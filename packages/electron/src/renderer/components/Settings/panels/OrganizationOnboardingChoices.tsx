@@ -10,6 +10,7 @@
 
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import { TeamBetaNotice } from '../../common/TeamBetaNotice';
 import { categorizeTeamAnalyticsError } from '../../../../shared/analytics/teamAnalytics';
@@ -44,6 +45,7 @@ export function OrganizationOnboardingChoices({
   /** Off where the host already discloses the beta on the same screen. */
   showBetaNotice?: boolean;
 }) {
+  const { t } = useTranslation('settings');
   const pending = organizations.filter(
     (organization) => organization.membershipType && organization.membershipType !== 'active_member',
   );
@@ -51,7 +53,7 @@ export function OrganizationOnboardingChoices({
   const acceptInvitation = (invitation: OrganizationChoice) => {
     void window.electronAPI.organization.acceptInvitation(invitation.orgId)
       .then(async (result: { success?: boolean; error?: string }) => {
-        if (result?.success === false) throw new Error(result.error ?? 'Could not accept invitation');
+        if (result?.success === false) throw new Error(result.error ?? t('orgOnboarding.errors.acceptInvitation'));
         trackTeamAnalyticsEvent('team_invitation_accepted', {
           surface: 'desktop',
           entryPoint: 'organization_manager',
@@ -61,7 +63,7 @@ export function OrganizationOnboardingChoices({
         // leaving them looking at a settings list.
         if (!(await queueOrgWindowGeneralRoute(invitation.orgId))) {
           throw new Error(
-            'Invitation accepted, but the organization destination could not be saved. Try again.',
+            t('orgOnboarding.errors.destinationNotSaved'),
           );
         }
         // Deliberately still the window: #general is a conversation, and
@@ -89,7 +91,7 @@ export function OrganizationOnboardingChoices({
     >
       {pending.length > 0 && (
         <div className="organization-invitation-inbox mb-5" data-testid="organization-invitation-inbox">
-          <h3 className="m-0 mb-2 text-sm font-semibold">Pending invitations</h3>
+          <h3 className="m-0 mb-2 text-sm font-semibold">{t('orgOnboarding.pendingInvitations')}</h3>
           <div className="flex flex-col gap-2">
             {pending.map((invitation) => (
               <article
@@ -101,7 +103,7 @@ export function OrganizationOnboardingChoices({
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium">{invitation.name}</div>
                   <div className="text-xs text-[var(--nim-text-muted)]">
-                    Invited account: {invitation.sourceEmail ?? 'signed-in account'}
+                    {t('orgOnboarding.invitedAccount', { account: invitation.sourceEmail ?? t('orgOnboarding.signedInAccount') })}
                   </div>
                 </div>
                 <button
@@ -110,7 +112,7 @@ export function OrganizationOnboardingChoices({
                   data-testid="pending-invitation-accept"
                   onClick={() => acceptInvitation(invitation)}
                 >
-                  Accept
+                  {t('orgOnboarding.accept')}
                 </button>
               </article>
             ))}
@@ -125,9 +127,9 @@ export function OrganizationOnboardingChoices({
         >
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold">New organization</div>
+              <div className="text-sm font-semibold">{t('orgOnboarding.newOrganizationTitle')}</div>
               <div className="mt-0.5 text-xs text-[var(--nim-text-muted)]">
-                Name it, invite your team, and pick starting rooms.
+                {t('orgOnboarding.newOrganizationDescription')}
               </div>
             </div>
             <button
@@ -138,7 +140,7 @@ export function OrganizationOnboardingChoices({
                 onOrganizationCreated: () => onChanged(),
               })}
             >
-              Create organization
+              {t('orgOnboarding.createOrganization')}
             </button>
           </div>
           {showBetaNotice && <TeamBetaNotice className="mt-3" />}

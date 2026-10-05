@@ -3,6 +3,7 @@ import { ProviderConfig } from '../../Settings/SettingsView';
 import { SettingsToggle } from '../SettingsToggle';
 import { AlphaBadge, SETTINGS_ALPHA_TOOLTIP } from '../../common/AlphaBadge';
 import type { FileChangeFidelity } from '@nimbalyst/runtime/ai/server/providerFileTracking';
+import { useTranslation, Trans } from '@nimbalyst/runtime/i18n/react';
 
 /**
  * Settings panel for a CLI agent Nimbalyst detects but does not install.
@@ -40,17 +41,11 @@ interface InstallStrategy {
   docsUrl?: string;
 }
 
+/** i18n keys (settings namespace); translated at render time. */
 const FIDELITY_COPY: Record<FileChangeFidelity, string> = {
-  structured:
-    'Reports every file it changes directly, including the file\'s contents before the '
-    + 'edit. Diff review and the Files Edited list are exact.',
-  'tool-args':
-    'Reports the files it edits, but not the ones it deletes or renames — those go '
-    + 'through shell commands. Nimbalyst watches the project folder to catch them, so '
-    + 'a diff can occasionally be attributed to the wrong turn.',
-  none:
-    'Does not report the files it changes. Nimbalyst infers them by watching the '
-    + 'project folder, so diff review is approximate.',
+  structured: 'providers.headlessCli.fidelity.structured',
+  'tool-args': 'providers.headlessCli.fidelity.toolArgs',
+  none: 'providers.headlessCli.fidelity.none',
 };
 
 export function HeadlessCliProviderPanel({
@@ -65,6 +60,7 @@ export function HeadlessCliProviderPanel({
   docsLabel,
   fileChangeFidelity,
 }: HeadlessCliProviderPanelProps) {
+  const { t } = useTranslation('settings');
   const [cliStatus, setCLIStatus] = useState<CLIStatus>('checking');
   const [cliVersion, setCLIVersion] = useState<string | null>(null);
   const [installCommand, setInstallCommand] = useState<string | null>(null);
@@ -132,14 +128,14 @@ export function HeadlessCliProviderPanel({
         </h4>
 
         {cliStatus === 'checking' && (
-          <p className="text-[13px] text-[var(--nim-text-muted)]">Checking for the {commandName} CLI...</p>
+          <p className="text-[13px] text-[var(--nim-text-muted)]">{t('providers.headlessCli.checking', { command: commandName })}</p>
         )}
 
         {cliStatus === 'installed' && (
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[var(--nim-success)] shrink-0" />
             <span className="text-[13px] text-[var(--nim-text)]">
-              Installed and signed in{cliVersion ? ` (${cliVersion})` : ''}
+              {cliVersion ? t('providers.headlessCli.installedSignedInVersion', { version: cliVersion }) : t('providers.headlessCli.installedSignedIn')}
             </span>
           </div>
         )}
@@ -149,19 +145,17 @@ export function HeadlessCliProviderPanel({
             <div className="flex items-center gap-2 mb-2">
               <span className="w-2 h-2 rounded-full bg-[var(--nim-warning)] shrink-0" />
               <span className="text-[13px] text-[var(--nim-text)]">
-                Installed{cliVersion ? ` (${cliVersion})` : ''}, but not signed in
+                {cliVersion ? t('providers.headlessCli.signedOutVersion', { version: cliVersion }) : t('providers.headlessCli.signedOut')}
               </span>
             </div>
             <p className="text-[13px] text-[var(--nim-text-muted)] leading-relaxed">
-              Run{' '}
-              <code className="text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 rounded select-text">{loginCommand}</code>{' '}
-              in your terminal, then check again.
+              <Trans t={t} i18nKey="providers.headlessCli.runLoginThenCheck" values={{ command: loginCommand }} components={{ code: <code className="text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 rounded select-text" /> }} />
             </p>
             <button
               className="mt-3 inline-flex items-center justify-center py-2 px-4 rounded-md text-sm font-medium cursor-pointer transition-all bg-[var(--nim-surface)] text-[var(--nim-text)] border border-[var(--nim-border)] hover:bg-[var(--nim-surface-hover)]"
               onClick={() => void checkCLI()}
             >
-              Check again
+              {t('providers.shared.checkAgain')}
             </button>
           </div>
         )}
@@ -169,8 +163,7 @@ export function HeadlessCliProviderPanel({
         {cliStatus === 'not-installed' && (
           <div>
             <p className="text-[13px] text-[var(--nim-text-muted)] mb-3 leading-relaxed">
-              The {commandName} CLI is required to run this agent. Nimbalyst does not install it
-              for you — run the vendor&apos;s installer in your terminal:
+              {t('providers.headlessCli.notInstalled', { command: commandName })}
             </p>
             {installCommand && (
               <code className="block text-[13px] text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-3 py-2 rounded mb-3 select-text">
@@ -181,61 +174,62 @@ export function HeadlessCliProviderPanel({
               className="inline-flex items-center justify-center py-2 px-4 rounded-md text-sm font-medium cursor-pointer transition-all bg-[var(--nim-surface)] text-[var(--nim-text)] border border-[var(--nim-border)] hover:bg-[var(--nim-surface-hover)]"
               onClick={() => void checkCLI()}
             >
-              Check again
+              {t('providers.shared.checkAgain')}
             </button>
           </div>
         )}
 
         <p className="text-[13px] text-[var(--nim-text-muted)] mt-3 leading-relaxed">
-          See the{' '}
-          <a
-            href={docsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[var(--nim-primary)] hover:underline"
-          >
-            {docsLabel}
-          </a>
-          {' '}for installation and authentication details.
+          <Trans
+            t={t}
+            i18nKey="providers.shared.seeDocsInstallAuth"
+            values={{ label: docsLabel }}
+            components={{
+              link: (
+                <a
+                  href={docsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--nim-primary)] hover:underline"
+                />
+              ),
+            }}
+          />
         </p>
       </div>
 
       <SettingsToggle
         variant="enable"
-        name={`Enable ${title}`}
+        name={t('providers.shared.enableProvider', { name: title })}
         checked={config.enabled || false}
         onChange={onToggle}
       />
 
       {cliStatus === 'installed' && (
         <p className="text-[13px] text-[var(--nim-text-muted)] mt-2 leading-relaxed">
-          On by default because the {commandName} CLI is installed and signed in. Turning it
-          off here is remembered.
+          {t('providers.headlessCli.onByDefault', { command: commandName })}
         </p>
       )}
 
       {config.enabled && (
         <>
           <div className="provider-panel-section py-4 mb-4 border-b border-[var(--nim-border)]">
-            <h4 className="provider-panel-section-title text-base font-semibold mb-3 text-[var(--nim-text)]">Authentication</h4>
+            <h4 className="provider-panel-section-title text-base font-semibold mb-3 text-[var(--nim-text)]">{t('providers.shared.authentication')}</h4>
             <p className="text-[13px] text-[var(--nim-text-muted)] mb-3 leading-relaxed">
-              {title} uses its own CLI login. Run{' '}
-              <code className="text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 rounded select-text">{loginCommand}</code>{' '}
-              in your terminal to authenticate.
+              <Trans t={t} i18nKey="providers.headlessCli.authUsesOwnLogin" values={{ title, command: loginCommand }} components={{ code: <code className="text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 rounded select-text" /> }} />
             </p>
             <p className="text-[13px] text-[var(--nim-text-muted)]">
-              No API key is required, and Nimbalyst never reads one from your environment.
+              {t('providers.shared.noApiKeyRequired')}
             </p>
           </div>
 
           <div className="provider-panel-section py-4 mb-4 border-b border-[var(--nim-border)] last:border-b-0 last:mb-0 last:pb-0">
-            <h4 className="provider-panel-section-title text-base font-semibold mb-3 text-[var(--nim-text)]">File tracking</h4>
+            <h4 className="provider-panel-section-title text-base font-semibold mb-3 text-[var(--nim-text)]">{t('providers.shared.fileTracking')}</h4>
             <p className="text-[13px] text-[var(--nim-text-muted)] leading-relaxed">
-              {FIDELITY_COPY[fileChangeFidelity]}
+              {t(FIDELITY_COPY[fileChangeFidelity])}
             </p>
             <p className="text-[13px] text-[var(--nim-text-muted)] mt-3 leading-relaxed">
-              This agent cannot pause a turn to ask permission for an individual tool, so a
-              session requires the &ldquo;Allow Edits&rdquo; workspace permission mode.
+              {t('providers.headlessCli.allowEditsRequired')}
             </p>
           </div>
         </>

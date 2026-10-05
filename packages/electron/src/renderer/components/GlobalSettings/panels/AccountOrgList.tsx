@@ -14,6 +14,7 @@
 import React, { useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import { AlphaBadge } from '../../common/AlphaBadge';
 import { TEAM_BETA_TOOLTIP } from '../../common/TeamBetaNotice';
@@ -59,6 +60,7 @@ function announceOrganizationsChanged() {
 }
 
 function RoleBadge({ role }: { role: string }) {
+  const { t } = useTranslation('settings');
   const normalized = (role || 'member').toLowerCase();
   const isPrivileged = normalized === 'owner' || normalized === 'admin';
   return (
@@ -70,7 +72,7 @@ function RoleBadge({ role }: { role: string }) {
       }`}
       data-testid="account-org-role-badge"
     >
-      {normalized}
+      {t(`accountOrgs.roles.${normalized}`, { defaultValue: normalized })}
     </span>
   );
 }
@@ -84,6 +86,7 @@ function AccountOrgRow({
   projectOrgId: string | null | undefined;
   openProjectOrgMode: () => void;
 }) {
+  const { t } = useTranslation('settings');
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,7 +100,7 @@ function AccountOrgRow({
     // write only costs that landing, so it does not block administration.
     if (!(await readOrgWelcomeDismissed(organization.orgId))) {
       if (!(await queueOrgWindowGeneralRoute(organization.orgId))) {
-        setError('Could not save where to open this organization’s messages.');
+        setError(t('accountOrgs.saveDestinationFailed'));
       }
     }
     openOrgManagement(organization.orgId);
@@ -112,7 +115,7 @@ function AccountOrgRow({
         const queued = await queueOrgWindowGeneralRoute(organization.orgId);
         if (!queued) {
           throw new Error(
-            'Invitation accepted, but the organization destination could not be saved. Try again.',
+            t('accountOrgs.acceptedButDestinationFailed'),
           );
         }
         announceOrganizationsChanged();
@@ -122,7 +125,7 @@ function AccountOrgRow({
         // retargetable organization window does.
         openOrgMessages(organization.orgId, projectOrgId, openProjectOrgMode);
       } else {
-        setError(result?.error || 'Could not accept the invitation');
+        setError(result?.error || t('accountOrgs.acceptFailed'));
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
@@ -147,17 +150,17 @@ function AccountOrgRow({
               className="account-org-pending-badge rounded-full bg-[color-mix(in_srgb,var(--nim-warning)_16%,transparent)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--nim-warning)]"
               data-testid="account-org-pending-badge"
             >
-              Invite pending
+              {t('accountOrgs.invitePending')}
             </span>
           )}
         </div>
         <div className="mt-0.5 truncate text-[11px] text-[var(--nim-text-muted)]">
           {organization.isPending
-            ? 'Accept to join this organization'
+            ? t('accountOrgs.acceptToJoin')
             : organization.projectCount === undefined
-              ? 'Active member'
-              : `${organization.projectCount} ${organization.projectCount === 1 ? 'project' : 'projects'}`}
-          {organization.alsoReachableBy.length > 0 && ` · also signed in as ${organization.alsoReachableBy.join(', ')}`}
+              ? t('accountOrgs.activeMember')
+              : t('accountOrgs.projectCount', { count: organization.projectCount })}
+          {organization.alsoReachableBy.length > 0 && ` · ${t('accountOrgs.alsoSignedInAs', { emails: organization.alsoReachableBy.join(', ') })}`}
         </div>
         {error && <div className="mt-0.5 text-[11px] text-[var(--nim-error)]">{error}</div>}
       </div>
@@ -175,7 +178,7 @@ function AccountOrgRow({
             className="rounded border border-[var(--nim-primary)] bg-transparent px-2.5 py-1 text-[11px] text-[var(--nim-primary)] hover:bg-[var(--nim-bg-hover)] disabled:opacity-60"
             data-testid="account-org-accept-invite"
           >
-            {accepting ? 'Accepting…' : 'Accept'}
+            {accepting ? t('accountOrgs.accepting') : t('accountOrgs.accept')}
           </button>
         ) : (
           <>
@@ -196,7 +199,7 @@ function AccountOrgRow({
               className="rounded border border-[var(--nim-primary)] bg-transparent px-2.5 py-1 text-[11px] text-[var(--nim-primary)] hover:bg-[var(--nim-bg-hover)]"
               data-testid="account-org-open-project"
             >
-              Open
+              {t('accountOrgs.open')}
             </button>
             <button
               type="button"
@@ -204,7 +207,7 @@ function AccountOrgRow({
               className="rounded border border-[var(--nim-border)] bg-transparent px-2.5 py-1 text-[11px] text-[var(--nim-text)] hover:bg-[var(--nim-bg-hover)]"
               data-testid="account-org-manage"
             >
-              Manage
+              {t('accountOrgs.manage')}
             </button>
           </>
         )}
@@ -225,6 +228,7 @@ export function AccountOrgList({
   group: AccountOrganizationGroup;
   indented?: boolean;
 }) {
+  const { t } = useTranslation('settings');
   const directory = useAtomValue(organizationDirectoryStateAtom);
   const { org: projectOrg } = useProjectOrg();
   const setWindowMode = useSetAtom(setWindowModeAtom);
@@ -248,12 +252,12 @@ export function AccountOrgList({
       ))}
       {group.organizations.length === 0 && directory.complete && (
         <p className="account-org-empty m-0 text-[11px] text-[var(--nim-text-muted)]" data-testid="account-org-empty">
-          No organizations
+          {t('accountOrgs.noOrganizations')}
         </p>
       )}
       {!directory.complete && directory.status !== 'signed-out' && (
         <p className="account-org-status m-0 text-[11px] text-[var(--nim-text-muted)]" role="status">
-          {directory.status === 'error' ? directory.error : 'Loading organizations…'}
+          {directory.status === 'error' ? directory.error : t('accountOrgs.loadingOrganizations')}
         </p>
       )}
       {organizationCreationEnabled && (
@@ -266,7 +270,7 @@ export function AccountOrgList({
             className="account-org-new self-start rounded border border-dashed border-[var(--nim-border)] bg-transparent px-2.5 py-1 text-[11px] text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
             data-testid="account-org-new"
           >
-            New organization
+            {t('accountOrgs.newOrganization')}
           </button>
           <AlphaBadge size="xs" stage="beta" tooltip={TEAM_BETA_TOOLTIP} />
         </div>

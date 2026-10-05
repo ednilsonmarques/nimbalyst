@@ -20,6 +20,8 @@
 import type { JSX } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation, Trans } from '@nimbalyst/runtime/i18n/react';
+import { t as i18nT } from '@nimbalyst/runtime/i18n';
 import {
   CLOUDFLARE_SANDBOX_CHANNELS,
   RESERVED_WRANGLER_PROFILE_NAMES,
@@ -60,10 +62,10 @@ function newProfileNameError(name: string): string | null {
   const trimmed = name.trim();
   if (!trimmed) return null;
   if ((RESERVED_WRANGLER_PROFILE_NAMES as readonly string[]).includes(trimmed.toLowerCase())) {
-    return `"${trimmed}" is reserved by Wrangler. Sign in to it from the profile list above instead.`;
+    return i18nT('settings:cloudflareSandboxes.profile.reservedName', { name: trimmed });
   }
   if (!WRANGLER_PROFILE_NAME_PATTERN.test(trimmed)) {
-    return 'Profile names may only contain letters, numbers, hyphens and underscores.';
+    return i18nT('settings:cloudflareSandboxes.profile.invalidName');
   }
   return null;
 }
@@ -89,13 +91,14 @@ export function CloudflareSandboxesPanel({ workspacePath }: { workspacePath?: st
 }
 
 function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string }): JSX.Element {
+  const { t } = useTranslation('settings');
   const selectionTouched = useRef(false);
   const savedSelection = useRef<{profileName: string; accountId: string | null} | null>(null);
   const saveSelection = useCallback((profileName: string, accountId: string | null) => {
     selectionTouched.current = true;
     if (!workspacePath) return;
     void window.electronAPI.invoke("workspace:update-state", workspacePath, {cloudflareSandboxSelection: {profileName, accountId}})
-      .catch(() => setSelectionError("The Cloudflare selection could not be saved. Please select it again."));
+      .catch(() => setSelectionError(i18nT('settings:cloudflareSandboxes.account.saveSelectionFailed')));
   }, [workspacePath]);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [selectionLoaded, setSelectionLoaded] = useState(!workspacePath);
@@ -106,7 +109,7 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
       if (cancelled || selectionTouched.current) return;
       const saved = state?.cloudflareSandboxSelection;
       if (typeof saved?.profileName === "string") savedSelection.current = saved;
-    }).catch(() => { if (!cancelled) setSelectionError("The saved Cloudflare selection could not be loaded."); })
+    }).catch(() => { if (!cancelled) setSelectionError(i18nT('settings:cloudflareSandboxes.account.loadSelectionFailed')); })
       .finally(() => { if (!cancelled) setSelectionLoaded(true); });
     return () => { cancelled = true; accountsRequest.current++; };
   }, [workspacePath]);
@@ -325,27 +328,24 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
     <div className="cloudflare-sandboxes-panel provider-panel flex flex-col" data-testid="cloudflare-sandboxes-panel">
       <div className="provider-panel-header mb-2 pb-4 border-b border-[var(--nim-border)]">
         <h3 className="provider-panel-title text-xl font-semibold leading-tight mb-1.5 text-[var(--nim-text)]">
-          Cloudflare Sandboxes
+          {t('cloudflareSandboxes.title')}
         </h3>
         <p className="provider-panel-description text-[13px] leading-relaxed text-[var(--nim-text-muted)]">
-          Deploy and manage a sandbox container in your own Cloudflare account. Nimbalyst signs in
-          through Wrangler in your browser and uses your Wrangler profiles — it never asks for an
-          API token. Connect an agent node to start remote sessions from a git branch.
-          The container keeps nothing between stops.
+          {t('cloudflareSandboxes.description')}
         </p>
       </div>
 
       {/* 1. Prerequisites */}
       <section className={sectionClass} data-testid="cloudflare-prerequisites-section">
         <div className="flex items-center justify-between gap-3 mb-2">
-          <h4 className={headingClass}>Prerequisites</h4>
+          <h4 className={headingClass}>{t('cloudflareSandboxes.prerequisites.title')}</h4>
           <button
             className={buttonClass}
             onClick={() => void loadPrerequisites()}
             disabled={prerequisitesLoading}
             data-testid="cloudflare-recheck-prerequisites"
           >
-            {prerequisitesLoading ? 'Checking…' : 'Re-check'}
+            {prerequisitesLoading ? t('cloudflareSandboxes.prerequisites.checking') : t('cloudflareSandboxes.prerequisites.recheck')}
           </button>
         </div>
         {prerequisitesError ? (
@@ -357,35 +357,34 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
               ok={prerequisites.wrangler.installed && prerequisites.wrangler.supportsProfiles}
               label={
                 !prerequisites.wrangler.installed
-                  ? 'Wrangler is not installed'
+                  ? t('cloudflareSandboxes.prerequisites.wranglerNotInstalled')
                   : !prerequisites.wrangler.supportsProfiles
-                    ? `Wrangler ${prerequisites.wrangler.version ?? ''} does not support profiles`.trim()
+                    ? t('cloudflareSandboxes.prerequisites.wranglerNoProfiles', { version: prerequisites.wrangler.version ?? '' }).trim()
                     : `Wrangler ${prerequisites.wrangler.version ?? ''}`.trim()
               }
               hint={
                 prerequisites.wrangler.installed
                   ? undefined
-                  : 'Install Wrangler, then re-check.'
+                  : t('cloudflareSandboxes.prerequisites.installWrangler')
               }
             />
           </ul>
         ) : (
-          <p className={hintClass}>Checking your machine…</p>
+          <p className={hintClass}>{t('cloudflareSandboxes.prerequisites.checkingMachine')}</p>
         )}
       </section>
 
       {/* 2. Wrangler profile */}
       <section className={sectionClass} data-testid="cloudflare-profile-section">
-        <h4 className={headingClass}>Cloudflare sign-in</h4>
+        <h4 className={headingClass}>{t('cloudflareSandboxes.profile.title')}</h4>
         <p className={hintClass}>
-          Pick one of your Wrangler profiles, or sign in to create a new named profile. Profiles let
-          you keep separate Cloudflare accounts side by side.
+          {t('cloudflareSandboxes.profile.description')}
         </p>
 
         {profilesLoading && !profiles ? (
-          <p className={`${hintClass} mt-3`}>Loading profiles…</p>
+          <p className={`${hintClass} mt-3`}>{t('cloudflareSandboxes.profile.loading')}</p>
         ) : (
-          <div className="flex flex-col gap-1.5 mt-3" role="radiogroup" aria-label="Wrangler profile">
+          <div className="flex flex-col gap-1.5 mt-3" role="radiogroup" aria-label={t('cloudflareSandboxes.profile.groupLabel')}>
             {(profiles ?? []).map((profile) => (
               <label
                 key={profile.name}
@@ -404,13 +403,13 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
                   <span className="text-[12px] text-[var(--nim-text-muted)]">{profile.identity}</span>
                 )}
                 {!profile.authenticated && (
-                  <span className="text-[12px] text-[var(--nim-warning)]">signed out</span>
+                  <span className="text-[12px] text-[var(--nim-warning)]">{t('cloudflareSandboxes.profile.signedOut')}</span>
                 )}
               </label>
             ))}
             {profiles?.length === 0 && (
               <p className={hintClass} data-testid="cloudflare-no-profiles">
-                No Wrangler profiles yet.
+                {t('cloudflareSandboxes.profile.noProfiles')}
               </p>
             )}
           </div>
@@ -423,7 +422,7 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
             disabled={operation !== 'none'}
             data-testid="cloudflare-reauthenticate"
           >
-            {operation === 'signing-in' ? 'Waiting for browser…' : `Sign in again as ${selectedProfile.name}`}
+            {operation === 'signing-in' ? t('cloudflareSandboxes.profile.waitingForBrowser') : t('cloudflareSandboxes.profile.signInAgain', { name: selectedProfile.name })}
           </button>
         )}
 
@@ -431,7 +430,7 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
           <input
             type="text"
             className="px-2.5 py-1.5 text-[13px] bg-[var(--nim-bg)] border border-[var(--nim-border)] rounded-md text-[var(--nim-text)] outline-none focus:border-[var(--nim-primary)]"
-            placeholder="New profile name"
+            placeholder={t('cloudflareSandboxes.profile.newProfilePlaceholder')}
             value={newProfileName}
             onChange={(event) => setNewProfileName(event.target.value)}
             data-testid="cloudflare-new-profile-name"
@@ -446,7 +445,7 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
             }
             data-testid="cloudflare-sign-in"
           >
-            {operation === 'signing-in' ? 'Waiting for browser…' : 'Sign in with Cloudflare'}
+            {operation === 'signing-in' ? t('cloudflareSandboxes.profile.waitingForBrowser') : t('cloudflareSandboxes.profile.signIn')}
           </button>
         </div>
         {newProfileNameError(newProfileName) && (
@@ -463,17 +462,17 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
 
       {/* 3. Account */}
       <section className={sectionClass} data-testid="cloudflare-account-section">
-        <h4 className={headingClass}>Cloudflare account</h4>
+        <h4 className={headingClass}>{t('cloudflareSandboxes.account.title')}</h4>
         {selectionError && <p role="alert" className={hintClass}>{selectionError}</p>}
         <p className={hintClass}>
-          Choose which account this sandbox is deployed to. Your selection is remembered for this project.
+          {t('cloudflareSandboxes.account.description')}
         </p>
         {!selectedProfileName ? (
           <p className={`${hintClass} mt-3`} data-testid="cloudflare-account-blocked">
-            Select a profile first.
+            {t('cloudflareSandboxes.account.selectProfileFirst')}
           </p>
         ) : accountsLoading ? (
-          <p className={`${hintClass} mt-3`}>Loading accounts…</p>
+          <p className={`${hintClass} mt-3`}>{t('cloudflareSandboxes.account.loading')}</p>
         ) : accountsError ? (
           <ErrorNote error={accountsError} />
         ) : (
@@ -486,9 +485,9 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
               invalidatePlan();
             }}
             data-testid="cloudflare-account-select"
-            aria-label="Cloudflare account"
+            aria-label={t('cloudflareSandboxes.account.title')}
           >
-            <option value="">Select an account…</option>
+            <option value="">{t('cloudflareSandboxes.account.selectPlaceholder')}</option>
             {(accounts ?? []).map((account) => (
               <option key={account.id} value={account.id}>
                 {account.name}
@@ -500,9 +499,9 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
 
       {/* 4. Review and deploy */}
       <section className={sectionClass} data-testid="cloudflare-deploy-section">
-        <h4 className={headingClass}>Review and deploy</h4>
+        <h4 className={headingClass}>{t('cloudflareSandboxes.deploy.title')}</h4>
         <p className={hintClass}>
-          Review exactly what will be created in your account, and what it costs, before deploying.
+          {t('cloudflareSandboxes.deploy.description')}
         </p>
 
         <button
@@ -511,7 +510,7 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
           disabled={!canReview}
           data-testid="cloudflare-review-deployment"
         >
-          {operation === 'planning' ? 'Preparing review…' : 'Review deployment'}
+          {operation === 'planning' ? t('cloudflareSandboxes.deploy.preparingReview') : t('cloudflareSandboxes.deploy.reviewDeployment')}
         </button>
         {planError && <ErrorNote error={planError} />}
 
@@ -521,25 +520,35 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
             data-testid="cloudflare-deployment-plan"
           >
             <p className="text-[13px] text-[var(--nim-text)] mb-2">
-              Deploying to <strong>{plan.account.name}</strong> using profile{' '}
-              <strong>{plan.profileName}</strong>.
+              <Trans
+                t={t}
+                i18nKey="cloudflareSandboxes.deploy.planTarget"
+                values={{ account: plan.account.name, profile: plan.profileName }}
+                components={{ bold: <strong /> }}
+              />
             </p>
             <ul className="flex flex-col gap-1 mb-3">
               {plan.resources.map((resource) => (
                 <li key={`${resource.kind}:${resource.name}`} className="text-[12px] text-[var(--nim-text-muted)]">
-                  {resource.action === 'create' ? 'Create' : resource.action === 'update' ? 'Update' : 'Reuse'}
-                  {' '}{resource.kind} <span className="text-[var(--nim-text)]">{resource.name}</span>
+                  <Trans
+                    t={t}
+                    i18nKey={resource.action === 'create' ? 'cloudflareSandboxes.deploy.resourceCreate' : resource.action === 'update' ? 'cloudflareSandboxes.deploy.resourceUpdate' : 'cloudflareSandboxes.deploy.resourceReuse'}
+                    values={{ kind: resource.kind, name: resource.name }}
+                    components={{ name: <span className="text-[var(--nim-text)]" /> }}
+                  />
                 </li>
               ))}
             </ul>
             <p className="text-[12px] text-[var(--nim-text-muted)] mb-2" data-testid="cloudflare-plan-container">
-              Container: {plan.container.instanceType}, at most {plan.container.maxInstances}{' '}
-              {plan.container.maxInstances === 1 ? 'instance' : 'instances'}, sleeping after{' '}
-              {plan.container.sleepAfterMinutes} minutes idle.
+              {t('cloudflareSandboxes.deploy.containerSummary', {
+                instanceType: plan.container.instanceType,
+                count: plan.container.maxInstances,
+                minutes: plan.container.sleepAfterMinutes,
+              })}
             </p>
             {plan.requiresPaidPlan && (
               <p className="text-[12px] text-[var(--nim-warning)] mb-2">
-                This requires a paid Cloudflare plan on {plan.account.name}.
+                {t('cloudflareSandboxes.deploy.paidPlanRequired', { account: plan.account.name })}
               </p>
             )}
             {plan.costNotes.map((note) => (
@@ -552,7 +561,7 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
                 onChange={(event) => setPlanAcknowledged(event.target.checked)}
                 data-testid="cloudflare-acknowledge-plan"
               />
-              I understand these resources and charges apply to my Cloudflare account.
+              {t('cloudflareSandboxes.deploy.acknowledge')}
             </label>
           </div>
         )}
@@ -564,7 +573,7 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
             disabled={!canDeploy}
             data-testid="cloudflare-deploy"
           >
-            {operation === 'deploying' ? 'Deploying…' : 'Deploy sandbox'}
+            {operation === 'deploying' ? t('cloudflareSandboxes.deploy.deploying') : t('cloudflareSandboxes.deploy.deploySandbox')}
           </button>
         </div>
         {deploymentError && <ErrorNote error={deploymentError} />}
@@ -576,8 +585,8 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
         <div className="cloudflare-deployment-load-error py-4" data-testid="cloudflare-deployment-load-error">
           <p className="text-[13px] text-[var(--nim-error)]" role="alert">
             {deployment
-              ? `Could not refresh the sandbox: ${deploymentLoadError.message} Showing the last known state.`
-              : `Could not read the sandbox: ${deploymentLoadError.message}`}
+              ? t('cloudflareSandboxes.deploymentLoad.refreshFailed', { message: deploymentLoadError.message })
+              : t('cloudflareSandboxes.deploymentLoad.readFailed', { message: deploymentLoadError.message })}
           </p>
           <button
             className={`${buttonClass} mt-2`}
@@ -585,7 +594,7 @@ function CloudflareSandboxesContent({ workspacePath }: { workspacePath?: string 
             disabled={deploymentLoading}
             data-testid="cloudflare-retry-deployment-load"
           >
-            {deploymentLoading ? 'Retrying…' : 'Retry'}
+            {deploymentLoading ? t('cloudflareSandboxes.deploymentLoad.retrying') : t('common:retry')}
           </button>
         </div>
       )}

@@ -3,6 +3,8 @@ import type {
   AIModel,
   OpenCodeModelCatalogSnapshot,
 } from '../../../../shared/openCodeModelCatalog';
+import { useTranslation, Trans } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 interface OpenCodeModelsSectionProps {
   /** Directory OpenCode discovers providers for; refresh is unavailable without one. */
@@ -33,33 +35,33 @@ export function describeCatalogStatus(
   if (snapshot.cacheStatus === 'cold') {
     return {
       tone: 'warning',
-      headline: 'Models not discovered yet',
+      headline: translate('settings:providers.openCodeModels.coldHeadline'),
       detail:
-        'This is the built-in fallback list. Nimbalyst has not yet asked OpenCode which providers you are signed in to, so providers you configured yourself are missing. Refresh to discover them.',
+        translate('settings:providers.openCodeModels.coldDetail'),
     };
   }
 
   if (snapshot.cacheStatus === 'stale' && snapshot.staleReason === 'identity-changed') {
     return {
       tone: 'warning',
-      headline: 'Your OpenCode setup changed',
+      headline: translate('settings:providers.openCodeModels.identityChangedHeadline'),
       detail:
-        'The OpenCode binary or its credentials changed since this list was discovered, so the fallback list is shown instead. Refresh to rediscover your providers.',
+        translate('settings:providers.openCodeModels.identityChangedDetail'),
     };
   }
 
   if (snapshot.cacheStatus === 'stale') {
     return {
       tone: 'warning',
-      headline: 'Discovered list may be out of date',
-      detail: `Last discovered ${formatTimestamp(snapshot.refreshedAt)}. Refresh to pick up providers or models added since.`,
+      headline: translate('settings:providers.openCodeModels.staleHeadline'),
+      detail: translate('settings:providers.openCodeModels.staleDetail', { time: formatTimestamp(snapshot.refreshedAt) }),
     };
   }
 
   return {
     tone: 'info',
-    headline: `${countProviders(snapshot.models)} connected ${countProviders(snapshot.models) === 1 ? 'provider' : 'providers'}`,
-    detail: `Discovered ${formatTimestamp(snapshot.refreshedAt)} from the providers OpenCode is authenticated for.`,
+    headline: translate('settings:providers.openCodeModels.connectedProviders', { count: countProviders(snapshot.models) }),
+    detail: translate('settings:providers.openCodeModels.freshDetail', { time: formatTimestamp(snapshot.refreshedAt) }),
   };
 }
 
@@ -126,6 +128,7 @@ export function OpenCodeModelsSection({
   onVisibilityToggle,
   onSetVisibilityForModels,
 }: OpenCodeModelsSectionProps) {
+  const { t } = useTranslation('settings');
   const { snapshot, loading, refreshing, error, refresh } = useOpenCodeModelCatalog(workspacePath);
   const [filter, setFilter] = useState('');
 
@@ -142,13 +145,14 @@ export function OpenCodeModelsSection({
   const status = snapshot ? describeCatalogStatus(snapshot) : null;
   const selectOptions = useMemo(
     () => buildSelectOptions(models, selectedModelId),
-    [models, selectedModelId]
+    // `t` re-derives the translated option labels after a language change.
+    [models, selectedModelId, t]
   );
 
   return (
     <div className="opencode-models-section provider-panel-section py-4 mb-4 border-b border-[var(--nim-border)]">
       <div className="flex items-start justify-between gap-3 mb-3">
-        <h4 className="provider-panel-section-title text-base font-semibold text-[var(--nim-text)]">Models</h4>
+        <h4 className="provider-panel-section-title text-base font-semibold text-[var(--nim-text)]">{t('providers.openCodeModels.title')}</h4>
         <div className="flex flex-col items-end gap-1">
           <button
             data-testid="opencode-models-refresh"
@@ -156,18 +160,18 @@ export function OpenCodeModelsSection({
             onClick={() => { void refresh(); }}
             disabled={refreshing || !workspacePath}
           >
-            {refreshing ? 'Discovering...' : 'Discover models'}
+            {refreshing ? t('providers.openCodeModels.discovering') : t('providers.openCodeModels.discover')}
           </button>
           <span className="text-[11px] text-[var(--nim-text-faint)]">
             {workspacePath
-              ? 'Starts OpenCode briefly to read your providers'
-              : 'Open a project to discover models'}
+              ? t('providers.openCodeModels.startsBriefly')
+              : t('providers.openCodeModels.openProject')}
           </span>
         </div>
       </div>
 
       {loading && (
-        <p className="text-[13px] text-[var(--nim-text-muted)] py-2">Loading models...</p>
+        <p className="text-[13px] text-[var(--nim-text-muted)] py-2">{t('providers.shared.loadingModels')}</p>
       )}
 
       {!loading && status && (
@@ -186,14 +190,18 @@ export function OpenCodeModelsSection({
 
       {error && (
         <div className="opencode-catalog-error text-xs mb-3 text-[var(--nim-error)]">
-          Discovery failed: {error}
+          {t('providers.openCodeModels.discoveryFailed', { error })}
         </div>
       )}
 
-      <label className="block text-[13px] text-[var(--nim-text)] mb-1">Default model</label>
+      <label className="block text-[13px] text-[var(--nim-text)] mb-1">{t('providers.openCodeModels.defaultModel')}</label>
       <p className="text-xs text-[var(--nim-text-muted)] mb-2 leading-relaxed">
-        Written to the <code className="text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 rounded">model</code> field
-        of your <code className="text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 rounded">opencode.json</code>, and used when a session does not pick its own.
+        <Trans
+          t={t}
+          i18nKey="providers.openCodeModels.defaultModelHint"
+          values={{ field: 'model', file: 'opencode.json' }}
+          components={{ code: <code className="text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 rounded" /> }}
+        />
       </p>
       <select
         data-testid="opencode-model-select"
@@ -201,7 +209,7 @@ export function OpenCodeModelsSection({
         onChange={(e) => onSelectModel(e.target.value)}
         className="w-full py-2 px-3 rounded-md bg-[var(--nim-bg-secondary)] border border-[var(--nim-border)] text-[var(--nim-text)] outline-none focus:border-[var(--nim-primary)] mb-4"
       >
-        <option value="">OpenCode default</option>
+        <option value="">{t('providers.openCodeModels.openCodeDefault')}</option>
         {selectOptions.map((option) => (
           <option key={option.value} value={option.value}>{option.label}</option>
         ))}
@@ -215,7 +223,7 @@ export function OpenCodeModelsSection({
               type="text"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              placeholder="Filter models"
+              placeholder={t('providers.openCodeModels.filterPlaceholder')}
               className="flex-1 min-w-[180px] py-1.5 px-3 rounded-md bg-[var(--nim-bg-secondary)] border border-[var(--nim-border)] text-[13px] text-[var(--nim-text)] outline-none focus:border-[var(--nim-primary)]"
             />
             <div className="flex gap-2">
@@ -224,14 +232,14 @@ export function OpenCodeModelsSection({
                 className="text-xs py-1 px-2 rounded bg-[var(--nim-bg-secondary)] border border-[var(--nim-border)] text-[var(--nim-text-muted)] hover:text-[var(--nim-text)] hover:bg-[var(--nim-bg-hover)] cursor-pointer transition-all"
                 onClick={() => onSetVisibilityForModels(visibleModels.map((m) => m.id), true)}
               >
-                Show all
+                {t('providers.shared.showAll')}
               </button>
               <button
                 data-testid="opencode-models-hide-all"
                 className="text-xs py-1 px-2 rounded bg-[var(--nim-bg-secondary)] border border-[var(--nim-border)] text-[var(--nim-text-muted)] hover:text-[var(--nim-text)] hover:bg-[var(--nim-bg-hover)] cursor-pointer transition-all"
                 onClick={() => onSetVisibilityForModels(visibleModels.map((m) => m.id), false)}
               >
-                Hide all
+                {t('providers.shared.hideAll')}
               </button>
             </div>
           </div>
@@ -260,7 +268,7 @@ export function OpenCodeModelsSection({
                     )}
                     {model.unavailable && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--nim-bg-tertiary)] text-[var(--nim-warning)]">
-                        provider not connected
+                        {t('providers.openCodeModels.providerNotConnected')}
                       </span>
                     )}
                   </span>
@@ -277,20 +285,23 @@ export function OpenCodeModelsSection({
               );
             })}
             {visibleModels.length === 0 && (
-              <p className="text-[13px] text-[var(--nim-text-muted)] py-2">No models match that filter.</p>
+              <p className="text-[13px] text-[var(--nim-text-muted)] py-2">{t('providers.openCodeModels.noMatch')}</p>
             )}
           </div>
           <p className="text-[11px] text-[var(--nim-text-faint)] leading-relaxed mt-3">
-            Unchecked models are hidden from the session model picker. Newly discovered models appear automatically.
+            {t('providers.openCodeModels.uncheckedHint')}
           </p>
         </>
       )}
 
       {!loading && models.length === 0 && (
         <p className="text-[13px] text-[var(--nim-text-muted)] py-2">
-          No models yet. Sign in to a provider with{' '}
-          <code className="text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 rounded">opencode auth login</code>,
-          then discover models.
+          <Trans
+            t={t}
+            i18nKey="providers.openCodeModels.noModelsYet"
+            values={{ command: 'opencode auth login' }}
+            components={{ code: <code className="text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 rounded" /> }}
+          />
         </p>
       )}
     </div>
@@ -320,19 +331,19 @@ function buildSelectOptions(
 ): Array<{ value: string; label: string }> {
   const options = models.map((model) => ({
     value: stripPrefix(model.id),
-    label: model.unavailable ? `${model.name} (provider not connected)` : model.name,
+    label: model.unavailable ? translate('settings:providers.openCodeModels.optionProviderNotConnected', { name: model.name }) : model.name,
   }));
   if (selectedModelId && !options.some((option) => option.value === selectedModelId)) {
-    options.unshift({ value: selectedModelId, label: `${selectedModelId} (not discovered)` });
+    options.unshift({ value: selectedModelId, label: translate('settings:providers.openCodeModels.optionNotDiscovered', { id: selectedModelId }) });
   }
   return options;
 }
 
 function describeModelMetadata(model: AIModel): string {
   const parts: string[] = [];
-  if (model.contextWindow) parts.push(`${formatTokens(model.contextWindow)} context`);
+  if (model.contextWindow) parts.push(translate('settings:providers.openCodeModels.contextTokens', { tokens: formatTokens(model.contextWindow) }));
   if (model.cost && (model.cost.input || model.cost.output)) {
-    parts.push(`$${formatCost(model.cost.input)} in / $${formatCost(model.cost.output)} out per Mtok`);
+    parts.push(translate('settings:providers.openCodeModels.costPerMtok', { input: formatCost(model.cost.input), output: formatCost(model.cost.output) }));
   }
   return parts.join('  ·  ');
 }
@@ -348,6 +359,6 @@ function formatCost(value: number): string {
 }
 
 function formatTimestamp(refreshedAt: number | null): string {
-  if (!refreshedAt) return 'never';
+  if (!refreshedAt) return translate('settings:providers.openCodeModels.never');
   return new Date(refreshedAt).toLocaleString();
 }

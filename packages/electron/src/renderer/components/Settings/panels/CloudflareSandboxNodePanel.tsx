@@ -20,6 +20,8 @@
 import type { JSX } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAtomValue } from 'jotai';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as i18nT } from '@nimbalyst/runtime/i18n';
 import {
   CLOUDFLARE_SANDBOX_CHANNELS,
   type CloudflareSandboxError,
@@ -59,20 +61,21 @@ function targetKeyOf(target: SandboxDeploymentTarget): string {
 /** What the node is doing, in the terms the user can act on. */
 function describeNode(deployment: SandboxDeployment): string {
   const node = deployment.node;
-  if (!node) return 'Not connected';
+  if (!node) return i18nT('settings:cloudflareSandboxNode.status.notConnected');
   if (node.running) {
     return node.startedAt
-      ? `Running since ${new Date(node.startedAt).toLocaleTimeString()}`
-      : 'Running';
+      ? i18nT('settings:cloudflareSandboxNode.status.runningSince', { time: new Date(node.startedAt).toLocaleTimeString() })
+      : i18nT('settings:cloudflareSandboxNode.status.running');
   }
-  if (node.exitCode !== null) return `Stopped, exit code ${node.exitCode}`;
-  return 'Stopped';
+  if (node.exitCode !== null) return i18nT('settings:cloudflareSandboxNode.status.stoppedWithCode', { code: node.exitCode });
+  return i18nT('settings:cloudflareSandboxNode.status.stopped');
 }
 
 export function CloudflareSandboxNodePanel({
   deployment,
   onDeploymentChange,
 }: CloudflareSandboxNodePanelProps): JSX.Element {
+  const { t } = useTranslation('settings');
   const workspacePath = useAtomValue(activeWorkspacePathAtom);
   const [operation, setOperation] = useState<NodeOperation>('none');
   const [confirmingDisconnect, setConfirmingDisconnect] = useState(false);
@@ -134,7 +137,7 @@ export function CloudflareSandboxNodePanel({
         }
         setError(refreshed.success ? response.error : {
           ...response.error,
-          message: `${response.error.message} The sandbox status could not be refreshed. Refresh the sandbox before retrying.`,
+          message: i18nT('settings:cloudflareSandboxNode.refreshFailedSuffix', { message: response.error.message }),
         });
       } else {
         onDeploymentChange(response.data);
@@ -173,26 +176,23 @@ export function CloudflareSandboxNodePanel({
 
   return (
     <section className="cloudflare-sandbox-node-panel pt-4 mt-4 border-t border-[var(--nim-border)]" data-testid="cloudflare-node-section">
-      <h4 className="text-[13px] font-semibold text-[var(--nim-text)] mb-1">Agent node</h4>
+      <h4 className="text-[13px] font-semibold text-[var(--nim-text)] mb-1">{t('cloudflareSandboxNode.title')}</h4>
       <p className={hintClass}>
-        Connecting installs a Nimbalyst agent in the sandbox and signs it in as one of your devices.
-        Your Claude Code subscription login is copied into the sandbox so the agent can use it. The
-        sandbox discards everything inside it whenever it sleeps, so anything the agent has not
-        pushed to git is lost and the node has to be connected again.
+        {t('cloudflareSandboxNode.description')}
       </p>
 
       <dl className="flex flex-col gap-1.5 text-[13px] mt-3">
         <div className="flex gap-2">
-          <dt className="text-[var(--nim-text-muted)] min-w-[92px]">Node</dt>
+          <dt className="text-[var(--nim-text-muted)] min-w-[92px]">{t('cloudflareSandboxNode.nodeLabel')}</dt>
           <dd className="text-[var(--nim-text)]" data-testid="cloudflare-node-status">
             {describeNode(deployment)}
           </dd>
         </div>
         {node?.workspace && (
           <div className="flex gap-2">
-            <dt className="text-[var(--nim-text-muted)] min-w-[92px]">Working in</dt>
+            <dt className="text-[var(--nim-text-muted)] min-w-[92px]">{t('cloudflareSandboxNode.workingInLabel')}</dt>
             <dd className="text-[var(--nim-text)] break-all" data-testid="cloudflare-node-workspace">
-              {node.workspace.projectId} on branch {node.workspace.branch}
+              {t('cloudflareSandboxNode.workingInValue', { project: node.workspace.projectId, branch: node.workspace.branch })}
             </dd>
           </div>
         )}
@@ -218,7 +218,7 @@ export function CloudflareSandboxNodePanel({
           )}
           data-testid="cloudflare-connect-node"
         >
-          {operation === 'connecting' ? 'Connecting…' : 'Connect node'}
+          {operation === 'connecting' ? t('cloudflareSandboxNode.connecting') : t('cloudflareSandboxNode.connect')}
         </button>
         {node && (
           <button
@@ -227,7 +227,7 @@ export function CloudflareSandboxNodePanel({
             onClick={() => void run(CLOUDFLARE_SANDBOX_CHANNELS.nodeStatus, { ...target }, 'refreshing')}
             data-testid="cloudflare-node-refresh"
           >
-            {operation === 'refreshing' ? 'Checking…' : 'Check node'}
+            {operation === 'refreshing' ? t('cloudflareSandboxNode.checking') : t('cloudflareSandboxNode.check')}
           </button>
         )}
         {node && (
@@ -237,14 +237,14 @@ export function CloudflareSandboxNodePanel({
             onClick={() => setConfirmingDisconnect(true)}
             data-testid="cloudflare-disconnect-node"
           >
-            Disconnect node
+            {t('cloudflareSandboxNode.disconnect')}
           </button>
         )}
       </div>
 
       {!workspacePath && (
         <p className={`${hintClass} mt-2`} data-testid="cloudflare-node-no-workspace">
-          Open a workspace first. The node clones that workspace&apos;s repository and branch.
+          {t('cloudflareSandboxNode.noWorkspace')}
         </p>
       )}
 
@@ -254,9 +254,7 @@ export function CloudflareSandboxNodePanel({
           data-testid="cloudflare-disconnect-confirm"
         >
           <p className="text-[13px] text-[var(--nim-text)]">
-            Disconnecting asks the agent to stop, ending any session it is running, and revokes its
-            sync credential so reconnecting issues a new one. Anything it wrote and has not pushed
-            stays in the sandbox until the sandbox next sleeps, and is then lost.
+            {t('cloudflareSandboxNode.disconnectConfirm')}
           </p>
           <div className="flex items-center gap-2 mt-3">
             <button
@@ -269,10 +267,10 @@ export function CloudflareSandboxNodePanel({
               )}
               data-testid="cloudflare-disconnect-confirmed"
             >
-              {operation === 'disconnecting' ? 'Disconnecting…' : 'Disconnect and discard'}
+              {operation === 'disconnecting' ? t('cloudflareSandboxNode.disconnecting') : t('cloudflareSandboxNode.disconnectAndDiscard')}
             </button>
             <button className={buttonClass} onClick={() => setConfirmingDisconnect(false)}>
-              Cancel
+              {t('common:cancel')}
             </button>
           </div>
         </div>
@@ -280,17 +278,19 @@ export function CloudflareSandboxNodePanel({
 
       {nodeRunning && (
         <div className="mt-4" data-testid="cloudflare-remote-session-form">
-          <h5 className="text-[13px] font-semibold text-[var(--nim-text)] mb-1">Start a session on the sandbox</h5>
+          <h5 className="text-[13px] font-semibold text-[var(--nim-text)] mb-1">{t('cloudflareSandboxNode.session.title')}</h5>
           <p className={hintClass}>
-            The agent runs in the sandbox, on{' '}
-            {node?.workspace ? `${node.workspace.branch} in ${node.workspace.projectId}` : 'the connected workspace'}.
-            Its sessions appear in your session list, where you can follow progress and send more prompts.
+            {t('cloudflareSandboxNode.session.description', {
+              target: node?.workspace
+                ? t('cloudflareSandboxNode.session.branchInProject', { branch: node.workspace.branch, project: node.workspace.projectId })
+                : t('cloudflareSandboxNode.session.connectedWorkspace'),
+            })}
           </p>
           <textarea
             className="w-full mt-2 p-2 text-[13px] rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg)] text-[var(--nim-text)] select-text"
             rows={3}
             value={prompt}
-            placeholder="What should the sandbox agent do?"
+            placeholder={t('cloudflareSandboxNode.session.promptPlaceholder')}
             onChange={(event) => setPrompt(event.target.value)}
             data-testid="cloudflare-remote-session-prompt"
           />
@@ -300,14 +300,14 @@ export function CloudflareSandboxNodePanel({
             onClick={() => void startSession()}
             data-testid="cloudflare-start-remote-session"
           >
-            {operation === 'starting-session' ? 'Starting…' : 'Start remote session'}
+            {operation === 'starting-session' ? t('cloudflareSandboxNode.session.starting') : t('cloudflareSandboxNode.session.start')}
           </button>
           {startedSessionId && (
             <p className="text-[12px] text-[var(--nim-text)] mt-2" data-testid="cloudflare-remote-session-result">
-              Started session {startedSessionId} on the sandbox.
+              {t('cloudflareSandboxNode.session.started', { id: startedSessionId })}
               <button className={`${buttonClass} ml-2`} data-testid="cloudflare-open-remote-session" onClick={() => {
                 window.dispatchEvent(new CustomEvent('open-ai-session', { detail: { sessionId: startedSessionId, workspacePath } }));
-              }}>Open session</button>
+              }}>{t('cloudflareSandboxNode.session.open')}</button>
             </p>
           )}
         </div>

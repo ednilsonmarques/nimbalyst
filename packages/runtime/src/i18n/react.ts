@@ -7,7 +7,7 @@
  */
 
 import { createElement, type ReactNode } from 'react';
-import { I18nextProvider, setI18n, useTranslation } from 'react-i18next';
+import { I18nextProvider, setI18n, Trans, useTranslation } from 'react-i18next';
 import { i18n } from './index';
 
 setI18n(i18n);
@@ -16,4 +16,4 @@ export function I18nProvider({ children }: { children?: ReactNode }) {
   return createElement(I18nextProvider, { i18n }, children);
 }
 
-export { useTranslation };
+export { Trans, useTranslation };

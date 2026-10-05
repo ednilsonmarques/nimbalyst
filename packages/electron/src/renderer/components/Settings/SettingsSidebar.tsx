@@ -10,6 +10,7 @@ import {
 import { windowControlsClearance } from '@nimbalyst/runtime/ui/floating/windowControlsClearance';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { getProviderIcon } from '@nimbalyst/runtime/ui/icons/ProviderIcons';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { AlphaBadge, SETTINGS_ALPHA_TOOLTIP } from '../common/AlphaBadge';
 import { TEAM_BETA_TOOLTIP } from '../common/TeamBetaNotice';
 import { developerModeAtom } from '../../store/atoms/appSettings';
@@ -34,9 +35,24 @@ interface SettingsSidebarProps {
 }
 
 const GROUP_DESCRIPTIONS: Record<string, string> = {
-  'Agent Providers': 'Agents can use tools and project files for multi-step work.',
-  'Chat Providers': 'Chat providers make direct model calls for focused conversations.',
+  'Agent Providers': 'sidebar.groupDescriptions.agentProviders',
+  'Chat Providers': 'sidebar.groupDescriptions.chatProviders',
 };
+
+/** i18n keys for the built-in group names; extension-contributed groups render as provided. */
+const GROUP_LABEL_KEYS: Record<string, string> = {
+  Application: 'sidebar.groups.application',
+  'Agent Providers': 'sidebar.groups.agentProviders',
+  'Chat Providers': 'sidebar.groups.chatProviders',
+  Extensions: 'sidebar.groups.extensions',
+  Account: 'sidebar.groups.account',
+  Project: 'sidebar.groups.project',
+};
+
+/** i18n key for a built-in route label, derived from its id (e.g. `voice-mode` -> `sidebar.routes.voiceMode`). */
+function routeLabelKey(id: string): string {
+  return `sidebar.routes.${id.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase())}`;
+}
 
 function routeIcon(route: SettingsRoute): React.ReactNode {
   if (['claude-code', 'claude', 'openai', 'openai-codex', 'opencode', 'copilot-cli', 'grok-build', 'cursor-agent', 'antigravity-gemini-agent', 'lmstudio'].includes(route.id)) {
@@ -54,6 +70,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   showDirectChatProviders,
   extensionRoutes = [],
 }) => {
+  const { t } = useTranslation('settings');
   const developerMode = useAtomValue(developerModeAtom);
   const teamsConfigured = useAtomValue(teamsConfiguredAtom);
   const [extAgentProviders, setExtAgentProviders] = useState<
@@ -107,20 +124,20 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
         {groups.map(([group, routes]) => (
           <section key={group} className="settings-sidebar-group mb-4" data-testid={`settings-group-${group.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}>
             <div className="settings-sidebar-group-title flex items-center gap-1.5 px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--nim-text-muted)]">
-              {group}
+              {GROUP_LABEL_KEYS[group] ? t(GROUP_LABEL_KEYS[group]) : group}
               {GROUP_DESCRIPTIONS[group] && (
                 <button
                   type="button"
                   className="settings-sidebar-group-info inline-flex border-0 bg-transparent p-0 text-[var(--nim-text-faint)] hover:text-[var(--nim-text-muted)]"
-                  aria-label={`About ${group}`}
+                  aria-label={t('sidebar.aboutGroup', { group: GROUP_LABEL_KEYS[group] ? t(GROUP_LABEL_KEYS[group]) : group })}
                   onMouseEnter={(event) => {
                     refs.setReference(event.currentTarget);
-                    setTooltipText(GROUP_DESCRIPTIONS[group]);
+                    setTooltipText(t(GROUP_DESCRIPTIONS[group]));
                   }}
                   onMouseLeave={() => setTooltipText(null)}
                   onFocus={(event) => {
                     refs.setReference(event.currentTarget);
-                    setTooltipText(GROUP_DESCRIPTIONS[group]);
+                    setTooltipText(t(GROUP_DESCRIPTIONS[group]));
                   }}
                   onBlur={() => setTooltipText(null)}
                 >
@@ -152,7 +169,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       ? routeIcon(route)
                       : route.icon ? <MaterialSymbol icon={route.icon} size={16} /> : getProviderIcon(id, { size: 16 })}
                   </span>
-                  <span className="settings-sidebar-item-name flex-1 truncate">{route.label}</span>
+                  <span className="settings-sidebar-item-name flex-1 truncate">{isSettingsRoute && route.source === 'builtin' ? t(routeLabelKey(route.id)) : route.label}</span>
                   {isSettingsRoute && route.source === 'builtin' && route.isAlpha && (
                     <AlphaBadge
                       size="xs"
