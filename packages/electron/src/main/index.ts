@@ -12,6 +12,7 @@ import { installMicrophoneGate } from './mediaPermissionGate';
 import { markBootComplete } from './utils/bootState';
 import { markStart, markEnd, checkpoint, logSummary } from './utils/startupTiming';
 import { resolveSpellCheckerLanguages } from './utils/spellcheckLanguages';
+import { initUiLanguage } from './services/uiLanguage';
 import type { SessionStore } from '@nimbalyst/runtime';
 import * as os from 'os';
 import * as path from 'path';
@@ -1790,6 +1791,10 @@ app.whenReady().then(async () => {
             // Non-fatal: fall back to Chromium's default language selection.
         }
     }
+
+    // Interface language: resolve the saved preference before any menu or
+    // window is built, so main-process strings can use t().
+    initUiLanguage();
 
     // Issue #146: wire up the `nim-asset://` request handler. Workspaces are
     // added to its allowlist below, as windows register their workspace path.
