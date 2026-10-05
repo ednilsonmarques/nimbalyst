@@ -1,0 +1,20 @@
+{
+  "advanced": {
+    "title": "Configurações avançadas",
+    "description": "Opções avançadas de configuração dos recursos de IA."
+  },
+  "general": {
+    "title": "Geral"
+  },
+  "language": {
+    "title": "Idioma",
+    "description": "Idioma da interface do Nimbalyst. As partes ainda não traduzidas aparecem em inglês.",
+    "system": "Sistema",
+    "english": "Inglês",
+    "portugueseBrazil": "Português (Brasil)"
+  },
+  "spellcheck": {
+    "title": "Corretor ortográfico",
+    "description": "Ativa o corretor ortográfico do sistema nos editores e campos de texto."
+  }
+}

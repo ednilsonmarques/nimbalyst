@@ -1,0 +1,20 @@
+{
+  "advanced": {
+    "title": "Advanced Settings",
+    "description": "Advanced configuration options for AI features."
+  },
+  "general": {
+    "title": "General"
+  },
+  "language": {
+    "title": "Language",
+    "description": "Language of the Nimbalyst interface. Parts that are not translated yet appear in English.",
+    "system": "System",
+    "english": "English",
+    "portugueseBrazil": "Português (Brasil)"
+  },
+  "spellcheck": {
+    "title": "Spellcheck",
+    "description": "Enable the system spellchecker in editors and text inputs."
+  }
+}
