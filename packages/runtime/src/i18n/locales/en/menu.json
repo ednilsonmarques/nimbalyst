@@ -1,0 +1,158 @@
+{
+  "app": {
+    "about": "About Nimbalyst",
+    "checkForUpdates": "Check for Updates...",
+    "settings": "Settings...",
+    "services": "Services",
+    "hide": "Hide {{appName}}",
+    "hideOthers": "Hide Others",
+    "showAll": "Show All",
+    "quit": "Quit"
+  },
+  "windowList": {
+    "openProjects": "Open Projects",
+    "openDocuments": "Open Documents"
+  },
+  "file": {
+    "title": "File",
+    "newFile": "New File...",
+    "launchNewSession": "Launch New Session...",
+    "newTrackerItem": "New Tracker Item...",
+    "newBrowserTab": "New Browser Tab",
+    "newExtensionProject": "New Extension Project...",
+    "importEarlierSessions": "Import earlier sessions...",
+    "new": "New",
+    "open": "Open...",
+    "openProject": "Open Project...",
+    "attachFolder": "Attach Folder to Workspace...",
+    "recentProjects": "Recent Projects",
+    "clearRecentProjects": "Clear Recent Projects",
+    "noRecentProjects": "No Recent Projects",
+    "settings": "Settings...",
+    "save": "Save",
+    "closeTab": "Close Tab",
+    "reopenClosedTab": "Reopen Closed Tab",
+    "closeProject": "Close Project",
+    "quit": "Quit",
+    "projectNotFound": {
+      "title": "Project Not Found",
+      "message": "The project \"{{name}}\" could not be found at:\n{{path}}"
+    }
+  },
+  "edit": {
+    "title": "Edit",
+    "undo": "Undo",
+    "redo": "Redo",
+    "cut": "Cut",
+    "copy": "Copy",
+    "copyAsMarkdown": "Copy as Markdown",
+    "paste": "Paste",
+    "selectAll": "Select All",
+    "find": "Find...",
+    "findNext": "Find Next",
+    "findPrevious": "Find Previous",
+    "viewLocalHistory": "View Local History...",
+    "viewFolderHistory": "View Folder History...",
+    "approveCurrentAction": "Approve Current Action",
+    "rejectCurrentAction": "Reject Current Action"
+  },
+  "view": {
+    "title": "View",
+    "filesMode": "Files Mode",
+    "agentMode": "Agent Mode",
+    "toggleAiChatPanel": "Toggle AI Chat Panel",
+    "toggleBottomPanel": "Toggle Bottom Panel",
+    "toggleExpandedTab": "Toggle Expanded Tab",
+    "navigateBack": "Navigate Back",
+    "navigateForward": "Navigate Forward",
+    "nextTab": "Next Tab",
+    "previousTab": "Previous Tab",
+    "actualSize": "Actual Size",
+    "zoomIn": "Zoom In",
+    "zoomInAlt": "Zoom In (alt)",
+    "zoomInShiftEquals": "Zoom In (Shift+=)",
+    "zoomInNumpad": "Zoom In (numpad)",
+    "zoomOut": "Zoom Out",
+    "zoomOutNumpad": "Zoom Out (numpad)",
+    "theme": {
+      "title": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "toggleFullScreen": "Toggle Full Screen"
+  },
+  "window": {
+    "title": "Window",
+    "projectManager": "Project Manager",
+    "organizationMessages": "Organization Messages",
+    "switchProject": "Switch Project",
+    "quickOpen": "Quick Open",
+    "sessionQuickOpen": "Session Quick Open",
+    "promptQuickOpen": "Prompt Quick Open",
+    "contentSearch": "Content Search",
+    "memorySearch": "Memory Search",
+    "teamQuickOpen": "Team Quick Open",
+    "aiUsageReport": "AI Usage Report",
+    "minimize": "Minimize",
+    "bringAllToFront": "Bring All to Front"
+  },
+  "messages": {
+    "title": "Messages",
+    "newMessage": "New Message...",
+    "goToInbox": "Go to Inbox",
+    "searchMessages": "Search Messages",
+    "nextConversation": "Next Conversation",
+    "previousConversation": "Previous Conversation",
+    "markAllAsRead": "Mark All as Read"
+  },
+  "help": {
+    "title": "Help",
+    "launchTutorial": "Launch Tutorial",
+    "welcome": "Welcome",
+    "documentation": "Documentation",
+    "installChromeExtension": "Install Chrome Extension",
+    "extensionSdkDocumentation": "Extension SDK Documentation",
+    "keyboardShortcuts": "Keyboard Shortcuts",
+    "sendFeedback": "Send Feedback...",
+    "browseIssuesOnGithub": "Browse Issues on GitHub",
+    "githubDiscussions": "GitHub Discussions",
+    "community": "Community",
+    "joinDiscord": "Join Discord",
+    "about": "About Nimbalyst",
+    "checkForUpdates": "Check for Updates...",
+    "sdkDocsNotFound": {
+      "title": "SDK Documentation Not Found",
+      "message": "The Extension SDK documentation could not be found. Please reinstall Nimbalyst."
+    },
+    "tutorialUnavailable": {
+      "title": "Tutorial Unavailable",
+      "message": "The tutorial project could not be opened.\n\n{{error}}"
+    }
+  },
+  "tray": {
+    "needsAttention": "Needs Attention",
+    "sessionError": "{{title}} (error)",
+    "sessionBlocked": "{{title}} (blocked)",
+    "running": "Running",
+    "sessionStreaming": "{{title}} (streaming...)",
+    "unread": "Unread",
+    "clearAllUnread": "Clear All Unread",
+    "newSession": "New Session",
+    "openApp": "Open Nimbalyst",
+    "preventSleep": {
+      "title": "Prevent Sleep",
+      "off": "Off",
+      "always": "Always",
+      "pluggedIn": "When Plugged In"
+    },
+    "showFleetStatus": "Show Fleet Status",
+    "fleetStatusStyle": {
+      "title": "Fleet Status Style",
+      "menuBarItem": "Menu Bar Item",
+      "island": "Island"
+    },
+    "hideMenuBarIcon": "Hide Menu Bar Icon",
+    "quit": "Quit"
+  }
+}

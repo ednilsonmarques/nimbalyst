@@ -14,19 +14,21 @@
 
 import i18next, { type i18n as I18nInstance } from 'i18next';
 import enCommon from './locales/en/common.json';
+import enMenu from './locales/en/menu.json';
 import enSettings from './locales/en/settings.json';
 import ptBRCommon from './locales/pt-BR/common.json';
+import ptBRMenu from './locales/pt-BR/menu.json';
 import ptBRSettings from './locales/pt-BR/settings.json';
 import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES, isSupportedLanguage, type SupportedLanguage } from './resolveLocale';
 
 export * from './resolveLocale';
 
-export const I18N_NAMESPACES = ['common', 'settings'] as const;
+export const I18N_NAMESPACES = ['common', 'settings', 'menu'] as const;
 export type I18nNamespace = (typeof I18N_NAMESPACES)[number];
 
 export const I18N_RESOURCES = {
-  en: { common: enCommon, settings: enSettings },
-  'pt-BR': { common: ptBRCommon, settings: ptBRSettings },
+  en: { common: enCommon, settings: enSettings, menu: enMenu },
+  'pt-BR': { common: ptBRCommon, settings: ptBRSettings, menu: ptBRMenu },
 } as const satisfies Record<SupportedLanguage, Record<I18nNamespace, unknown>>;
 
 /** Dedicated instance so nothing else on the global i18next singleton can interfere. */

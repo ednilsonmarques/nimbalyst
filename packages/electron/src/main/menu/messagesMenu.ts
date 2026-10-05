@@ -2,6 +2,7 @@ import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { sendOrgWindowCommand } from '../window/TeamManagementWindow';
 import { AnalyticsService } from '../services/analytics/AnalyticsService';
 import type { OrgWindowCommand } from '../../shared/orgWindowCommands';
+import { t } from '@nimbalyst/runtime/i18n';
 
 /**
  * The Messages menu, present only while the organization window is focused.
@@ -38,17 +39,17 @@ export function buildMessagesMenu(): any {
     });
 
     return {
-        label: 'Messages',
+        label: t('menu:messages.title'),
         submenu: [
-            command('New Message...', KeyboardShortcuts.orgWindow.newMessage, 'newMessage', 'new_message'),
+            command(t('menu:messages.newMessage'), KeyboardShortcuts.orgWindow.newMessage, 'newMessage', 'new_message'),
             { type: 'separator' },
-            command('Go to Inbox', KeyboardShortcuts.orgWindow.goToInbox, 'goToInbox', 'go_to_inbox'),
-            command('Search Messages', KeyboardShortcuts.orgWindow.searchMessages, 'searchMessages', 'search_messages'),
+            command(t('menu:messages.goToInbox'), KeyboardShortcuts.orgWindow.goToInbox, 'goToInbox', 'go_to_inbox'),
+            command(t('menu:messages.searchMessages'), KeyboardShortcuts.orgWindow.searchMessages, 'searchMessages', 'search_messages'),
             { type: 'separator' },
-            command('Next Conversation', KeyboardShortcuts.orgWindow.nextConversation, 'nextConversation', 'next_conversation'),
-            command('Previous Conversation', KeyboardShortcuts.orgWindow.previousConversation, 'previousConversation', 'previous_conversation'),
+            command(t('menu:messages.nextConversation'), KeyboardShortcuts.orgWindow.nextConversation, 'nextConversation', 'next_conversation'),
+            command(t('menu:messages.previousConversation'), KeyboardShortcuts.orgWindow.previousConversation, 'previousConversation', 'previous_conversation'),
             { type: 'separator' },
-            command('Mark All as Read', KeyboardShortcuts.orgWindow.markAllRead, 'markAllRead', 'mark_all_read'),
+            command(t('menu:messages.markAllAsRead'), KeyboardShortcuts.orgWindow.markAllRead, 'markAllRead', 'mark_all_read'),
         ],
     };
 }
