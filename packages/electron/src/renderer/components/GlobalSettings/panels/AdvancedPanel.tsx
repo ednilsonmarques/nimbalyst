@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { usePostHog } from 'posthog-js/react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { SettingsToggle } from '../SettingsToggle';
 import { HelpTooltip } from '../../../help';
 import { requestConfirmation } from '../../../dialogs/requestConfirmation';
@@ -34,6 +35,7 @@ import {
   restorePreviousProjectsAtom,
   allowUnlimitedProjectsAtom,
 } from '../../../store/atoms/openProjects';
+import { settingAtom } from '../../../store/atoms/settingAtomFamily';
 
 /** Reusable compact dropdown row */
 function DropdownRow({
@@ -80,6 +82,7 @@ function DropdownRow({
  */
 export function AdvancedPanel() {
   const posthog = usePostHog();
+  const { t } = useTranslation('settings');
   // App-level advanced settings from Jotai atoms
   const [settings] = useAtom(advancedSettingsAtom);
   const [, updateSettings] = useAtom(setAdvancedSettingsAtom);
@@ -197,10 +200,10 @@ export function AdvancedPanel() {
     <div className="provider-panel flex flex-col">
       <div className="provider-panel-header mb-6 pb-4 border-b border-[var(--nim-border)]">
         <h3 className="provider-panel-title text-xl font-semibold leading-tight mb-2 text-[var(--nim-text)]">
-          Advanced Settings
+          {t('advanced.title')}
         </h3>
         <p className="provider-panel-description text-sm leading-relaxed text-[var(--nim-text-muted)]">
-          Advanced configuration options for AI features.
+          {t('advanced.description')}
         </p>
       </div>
 
@@ -397,7 +400,9 @@ export function AdvancedPanel() {
 
       {/* ── General ── */}
       <div className="provider-panel-section py-4 mb-4 border-b border-[var(--nim-border)] last:border-b-0 last:mb-0 last:pb-0">
-        <h4 className="provider-panel-section-title text-base font-semibold mb-2 text-[var(--nim-text)]">General</h4>
+        <h4 className="provider-panel-section-title text-base font-semibold mb-2 text-[var(--nim-text)]">{t('general.title')}</h4>
+
+        <UiLanguageSelect />
 
         <MultiProjectModeToggle />
 
@@ -415,8 +420,8 @@ export function AdvancedPanel() {
         <SettingsToggle
           checked={spellcheckEnabled}
           onChange={(checked) => updateSettings({ spellcheckEnabled: checked })}
-          name="Spellcheck"
-          description="Enable the system spellchecker in editors and text inputs."
+          name={t('spellcheck.title')}
+          description={t('spellcheck.description')}
         />
 
         <SettingsToggle
@@ -683,6 +688,33 @@ function MultiProjectModeToggle() {
       name="Multi-project Mode"
       description="Open multiple projects in a single window via a project rail. When off, each project opens in its own window."
     />
+  );
+}
+
+/**
+ * Interface language. Writes `app.uiLanguage`; the main process persists it
+ * and broadcasts `settings:changed`, which switches every window live.
+ */
+function UiLanguageSelect() {
+  const { t } = useTranslation('settings');
+  const [uiLanguage, setUiLanguage] = useAtom(settingAtom('app.uiLanguage'));
+
+  return (
+    <div data-testid="ui-language-setting">
+      <DropdownRow
+        value={uiLanguage}
+        onChange={(value) => {
+          void setUiLanguage(value as typeof uiLanguage);
+        }}
+        name={t('language.title')}
+        description={t('language.description')}
+        options={[
+          { value: 'system', label: t('language.system') },
+          { value: 'en', label: t('language.english') },
+          { value: 'pt-BR', label: t('language.portugueseBrazil') },
+        ]}
+      />
+    </div>
   );
 }
 
