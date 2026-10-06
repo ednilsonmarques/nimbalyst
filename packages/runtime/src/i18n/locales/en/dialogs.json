@@ -197,6 +197,7 @@
     },
     "closeProject": {
       "title": "Close project",
+      "message_zero": "{{name}} has {{count}} streaming sessions. Close anyway? Sessions will be paused.",
       "message_one": "{{name}} has {{count}} streaming session. Close anyway? Sessions will be paused.",
       "message_other": "{{name}} has {{count}} streaming sessions. Close anyway? Sessions will be paused.",
       "confirm": "Close project"
@@ -332,6 +333,7 @@
       "title": "Downloading Nimbalyst {{version}}...",
       "calculating": "Calculating...",
       "lessThanMinute": "Less than 1 minute remaining",
+      "minutesRemaining_zero": "About {{count}} minutes remaining",
       "minutesRemaining_one": "About {{count}} minute remaining",
       "minutesRemaining_other": "About {{count}} minutes remaining",
       "hoursRemaining": "About {{hours}}h {{minutes}}m remaining",
@@ -406,18 +408,21 @@
       "title": "Delete failed",
       "message": "Could not delete {{name}}.",
       "someTitle": "Some files could not be deleted",
+      "countMessage_zero": "{{failed}} of {{count}} files could not be deleted.",
       "countMessage_one": "{{failed}} of {{count}} file could not be deleted.",
       "countMessage_other": "{{failed}} of {{count}} files could not be deleted."
     },
     "copyFailed": {
       "title": "Copy failed",
       "someTitle": "Some files could not be copied",
+      "countMessage_zero": "{{failed}} of {{count}} items could not be copied into {{folder}}.",
       "countMessage_one": "{{failed}} of {{count}} item could not be copied into {{folder}}.",
       "countMessage_other": "{{failed}} of {{count}} items could not be copied into {{folder}}."
     },
     "moveFailed": {
       "title": "Move failed",
       "someTitle": "Some files could not be moved",
+      "countMessage_zero": "{{failed}} of {{count}} items could not be moved into {{folder}}.",
       "countMessage_one": "{{failed}} of {{count}} item could not be moved into {{folder}}.",
       "countMessage_other": "{{failed}} of {{count}} items could not be moved into {{folder}}."
     }
@@ -471,8 +476,10 @@
       "confirm": "Restore"
     },
     "batchRestore": {
+      "title_zero": "Restore deleted files?",
       "title_one": "Restore deleted file?",
       "title_other": "Restore deleted files?",
+      "message_zero": "Restore {{count}} deleted files to their most recent versions?",
       "message_one": "Restore {{count}} deleted file to their most recent versions?",
       "message_other": "Restore {{count}} deleted files to their most recent versions?"
     },
@@ -483,6 +490,7 @@
     },
     "partialRestore": {
       "title": "Some files were not restored",
+      "message_zero": "Restored {{count}} files. Failed: {{failedNames}}",
       "message_one": "Restored {{count}} file. Failed: {{failedNames}}",
       "message_other": "Restored {{count}} files. Failed: {{failedNames}}"
     }
@@ -552,8 +560,10 @@
       "title": "Shared document updated",
       "pushedMessage": "Pushed the current local file into the shared document.",
       "uploadedMessage": "Uploaded the current local file to the shared document.",
+      "attachmentsUploaded_zero": "Uploaded {{count}} attachments.",
       "attachmentsUploaded_one": "Uploaded {{count}} attachment.",
       "attachmentsUploaded_other": "Uploaded {{count}} attachments.",
+      "attachmentsUploadedWithFailures_zero": "Uploaded {{count}} attachments; {{failed}} failed.",
       "attachmentsUploadedWithFailures_one": "Uploaded {{count}} attachment; {{failed}} failed.",
       "attachmentsUploadedWithFailures_other": "Uploaded {{count}} attachments; {{failed}} failed."
     },

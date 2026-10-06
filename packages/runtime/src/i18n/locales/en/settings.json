@@ -85,6 +85,7 @@
     "historyRetention": {
       "name": "History Retention",
       "description": "Max age of file history snapshots before automatic cleanup.",
+      "days_zero": "{{count}} days",
       "days_one": "{{count}} day",
       "days_other": "{{count}} days",
       "oneYear": "1 year"
@@ -218,6 +219,7 @@
       "providerOverrides": "Open a local project to configure provider overrides."
     },
     "projectMcpIndicator": {
+      "title_zero": "There are {{count}} additional MCP servers configured just for this project.",
       "title_one": "There is {{count}} additional MCP server configured just for this project.",
       "title_other": "There are {{count}} additional MCP servers configured just for this project.",
       "hint": "Switch to the Project tab above to view or edit project-specific MCP servers."
@@ -522,11 +524,13 @@
     "tokenCostUnknown": "Tool definitions live in the external server; cost unknown until it connects",
     "tokenCostEstimated": "Estimated context tokens when this group’s tool definitions are loaded",
     "loadFailed": "Failed to load tool information",
+    "extensionToolsDescription_zero": "{{count}} tools from the {{name}} extension",
     "extensionToolsDescription_one": "{{count}} tools from the {{name}} extension",
     "extensionToolsDescription_other": "{{count}} tools from the {{name}} extension",
     "userServerDescription": "User-added MCP server",
     "lockedTooltip": "Required — the app's own tools; cannot be disabled",
     "thisWorkspace": "This workspace",
+    "toolCount_zero": "{{count}} tools",
     "toolCount_one": "{{count}} tools",
     "toolCount_other": "{{count}} tools",
     "manage": "Manage",
@@ -662,6 +666,7 @@
       "alreadyMember": "already a member",
       "dropped": "dropped"
     },
+    "seatImpact_zero": "Seat impact on {{destName}}: <delta>+{{count}}</delta> seats.",
     "seatImpact_one": "Seat impact on {{destName}}: <delta>+{{count}}</delta> seat.",
     "seatImpact_other": "Seat impact on {{destName}}: <delta>+{{count}}</delta> seats.",
     "typeToConfirm": "Type <dest>{{destName}}</dest> to confirm this move:",
@@ -669,14 +674,19 @@
     "doNotClose": "Do not close this window.",
     "done": {
       "title": "Project moved to {{destName}}",
+      "documentsRelocated_zero": "{{count}} documents relocated",
       "documentsRelocated_one": "{{count}} document relocated",
       "documentsRelocated_other": "{{count}} documents relocated",
+      "grantsTransferred_zero": "{{count}} member grants transferred",
       "grantsTransferred_one": "{{count}} member grant transferred",
       "grantsTransferred_other": "{{count}} member grants transferred",
+      "grantsPending_zero": "{{count}} invited (grant activates on accept)",
       "grantsPending_one": "{{count}} invited (grant activates on accept)",
       "grantsPending_other": "{{count}} invited (grant activates on accept)",
+      "grantsDropped_zero": "{{count}} dropped per your selection",
       "grantsDropped_one": "{{count}} dropped per your selection",
       "grantsDropped_other": "{{count}} dropped per your selection",
+      "grantsSkipped_zero": "{{count}} skipped (no email on record)",
       "grantsSkipped_one": "{{count}} skipped (no email on record)",
       "grantsSkipped_other": "{{count}} skipped (no email on record)"
     },
@@ -758,10 +768,13 @@
     "done": {
       "partialTitle": "Merge partially completed",
       "title": "Merged into {{survivorName}}",
+      "projectsMoved_zero": "{{count}} projects moved",
       "projectsMoved_one": "{{count}} project moved",
       "projectsMoved_other": "{{count}} projects moved",
+      "rolesElevated_zero": "{{count}} member roles elevated",
       "rolesElevated_one": "{{count}} member role elevated",
       "rolesElevated_other": "{{count}} member roles elevated",
+      "membersInvited_zero": "{{count}} members invited to the survivor",
       "membersInvited_one": "{{count}} member invited to the survivor",
       "membersInvited_other": "{{count}} members invited to the survivor",
       "drainedDeleted": "{{orgName}} was deleted",
@@ -865,6 +878,7 @@
     "openProjectFirst": "Open a project before changing its local tracker prefix.",
     "deleteType": {
       "blockedTitle": "Tracker type still has items",
+      "blockedMessage_zero": "Cannot delete \"{{name}}\": {{count}} items of this type still exist. Delete those items first.",
       "blockedMessage_one": "Cannot delete \"{{name}}\": {{count}} item of this type still exist. Delete those items first.",
       "blockedMessage_other": "Cannot delete \"{{name}}\": {{count}} items of this type still exist. Delete those items first.",
       "confirmTitle": "Delete tracker type?",
@@ -1103,6 +1117,7 @@
     "loadingMarketplace": "Loading marketplace...",
     "errorPrefix": "Error: {{error}}",
     "byAuthor": "by {{author}}",
+    "installsCount_zero": "{{formattedCount}} installs",
     "installsCount_one": "{{formattedCount}} installs",
     "installsCount_other": "{{formattedCount}} installs",
     "updating": "Updating...",
@@ -1118,6 +1133,7 @@
     "installFromGithub": "Install from GitHub",
     "githubUrlHelp": "Paste a GitHub repository URL containing a Nimbalyst extension (must have manifest.json).",
     "viewInstalled": "Installed ({{count}})",
+    "updatesSuffix_zero": " • {{count}} updates",
     "updatesSuffix_one": " • {{count}} update",
     "updatesSuffix_other": " • {{count}} updates",
     "details": {
@@ -1149,6 +1165,7 @@
       "updating": "Updating {{name}} to v{{version}}...",
       "updated": "{{name}} updated to v{{version}}",
       "updateFailed": "Update failed",
+      "updatingMany_zero": "Updating {{count}} extensions...",
       "updatingMany_one": "Updating {{count}} extension...",
       "updatingMany_other": "Updating {{count}} extensions..."
     }
@@ -1157,6 +1174,7 @@
     "title": "Installed Extensions",
     "loading": "Loading extensions...",
     "listHeader": "Extensions",
+    "updatesCount_zero": "{{count}} updates",
     "updatesCount_one": "{{count}} update",
     "updatesCount_other": "{{count}} updates",
     "searchPlaceholder": "Search extensions...",
@@ -1599,6 +1617,7 @@
       "tags": "Tags:",
       "license": "License:",
       "colors": "Colors",
+      "moreColors_zero": "+{{count}} more colors",
       "moreColors_one": "+{{count}} more colors",
       "moreColors_other": "+{{count}} more colors"
     },
@@ -1657,6 +1676,7 @@
       "resourceCreate": "Create {{kind}} <name>{{name}}</name>",
       "resourceUpdate": "Update {{kind}} <name>{{name}}</name>",
       "resourceReuse": "Reuse {{kind}} <name>{{name}}</name>",
+      "containerSummary_zero": "Container: {{instanceType}}, at most {{count}} instances, sleeping after {{minutes}} minutes idle.",
       "containerSummary_one": "Container: {{instanceType}}, at most {{count}} instance, sleeping after {{minutes}} minutes idle.",
       "containerSummary_other": "Container: {{instanceType}}, at most {{count}} instances, sleeping after {{minutes}} minutes idle.",
       "paidPlanRequired": "This requires a paid Cloudflare plan on {{account}}.",
@@ -1939,6 +1959,7 @@
       "seeDocs": "See the <link>OpenCode documentation</link> for more details.",
       "readConfigFailed": "Failed to read OpenCode config",
       "updateConfigFailed": "Failed to update OpenCode config",
+      "lmStudioConfigured_zero": "Configured {{count}} models from LM Studio. Use \"Discover models\" above to add them to the picker.",
       "lmStudioConfigured_one": "Configured {{count}} model from LM Studio. Use \"Discover models\" above to add them to the picker.",
       "lmStudioConfigured_other": "Configured {{count}} models from LM Studio. Use \"Discover models\" above to add them to the picker.",
       "lmStudioConfigureFailed": "Failed to configure LM Studio bridge",
@@ -1946,6 +1967,7 @@
       "lmStudioTitle": "LM Studio integration",
       "lmStudioBody": "Point at a running LM Studio server and Nimbalyst will query <code>{{endpoint}}</code>, then write a <code>{{block}}</code> block into your <code>{{file}}</code>. You don't need to enable LM Studio as a separate Nimbalyst chat provider.",
       "configuring": "Configuring...",
+      "bridgeActive_zero": "Bridge active with {{count}} models. Select one above to use it as the default.",
       "bridgeActive_one": "Bridge active with {{count}} model. Select one above to use it as the default.",
       "bridgeActive_other": "Bridge active with {{count}} models. Select one above to use it as the default.",
       "updates": "Updates",
@@ -1962,6 +1984,7 @@
       "identityChangedDetail": "The OpenCode binary or its credentials changed since this list was discovered, so the fallback list is shown instead. Refresh to rediscover your providers.",
       "staleHeadline": "Discovered list may be out of date",
       "staleDetail": "Last discovered {{time}}. Refresh to pick up providers or models added since.",
+      "connectedProviders_zero": "{{count}} connected providers",
       "connectedProviders_one": "{{count}} connected provider",
       "connectedProviders_other": "{{count}} connected providers",
       "freshDetail": "Discovered {{time}} from the providers OpenCode is authenticated for.",
@@ -2039,12 +2062,14 @@
     },
     "signOutPurge": {
       "title": "Delete unsynced offline work?",
+      "message_zero": "You have unsynced offline edits or attachments in {{count}} documents. Signing out will permanently delete that local work.",
       "message_one": "You have unsynced offline edits or attachments in {{count}} document. Signing out will permanently delete that local work.",
       "message_other": "You have unsynced offline edits or attachments in {{count}} documents. Signing out will permanently delete that local work.",
       "confirm": "Sign out and delete"
     },
     "removePurge": {
       "title": "Remove account and delete unsynced work?",
+      "message_zero": "This account has unsynced offline edits or attachments in {{count}} documents. Removing it will permanently delete that local work.",
       "message_one": "This account has unsynced offline edits or attachments in {{count}} document. Removing it will permanently delete that local work.",
       "message_other": "This account has unsynced offline edits or attachments in {{count}} documents. Removing it will permanently delete that local work.",
       "confirm": "Remove and delete"
@@ -2150,6 +2175,7 @@
     "invitePending": "Invite pending",
     "acceptToJoin": "Accept to join this organization",
     "activeMember": "Active member",
+    "projectCount_zero": "{{count}} projects",
     "projectCount_one": "{{count}} project",
     "projectCount_other": "{{count}} projects",
     "alsoSignedInAs": "also signed in as {{emails}}",
@@ -2175,6 +2201,7 @@
       "file": "File",
       "session": "Session"
     },
+    "viewCount_zero": "{{count}} views",
     "viewCount_one": "{{count}} view",
     "viewCount_other": "{{count}} views",
     "createdBy": "Created by {{email}}",
@@ -2235,6 +2262,7 @@
     "adoptConfirm": {
       "title": "Switch to SQLite",
       "lessThanAnHour": "less than an hour",
+      "aboutHours_zero": "about {{count}} hours",
       "aboutHours_one": "about {{count}} hour",
       "aboutHours_other": "about {{count}} hours",
       "message": "Switch to the dry-run SQLite copy?\n\nNimbalyst will:\n  1. Close the current PGLite database\n  2. Copy anything new since the dry-run ({{age}} ago)\n  3. Make SQLite the active backend\n  4. Preserve the old PGLite for rollback\n\nA relaunch is required after switching.",
@@ -2407,17 +2435,21 @@
     "adopt": {
       "title": "Switch to your dry-run SQLite copy",
       "lessThanAnHourAgo": "less than an hour ago",
+      "hoursAgo_zero": "{{count}} hours ago",
       "hoursAgo_one": "{{count}} hour ago",
       "hoursAgo_other": "{{count}} hours ago",
+      "daysAgo_zero": "{{count}} days ago",
       "daysAgo_one": "{{count}} day ago",
       "daysAgo_other": "{{count}} days ago",
       "description": "A successful dry-run from {{age}} is saved on disk ({{rows}} rows). Nimbalyst can promote it to be your active database — it'll copy anything new since the dry-run, then flip the backend flag. The current PGLite directory is preserved for rollback.",
       "switching": "Switching...",
       "switchButton": "Switch to this SQLite copy",
       "switchFailed": "Switch failed: {{error}}",
+      "switched_zero": "Switched to SQLite. Caught up {{rows}} new rows in {{duration}}. Please relaunch Nimbalyst for the change to take effect.",
       "switched_one": "Switched to SQLite. Caught up {{rows}} new row in {{duration}}. Please relaunch Nimbalyst for the change to take effect.",
       "switched_other": "Switched to SQLite. Caught up {{rows}} new rows in {{duration}}. Please relaunch Nimbalyst for the change to take effect."
     },
+    "historyWarning_zero": "Migration completed with {{formattedCount}} document-history entries omitted. These entries are unavailable in history, but their original data is retained in a local recovery record. The original PGLite database is also retained. Sessions and messages were not skipped.",
     "historyWarning_one": "Migration completed with {{formattedCount}} document-history entry omitted. These entries are unavailable in history, but their original data is retained in a local recovery record. The original PGLite database is also retained. Sessions and messages were not skipped.",
     "historyWarning_other": "Migration completed with {{formattedCount}} document-history entries omitted. These entries are unavailable in history, but their original data is retained in a local recovery record. The original PGLite database is also retained. Sessions and messages were not skipped."
   },

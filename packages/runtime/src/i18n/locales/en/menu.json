@@ -176,6 +176,7 @@
       "detachFolder": "Detach Folder from Workspace",
       "rename": "Rename",
       "delete": "Delete",
+      "deleteItems_zero": "Delete {{count}} Items",
       "deleteItems_one": "Delete {{count}} Items",
       "deleteItems_other": "Delete {{count}} Items",
       "newOfType": "New {{type}}"
@@ -295,6 +296,7 @@
       "hoursAgo": "{{count}}h ago",
       "daysAgo": "{{count}}d ago"
     },
+    "messagesUnreadAriaLabel_zero": "Messages, {{count}} unread",
     "messagesUnreadAriaLabel_one": "Messages, {{count}} unread",
     "messagesUnreadAriaLabel_other": "Messages, {{count}} unread"
   },

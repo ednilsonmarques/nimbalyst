@@ -6,6 +6,8 @@
 //   - orphan: key exists in the translation but not in `en`
 //   - shape: a key is a string in one language and a nested object in the other
 //   - placeholders: `{{name}}` interpolations differ from the English string
+//   - tags: `<Trans>` component tags (`<strong>`, `</code>`, `<br/>`) differ
+//   - empty: the translation is blank while the English string is not
 // Namespace files (`<ns>.json`) must exist in every language directory.
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -17,6 +19,7 @@ export const LOCALES_DIR = path.join(repoRoot, 'packages/runtime/src/i18n/locale
 export const SOURCE_LANGUAGE = 'en';
 
 const PLACEHOLDER = /\{\{\s*([\w.-]+)\s*(?:,[^}]*)?\}\}/g;
+const TAG = /<(\/?)([A-Za-z][\w-]*|\d+)\s*(\/?)>/g;
 
 function isPlainObject(value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -24,6 +27,10 @@ function isPlainObject(value) {
 
 function placeholders(text) {
   return [...text.matchAll(PLACEHOLDER)].map((m) => m[1]).sort();
+}
+
+function tags(text) {
+  return [...text.matchAll(TAG)].map((m) => `${m[1]}${m[2]}${m[3]}`).sort();
 }
 
 /** Compare one namespace of a translation against the English source. */
@@ -44,6 +51,12 @@ export function compareLocaleTrees(source, target, prefix = '') {
     } else if (typeof s === 'string' && typeof t === 'string') {
       if (placeholders(s).join(',') !== placeholders(t).join(',')) {
         issues.push({ type: 'placeholders', key: keyPath });
+      }
+      if (tags(s).join(',') !== tags(t).join(',')) {
+        issues.push({ type: 'tags', key: keyPath });
+      }
+      if (s.trim() !== '' && t.trim() === '') {
+        issues.push({ type: 'empty', key: keyPath });
       }
     }
   }

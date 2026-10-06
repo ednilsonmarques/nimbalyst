@@ -176,6 +176,7 @@
       "detachFolder": "Desanexar pasta do espaço de trabalho",
       "rename": "Renomear",
       "delete": "Excluir",
+      "deleteItems_zero": "Excluir {{count}} itens",
       "deleteItems_one": "Excluir {{count}} item",
       "deleteItems_other": "Excluir {{count}} itens",
       "newOfType": "Novo {{type}}"
@@ -285,7 +286,7 @@
     "sync": {
       "offForProject": "Desativada neste projeto",
       "paused": "A sincronização de sessões está pausada.",
-      "checking": "Verificando a sincronização…",
+      "checking": "Verificando a sincronização de sessões…",
       "syncing": "Sincronizando…",
       "synced": "Sincronizada {{age}}",
       "connected": "Conectada",
@@ -295,6 +296,7 @@
       "hoursAgo": "há {{count}} h",
       "daysAgo": "há {{count}} d"
     },
+    "messagesUnreadAriaLabel_zero": "Mensagens, {{count}} não lidas",
     "messagesUnreadAriaLabel_one": "Mensagens, {{count}} não lida",
     "messagesUnreadAriaLabel_other": "Mensagens, {{count}} não lidas"
   },

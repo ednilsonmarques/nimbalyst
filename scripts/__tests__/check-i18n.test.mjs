@@ -19,6 +19,15 @@ test('accepts identical structure with translated text', () => {
   assert.deepEqual(compareLocaleTrees({ a: 'Hi {{name}}', b: { c: 'X' } }, { b: { c: 'Y' }, a: 'Oi {{name}}' }), []);
 });
 
+test('reports <Trans> tag differences and blank translations', () => {
+  const source = { a: 'Run <code>{{cmd}}</code> now', b: 'Line<br/>break', c: 'Text', d: 'Go <strong>{{n}}</strong> & <1 min' };
+  const target = { a: 'Rode {{cmd}} agora', b: 'Quebra<br/>de linha', c: '  ', d: '<strong>{{n}}</strong> & <1 min' };
+  assert.deepEqual(compareLocaleTrees(source, target), [
+    { type: 'tags', key: 'a' },
+    { type: 'empty', key: 'c' },
+  ]);
+});
+
 test('shipped translations match the English source', () => {
   assert.deepEqual(checkI18n(), []);
 });

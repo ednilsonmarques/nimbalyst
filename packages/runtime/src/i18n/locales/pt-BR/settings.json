@@ -85,6 +85,7 @@
     "historyRetention": {
       "name": "Retenção do histórico",
       "description": "Idade máxima dos snapshots do histórico de arquivos antes da limpeza automática.",
+      "days_zero": "{{count}} dias",
       "days_one": "{{count}} dia",
       "days_other": "{{count}} dias",
       "oneYear": "1 ano"
@@ -218,6 +219,7 @@
       "providerOverrides": "Abra um projeto local para configurar substituições de provedor."
     },
     "projectMcpIndicator": {
+      "title_zero": "Há {{count}} servidores MCP adicionais configurados apenas para este projeto.",
       "title_one": "Há {{count}} servidor MCP adicional configurado apenas para este projeto.",
       "title_other": "Há {{count}} servidores MCP adicionais configurados apenas para este projeto.",
       "hint": "Mude para a aba Projeto acima para ver ou editar os servidores MCP específicos do projeto."
@@ -274,9 +276,9 @@
       "braveSearch": "Recursos de busca na web",
       "posthog": "Análise de produto, feature flags e rastreamento de erros",
       "atlassian": "Acesso ao Jira e ao Confluence",
-      "notion": "Gerenciamento de workspaces e páginas",
+      "notion": "Gerenciamento de espaços de trabalho e páginas",
       "asana": "Gestão de tarefas e projetos",
-      "slack": "Conversas do workspace e contexto dos canais",
+      "slack": "Conversas do espaço de trabalho e contexto dos canais",
       "playwright": "Automação e testes de navegador",
       "sentry": "Rastreamento de erros e monitoramento de desempenho",
       "corridor": "Acesso e gerenciamento de infraestrutura",
@@ -367,7 +369,7 @@
       "description": "Escolha um modelo para começar rapidamente ou crie uma configuração personalizada.",
       "searchPlaceholder": "Buscar modelos...",
       "searchAria": "Buscar modelos de servidor MCP",
-      "clearSearch": "Limpar busca",
+      "clearSearch": "Limpar pesquisa",
       "customConfiguration": "Configuração personalizada",
       "startFromScratch": "+ Começar do zero",
       "startFromScratchHint": "Configure todas as opções manualmente",
@@ -522,11 +524,13 @@
     "tokenCostUnknown": "As definições das ferramentas ficam no servidor externo; o custo é desconhecido até que ele se conecte",
     "tokenCostEstimated": "Tokens de contexto estimados quando as definições de ferramentas deste grupo são carregadas",
     "loadFailed": "Falha ao carregar as informações das ferramentas",
+    "extensionToolsDescription_zero": "{{count}} ferramentas da extensão {{name}}",
     "extensionToolsDescription_one": "{{count}} ferramenta da extensão {{name}}",
     "extensionToolsDescription_other": "{{count}} ferramentas da extensão {{name}}",
     "userServerDescription": "Servidor MCP adicionado pelo usuário",
     "lockedTooltip": "Obrigatório — ferramentas do próprio app; não podem ser desativadas",
     "thisWorkspace": "Este projeto",
+    "toolCount_zero": "{{count}} ferramentas",
     "toolCount_one": "{{count}} ferramenta",
     "toolCount_other": "{{count}} ferramentas",
     "manage": "Gerenciar",
@@ -662,6 +666,7 @@
       "alreadyMember": "já é membro",
       "dropped": "removido"
     },
+    "seatImpact_zero": "Impacto em licenças em {{destName}}: <delta>+{{count}}</delta> licenças.",
     "seatImpact_one": "Impacto em licenças em {{destName}}: <delta>+{{count}}</delta> licença.",
     "seatImpact_other": "Impacto em licenças em {{destName}}: <delta>+{{count}}</delta> licenças.",
     "typeToConfirm": "Digite <dest>{{destName}}</dest> para confirmar esta movimentação:",
@@ -669,14 +674,19 @@
     "doNotClose": "Não feche esta janela.",
     "done": {
       "title": "Projeto movido para {{destName}}",
+      "documentsRelocated_zero": "{{count}} documentos transferidos",
       "documentsRelocated_one": "{{count}} documento transferido",
       "documentsRelocated_other": "{{count}} documentos transferidos",
+      "grantsTransferred_zero": "{{count}} permissões de membros transferidas",
       "grantsTransferred_one": "{{count}} permissão de membro transferida",
       "grantsTransferred_other": "{{count}} permissões de membros transferidas",
+      "grantsPending_zero": "{{count}} convidados (a permissão é ativada ao aceitar)",
       "grantsPending_one": "{{count}} convidado (a permissão é ativada ao aceitar)",
       "grantsPending_other": "{{count}} convidados (a permissão é ativada ao aceitar)",
+      "grantsDropped_zero": "{{count}} removidos conforme sua seleção",
       "grantsDropped_one": "{{count}} removido conforme sua seleção",
       "grantsDropped_other": "{{count}} removidos conforme sua seleção",
+      "grantsSkipped_zero": "{{count}} ignorados (nenhum e-mail registrado)",
       "grantsSkipped_one": "{{count}} ignorado (nenhum e-mail registrado)",
       "grantsSkipped_other": "{{count}} ignorados (nenhum e-mail registrado)"
     },
@@ -758,10 +768,13 @@
     "done": {
       "partialTitle": "Mesclagem concluída parcialmente",
       "title": "Mesclada com {{survivorName}}",
+      "projectsMoved_zero": "{{count}} projetos movidos",
       "projectsMoved_one": "{{count}} projeto movido",
       "projectsMoved_other": "{{count}} projetos movidos",
+      "rolesElevated_zero": "{{count}} funções de membros elevadas",
       "rolesElevated_one": "{{count}} função de membro elevada",
       "rolesElevated_other": "{{count}} funções de membros elevadas",
+      "membersInvited_zero": "{{count}} membros convidados para a organização que permanece",
       "membersInvited_one": "{{count}} membro convidado para a organização que permanece",
       "membersInvited_other": "{{count}} membros convidados para a organização que permanece",
       "drainedDeleted": "{{orgName}} foi excluída",
@@ -865,7 +878,8 @@
     "openProjectFirst": "Abra um projeto antes de alterar o prefixo local dos rastreadores.",
     "deleteType": {
       "blockedTitle": "O tipo de rastreador ainda tem itens",
-      "blockedMessage_one": "Não é possível excluir \"{{name}}\": ainda existe {{count}} item deste tipo. Exclua esses itens primeiro.",
+      "blockedMessage_zero": "Não é possível excluir \"{{name}}\": ainda existem {{count}} itens deste tipo. Exclua esses itens primeiro.",
+      "blockedMessage_one": "Não é possível excluir \"{{name}}\": ainda existe {{count}} item deste tipo. Exclua esse item primeiro.",
       "blockedMessage_other": "Não é possível excluir \"{{name}}\": ainda existem {{count}} itens deste tipo. Exclua esses itens primeiro.",
       "confirmTitle": "Excluir tipo de rastreador?",
       "confirmMessage": "Excluir o tipo de rastreador \"{{name}}\"? Esta ação não pode ser desfeita.",
@@ -1103,6 +1117,7 @@
     "loadingMarketplace": "Carregando o Marketplace...",
     "errorPrefix": "Erro: {{error}}",
     "byAuthor": "por {{author}}",
+    "installsCount_zero": "{{formattedCount}} instalações",
     "installsCount_one": "{{formattedCount}} instalação",
     "installsCount_other": "{{formattedCount}} instalações",
     "updating": "Atualizando...",
@@ -1118,6 +1133,7 @@
     "installFromGithub": "Instalar do GitHub",
     "githubUrlHelp": "Cole a URL de um repositório do GitHub que contenha uma extensão do Nimbalyst (deve ter manifest.json).",
     "viewInstalled": "Instaladas ({{count}})",
+    "updatesSuffix_zero": " • {{count}} atualizações",
     "updatesSuffix_one": " • {{count}} atualização",
     "updatesSuffix_other": " • {{count}} atualizações",
     "details": {
@@ -1149,6 +1165,7 @@
       "updating": "Atualizando {{name}} para v{{version}}...",
       "updated": "{{name}} atualizada para v{{version}}",
       "updateFailed": "Falha na atualização",
+      "updatingMany_zero": "Atualizando {{count}} extensões...",
       "updatingMany_one": "Atualizando {{count}} extensão...",
       "updatingMany_other": "Atualizando {{count}} extensões..."
     }
@@ -1157,6 +1174,7 @@
     "title": "Extensões instaladas",
     "loading": "Carregando extensões...",
     "listHeader": "Extensões",
+    "updatesCount_zero": "{{count}} atualizações",
     "updatesCount_one": "{{count}} atualização",
     "updatesCount_other": "{{count}} atualizações",
     "searchPlaceholder": "Pesquisar extensões...",
@@ -1228,7 +1246,7 @@
     }
   },
   "privilegedExtensions": {
-    "title": "Capacidades privilegiadas",
+    "title": "Recursos privilegiados",
     "description": "Extensões que receberam permissão para executar código fora do renderizador (por exemplo, iniciar processos ou abrir conexões de rede). Revogue tudo o que você não reconhecer.",
     "loadFailed": "Falha ao carregar as extensões privilegiadas",
     "apiNotLoaded": "A API de capacidades privilegiadas ainda não foi carregada. Reinicie o Nimbalyst para ver as extensões privilegiadas.",
@@ -1599,6 +1617,7 @@
       "tags": "Tags:",
       "license": "Licença:",
       "colors": "Cores",
+      "moreColors_zero": "+{{count}} cores a mais",
       "moreColors_one": "+{{count}} cor a mais",
       "moreColors_other": "+{{count}} cores a mais"
     },
@@ -1657,6 +1676,7 @@
       "resourceCreate": "Criar {{kind}} <name>{{name}}</name>",
       "resourceUpdate": "Atualizar {{kind}} <name>{{name}}</name>",
       "resourceReuse": "Reutilizar {{kind}} <name>{{name}}</name>",
+      "containerSummary_zero": "Contêiner: {{instanceType}}, no máximo {{count}} instâncias, entrando em repouso após {{minutes}} minutos ocioso.",
       "containerSummary_one": "Contêiner: {{instanceType}}, no máximo {{count}} instância, entrando em repouso após {{minutes}} minutos ocioso.",
       "containerSummary_other": "Contêiner: {{instanceType}}, no máximo {{count}} instâncias, entrando em repouso após {{minutes}} minutos ocioso.",
       "paidPlanRequired": "Isto exige um plano pago do Cloudflare em {{account}}.",
@@ -1939,6 +1959,7 @@
       "seeDocs": "Consulte a <link>documentação do OpenCode</link> para mais detalhes.",
       "readConfigFailed": "Falha ao ler a configuração do OpenCode",
       "updateConfigFailed": "Falha ao atualizar a configuração do OpenCode",
+      "lmStudioConfigured_zero": "{{count}} modelos do LM Studio configurados. Use \"Descobrir modelos\" acima para adicioná-los ao seletor.",
       "lmStudioConfigured_one": "{{count}} modelo do LM Studio configurado. Use \"Descobrir modelos\" acima para adicioná-lo ao seletor.",
       "lmStudioConfigured_other": "{{count}} modelos do LM Studio configurados. Use \"Descobrir modelos\" acima para adicioná-los ao seletor.",
       "lmStudioConfigureFailed": "Falha ao configurar a ponte com o LM Studio",
@@ -1946,6 +1967,7 @@
       "lmStudioTitle": "Integração com o LM Studio",
       "lmStudioBody": "Aponte para um servidor do LM Studio em execução e o Nimbalyst consultará <code>{{endpoint}}</code> e, em seguida, gravará um bloco <code>{{block}}</code> no seu <code>{{file}}</code>. Não é preciso ativar o LM Studio como um provedor de chat separado no Nimbalyst.",
       "configuring": "Configurando...",
+      "bridgeActive_zero": "Ponte ativa com {{count}} modelos. Selecione um acima para usá-lo como padrão.",
       "bridgeActive_one": "Ponte ativa com {{count}} modelo. Selecione-o acima para usá-lo como padrão.",
       "bridgeActive_other": "Ponte ativa com {{count}} modelos. Selecione um acima para usá-lo como padrão.",
       "updates": "Atualizações",
@@ -1962,6 +1984,7 @@
       "identityChangedDetail": "O binário do OpenCode ou suas credenciais mudaram desde que esta lista foi descoberta, por isso a lista padrão é exibida. Atualize para redescobrir seus provedores.",
       "staleHeadline": "A lista descoberta pode estar desatualizada",
       "staleDetail": "Última descoberta: {{time}}. Atualize para incluir provedores ou modelos adicionados desde então.",
+      "connectedProviders_zero": "{{count}} provedores conectados",
       "connectedProviders_one": "{{count}} provedor conectado",
       "connectedProviders_other": "{{count}} provedores conectados",
       "freshDetail": "Descoberta em {{time}} a partir dos provedores em que o OpenCode está autenticado.",
@@ -2039,12 +2062,14 @@
     },
     "signOutPurge": {
       "title": "Excluir trabalho offline não sincronizado?",
+      "message_zero": "Você tem edições ou anexos offline não sincronizados em {{count}} documentos. Ao sair, esse trabalho local será excluído permanentemente.",
       "message_one": "Você tem edições ou anexos offline não sincronizados em {{count}} documento. Ao sair, esse trabalho local será excluído permanentemente.",
       "message_other": "Você tem edições ou anexos offline não sincronizados em {{count}} documentos. Ao sair, esse trabalho local será excluído permanentemente.",
       "confirm": "Sair e excluir"
     },
     "removePurge": {
       "title": "Remover a conta e excluir o trabalho não sincronizado?",
+      "message_zero": "Esta conta tem edições ou anexos offline não sincronizados em {{count}} documentos. Ao removê-la, esse trabalho local será excluído permanentemente.",
       "message_one": "Esta conta tem edições ou anexos offline não sincronizados em {{count}} documento. Ao removê-la, esse trabalho local será excluído permanentemente.",
       "message_other": "Esta conta tem edições ou anexos offline não sincronizados em {{count}} documentos. Ao removê-la, esse trabalho local será excluído permanentemente.",
       "confirm": "Remover e excluir"
@@ -2150,6 +2175,7 @@
     "invitePending": "Convite pendente",
     "acceptToJoin": "Aceite para entrar nesta organização",
     "activeMember": "Membro ativo",
+    "projectCount_zero": "{{count}} projetos",
     "projectCount_one": "{{count}} projeto",
     "projectCount_other": "{{count}} projetos",
     "alsoSignedInAs": "também conectado como {{emails}}",
@@ -2175,6 +2201,7 @@
       "file": "Arquivo",
       "session": "Sessão"
     },
+    "viewCount_zero": "{{count}} visualizações",
     "viewCount_one": "{{count}} visualização",
     "viewCount_other": "{{count}} visualizações",
     "createdBy": "Criado por {{email}}",
@@ -2202,7 +2229,7 @@
     "online": "Online",
     "hiddenOffline": "Oculto · Offline",
     "offline": "Offline",
-    "lastSeen": "Visto por último em {{time}}",
+    "lastSeen": "Visto pela última vez em {{time}}",
     "saveName": "Salvar nome",
     "restore": "Restaurar",
     "hide": "Ocultar"
@@ -2235,6 +2262,7 @@
     "adoptConfirm": {
       "title": "Mudar para SQLite",
       "lessThanAnHour": "menos de uma hora",
+      "aboutHours_zero": "cerca de {{count}} horas",
       "aboutHours_one": "cerca de {{count}} hora",
       "aboutHours_other": "cerca de {{count}} horas",
       "message": "Mudar para a cópia SQLite da simulação?\n\nO Nimbalyst vai:\n  1. Fechar o banco de dados PGLite atual\n  2. Copiar tudo o que for novo desde a simulação (há {{age}})\n  3. Tornar o SQLite o backend ativo\n  4. Preservar o PGLite antigo para reversão\n\nÉ necessário reiniciar após a troca.",
@@ -2407,17 +2435,21 @@
     "adopt": {
       "title": "Mudar para a sua cópia SQLite da simulação",
       "lessThanAnHourAgo": "há menos de uma hora",
+      "hoursAgo_zero": "há {{count}} horas",
       "hoursAgo_one": "há {{count}} hora",
       "hoursAgo_other": "há {{count}} horas",
+      "daysAgo_zero": "há {{count}} dias",
       "daysAgo_one": "há {{count}} dia",
       "daysAgo_other": "há {{count}} dias",
       "description": "Uma simulação bem-sucedida feita {{age}} está salva no disco ({{rows}} linhas). O Nimbalyst pode promovê-la a banco de dados ativo — ele copiará tudo o que for novo desde a simulação e depois trocará o indicador de backend. O diretório atual do PGLite é preservado para reversão.",
       "switching": "Mudando...",
       "switchButton": "Mudar para esta cópia SQLite",
       "switchFailed": "Falha na troca: {{error}}",
+      "switched_zero": "Mudança para o SQLite concluída. {{rows}} novas linhas sincronizadas em {{duration}}. Reinicie o Nimbalyst para que a alteração tenha efeito.",
       "switched_one": "Mudança para o SQLite concluída. {{rows}} nova linha sincronizada em {{duration}}. Reinicie o Nimbalyst para que a alteração tenha efeito.",
       "switched_other": "Mudança para o SQLite concluída. {{rows}} novas linhas sincronizadas em {{duration}}. Reinicie o Nimbalyst para que a alteração tenha efeito."
     },
+    "historyWarning_zero": "A migração foi concluída com {{formattedCount}} entradas do histórico de documentos omitidas. Essas entradas não estão disponíveis no histórico, mas seus dados originais são mantidos em um registro de recuperação local. O banco de dados PGLite original também é mantido. Nenhuma sessão ou mensagem foi ignorada.",
     "historyWarning_one": "A migração foi concluída com {{formattedCount}} entrada do histórico de documentos omitida. Essas entradas não estão disponíveis no histórico, mas seus dados originais são mantidos em um registro de recuperação local. O banco de dados PGLite original também é mantido. Nenhuma sessão ou mensagem foi ignorada.",
     "historyWarning_other": "A migração foi concluída com {{formattedCount}} entradas do histórico de documentos omitidas. Essas entradas não estão disponíveis no histórico, mas seus dados originais são mantidos em um registro de recuperação local. O banco de dados PGLite original também é mantido. Nenhuma sessão ou mensagem foi ignorada."
   },

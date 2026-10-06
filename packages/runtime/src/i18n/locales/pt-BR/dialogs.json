@@ -197,6 +197,7 @@
     },
     "closeProject": {
       "title": "Fechar projeto",
+      "message_zero": "{{name}} tem {{count}} sessões em andamento. Fechar mesmo assim? As sessões serão pausadas.",
       "message_one": "{{name}} tem {{count}} sessão em andamento. Fechar mesmo assim? As sessões serão pausadas.",
       "message_other": "{{name}} tem {{count}} sessões em andamento. Fechar mesmo assim? As sessões serão pausadas.",
       "confirm": "Fechar projeto"
@@ -332,6 +333,7 @@
       "title": "Baixando o Nimbalyst {{version}}...",
       "calculating": "Calculando...",
       "lessThanMinute": "Menos de 1 minuto restante",
+      "minutesRemaining_zero": "Cerca de {{count}} minutos restantes",
       "minutesRemaining_one": "Cerca de {{count}} minuto restante",
       "minutesRemaining_other": "Cerca de {{count}} minutos restantes",
       "hoursRemaining": "Cerca de {{hours}} h {{minutes}} min restantes",
@@ -406,18 +408,21 @@
       "title": "Falha ao excluir",
       "message": "Não foi possível excluir {{name}}.",
       "someTitle": "Não foi possível excluir alguns arquivos",
+      "countMessage_zero": "Não foi possível excluir {{failed}} de {{count}} arquivos.",
       "countMessage_one": "Não foi possível excluir {{failed}} de {{count}} arquivo.",
       "countMessage_other": "Não foi possível excluir {{failed}} de {{count}} arquivos."
     },
     "copyFailed": {
       "title": "Falha ao copiar",
       "someTitle": "Não foi possível copiar alguns arquivos",
+      "countMessage_zero": "Não foi possível copiar {{failed}} de {{count}} itens para {{folder}}.",
       "countMessage_one": "Não foi possível copiar {{failed}} de {{count}} item para {{folder}}.",
       "countMessage_other": "Não foi possível copiar {{failed}} de {{count}} itens para {{folder}}."
     },
     "moveFailed": {
       "title": "Falha ao mover",
       "someTitle": "Não foi possível mover alguns arquivos",
+      "countMessage_zero": "Não foi possível mover {{failed}} de {{count}} itens para {{folder}}.",
       "countMessage_one": "Não foi possível mover {{failed}} de {{count}} item para {{folder}}.",
       "countMessage_other": "Não foi possível mover {{failed}} de {{count}} itens para {{folder}}."
     }
@@ -471,8 +476,10 @@
       "confirm": "Restaurar"
     },
     "batchRestore": {
+      "title_zero": "Restaurar arquivos excluídos?",
       "title_one": "Restaurar arquivo excluído?",
       "title_other": "Restaurar arquivos excluídos?",
+      "message_zero": "Restaurar {{count}} arquivos excluídos para as versões mais recentes?",
       "message_one": "Restaurar {{count}} arquivo excluído para a versão mais recente?",
       "message_other": "Restaurar {{count}} arquivos excluídos para as versões mais recentes?"
     },
@@ -483,13 +490,14 @@
     },
     "partialRestore": {
       "title": "Alguns arquivos não foram restaurados",
+      "message_zero": "{{count}} arquivos restaurados. Falharam: {{failedNames}}",
       "message_one": "{{count}} arquivo restaurado. Falharam: {{failedNames}}",
       "message_other": "{{count}} arquivos restaurados. Falharam: {{failedNames}}"
     }
   },
   "collabOrigin": {
     "relativeTime": {
-      "justNow": "agora mesmo",
+      "justNow": "agora",
       "minutesAgo": "há {{minutes}} min",
       "hoursAgo": "há {{hours}} h",
       "daysAgo": "há {{days}} d"
@@ -552,8 +560,10 @@
       "title": "Documento compartilhado atualizado",
       "pushedMessage": "O arquivo local atual foi enviado para o documento compartilhado.",
       "uploadedMessage": "O arquivo local atual foi enviado para o documento compartilhado.",
+      "attachmentsUploaded_zero": "{{count}} anexos enviados.",
       "attachmentsUploaded_one": "{{count}} anexo enviado.",
       "attachmentsUploaded_other": "{{count}} anexos enviados.",
+      "attachmentsUploadedWithFailures_zero": "{{count}} anexos enviados; {{failed}} com falha.",
       "attachmentsUploadedWithFailures_one": "{{count}} anexo enviado; {{failed}} com falha.",
       "attachmentsUploadedWithFailures_other": "{{count}} anexos enviados; {{failed}} com falha."
     },
@@ -587,7 +597,7 @@
       "readSharedFailed": "Não foi possível ler o estado atual do documento compartilhado.",
       "localAlreadyMatches": "O arquivo local já corresponde ao documento compartilhado.",
       "localUpdated": "O arquivo local foi atualizado a partir do documento compartilhado.",
-      "alreadyMatchBaseline": "A fonte local e o documento compartilhado já correspondem à última versão sincronizada.",
+      "alreadyMatchBaseline": "A fonte local e o documento compartilhado já correspondem à última base sincronizada.",
       "writeSharedFailed": "Não foi possível gravar o arquivo local de volta no documento compartilhado.",
       "uploaded": "O arquivo local atual foi enviado para o documento compartilhado."
     }
