@@ -8,6 +8,7 @@ import {
   shouldShowRoleSelector,
   summarizeRolePermissions,
 } from './openCodeRoles';
+import { Trans, useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface OpenCodeRoleSelectorProps {
   workspacePath: string;
@@ -43,6 +44,7 @@ export function OpenCodeRoleSelector({
   onModelChange,
   turnActive = false,
 }: OpenCodeRoleSelectorProps) {
+  const { t } = useTranslation('ai');
   const [agents, setAgents] = useState<OpenCodeAgentSummary[]>([]);
   const menu = useFloatingMenu({ placement: 'top-start', offsetPx: 4 });
   const { isOpen, setIsOpen } = menu;
@@ -95,13 +97,13 @@ export function OpenCodeRoleSelector({
         data-testid="opencode-role-selector"
         className={`flex items-center gap-1 px-2 py-[3px] rounded-xl text-[11px] font-medium transition-all duration-200 outline-none whitespace-nowrap cursor-pointer bg-[var(--nim-bg-secondary)] text-[var(--nim-text-muted)] border border-[var(--nim-border)] hover:bg-[var(--nim-bg-hover)] hover:border-[var(--nim-primary)]`}
         onClick={() => setIsOpen(!isOpen)}
-        aria-label={role ? `Session role: ${role}` : 'Session role'}
+        aria-label={role ? t('openCode.sessionRoleNamed', { role }) : t('openCode.sessionRole')}
         title={conflict
-          ? `This role is configured for ${conflict.roleModelLabel}, but the session model runs instead`
+          ? t('openCode.conflictTitle', { model: conflict.roleModelLabel })
           : undefined}
       >
         <MaterialSymbol icon="badge" size={12} />
-        <span>{role ?? 'Role'}</span>
+        <span>{role ?? t('openCode.role')}</span>
         {conflict && (
           <MaterialSymbol
             icon="error"
@@ -125,12 +127,12 @@ export function OpenCodeRoleSelector({
             className="opencode-role-selector-menu min-w-[260px] max-w-[340px] overflow-y-auto rounded-lg p-1 z-[1000] bg-[var(--nim-bg)] border border-[var(--nim-border)] shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
           >
             <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-[var(--nim-text-muted)]">
-              Session role
+              {t('openCode.sessionRole')}
             </div>
 
             <RoleOption
-              label="Default"
-              description="Run as OpenCode's own default agent."
+              label={t('openCode.defaultRole')}
+              description={t('openCode.defaultRoleDescription')}
               selected={!role}
               onSelect={() => select(null)}
             />
@@ -150,8 +152,7 @@ export function OpenCodeRoleSelector({
             {conflict && (
               <div className="opencode-role-model-conflict mt-1 border-t border-[var(--nim-border)] px-2 py-2 text-[11px] text-[var(--nim-text-muted)] select-text">
                 <div>
-                  This role is configured for <span className="text-[var(--nim-text)]">{conflict.roleModelLabel}</span>.
-                  The session&apos;s own model is sent with every prompt and takes precedence, so that is what runs.
+                  <Trans t={t} i18nKey="openCode.conflictBody" values={{ model: conflict.roleModelLabel }} components={{ model: <span className="text-[var(--nim-text)]" /> }} />
                 </div>
                 {onModelChange && (
                   <button
@@ -161,7 +162,7 @@ export function OpenCodeRoleSelector({
                       setIsOpen(false);
                     }}
                   >
-                    Switch session to {conflict.roleModelLabel}
+                    {t('openCode.switchSessionTo', { model: conflict.roleModelLabel })}
                   </button>
                 )}
               </div>

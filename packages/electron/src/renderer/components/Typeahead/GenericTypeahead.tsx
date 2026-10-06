@@ -2,6 +2,19 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { getWindowControlsZones } from '@nimbalyst/runtime/ui/floating/windowControlsClearance';
 import { getCursorCoordinates } from './typeaheadUtils';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+
+// Section ids stay English (callers sort by them); only the header text is localized.
+const SECTION_LABEL_KEYS: Record<string, string> = {
+  'Built-in Commands': 'typeahead.sections.builtInCommands',
+  'Project Commands': 'typeahead.sections.projectCommands',
+  'User Commands': 'typeahead.sections.userCommands',
+  'Extension Commands': 'typeahead.sections.extensionCommands',
+  'Project Skills': 'typeahead.sections.projectSkills',
+  'User Skills': 'typeahead.sections.userSkills',
+  'Plugin Skills': 'typeahead.sections.pluginSkills',
+  Other: 'typeahead.sections.other',
+};
 
 export interface TypeaheadOption {
   id: string;
@@ -61,6 +74,7 @@ export function GenericTypeahead({
   maxWidth = 600,
   sectionOrder
 }: GenericTypeaheadProps) {
+  const { t } = useTranslation('ai');
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [isPositioned, setIsPositioned] = useState(false);
@@ -276,7 +290,7 @@ export function GenericTypeahead({
         {groupedOptions.map(({ section, options: sectionOptions }, groupIndex) => (
           <div key={section || groupIndex} className="generic-typeahead-section py-0.5 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-nim">
             {section && (
-              <div className="generic-typeahead-section-header px-3 pt-1.5 pb-1 text-[0.6875rem] font-semibold text-nim-faint uppercase tracking-wide">{section}</div>
+              <div className="generic-typeahead-section-header px-3 pt-1.5 pb-1 text-[0.6875rem] font-semibold text-nim-faint uppercase tracking-wide">{SECTION_LABEL_KEYS[section] ? t(SECTION_LABEL_KEYS[section]) : section}</div>
             )}
             {sectionOptions.map((option) => {
               // Calculate visual index based on flat ordered list (matches navigation order)

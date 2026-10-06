@@ -1,6 +1,7 @@
 import type { TypeaheadOption } from './GenericTypeahead';
 import type { SlashTypeaheadScope } from './typeaheadUtils';
 import { supportsWorkspaceSlashWorkflowProvider } from '../../../shared/agentWorkflowProviders';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 export interface SlashCommandEntry {
   name: string;
@@ -133,7 +134,7 @@ export function buildSlashCommandOptions(
       label: command.argumentHint
         ? `/${command.name} ${command.argumentHint}`
         : `/${command.name}`,
-      description: command.description || `Execute ${command.name} command`,
+      description: command.description || translate('ai:typeahead.executeCommand', { name: command.name }),
       icon: getCommandIcon(command),
       section: hasQuery ? undefined : getCommandSection(command),
       data: command,

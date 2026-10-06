@@ -3,10 +3,12 @@ import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import type { ThinkingMode } from '../../utils/modelUtils';
 import { DEFAULT_THINKING_MODE } from '../../utils/modelUtils';
 import { FloatingPortal, useFloatingMenu } from '../../hooks/useFloatingMenu';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
+// `label` holds an ai-namespace i18n key; translate at render time.
 const THINKING_MODE_OPTIONS: Array<{ key: ThinkingMode; label: string }> = [
-  { key: 'enabled', label: 'Extended: On' },
-  { key: 'disabled', label: 'Extended: Off' },
+  { key: 'enabled', label: 'thinking.enabled' },
+  { key: 'disabled', label: 'thinking.disabled' },
 ];
 
 interface ThinkingModeSelectorProps {
@@ -17,6 +19,7 @@ interface ThinkingModeSelectorProps {
 }
 
 export function ThinkingModeSelector({ mode, onModeChange, disabled = false, disabledTitle }: ThinkingModeSelectorProps) {
+  const { t } = useTranslation('ai');
   const menu = useFloatingMenu({ placement: 'top-start', offsetPx: 4 });
   const { isOpen, setIsOpen } = menu;
 
@@ -40,12 +43,12 @@ export function ThinkingModeSelector({ mode, onModeChange, disabled = false, dis
         onClick={() => {
           if (!disabled) setIsOpen(!isOpen);
         }}
-        aria-label={`Extended thinking: ${currentMode.label}`}
+        aria-label={t('thinking.ariaLabel', { mode: t(currentMode.label) })}
         disabled={disabled}
         title={disabled ? disabledTitle : undefined}
       >
         <MaterialSymbol icon="psychology_alt" size={12} />
-        <span>{currentMode.label}</span>
+        <span>{t(currentMode.label)}</span>
         <MaterialSymbol icon="expand_more" size={14} className={`transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
@@ -68,7 +71,7 @@ export function ThinkingModeSelector({ mode, onModeChange, disabled = false, dis
                   setIsOpen(false);
                 }}
               >
-                <span>{option.label}</span>
+                <span>{t(option.label)}</span>
                 {option.key === mode && <MaterialSymbol icon="check" size={14} />}
               </button>
             ))}

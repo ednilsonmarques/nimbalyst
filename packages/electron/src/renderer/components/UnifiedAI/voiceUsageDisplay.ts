@@ -12,6 +12,7 @@
  */
 
 import type { VoiceEngineId, VoiceTokenUsage } from '../../store/atoms/voiceModeState';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 /** Live list price as of 2026-09-11: $0.05 per minute, billed per second. */
 export const LIVE_COST_PER_MINUTE_USD = 0.05;
@@ -102,17 +103,17 @@ export function buildVoiceUsageDisplay(usage: VoiceTokenUsage | null | undefined
     // divisor of ours -- that derived number is exactly what this replaces.
     if (isNumber(usage.contextUsageRatio)) {
       occupancy = Math.min(1, Math.max(0, usage.contextUsageRatio));
-      lines.push({ id: 'context', label: 'Context', value: `${Math.round(occupancy * 100)}%` });
+      lines.push({ id: 'context', label: translate('ai:voiceUsage.context'), value: `${Math.round(occupancy * 100)}%` });
     }
     if (isNumber(usage.durationSeconds)) {
-      lines.push({ id: 'duration', label: 'Voice time', value: formatVoiceDuration(usage.durationSeconds) });
-      lines.push({ id: 'cost', label: 'Voice cost', value: formatLiveCost(usage.durationSeconds) });
+      lines.push({ id: 'duration', label: translate('ai:voiceUsage.voiceTime'), value: formatVoiceDuration(usage.durationSeconds) });
+      lines.push({ id: 'cost', label: translate('ai:voiceUsage.voiceCost'), value: formatLiveCost(usage.durationSeconds) });
     }
   } else if (isNumber(usage.total)) {
     // Cumulative token usage does not measure remaining context capacity.
     lines.push({
       id: 'tokens',
-      label: 'Tokens used',
+      label: translate('ai:voiceUsage.tokensUsed'),
       value: usage.total.toLocaleString(),
     });
   }
@@ -122,7 +123,7 @@ export function buildVoiceUsageDisplay(usage: VoiceTokenUsage | null | undefined
   // inventing a dollar figure from an opaque usage block would be a guess.
   if (usage.backend && usage.backend.length > 0) {
     const n = usage.backend.length;
-    lines.push({ id: 'backend', label: 'Controller', value: `${n} ${n === 1 ? 'response' : 'responses'}` });
+    lines.push({ id: 'backend', label: translate('ai:voiceUsage.controller'), value: translate('ai:voiceUsage.responses', { count: n }) });
   }
 
   if (lines.length === 0) return null;

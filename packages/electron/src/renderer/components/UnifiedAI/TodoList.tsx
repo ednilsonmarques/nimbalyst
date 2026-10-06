@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export interface Todo {
   status: 'pending' | 'in_progress' | 'completed';
@@ -12,6 +13,7 @@ export interface TodoListProps {
 }
 
 export function TodoList({ todos, sessionId }: TodoListProps) {
+  const { t } = useTranslation('ai');
   console.log(`[TodoList] Rendering with ${todos?.length || 0} todos for session ${sessionId}`);
 
   if (!todos || todos.length === 0) {
@@ -28,7 +30,7 @@ export function TodoList({ todos, sessionId }: TodoListProps) {
     >
       <div className="todo-list-header flex items-center justify-between px-3 py-2 border-b border-[var(--nim-border)] bg-[var(--nim-bg-tertiary)] rounded-t-lg">
         <span className="todo-list-title text-xs font-semibold text-[var(--nim-text)] uppercase tracking-[0.5px]">
-          Tasks
+          {t('todo.title')}
         </span>
         <span className="todo-list-count text-[11px] text-[var(--nim-text-muted)] font-mono">
           {todos.filter(t => t.status === 'completed').length}/{todos.length}

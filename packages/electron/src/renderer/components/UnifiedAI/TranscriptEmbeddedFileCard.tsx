@@ -1,6 +1,8 @@
 import React, { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { basename } from 'pathe';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { store } from '@nimbalyst/runtime/store';
 
 import { customEditorRegistry } from '../CustomEditors/registry';
@@ -56,7 +58,7 @@ class TranscriptEmbeddedFileErrorBoundary extends Component<
       return (
         <div className="transcript-embedded-file__error flex items-center gap-2 p-3 text-sm text-[var(--nim-error)]">
           <MaterialSymbol icon="error" size={16} />
-          <span>{this.state.error?.message ?? 'Failed to render preview'}</span>
+          <span>{this.state.error?.message ?? translate('ai:embeddedFile.renderFailed')}</span>
         </div>
       );
     }
@@ -75,6 +77,7 @@ export const TranscriptEmbeddedFileCard: React.FC<TranscriptEmbeddedFileCardProp
   onOpenFile,
   defaultExpanded = false,
 }) => {
+  const { t } = useTranslation('ai');
   const { theme } = useTheme();
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   // Click-to-activate gate. Mirrors EmbedFrame's shield: until the user
@@ -184,7 +187,7 @@ export const TranscriptEmbeddedFileCard: React.FC<TranscriptEmbeddedFileCardProp
 
   const canRenderPreview = isSupportedFile && host != null;
   const ExtensionComponent = registration?.component;
-  const editorLabel = registration?.name || 'Rendered file';
+  const editorLabel = registration?.name || t('embeddedFile.renderedFile');
   const previewHeight = registration?.transcriptEmbedHeight ?? DEFAULT_PREVIEW_HEIGHT;
 
   return (
@@ -223,8 +226,8 @@ export const TranscriptEmbeddedFileCard: React.FC<TranscriptEmbeddedFileCardProp
             type="button"
             className="flex h-6 w-6 items-center justify-center rounded border-none bg-transparent p-0 text-[var(--nim-text-faint)] cursor-pointer transition-colors duration-150 hover:bg-[var(--nim-bg-tertiary)] hover:text-[var(--nim-text)]"
             onClick={handleOpenFile}
-            title="Open file"
-            aria-label="Open file"
+            title={t('embeddedFile.openFile')}
+            aria-label={t('embeddedFile.openFile')}
           >
             <MaterialSymbol icon="open_in_new" size={14} />
           </button>
@@ -238,7 +241,7 @@ export const TranscriptEmbeddedFileCard: React.FC<TranscriptEmbeddedFileCardProp
         >
           {!canRenderPreview || !ExtensionComponent || !host ? (
             <div className="transcript-embedded-file__placeholder flex h-full items-center justify-center px-4 text-center text-sm text-[var(--nim-text-muted)]">
-              No editor is available to render this file inline.
+              {t('embeddedFile.noEditor')}
             </div>
           ) : (
             <TranscriptEmbeddedFileErrorBoundary filePath={filePath}>
@@ -254,7 +257,7 @@ export const TranscriptEmbeddedFileCard: React.FC<TranscriptEmbeddedFileCardProp
                 <React.Suspense
                   fallback={
                     <div className="transcript-embedded-file__loading flex h-full items-center justify-center text-sm text-[var(--nim-text-muted)]">
-                      Loading preview...
+                      {t('embeddedFile.loadingPreview')}
                     </div>
                   }
                 >

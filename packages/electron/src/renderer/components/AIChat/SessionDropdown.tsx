@@ -7,12 +7,14 @@ import { formatDate } from '@nimbalyst/runtime';
 import { sessionProcessingAtom, sessionUnreadAtom } from '../../store';
 import { useFloatingMenu, FloatingPortal } from '../../hooks/useFloatingMenu';
 import { requestConfirmation } from '../../dialogs/requestConfirmation';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 /**
  * Status indicator that subscribes to session atoms.
  * Only this component re-renders when the session's state changes.
  */
 const SessionStatusIndicator = memo<{ sessionId: string }>(({ sessionId }) => {
+  const { t } = useTranslation('ai');
   const isProcessing = useAtomValue(sessionProcessingAtom(sessionId));
   const hasUnread = useAtomValue(sessionUnreadAtom(sessionId));
 
@@ -20,7 +22,7 @@ const SessionStatusIndicator = memo<{ sessionId: string }>(({ sessionId }) => {
     return (
       <div
         className="session-status-indicator processing w-2 h-2 rounded-full shrink-0 bg-[var(--nim-primary)] animate-pulse"
-        title="Running"
+        title={t('sessionDropdown.running')}
       />
     );
   }
@@ -28,7 +30,7 @@ const SessionStatusIndicator = memo<{ sessionId: string }>(({ sessionId }) => {
     return (
       <div
         className="session-status-indicator unread w-2 h-2 rounded-full shrink-0 bg-[var(--nim-primary)]"
-        title="Unread response"
+        title={t('sessionDropdown.unread')}
       />
     );
   }
@@ -62,6 +64,7 @@ export function SessionDropdown({
   onOpenSessionManager,
   className = ''
 }: SessionDropdownProps) {
+  const { t } = useTranslation('ai');
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
 
@@ -74,7 +77,7 @@ export function SessionDropdown({
 
   const getCurrentSessionName = () => {
     const session = getCurrentSession();
-    if (!session) return 'New Session';
+    if (!session) return t('sessionDropdown.newSessionTitle');
     if (session.title) return session.title;
     return formatDate(session.createdAt);
   };
@@ -114,7 +117,7 @@ export function SessionDropdown({
         {...menu.getReferenceProps()}
         className="session-dropdown-trigger flex items-center gap-1 w-full min-w-0 px-2 py-1.5 bg-transparent border border-[var(--nim-border)] rounded-md text-[var(--nim-text)] text-[13px] cursor-pointer transition-all duration-200 h-8 hover:bg-[var(--nim-bg-hover)] hover:border-[var(--nim-border-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
         onClick={() => menu.setIsOpen(!menu.isOpen)}
-        title="Session History"
+        title={t('sessionDropdown.history')}
       >
         {currentSessionId && <SessionStatusIndicator sessionId={currentSessionId} />}
         <ProviderIcon provider={getCurrentSession()?.provider || 'claude'} size={16} />
@@ -142,7 +145,7 @@ export function SessionDropdown({
               }}
             >
               <MaterialSymbol icon="add" size={16} />
-              <span>New session</span>
+              <span>{t('sessionDropdown.newSession')}</span>
             </button>
             <div className="session-dropdown-divider h-px bg-[var(--nim-border)] my-1" />
             {onOpenSessionManager && (
@@ -154,7 +157,7 @@ export function SessionDropdown({
                 }}
               >
                 <MaterialSymbol icon="folder_open" size={16} />
-                <span>All Sessions</span>
+                <span>{t('sessionDropdown.allSessions')}</span>
               </button>
             )}
             {sessions.length > 0 && (
@@ -200,7 +203,7 @@ export function SessionDropdown({
                             )}
                           </div>
                           {session.messageCount !== undefined && session.messageCount > 0 && (
-                            <span className="session-message-count text-[11px] text-[var(--nim-text-muted)]">{session.messageCount} turns</span>
+                            <span className="session-message-count text-[11px] text-[var(--nim-text-muted)]">{t('sessionDropdown.turns', { count: session.messageCount })}</span>
                           )}
                         </div>
                       )}
@@ -213,7 +216,7 @@ export function SessionDropdown({
                               e.stopPropagation();
                               handleRename(session.id);
                             }}
-                            title="Rename"
+                            title={t('sessionDropdown.rename')}
                           >
                             <MaterialSymbol icon="edit" size={14} />
                           </button>
@@ -223,16 +226,16 @@ export function SessionDropdown({
                           onClick={async (e) => {
                             e.stopPropagation();
                             const confirmed = await requestConfirmation({
-                              title: 'Delete Session',
-                              message: 'Delete this session?',
-                              confirmLabel: 'Delete',
+                              title: t('sessionDropdown.deleteTitle'),
+                              message: t('sessionDropdown.deleteMessage'),
+                              confirmLabel: t('sessionDropdown.delete'),
                               destructive: true,
                             });
                             if (confirmed) {
                               onDeleteSession(session.id);
                             }
                           }}
-                          title="Delete"
+                          title={t('sessionDropdown.delete')}
                         >
                           <MaterialSymbol icon="delete" size={14} />
                         </button>
@@ -242,7 +245,7 @@ export function SessionDropdown({
             </div>
             {sessions.length === 0 && (
               <div className="session-dropdown-empty p-5 text-center text-[var(--nim-text-muted)] text-[13px]">
-                <span>No sessions yet</span>
+                <span>{t('sessionDropdown.empty')}</span>
               </div>
             )}
           </div>

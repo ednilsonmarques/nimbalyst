@@ -1,5 +1,6 @@
 import React from 'react';
 import { HelpTooltip } from '../../help';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export type AIMode = 'planning' | 'agent';
 
@@ -15,6 +16,7 @@ interface ModeTagProps {
  * Agent mode: Full tool access, write operations enabled
  */
 export function ModeTag({ mode, onModeChange }: ModeTagProps) {
+  const { t } = useTranslation('ai');
   const handleToggle = () => {
     onModeChange(mode === 'planning' ? 'agent' : 'planning');
   };
@@ -30,11 +32,11 @@ export function ModeTag({ mode, onModeChange }: ModeTagProps) {
         }`}
         onClick={handleToggle}
         aria-label={mode === 'planning'
-          ? 'Plan mode: Creates plan documents (click to enable full agent mode)'
-          : 'Agent mode: Full tool access (click to switch to plan mode)'}
+          ? t('mode.planAriaLabel')
+          : t('mode.agentAriaLabel')}
         type="button"
       >
-        {mode === 'planning' ? 'Plan' : 'Agent'}
+        {mode === 'planning' ? t('mode.plan') : t('mode.agent')}
       </button>
     </HelpTooltip>
   );

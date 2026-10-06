@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface ToolUsageProps {
   workspaceId?: string;
@@ -43,6 +44,7 @@ function displayProjectName(projectPath: string): string {
 }
 
 export const ToolUsage: React.FC<ToolUsageProps> = ({ workspaceId }) => {
+  const { t } = useTranslation('ai');
   const [report, setReport] = useState<ToolUsageReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [backfilling, setBackfilling] = useState(false);
@@ -85,7 +87,7 @@ export const ToolUsage: React.FC<ToolUsageProps> = ({ workspaceId }) => {
     <div className="tool-usage-report flex flex-col gap-4">
       <div className="tool-usage-header flex items-center justify-between">
         <h3 className="m-0 text-sm font-semibold text-[var(--nim-text)]">
-          Tool Usage
+          {t('usageReport.tools.title')}
         </h3>
         <button
           type="button"
@@ -96,27 +98,26 @@ export const ToolUsage: React.FC<ToolUsageProps> = ({ workspaceId }) => {
               ? 'opacity-50 cursor-default'
               : 'text-[var(--nim-text-muted)] hover:text-[var(--nim-text)]'
           }`}
-          title="Populate historical tool usage from past claude-code and codex sessions"
+          title={t('usageReport.tools.backfillTitle')}
         >
-          {backfilling ? 'Backfilling...' : 'Backfill history'}
+          {backfilling ? t('usageReport.tools.backfilling') : t('usageReport.tools.backfill')}
         </button>
       </div>
 
       {loading ? (
         <div className="tool-usage-loading text-xs text-[var(--nim-text-muted)]">
-          Loading...
+          {t('usageReport.loading')}
         </div>
       ) : !report || total === 0 ? (
         <div className="tool-usage-empty text-xs text-[var(--nim-text-muted)]">
-          No tool usage recorded yet. Run an agent session, or use "Backfill
-          history" to import past sessions.
+          {t('usageReport.tools.empty')}
         </div>
       ) : (
         <>
           <div className="tool-usage-kind flex gap-4">
             <div className="tool-usage-kind-stat flex-1 bg-[var(--nim-bg-tertiary)] rounded-md p-3">
               <div className="text-[11px] text-[var(--nim-text-muted)]">
-                Built-in tools
+                {t('usageReport.tools.builtIn')}
               </div>
               <div className="text-lg font-semibold text-[var(--nim-text)]">
                 {report.byKind.builtin.toLocaleString()}
@@ -124,7 +125,7 @@ export const ToolUsage: React.FC<ToolUsageProps> = ({ workspaceId }) => {
             </div>
             <div className="tool-usage-kind-stat flex-1 bg-[var(--nim-bg-tertiary)] rounded-md p-3">
               <div className="text-[11px] text-[var(--nim-text-muted)]">
-                MCP / extension tools
+                {t('usageReport.tools.mcp')}
               </div>
               <div className="text-lg font-semibold text-[var(--nim-text)]">
                 {report.byKind.mcp.toLocaleString()}
@@ -134,7 +135,7 @@ export const ToolUsage: React.FC<ToolUsageProps> = ({ workspaceId }) => {
 
           <div className="tool-usage-top">
             <h4 className="m-0 mb-2 text-xs font-semibold text-[var(--nim-text-muted)]">
-              Most-used tools
+              {t('usageReport.tools.mostUsed')}
             </h4>
             <div className="tool-usage-bars flex flex-col gap-2">
               {report.topTools.slice(0, 20).map((tool, index) => (
@@ -148,7 +149,7 @@ export const ToolUsage: React.FC<ToolUsageProps> = ({ workspaceId }) => {
                     </span>
                     <span className="tool-usage-bar-count text-[11px] text-[var(--nim-text-muted)] shrink-0 ml-2">
                       {tool.count.toLocaleString()}
-                      {tool.errorCount > 0 ? ` (${tool.errorCount} err)` : ''}
+                      {tool.errorCount > 0 ? ` ${t('usageReport.tools.errors', { count: tool.errorCount })}` : ''}
                     </span>
                   </div>
                   <div className="tool-usage-bar-track h-1.5 bg-[var(--nim-bg-tertiary)] rounded-sm overflow-hidden">
@@ -169,7 +170,7 @@ export const ToolUsage: React.FC<ToolUsageProps> = ({ workspaceId }) => {
           {report.overTime.length > 1 && (
             <div className="tool-usage-over-time">
               <h4 className="m-0 mb-2 text-xs font-semibold text-[var(--nim-text-muted)]">
-                Tool calls over time
+                {t('usageReport.tools.overTime')}
               </h4>
               <ResponsiveContainer width="100%" height={160}>
                 <AreaChart data={report.overTime}>
@@ -206,7 +207,7 @@ export const ToolUsage: React.FC<ToolUsageProps> = ({ workspaceId }) => {
           {report.byProvider.length > 1 && (
             <div className="tool-usage-by-provider">
               <h4 className="m-0 mb-2 text-xs font-semibold text-[var(--nim-text-muted)]">
-                By provider
+                {t('usageReport.tools.byProvider')}
               </h4>
               <div className="tool-usage-provider-bars flex flex-col gap-2">
                 {report.byProvider.map((p, index) => {
@@ -240,7 +241,7 @@ export const ToolUsage: React.FC<ToolUsageProps> = ({ workspaceId }) => {
           {report.byProject.length > 0 && (
             <div className="tool-usage-by-project">
               <h4 className="m-0 mb-2 text-xs font-semibold text-[var(--nim-text-muted)]">
-                By project
+                {t('usageReport.tools.byProject')}
               </h4>
               <div className="tool-usage-project-bars flex flex-col gap-2">
                 {report.byProject.map((project) => {

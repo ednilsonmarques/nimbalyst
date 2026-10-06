@@ -30,6 +30,7 @@ import type { TodoItem } from '@nimbalyst/runtime/ui/AgentTranscript/types';
 import { isToolLikeMessage } from '@nimbalyst/runtime/ui/AgentTranscript/utils/messageTypeHelpers';
 import type { AIInputRef } from './AIInput';
 import { SessionAIInput } from './SessionAIInput';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { PromptQueueList } from './PromptQueueList';
 import { TranscriptEmbeddedFileCard } from './TranscriptEmbeddedFileCard';
 import { getDiffPeekSizeForInteractiveWidgetHost } from './interactiveWidgetHostProxy';
@@ -369,6 +370,7 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
   additionalTeammates,
   waitingForNoun,
 }, ref) => {
+  const { t } = useTranslation('ai');
   const posthog = usePostHog();
   const inputRef = useRef<AIInputRef>(null);
   const transcriptPanelRef = useRef<{ scrollToMessage: (index: number) => void; scrollToTop: () => void }>(null);
@@ -853,17 +855,8 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
         const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
         const settingsShortcut = isMac ? 'Cmd+,' : 'Ctrl+,';
         await confirm({
-          title: 'MCP Tool Configuration Required',
-          message: [
-            'Some alternative AI providers don\'t fully support deferred tool loading (tool search).',
-            '',
-            'To fix this:',
-            `1. Open Settings (${settingsShortcut})`,
-            '2. Go to "Claude Code" panel',
-            '3. In the "Environment Variables" section, add:',
-            '   ENABLE_TOOL_SEARCH = false',
-            '4. Save and retry your request'
-          ].join('\n'),
+          title: t('transcript.toolSearchErrorTitle'),
+          message: t('transcript.toolSearchErrorMessage', { shortcut: settingsShortcut }),
           confirmLabel: 'OK',
           cancelLabel: ''
         });
@@ -2494,7 +2487,7 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
         }}
         data-session-id={sessionId}
       >
-        {isDataLoading ? 'Loading session...' : 'Session not found'}
+        {isDataLoading ? t('transcript.loadingSession') : t('transcript.sessionNotFound')}
       </div>
     );
   }
@@ -2669,12 +2662,12 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
               textAlign: 'left',
               flex: '0 0 auto',
             }}
-            title={cliTerminalExpanded ? 'Collapse raw terminal' : 'Expand raw terminal'}
+            title={cliTerminalExpanded ? t('transcript.collapseRawTerminal') : t('transcript.expandRawTerminal')}
           >
             <span style={{ transform: cliTerminalExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.1s' }}>
               ▶
             </span>
-            <span>Raw terminal</span>
+            <span>{t('transcript.rawTerminal')}</span>
           </button>
           {/* Keep the strip mounted always (PTY lifecycle); hide only its body when
               collapsed. The strip observes the always-on-screen drawer root
@@ -2746,10 +2739,8 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
         onNavigateHistory={enableHistoryNavigation ? handleNavigateHistory : undefined}
         placeholder={
           mode === 'chat'
-            ? "Ask a question. @ for files, @@ for sessions, / for commands"
-            : enableSlashCommands
-              ? "Type your message... (Enter to send, Shift+Enter for new line, @ for files, @@ for sessions, / for commands)"
-              : "Type your message... (Enter to send, Shift+Enter for new line, @ for files, @@ for sessions, / for commands)"
+            ? t('composer.chatPlaceholder')
+            : t('composer.placeholder')
         }
         mode={aiMode as AIMode}
         onModeChange={handleAIModeChange}
@@ -2766,7 +2757,7 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
         // AIInput.
         onModelChange={handleModelChange}
         readOnlyModel={isClaudeCliTerminalSession(provider) && cliSessionCommitted && isLoading}
-        readOnlyModelTitle="Wait for the current turn to finish before switching models"
+        readOnlyModelTitle={t('transcript.waitForTurnToSwitchModel')}
         sessionHasMessages={sessionHasMessages}
         currentProvider={provider ?? null}
         effortLevel={effortLevel}

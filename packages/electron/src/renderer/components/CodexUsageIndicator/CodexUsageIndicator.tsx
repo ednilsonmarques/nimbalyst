@@ -18,6 +18,7 @@ import {
 } from '../../store/atoms/codexUsageAtoms';
 import { CodexUsagePopover } from './CodexUsagePopover';
 import { refreshCodexUsage } from '../../store/listeners/codexUsageListeners';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 const RING_RADIUS = 12;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -27,6 +28,7 @@ interface CodexUsageIndicatorProps {
 }
 
 export const CodexUsageIndicator: React.FC<CodexUsageIndicatorProps> = ({ className }) => {
+  const { t } = useTranslation('ai');
   const usage = useAtomValue(codexUsageAtom);
   const isAvailable = useAtomValue(codexUsageAvailableAtom);
   const indicatorColor = useAtomValue(codexUsageIndicatorColorAtom);
@@ -69,12 +71,12 @@ export const CodexUsageIndicator: React.FC<CodexUsageIndicatorProps> = ({ classN
     : null;
 
   const tooltipContent = usage?.error
-    ? `Codex usage unavailable: ${usage.error}`
+    ? t('codexUsage.unavailableWithError', { error: usage.error })
     : usage
       ? limitsAvailable
-        ? `Codex ${constrainedLabel}: ${Math.round(utilization)}% (resets ${formatResetTime(mostConstrained?.window.resetsAt ?? null)})`
-        : 'Codex usage (limits unavailable)'
-      : 'Codex usage unavailable';
+        ? t('codexUsage.tooltip', { label: constrainedLabel, percent: Math.round(utilization), time: formatResetTime(mostConstrained?.window.resetsAt ?? null) })
+        : t('codexUsage.limitsUnavailableShort')
+      : t('codexUsage.unavailable');
 
   return (
     <div className={`relative ${className || ''}`}>
@@ -83,7 +85,7 @@ export const CodexUsageIndicator: React.FC<CodexUsageIndicatorProps> = ({ classN
         onClick={handleClick}
         title={tooltipContent}
         className="relative w-9 h-9 flex items-center justify-center bg-transparent border-none rounded-md cursor-pointer transition-all duration-150 p-0 hover:bg-nim-tertiary active:scale-95 focus-visible:outline-2 focus-visible:outline-[var(--nim-primary)] focus-visible:outline-offset-2"
-        aria-label="Codex Usage"
+        aria-label={t('codexUsage.title')}
         data-testid="codex-usage-indicator"
       >
         <svg

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Trans, useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 /**
  * Notice shown in a `claude-code-cli` session when the genuine `claude` CLI
@@ -25,6 +26,7 @@ const openInstallDocs = () => {
 export const ClaudeCliNotInstalledNotice: React.FC<ClaudeCliNotInstalledNoticeProps> = ({
   variant,
 }) => {
+  const { t } = useTranslation('ai');
   const installButton = (
     <button
       type="button"
@@ -42,7 +44,7 @@ export const ClaudeCliNotInstalledNotice: React.FC<ClaudeCliNotInstalledNoticePr
         cursor: 'pointer',
       }}
     >
-      Install Claude Code
+      {t('claudeCli.install')}
     </button>
   );
 
@@ -65,9 +67,9 @@ export const ClaudeCliNotInstalledNotice: React.FC<ClaudeCliNotInstalledNoticePr
         }}
       >
         <span>
-          <strong>Claude Code CLI isn&apos;t installed.</strong>{' '}
+          <strong>{t('claudeCli.notInstalledSentence')}</strong>{' '}
           <span style={{ color: 'var(--nim-text-muted)' }}>
-            Install it to run this session.
+            {t('claudeCli.installToRun')}
           </span>
         </span>
         {installButton}
@@ -92,11 +94,10 @@ export const ClaudeCliNotInstalledNotice: React.FC<ClaudeCliNotInstalledNoticePr
       }}
     >
       <div style={{ fontSize: '14px', fontWeight: 600 }}>
-        Claude Code CLI isn&apos;t installed
+        {t('claudeCli.notInstalledTitle')}
       </div>
       <div style={{ fontSize: '12px', color: 'var(--nim-text-muted)', maxWidth: 360 }}>
-        This session runs the genuine <code>claude</code> command-line tool, which
-        wasn&apos;t found on your system. Install it, then reopen this session.
+        <Trans t={t} i18nKey="claudeCli.panelBody" components={{ code: <code /> }} />
       </div>
       {installButton}
     </div>

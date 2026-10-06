@@ -1,1 +1,533 @@
-{}
+{
+  "composer": {
+    "placeholder": "Type your message... (Enter to send, Shift+Enter for new line, @ for files, @@ for sessions, / for commands)",
+    "chatPlaceholder": "Ask a question. @ for files, @@ for sessions, / for commands",
+    "resizeHandle": "Drag to resize prompt box",
+    "cancelRequestTitle": "Cancel request (Esc)",
+    "cancelRequest": "Cancel request",
+    "processingAttachments": "Processing attachments...",
+    "sendMessageTitle": "Send message (Enter)",
+    "sendMessage": "Send message"
+  },
+  "attachments": {
+    "rejectedTitle": "Attachment Rejected",
+    "invalidFile": "Invalid file",
+    "failedTitle": "Attachment Failed",
+    "saveFailed": "Failed to save attachment",
+    "attachFailed": "Failed to attach file"
+  },
+  "mode": {
+    "plan": "Plan",
+    "agent": "Agent",
+    "planAriaLabel": "Plan mode: Creates plan documents (click to enable full agent mode)",
+    "agentAriaLabel": "Agent mode: Full tool access (click to switch to plan mode)"
+  },
+  "effort": {
+    "ariaLabel": "Effort level: {{level}}",
+    "levels": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "xhigh": "xHigh",
+      "max": "Max",
+      "ultra": "Ultra"
+    }
+  },
+  "thinking": {
+    "enabled": "Extended: On",
+    "disabled": "Extended: Off",
+    "ariaLabel": "Extended thinking: {{mode}}"
+  },
+  "queue": {
+    "count_zero": "{{count}} queued",
+    "count_one": "{{count}} queued",
+    "count_other": "{{count}} queued",
+    "sendNow": "Interrupt and send now",
+    "edit": "Edit this prompt",
+    "cancel": "Cancel this prompt"
+  },
+  "layout": {
+    "maximizeEditor": "Maximize editor",
+    "files": "Files",
+    "splitView": "Split view",
+    "maximizeTranscript": "Maximize transcript",
+    "agent": "Agent"
+  },
+  "todo": {
+    "title": "Tasks"
+  },
+  "typeahead": {
+    "sections": {
+      "builtInCommands": "Built-in Commands",
+      "projectCommands": "Project Commands",
+      "userCommands": "User Commands",
+      "extensionCommands": "Extension Commands",
+      "projectSkills": "Project Skills",
+      "userSkills": "User Skills",
+      "pluginSkills": "Plugin Skills",
+      "other": "Other"
+    },
+    "executeCommand": "Execute {{name}} command"
+  },
+  "transcript": {
+    "toolSearchErrorTitle": "MCP Tool Configuration Required",
+    "toolSearchErrorMessage": "Some alternative AI providers don't fully support deferred tool loading (tool search).\n\nTo fix this:\n1. Open Settings ({{shortcut}})\n2. Go to \"Claude Code\" panel\n3. In the \"Environment Variables\" section, add:\n   ENABLE_TOOL_SEARCH = false\n4. Save and retry your request",
+    "loadingSession": "Loading session...",
+    "sessionNotFound": "Session not found",
+    "collapseRawTerminal": "Collapse raw terminal",
+    "expandRawTerminal": "Expand raw terminal",
+    "rawTerminal": "Raw terminal",
+    "waitForTurnToSwitchModel": "Wait for the current turn to finish before switching models"
+  },
+  "modelPicker": {
+    "selectModel": "Select Model",
+    "claudeAgentRecommended": "Claude Agent (Recommended)",
+    "currentModel": "Current model: {{model}}",
+    "loading": "Loading models...",
+    "empty": "No models available",
+    "agentsSection": "Agents",
+    "startNewSessionForAgents": "Start a new session to use agents",
+    "providerSwitchDisabled": "Start a new session to switch providers after the session has started",
+    "chatSection": "Chat with open document",
+    "startNewSessionForChat": "Start a new session to use chat models",
+    "configure": "Configure models"
+  },
+  "contextUsage": {
+    "input": "Input",
+    "inputUncached": "Input (uncached)",
+    "cacheRead": "Cache read",
+    "cacheWrite": "Cache write",
+    "output": "Output",
+    "total": "Total",
+    "tokensUsed": "{{tokens}} tokens used",
+    "ariaWithWindow": "Context usage {{used}} of {{total}} tokens ({{percentage}}%)",
+    "ariaNoWindow": "Session token usage: {{tokens}} tokens used; this agent reports no context window size",
+    "ariaNoData": "Token usage data not available yet",
+    "breakdownTitle": "Context Breakdown",
+    "sessionUsageTitle": "Session Token Usage",
+    "hideHelp": "Hide help",
+    "whatIsThis": "What is this?",
+    "noWindowNote": "Cumulative spend for this session. This agent reports no context window size, so there is no fill percentage to show.",
+    "sessionTotals": "Session totals (cumulative)",
+    "categoryTokens": "{{tokens}} tokens",
+    "alwaysLoadedTools": "Always-loaded tools: ~{{tokens}} tokens",
+    "toolsOnDemand": "Other tool groups load on demand",
+    "manageTools": "Manage tools"
+  },
+  "chips": {
+    "selection": "Selection",
+    "selectionTooltip": "Selected text will be included: \"{{preview}}\"",
+    "mockupAnnotations": "Mockup annotations",
+    "mockupAnnotationsTooltip": "Annotations drawn on your mockup will be included with your prompt",
+    "removeFromContext": "Remove {{label}} from context",
+    "showFewer": "Show fewer {{label}}",
+    "showMoreAria": "Show {{count}} more {{label}}",
+    "showMore": "+{{count}} more {{label}}",
+    "hiddenRestore_zero": "{{count}} hidden — restore",
+    "hiddenRestore_one": "{{count}} hidden — restore",
+    "hiddenRestore_other": "{{count}} hidden — restore"
+  },
+  "slashSuggestions": {
+    "tryCommand": "Try a command:"
+  },
+  "voice": {
+    "pendingTitle": "Voice Command",
+    "cancelEsc": "Cancel (Esc)",
+    "placeholder": "Voice command...",
+    "pausedEditing": "Paused - editing",
+    "sendingIn": "Sending in",
+    "edit": "Edit",
+    "sendNow": "Send Now",
+    "connectFailed": "Failed to connect to voice service",
+    "startFailed": "Failed to start voice mode",
+    "reconnecting": "Voice Mode reconnecting...",
+    "connecting": "Connecting...",
+    "errorTitle": "Error: {{message}}",
+    "sleeping": "Voice Mode (sleeping) - Click to wake",
+    "stop": "Stop Voice Mode",
+    "noActiveSession": "Voice Mode (no active session)",
+    "start": "Start Voice Mode",
+    "usageFloor": "At least this much -- the session ended before final usage arrived.",
+    "errorHeading": "Voice Mode Error",
+    "openSettings": "Open Voice Mode Settings",
+    "errors": {
+      "quota": "OpenAI API quota exceeded. Please check your billing at platform.openai.com.",
+      "rateLimit": "Too many requests. Please wait a moment and try again.",
+      "invalidKey": "Invalid OpenAI API key. Please check your settings.",
+      "connectionFailed": "Failed to connect to voice service.",
+      "unexpected": "An unexpected error occurred."
+    }
+  },
+  "memory": {
+    "saving": "Saving...",
+    "adding": "Adding to memory",
+    "switchHint": "Use arrow keys to switch",
+    "userMemory": "User Memory",
+    "projectMemory": "Project Memory",
+    "openFileTitle": "Open memory file in editor",
+    "openFile": "Open memory file",
+    "hintSave": "to save",
+    "hintSwitch": "to switch target",
+    "hintCancel": "to cancel",
+    "saveTitle": "Save to memory (Enter)",
+    "save": "Save to memory",
+    "updatedTitle": "Memory Updated",
+    "addedTo": "Added to {{target}}",
+    "saveFailedTitle": "Failed to Save Memory",
+    "unknownError": "Unknown error"
+  },
+  "launch": {
+    "title": "Launch New Session",
+    "ariaLabel": "Launch new session",
+    "closeLabel": "Close session launch popup",
+    "placeholder": "Ask or instruct...",
+    "readOnlyModelTitle": "This session was already created; retry to submit the prompt",
+    "planNeedsInstructions": "Add instructions after /plan before starting the session.",
+    "createFailed": "Failed to create the session.",
+    "startFailed": "Failed to start the session.",
+    "backgroundFailedTitle": "Background session failed",
+    "cliNotInstalled": "Claude Code CLI is not installed.",
+    "cliStartFailed": "Failed to start the Claude Code CLI session.",
+    "cliSubmitFailed": "Failed to submit the Claude Code CLI prompt."
+  },
+  "actions": {
+    "button": "Actions",
+    "fromFile": "From ai-actions.md",
+    "headerEmpty": "Action prompts",
+    "noFile": "No <code>ai-actions.md</code> in this workspace yet. Seed it with a few example prompts you can edit.",
+    "seed": "Create ai-actions.md with examples",
+    "noSections": "<code>ai-actions.md</code> has no <code>## Heading</code> sections yet. Open the file and add one to get started.",
+    "opensNewSession": "Opens new session",
+    "edit": "Edit actions…",
+    "openFile": "Open ai-actions.md…"
+  },
+  "claudeCli": {
+    "install": "Install Claude Code",
+    "notInstalledSentence": "Claude Code CLI isn't installed.",
+    "installToRun": "Install it to run this session.",
+    "notInstalledTitle": "Claude Code CLI isn't installed",
+    "panelBody": "This session runs the genuine <code>claude</code> command-line tool, which wasn't found on your system. Install it, then reopen this session."
+  },
+  "commandPill": {
+    "loading": "Loading…",
+    "openFile": "Open file"
+  },
+  "embeddedFile": {
+    "renderFailed": "Failed to render preview",
+    "renderedFile": "Rendered file",
+    "openFile": "Open file",
+    "noEditor": "No editor is available to render this file inline.",
+    "loadingPreview": "Loading preview..."
+  },
+  "voiceUsage": {
+    "context": "Context",
+    "voiceTime": "Voice time",
+    "voiceCost": "Voice cost",
+    "tokensUsed": "Tokens used",
+    "controller": "Controller",
+    "responses_zero": "{{count}} responses",
+    "responses_one": "{{count}} response",
+    "responses_other": "{{count}} responses"
+  },
+  "openCode": {
+    "sessionRole": "Session role",
+    "sessionRoleNamed": "Session role: {{role}}",
+    "conflictTitle": "This role is configured for {{model}}, but the session model runs instead",
+    "role": "Role",
+    "defaultRole": "Default",
+    "defaultRoleDescription": "Run as OpenCode's own default agent.",
+    "conflictBody": "This role is configured for <model>{{model}}</model>. The session's own model is sent with every prompt and takes precedence, so that is what runs.",
+    "switchSessionTo": "Switch session to {{model}}",
+    "permissions": {
+      "noEdits": "no edits",
+      "editsOnApproval": "edits on approval",
+      "editsFiles": "edits files",
+      "noCommands": "no commands",
+      "runsCommands": "runs commands",
+      "commandsOnApproval": "commands on approval",
+      "commandsVary": "commands vary by rule",
+      "outsideWorkspace": "works outside the workspace",
+      "outsideWorkspaceOnApproval": "outside the workspace on approval",
+      "workspaceOnly": "workspace only",
+      "noWebAccess": "no web access",
+      "doomLoopAllowed": "doom loop allowed",
+      "doomLoopOnApproval": "doom loop on approval",
+      "noDoomLoop": "no doom loop",
+      "toolsDisabled_zero": "{{count}} tools disabled",
+      "toolsDisabled_one": "{{count}} tool disabled",
+      "toolsDisabled_other": "{{count}} tools disabled"
+    },
+    "origin": {
+      "builtIn": "built-in",
+      "builtInTitle": "Ships with OpenCode.",
+      "custom": "custom",
+      "customTitle": "Defined in OpenCode config -- this project's .opencode/agent or your own -- not shipped with OpenCode."
+    }
+  },
+  "remote": {
+    "promptSendFailed": "The prompt could not be sent.",
+    "stopSendFailed": "The stop request could not be sent.",
+    "actionLaunchFailed": "The Action could not be launched.",
+    "status": {
+      "connecting": "Connecting…",
+      "historyOnly": "History only",
+      "hostOffline": "Host offline",
+      "loading": "Loading transcript…",
+      "working": "Working",
+      "ready": "Ready"
+    },
+    "claudeCodeOnly": "This machine currently runs Claude Code models."
+  },
+  "pendingReview": {
+    "filesPending_zero": "files pending review",
+    "filesPending_one": "file pending review",
+    "filesPending_other": "files pending review",
+    "keepAllTitle": "Accept all pending AI changes",
+    "keeping": "Keeping...",
+    "keepAll": "Keep All"
+  },
+  "mcpLockdown": {
+    "message": "This machine has an enterprise Claude Code MCP policy, so Nimbalyst's own tools are unavailable in this session — no interactive question widgets, session naming, tracker tools, or extension tools. Claude Code itself runs normally on your organization's servers.",
+    "dismiss": "Dismiss"
+  },
+  "wakeup": {
+    "relative": {
+      "now": "now",
+      "seconds": "in {{seconds}}s",
+      "minutes": "in {{minutes}}m",
+      "hours": "in {{hours}}h {{minutes}}m",
+      "days": "in {{days}}d {{hours}}h"
+    },
+    "scheduled": "Scheduled to resume {{relative}} ({{absolute}})",
+    "resuming": "Resuming session…",
+    "waitingForWorkspace": "Waiting for the workspace window to open",
+    "overdueHours": "Wakeup was due {{hours}}h ago — fire now or cancel?",
+    "overdueClosed": "Wakeup was due while the app was closed — fire now or cancel?",
+    "fireNowTitle": "Fire this wakeup right now",
+    "fireNow": "Fire now",
+    "cancelTitle": "Cancel the scheduled wakeup",
+    "cancel": "Cancel"
+  },
+  "sessionDropdown": {
+    "running": "Running",
+    "unread": "Unread response",
+    "newSessionTitle": "New Session",
+    "history": "Session History",
+    "newSession": "New session",
+    "allSessions": "All Sessions",
+    "turns_zero": "{{count}} turns",
+    "turns_one": "{{count}} turns",
+    "turns_other": "{{count}} turns",
+    "rename": "Rename",
+    "deleteTitle": "Delete Session",
+    "deleteMessage": "Delete this session?",
+    "delete": "Delete",
+    "empty": "No sessions yet"
+  },
+  "fileGutter": {
+    "gitStatus": "Git status: {{status}}",
+    "gitStatuses": {
+      "modified": "modified",
+      "staged": "staged",
+      "untracked": "untracked",
+      "deleted": "deleted"
+    },
+    "pendingReview": "Pending review",
+    "referenced": "Referenced",
+    "edited": "Edited",
+    "groupByDirectory": "Group by directory",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all"
+  },
+  "usage": {
+    "used": "used",
+    "windowElapsed": "{{percent}}% of window elapsed",
+    "resetsIn": "Resets in {{time}}",
+    "resetUnavailable": "Reset time unavailable",
+    "refresh": "Refresh usage",
+    "close": "Close",
+    "updated": "Updated {{time}}",
+    "disable": "Disable",
+    "justNow": "just now",
+    "minutesAgo_zero": "{{count}} minutes ago",
+    "minutesAgo_one": "{{count}} minute ago",
+    "minutesAgo_other": "{{count}} minutes ago",
+    "hoursAgo_zero": "{{count}} hours ago",
+    "hoursAgo_one": "{{count}} hour ago",
+    "hoursAgo_other": "{{count}} hours ago",
+    "session": "Session",
+    "weekly": "Weekly",
+    "modelWeekly": "{{model}} (Weekly)",
+    "fiveHourWindow": "5-hour window",
+    "sevenDayWindow": "7-day window"
+  },
+  "claudeUsage": {
+    "title": "Claude Usage",
+    "statusPage": "Anthropic Status Page",
+    "unavailable": "Claude usage unavailable",
+    "unavailableWithError": "Claude usage unavailable: {{error}}",
+    "tooltipSession": "Session: {{percent}}% used (resets {{time}})",
+    "tooltipModelWeekly": "{{model}}: {{percent}}% used this week (resets {{time}})"
+  },
+  "codexUsage": {
+    "title": "Codex Usage",
+    "statusPage": "OpenAI Status Page",
+    "limitsUnavailable": "Usage detected, but Codex limits are unavailable in recent session data.",
+    "resetsAvailable_zero": "{{count}} full resets available",
+    "resetsAvailable_one": "{{count}} full reset available",
+    "resetsAvailable_other": "{{count}} full resets available",
+    "redeemHint": "Redeem from Codex account usage when needed.",
+    "unavailable": "Codex usage unavailable",
+    "unavailableWithError": "Codex usage unavailable: {{error}}",
+    "tooltip": "Codex {{label}}: {{percent}}% (resets {{time}})",
+    "limitsUnavailableShort": "Codex usage (limits unavailable)"
+  },
+  "geminiUsage": {
+    "title": "Gemini Usage",
+    "statusPage": "Google Cloud Status",
+    "notStarted": "Gemini usage will appear after your first request.",
+    "notStartedShort": "Gemini usage will appear after your first request",
+    "limitsUnavailable": "Usage detected, but Gemini limits are unavailable in recent session data.",
+    "mostConstrained": "Most-constrained model",
+    "secondary": "Secondary",
+    "nextMostConstrained": "Next-most-constrained model",
+    "unavailable": "Gemini usage unavailable",
+    "unavailableWithError": "Gemini usage unavailable: {{error}}",
+    "tooltip": "Gemini: {{percent}}% (resets {{time}})",
+    "limitsUnavailableShort": "Gemini usage (limits unavailable)"
+  },
+  "usageReport": {
+    "sectionsAriaLabel": "AI usage report sections",
+    "tabs": {
+      "overview": "Overview",
+      "tools": "Tools"
+    },
+    "loading": "Loading...",
+    "heatmap": {
+      "sessions": {
+        "title": "AI Sessions Created",
+        "description": "When new AI chat sessions are started",
+        "toggle": "Sessions Created"
+      },
+      "messages": {
+        "title": "AI Messages Sent",
+        "description": "When you send messages to AI",
+        "toggle": "Messages Sent"
+      },
+      "edits": {
+        "title": "Documents Edited",
+        "description": "When documents are saved",
+        "toggle": "Edited"
+      },
+      "messagesSent_zero": "{{count}} messages sent",
+      "messagesSent_one": "{{count}} message sent",
+      "messagesSent_other": "{{count}} messages sent",
+      "editsSaved_zero": "{{count}} edits saved",
+      "editsSaved_one": "{{count}} edit saved",
+      "editsSaved_other": "{{count}} edits saved",
+      "sessionsStarted_zero": "{{count}} sessions started",
+      "sessionsStarted_one": "{{count}} session started",
+      "sessionsStarted_other": "{{count}} sessions started",
+      "less": "Less",
+      "more": "More"
+    },
+    "days": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    },
+    "tokenUsageOverTime": "Token Usage Over Time",
+    "ranges": {
+      "week": "Week",
+      "month": "Month",
+      "quarter": "Quarter",
+      "year": "Year"
+    },
+    "inputTokens": "Input Tokens",
+    "outputTokens": "Output Tokens",
+    "noDataForRange": "No data available for this time range",
+    "noUsageData": "No usage data available",
+    "totalSessions": "Total Sessions",
+    "withTokenData": "{{sessions}} with token data",
+    "totalTokens": "Total Tokens",
+    "inOut": "{{input}} in / {{output}} out",
+    "mostUsed": "Most Used",
+    "defaultModel": "Default model",
+    "sessionsCount_zero": "{{count}} sessions",
+    "sessionsCount_one": "{{count}} sessions",
+    "sessionsCount_other": "{{count}} sessions",
+    "usageByProvider": "Usage by Provider",
+    "usageByProject": "Usage by Project",
+    "sessionsLabel": "Sessions:",
+    "tokensLabel": "Tokens:",
+    "lastActiveLabel": "Last Active:",
+    "noProjectData": "No project data available",
+    "tools": {
+      "title": "Tool Usage",
+      "backfillTitle": "Populate historical tool usage from past claude-code and codex sessions",
+      "backfilling": "Backfilling...",
+      "backfill": "Backfill history",
+      "empty": "No tool usage recorded yet. Run an agent session, or use \"Backfill history\" to import past sessions.",
+      "builtIn": "Built-in tools",
+      "mcp": "MCP / extension tools",
+      "mostUsed": "Most-used tools",
+      "errors_zero": "({{count}} err)",
+      "errors_one": "({{count}} err)",
+      "errors_other": "({{count}} err)",
+      "overTime": "Tool calls over time",
+      "byProvider": "By provider",
+      "byProject": "By project"
+    }
+  },
+  "blitz": {
+    "loadModelsFailed": "Failed to load available models",
+    "createFailed": "Failed to create blitz",
+    "title": "New Blitz",
+    "beta": "Beta",
+    "subtitle": "Run a single prompt across multiple worktrees and compare the outcomes side-by-side.",
+    "maxWorktrees": "Max 10 worktrees",
+    "promptLabel": "Prompt",
+    "shortcutHint": "Cmd+Enter to start",
+    "promptPlaceholder": "Enter the prompt to run across all sessions...",
+    "tip": "Tip: Be explicit about scope and acceptance criteria.",
+    "modelsLabel": "Models",
+    "total_zero": "Total: {{count}} worktrees",
+    "total_one": "Total: {{count}} worktree",
+    "total_other": "Total: {{count}} worktrees",
+    "maximum": "(maximum 10)",
+    "loadingModels": "Loading models...",
+    "noModels": "No agent models available. Configure API keys in Settings.",
+    "perModelHint": "Choose up to 5 sessions per model.",
+    "analysisModelLabel": "Analysis Model",
+    "analysisModelHint": "When all sessions complete, an analysis session compares the results.",
+    "cancel": "Cancel",
+    "creating": "Creating...",
+    "start_zero": "Start Blitz ({{count}} worktrees)",
+    "start_one": "Start Blitz ({{count}} worktree)",
+    "start_other": "Start Blitz ({{count}} worktrees)"
+  },
+  "apiKey": {
+    "title": "API Key Required",
+    "message": "To use the AI chat features, you need to configure your AI provider.",
+    "howToStart": "How to get started:",
+    "chooseProvider": "Choose your AI provider:",
+    "local": "(Local)",
+    "stepGetKey": "Get your API key (or start LM Studio)",
+    "stepClick": "Click \"Open AI Settings\" below",
+    "stepEnter": "Enter your API key and save",
+    "cancel": "Cancel",
+    "openSettings": "Open AI Settings"
+  },
+  "windowsWarning": {
+    "close": "Close",
+    "title": "Claude Code Installation Required",
+    "message": "To use Nimbalyst's AI features on Windows, you need to install Claude Code separately. Without it, many agentic editing features will not be available.",
+    "viewInstructions": "View Installation Instructions",
+    "remindLater": "Remind Me Later",
+    "dontShowAgain": "Don't Show Again"
+  }
+}

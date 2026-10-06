@@ -20,6 +20,7 @@ import {
   sessionDraftLocalModifiedAtAtom,
 } from "../../store/atoms/sessions";
 import { SessionAIInput } from "./SessionAIInput";
+import { useTranslation } from "@nimbalyst/runtime/i18n/react";
 import type { SlashCommandEntry } from "../Typeahead/slashCommandAutocomplete";
 import type { AIInputRef } from "./AIInput";
 import type { ActionPrompt } from "../../store/atoms/actionPrompts";
@@ -34,6 +35,7 @@ export const RemoteSessionTranscript = forwardRef<
   SessionTranscriptRef,
   SessionTranscriptProps
 >(({ sessionId, workspacePath }, ref) => {
+  const { t } = useTranslation("ai");
   const snapshot = useAtomValue(remoteSessionSnapshotAtom(sessionId));
   const connectionError = useAtomValue(remoteSessionErrorAtom(sessionId));
   const [prompt, setPrompt] = useAtom(sessionDraftInputAtom(sessionId));
@@ -165,7 +167,7 @@ export const RemoteSessionTranscript = forwardRef<
       await persistDraft("", []);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "The prompt could not be sent."
+        err instanceof Error ? err.message : t("remote.promptSendFailed")
       );
     } finally {
       setBusy(false);
@@ -183,7 +185,7 @@ export const RemoteSessionTranscript = forwardRef<
       setError(
         err instanceof Error
           ? err.message
-          : "The stop request could not be sent."
+          : t("remote.stopSendFailed")
       );
     }
   };
@@ -222,7 +224,7 @@ export const RemoteSessionTranscript = forwardRef<
         );
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "The Action could not be launched."
+        err instanceof Error ? err.message : t("remote.actionLaunchFailed")
       );
     } finally {
       setBusy(false);
@@ -238,18 +240,18 @@ export const RemoteSessionTranscript = forwardRef<
         data-testid="remote-session-status"
       >
         {!snapshot
-          ? "Connecting…"
+          ? t("remote.status.connecting")
           : snapshot.readOnlyReason
-          ? "History only"
+          ? t("remote.status.historyOnly")
           : !snapshot.hostOnline
-          ? "Host offline"
+          ? t("remote.status.hostOffline")
           : snapshot.syncing
-          ? "Loading transcript…"
+          ? t("remote.status.loading")
           : snapshot.executing
-          ? "Working"
-          : "Ready"}
+          ? t("remote.status.working")
+          : t("remote.status.ready")}
         {!!snapshot?.queuedPrompts.length && (
-          <span>{snapshot.queuedPrompts.length} queued</span>
+          <span>{t("queue.count", { count: snapshot.queuedPrompts.length })}</span>
         )}
       </div>
       {snapshot?.readOnlyReason && (
@@ -319,7 +321,7 @@ export const RemoteSessionTranscript = forwardRef<
           onModeChange={(mode) => updateOptions({ mode })}
           onModelChange={(model) => {
             if (!model.startsWith("claude-code:")) {
-              setError("This machine currently runs Claude Code models.");
+              setError(t("remote.claudeCodeOnly"));
               return;
             }
             updateOptions({ model });

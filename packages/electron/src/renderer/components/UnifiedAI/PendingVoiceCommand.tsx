@@ -8,6 +8,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { pendingVoiceCommandAtom } from '../../store/atoms/voiceModeState';
 
 // Global set of submitted command IDs to prevent duplicate submissions across component instances
@@ -19,6 +20,7 @@ interface PendingVoiceCommandProps {
 }
 
 export function PendingVoiceCommand({ sessionId, onSubmit }: PendingVoiceCommandProps) {
+  const { t } = useTranslation('ai');
   const [pendingCommand, setPendingCommand] = useAtom(pendingVoiceCommandAtom);
   const [remainingMs, setRemainingMs] = useState<number>(0);
   const [editedPrompt, setEditedPrompt] = useState<string>('');
@@ -141,12 +143,12 @@ export function PendingVoiceCommand({ sessionId, onSubmit }: PendingVoiceCommand
           className="flex items-center gap-2 text-[13px] font-medium text-nim-primary"
         >
           <MaterialSymbol icon="mic" size={18} />
-          Voice Command
+          {t('voice.pendingTitle')}
         </div>
         <button
           onClick={handleCancel}
           className="flex items-center justify-center w-6 h-6 border-none bg-transparent text-nim-muted cursor-pointer rounded transition-all duration-150 hover:bg-red-500/10 hover:text-nim-error"
-          title="Cancel (Esc)"
+          title={t('voice.cancelEsc')}
         >
           <MaterialSymbol icon="close" size={18} />
         </button>
@@ -162,7 +164,7 @@ export function PendingVoiceCommand({ sessionId, onSubmit }: PendingVoiceCommand
           onBlur={handleTextareaBlur}
           onKeyDown={handleKeyDown}
           className="w-full min-h-[60px] py-2.5 px-3 border border-nim rounded-md bg-nim-secondary text-nim font-inherit text-sm leading-normal resize-none transition-[border-color] duration-150"
-          placeholder="Voice command..."
+          placeholder={t('voice.placeholder')}
         />
       </div>
 
@@ -201,9 +203,9 @@ export function PendingVoiceCommand({ sessionId, onSubmit }: PendingVoiceCommand
           </div>
           <span className="text-[13px] font-medium text-nim-muted">
             {isEditing ? (
-              'Paused - editing'
+              t('voice.pausedEditing')
             ) : (
-              <>Sending in <span className="text-nim tabular-nums">{(remainingMs / 1000).toFixed(1)}s</span></>
+              <>{t('voice.sendingIn')} <span className="text-nim tabular-nums">{(remainingMs / 1000).toFixed(1)}s</span></>
             )}
           </span>
         </div>
@@ -217,13 +219,13 @@ export function PendingVoiceCommand({ sessionId, onSubmit }: PendingVoiceCommand
             className="flex items-center gap-1.5 py-1.5 px-3 border border-nim rounded-md bg-transparent text-nim-muted text-[13px] font-medium cursor-pointer transition-all duration-150 hover:bg-nim-secondary hover:border-nim-focus hover:text-nim"
           >
             <MaterialSymbol icon="edit" size={16} />
-            Edit
+            {t('voice.edit')}
           </button>
           <button
             onClick={handleSubmit}
             className="flex items-center gap-1.5 py-1.5 px-3.5 border-none rounded-md bg-nim-primary text-nim-on-primary text-[13px] font-medium cursor-pointer transition-all duration-150 hover:bg-nim-primary-hover"
           >
-            Send Now
+            {t('voice.sendNow')}
             <MaterialSymbol icon="arrow_forward" size={16} />
           </button>
         </div>
