@@ -477,7 +477,7 @@ export const TabEditor: React.FC<TabEditorProps> = ({
         if (sessionData) {
           setDiffSessionInfo({
             sessionId,
-            sessionTitle: sessionData.title || 'AI Session',
+            sessionTitle: sessionData.title || translate('editor:diff.fallbackSessionTitle'),
             editedAt: editedAt || Date.now(),
             provider: sessionData.provider
           });

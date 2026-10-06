@@ -103,5 +103,29 @@
     "copied": "Copiado!",
     "notAvailable": "Indisponível",
     "versionLabel": "Versão"
+  },
+  "mcpOAuth": {
+    "errors": {
+      "invalidConfig": "Configuração OAuth inválida.",
+      "timeout": "A autorização OAuth expirou. Tente novamente.",
+      "browserLaunch": "Não foi possível abrir a página de autorização. Verifique seu navegador padrão e tente novamente.",
+      "stalePendingAuth": "Outra autorização OAuth ainda está pendente. Limpe o cache de autenticação e tente novamente.",
+      "portConflict": "Outro processo está usando a porta de callback do OAuth. Limpe o cache de autenticação e tente novamente.",
+      "commandUnavailable": "Não foi possível iniciar o auxiliar de OAuth porque um comando necessário não está disponível.",
+      "providerRejected": "O provedor não aprovou a autorização.",
+      "dynamicRegistrationUnsupported": "Este provedor não oferece suporte ao registro dinâmico de clientes, então não pode ser autorizado por aqui. Adicione um ID de cliente OAuth pré-registrado para este servidor (oauth.staticClientInfo) e tente novamente. Limpar o cache de autenticação não vai ajudar.",
+      "callbackValidation": "Não foi possível validar o callback do OAuth. Tente novamente.",
+      "tokenExchange": "O provedor não aceitou a resposta de autorização. Tente novamente.",
+      "network": "Não foi possível acessar o provedor OAuth. Verifique sua conexão e tente novamente.",
+      "processError": "Não foi possível iniciar o auxiliar de OAuth.",
+      "processExit": "O auxiliar de OAuth foi encerrado antes de a autorização ser concluída.",
+      "processExitWithCode": "O auxiliar de OAuth foi encerrado antes de a autorização ser concluída (código de saída {{exitCode}}).",
+      "unknown": "A autorização OAuth falhou por um motivo desconhecido."
+    },
+    "commandNotFound": {
+      "npx": "Comando 'npx' não encontrado. É preciso instalar o Node.js para usar este servidor MCP.",
+      "node": "Comando 'node' não encontrado. É preciso instalar o Node.js para usar este servidor MCP.",
+      "generic": "Comando '{{command}}' não encontrado. Verifique se ele está instalado e disponível no seu PATH."
+    }
   }
 }

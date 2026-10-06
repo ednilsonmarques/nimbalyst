@@ -407,7 +407,10 @@
       "push": "Fazer push",
       "pushing": "Fazendo push…",
       "openLog": "Abrir log do Git",
-      "enableExtension": "Ativar extensão do Git…"
+      "enableExtension": "Ativar extensão do Git…",
+      "pullCompleted": "Pull concluído",
+      "pushCompleted": "Push concluído",
+      "actionFailed": "Falha ao executar git {{action}}"
     },
     "labels": {
       "filesSidebar": "barra lateral de arquivos",

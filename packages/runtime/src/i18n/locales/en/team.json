@@ -99,7 +99,8 @@
     "mention": {
       "aria": "Mention a person or agent",
       "people": "People",
-      "agents": "Agents in this conversation"
+      "agents": "Agents in this conversation",
+      "agentSessionOf": "@{{handle}} · session of {{owner}}"
     },
     "pill": {
       "notInWorkspace": "Not in your workspace",
@@ -201,7 +202,11 @@
     "lastUsed": "last used",
     "folderNamePlaceholder": "Folder name",
     "collapse": "Collapse",
-    "expand": "Expand"
+    "expand": "Expand",
+    "documentTypes": {
+      "code": "Text / Code",
+      "canvas": "Project Canvas"
+    }
   },
   "shareFolder": {
     "title": "Share Folder to Team",
@@ -648,7 +653,8 @@
     "submit": "Start conversation",
     "participants_zero": "{{count}} participants, including you.",
     "participants_one": "{{count}} participants, including you.",
-    "participants_other": "{{count}} participants, including you."
+    "participants_other": "{{count}} participants, including you.",
+    "startFailed": "Unable to start a direct message."
   },
   "roomsDirectory": {
     "showArchived": "Show archived",
@@ -759,7 +765,12 @@
       "settingsFor": "Organization settings for {{name}}",
       "waitingMembership": "Waiting for your organization membership to finish loading."
     },
-    "workspaceOrgLoadFailed": "Workspace organization could not be loaded."
+    "workspaceOrgLoadFailed": "Workspace organization could not be loaded.",
+    "directory": {
+      "partialLoad": "Some organizations could not be loaded. Retrying may restore the list.",
+      "accountStatusFailed": "Account status could not be loaded.",
+      "accountsFailed": "Accounts could not be loaded."
+    }
   },
   "projects": {
     "chooseFolderFor": "Choose a folder for {{name}}",
@@ -799,7 +810,8 @@
     "setAway": "Set yourself away",
     "accountSettingsFailed": "Could not open account settings.",
     "account": "Account",
-    "sessionExpired": "Session expired — reconnect"
+    "sessionExpired": "Session expired — reconnect",
+    "noWorkspaceWindow": "No workspace window is available for account settings."
   },
   "feedback": {
     "age": {

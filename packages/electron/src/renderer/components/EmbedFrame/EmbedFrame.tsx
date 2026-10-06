@@ -869,7 +869,7 @@ export const EmbedFrame: React.FC<EmbedFrameProps> = (props) => {
             className="px-2 py-1 rounded border border-nim text-nim hover:bg-nim-active"
             data-testid="embed-save-failure-retry"
           >
-            Retry
+            {t('common:retry')}
           </button>
         </div>
       )}

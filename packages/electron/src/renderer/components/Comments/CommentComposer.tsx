@@ -584,7 +584,7 @@ export function CommentComposer({
             onClick={onCancel}
             className="comment-composer-cancel ml-auto shrink-0 rounded-md px-2.5 py-1 text-[12px] text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-hover)]"
           >
-            Cancel
+            {t('common:cancel')}
           </button>
         )}
 

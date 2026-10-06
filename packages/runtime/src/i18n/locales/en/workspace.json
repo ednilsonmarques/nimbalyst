@@ -407,7 +407,10 @@
       "push": "Push",
       "pushing": "Pushing…",
       "openLog": "Open Git Log",
-      "enableExtension": "Enable Git Extension…"
+      "enableExtension": "Enable Git Extension…",
+      "pullCompleted": "Pull completed",
+      "pushCompleted": "Push completed",
+      "actionFailed": "Git {{action}} failed"
     },
     "labels": {
       "filesSidebar": "Files sidebar",

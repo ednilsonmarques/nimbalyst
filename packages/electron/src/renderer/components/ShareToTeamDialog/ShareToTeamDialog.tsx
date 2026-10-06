@@ -34,6 +34,24 @@ export interface ShareToTeamDialogProps {
 
 const EMPTY_EMBEDDED_DOCUMENTS: EmbeddedDocumentCandidate[] = [];
 
+// Display-only labels for the built-in document types. The catalog keeps its
+// English displayName (it is also used as data elsewhere); only the label shown
+// in this dialog is localized.
+const BUILTIN_DOCUMENT_TYPE_LABEL_KEYS: Record<string, string> = {
+  code: 'shareToTeam.documentTypes.code',
+  canvas: 'shareToTeam.documentTypes.canvas',
+};
+
+function documentTypeLabel(
+  descriptor: CollaborativeDocumentTypeDescriptor,
+  t: (key: string) => string,
+): string {
+  const key = descriptor.creation?.source === 'builtin'
+    ? BUILTIN_DOCUMENT_TYPE_LABEL_KEYS[descriptor.documentType]
+    : undefined;
+  return key ? t(key) : descriptor.displayName;
+}
+
 export function splitShareFileName(
   fileName: string,
   descriptor: CollaborativeDocumentTypeDescriptor,
@@ -238,7 +256,7 @@ export function ShareToTeamDialog({
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-medium text-[var(--nim-text)] truncate">{fileName}</div>
               <div className="text-[11px] text-[var(--nim-text-faint)] truncate">
-                {descriptor.displayName} · {sourceRelPath}
+                {documentTypeLabel(descriptor, t)} · {sourceRelPath}
               </div>
             </div>
           </div>
@@ -329,7 +347,7 @@ export function ShareToTeamDialog({
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium">{document.fileName}</span>
                         <span className="block truncate text-[11px] text-[var(--nim-text-faint)]">
-                          {document.descriptor.displayName}
+                          {documentTypeLabel(document.descriptor, t)}
                         </span>
                       </span>
                       {document.alreadyShared && (

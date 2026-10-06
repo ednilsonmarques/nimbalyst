@@ -184,7 +184,7 @@ function CandidateRow({
           {agent.sessionName}
         </span>
         <span className="mention-picker-handle block truncate text-[11px] text-[var(--nim-text-faint)]">
-          @{agent.handle} · session of {agent.ownerDisplayName}
+          {t('comments.mention.agentSessionOf', { handle: agent.handle, owner: agent.ownerDisplayName })}
         </span>
       </span>
     </button>

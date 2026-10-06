@@ -21,6 +21,15 @@ const AGENT_FEATURE_TAGS: AlphaFeatureTag[] = [
   'meta-agent',
 ];
 
+// Localized descriptions for the alpha features shown here, looked up by tag at
+// render time. The shared registry keeps its English text; feature names are
+// product names and stay as-is.
+const ALPHA_FEATURE_DESCRIPTION_KEYS: Partial<Record<AlphaFeatureTag, string>> = {
+  'super-loops': 'agentFeatures.alpha.superLoops',
+  blitz: 'agentFeatures.alpha.blitz',
+  'meta-agent': 'agentFeatures.alpha.metaAgent',
+};
+
 interface WorkflowSourceSettings {
   workspaceClaudeCompatibilityEnabled: boolean;
   includeProjectClaudeSources: boolean;
@@ -468,7 +477,11 @@ export function AgentFeaturesPanel() {
             checked={alphaFeatures[feature.tag] ?? false}
             onChange={(checked) => handleAlphaToggle(feature.tag, checked)}
             name={feature.name}
-            description={feature.description}
+            description={
+              ALPHA_FEATURE_DESCRIPTION_KEYS[feature.tag]
+                ? t(ALPHA_FEATURE_DESCRIPTION_KEYS[feature.tag]!)
+                : feature.description
+            }
           />
         ))}
 

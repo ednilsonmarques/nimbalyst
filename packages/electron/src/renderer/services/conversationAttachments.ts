@@ -122,7 +122,7 @@ export function preflightAttachment(file: {
     return {
       ok: false,
       code: 'empty',
-      message: `${file.name} is empty.`,
+      message: translate('general:attachments.empty', { file: file.name }),
     };
   }
 
@@ -134,7 +134,11 @@ export function preflightAttachment(file: {
     return {
       ok: false,
       code: 'tooLarge',
-      message: `${file.name} is ${formatByteSize(file.size)}. Attachments are limited to ${formatByteSize(MAX_MESSAGE_ATTACHMENT_BYTES)}.`,
+      message: translate('general:attachments.tooLarge', {
+        file: file.name,
+        size: formatByteSize(file.size),
+        max: formatByteSize(MAX_MESSAGE_ATTACHMENT_BYTES),
+      }),
     };
   }
 
@@ -189,7 +193,11 @@ export async function uploadConversationAttachment(
   if (blob.size > MAX_MESSAGE_ATTACHMENT_BYTES) {
     throw new AttachmentError(
       'tooLarge',
-      `${file.name} is ${formatByteSize(blob.size)} after compression. Attachments are limited to ${formatByteSize(MAX_MESSAGE_ATTACHMENT_BYTES)}.`,
+      translate('general:attachments.tooLargeAfterCompression', {
+        file: file.name,
+        size: formatByteSize(blob.size),
+        max: formatByteSize(MAX_MESSAGE_ATTACHMENT_BYTES),
+      }),
     );
   }
 

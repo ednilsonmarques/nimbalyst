@@ -99,7 +99,8 @@
     "mention": {
       "aria": "Mencionar uma pessoa ou um agente",
       "people": "Pessoas",
-      "agents": "Agentes nesta conversa"
+      "agents": "Agentes nesta conversa",
+      "agentSessionOf": "@{{handle}} · sessão de {{owner}}"
     },
     "pill": {
       "notInWorkspace": "Fora do seu espaço de trabalho",
@@ -201,7 +202,11 @@
     "lastUsed": "último usado",
     "folderNamePlaceholder": "Nome da pasta",
     "collapse": "Recolher",
-    "expand": "Expandir"
+    "expand": "Expandir",
+    "documentTypes": {
+      "code": "Texto / Código",
+      "canvas": "Canvas do projeto"
+    }
   },
   "shareFolder": {
     "title": "Compartilhar pasta com a equipe",
@@ -648,7 +653,8 @@
     "submit": "Iniciar conversa",
     "participants_zero": "{{count}} participantes, incluindo você.",
     "participants_one": "{{count}} participante, incluindo você.",
-    "participants_other": "{{count}} participantes, incluindo você."
+    "participants_other": "{{count}} participantes, incluindo você.",
+    "startFailed": "Não foi possível iniciar uma mensagem direta."
   },
   "roomsDirectory": {
     "showArchived": "Mostrar arquivadas",
@@ -759,7 +765,12 @@
       "settingsFor": "Configurações da organização {{name}}",
       "waitingMembership": "Aguardando o carregamento da sua participação na organização."
     },
-    "workspaceOrgLoadFailed": "Não foi possível carregar a organização do espaço de trabalho."
+    "workspaceOrgLoadFailed": "Não foi possível carregar a organização do espaço de trabalho.",
+    "directory": {
+      "partialLoad": "Não foi possível carregar algumas organizações. Tentar novamente pode restaurar a lista.",
+      "accountStatusFailed": "Não foi possível carregar o status da conta.",
+      "accountsFailed": "Não foi possível carregar as contas."
+    }
   },
   "projects": {
     "chooseFolderFor": "Escolha uma pasta para {{name}}",
@@ -799,7 +810,8 @@
     "setAway": "Ficar ausente",
     "accountSettingsFailed": "Não foi possível abrir as configurações da conta.",
     "account": "Conta",
-    "sessionExpired": "Sessão expirada — reconecte"
+    "sessionExpired": "Sessão expirada — reconecte",
+    "noWorkspaceWindow": "Nenhuma janela de espaço de trabalho está disponível para as configurações da conta."
   },
   "feedback": {
     "age": {

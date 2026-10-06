@@ -702,7 +702,8 @@
       "saving": "Saving…",
       "rename": "Rename",
       "unnamed": "Unnamed organization",
-      "ownedBy": "Owned by {{email}}"
+      "ownedBy": "Owned by {{email}}",
+      "renameFailed": "Could not rename organization"
     },
     "messaging": {
       "title": "Messaging",
@@ -1005,7 +1006,8 @@
       "addUrlPattern": "Failed to add URL pattern",
       "removeUrlPattern": "Failed to remove URL pattern",
       "allowAllDomains": "Failed to allow all domains",
-      "revokeAllDomains": "Failed to revoke all domains permission"
+      "revokeAllDomains": "Failed to revoke all domains permission",
+      "load": "Failed to load workspace permissions"
     },
     "trust": {
       "title": "Workspace Trust",
@@ -1043,7 +1045,9 @@
       "patternPlaceholder": "URL pattern (e.g., *.github.com)",
       "descriptionPlaceholder": "Description (optional)",
       "add": "Add URL Pattern",
-      "allowAll": "Allow All Domains"
+      "allowAll": "Allow All Domains",
+      "allowFetchingFrom": "Allow fetching from {{domain}}",
+      "allUrlsAllowed": "All URLs allowed"
     },
     "patterns": {
       "title": "Allowed Patterns",
@@ -1168,6 +1172,14 @@
       "updatingMany_zero": "Updating {{count}} extensions...",
       "updatingMany_one": "Updating {{count}} extension...",
       "updatingMany_other": "Updating {{count}} extensions..."
+    },
+    "progress": {
+      "installing": "Installing {{id}}...",
+      "checkingRelease": "Checking for release artifact...",
+      "downloadingRelease": "Downloading {{asset}} ({{tag}})...",
+      "installedFromRelease": "Installed {{id}} from release {{tag}}",
+      "cloningSource": "No release artifact found, cloning source...",
+      "installedFromSource": "Installed {{id}} from source"
     }
   },
   "installedExtensions": {
@@ -1585,6 +1597,11 @@
         "name": "Show Prompt Additions",
         "description": "Display system prompt additions and context that Nimbalyst appends to Claude Code requests."
       }
+    },
+    "alpha": {
+      "superLoops": "Enable Super Loops for iterative agent workflows in dedicated worktrees.",
+      "blitz": "Run the same prompt on multiple isolated worktrees to make more than one attempt at a task.",
+      "metaAgent": "Enable meta-agent sessions that orchestrate and delegate work to child sessions."
     }
   },
   "themes": {
@@ -1889,7 +1906,8 @@
       "checkStatusFailed": "Failed to check Codex auth status",
       "loginFailed": "Login failed",
       "logoutFailed": "Logout failed",
-      "enterApiKeyFirst": "Enter an API key first"
+      "enterApiKeyFirst": "Enter an API key first",
+      "cliUnavailable": "Codex CLI is unavailable."
     },
     "codexWindowsSandbox": {
       "title": "Windows sandbox",

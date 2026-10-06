@@ -41,8 +41,7 @@ export async function changeProviderCredential(
     )) as ProviderCredentialSnapshot;
     store.set(providerCredentialsAtom, result);
   } catch {
-    const message =
-      "Could not confirm the API key change. Unlock secure storage, refresh, and retry.";
+    const message = translate("general:providerCredentials.changeFailed");
     store.set(providerCredentialErrorAtom, message);
     throw new Error(message);
   }

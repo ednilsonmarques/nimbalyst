@@ -1,3 +1,4 @@
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import type {
   OrgSettings,
   OrgSettingsChangedEvent,
@@ -23,7 +24,7 @@ export async function renameOrganization(
 ): Promise<{ orgId: string; name: string }> {
   const result = await window.electronAPI.organization.rename(orgId, name);
   if (!result?.success || !result.organization) {
-    throw new Error(result?.error || 'Could not rename organization');
+    throw new Error(result?.error || translate('settings:organization.identity.renameFailed'));
   }
   return result.organization;
 }

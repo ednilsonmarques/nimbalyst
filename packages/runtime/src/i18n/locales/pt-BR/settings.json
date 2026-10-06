@@ -702,7 +702,8 @@
       "saving": "Salvando…",
       "rename": "Renomear",
       "unnamed": "Organização sem nome",
-      "ownedBy": "Proprietário: {{email}}"
+      "ownedBy": "Proprietário: {{email}}",
+      "renameFailed": "Não foi possível renomear a organização"
     },
     "messaging": {
       "title": "Mensagens",
@@ -1005,7 +1006,8 @@
       "addUrlPattern": "Falha ao adicionar o padrão de URL",
       "removeUrlPattern": "Falha ao remover o padrão de URL",
       "allowAllDomains": "Falha ao permitir todos os domínios",
-      "revokeAllDomains": "Falha ao revogar a permissão para todos os domínios"
+      "revokeAllDomains": "Falha ao revogar a permissão para todos os domínios",
+      "load": "Falha ao carregar as permissões do espaço de trabalho"
     },
     "trust": {
       "title": "Confiança no espaço de trabalho",
@@ -1043,7 +1045,9 @@
       "patternPlaceholder": "Padrão de URL (ex.: *.github.com)",
       "descriptionPlaceholder": "Descrição (opcional)",
       "add": "Adicionar padrão de URL",
-      "allowAll": "Permitir todos os domínios"
+      "allowAll": "Permitir todos os domínios",
+      "allowFetchingFrom": "Permitir acesso a {{domain}}",
+      "allUrlsAllowed": "Todas as URLs permitidas"
     },
     "patterns": {
       "title": "Padrões permitidos",
@@ -1168,6 +1172,14 @@
       "updatingMany_zero": "Atualizando {{count}} extensões...",
       "updatingMany_one": "Atualizando {{count}} extensão...",
       "updatingMany_other": "Atualizando {{count}} extensões..."
+    },
+    "progress": {
+      "installing": "Instalando {{id}}...",
+      "checkingRelease": "Procurando artefato de release...",
+      "downloadingRelease": "Baixando {{asset}} ({{tag}})...",
+      "installedFromRelease": "{{id}} instalado a partir da release {{tag}}",
+      "cloningSource": "Nenhum artefato de release encontrado, clonando o código-fonte...",
+      "installedFromSource": "{{id}} instalado a partir do código-fonte"
     }
   },
   "installedExtensions": {
@@ -1585,6 +1597,11 @@
         "name": "Mostrar acréscimos ao prompt",
         "description": "Exibe os acréscimos ao prompt de sistema e o contexto que o Nimbalyst anexa às requisições do Claude Code."
       }
+    },
+    "alpha": {
+      "superLoops": "Ativa os Super Loops para fluxos de trabalho iterativos de agentes em worktrees dedicadas.",
+      "blitz": "Executa o mesmo prompt em várias worktrees isoladas para fazer mais de uma tentativa em uma tarefa.",
+      "metaAgent": "Ativa sessões de meta-agente que orquestram e delegam trabalho para sessões filhas."
     }
   },
   "themes": {
@@ -1889,7 +1906,8 @@
       "checkStatusFailed": "Falha ao verificar o status de autenticação do Codex",
       "loginFailed": "Falha no login",
       "logoutFailed": "Falha ao sair",
-      "enterApiKeyFirst": "Insira uma chave de API primeiro"
+      "enterApiKeyFirst": "Insira uma chave de API primeiro",
+      "cliUnavailable": "O Codex CLI não está disponível."
     },
     "codexWindowsSandbox": {
       "title": "Sandbox do Windows",

@@ -65,7 +65,8 @@
       "daysAgo_zero": "há {{count}} dias",
       "daysAgo_one": "há {{count}} dia",
       "daysAgo_other": "há {{count}} dias"
-    }
+    },
+    "fallbackSessionTitle": "Sessão de IA"
   },
   "errorBoundary": {
     "title": "Não foi possível carregar o editor",

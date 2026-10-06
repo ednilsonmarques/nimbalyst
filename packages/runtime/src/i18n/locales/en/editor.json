@@ -65,7 +65,8 @@
       "daysAgo_zero": "{{count}} days ago",
       "daysAgo_one": "{{count}} day ago",
       "daysAgo_other": "{{count}} days ago"
-    }
+    },
+    "fallbackSessionTitle": "AI Session"
   },
   "errorBoundary": {
     "title": "Unable to Load Editor",

@@ -1580,7 +1580,7 @@ export const CollaborativeTabEditor: React.FC<CollaborativeTabEditorProps> = ({
           />
         ) : (
           <div className="flex items-center justify-center h-full text-nim-muted">
-            No editor available for document type: {documentType}
+            {t('collab.missingEditor.noEditor', { documentType })}
           </div>
         )}
       </div>

@@ -815,7 +815,8 @@
       "dontSave": "Não salvar"
     },
     "agentNeedsWorkspace": "O modo Agente requer um espaço de trabalho",
-    "agentNeedsWorkspaceHint": "Abra um espaço de trabalho para usar os recursos de agente"
+    "agentNeedsWorkspaceHint": "Abra um espaço de trabalho para usar os recursos de agente",
+    "openWorkspaceToStart": "Abra um espaço de trabalho para começar"
   },
   "share": {
     "couldNotShare": "Não foi possível compartilhar com a equipe",
@@ -941,10 +942,14 @@
   "attachments": {
     "storageBudget": "Sem espaço local para envios pendentes. Aguarde os anexos anteriores terminarem de ser enviados e tente novamente.",
     "uploadFailedWithReason": "Não foi possível anexar {{file}}: {{message}}",
-    "uploadFailed": "Não foi possível anexar {{file}}."
+    "uploadFailed": "Não foi possível anexar {{file}}.",
+    "empty": "{{file}} está vazio.",
+    "tooLarge": "{{file}} tem {{size}}. Os anexos são limitados a {{max}}.",
+    "tooLargeAfterCompression": "{{file}} tem {{size}} após a compressão. Os anexos são limitados a {{max}}."
   },
   "providerCredentials": {
-    "loadFailed": "Não foi possível carregar as chaves de API salvas. Tente novamente quando o armazenamento seguro estiver disponível."
+    "loadFailed": "Não foi possível carregar as chaves de API salvas. Tente novamente quando o armazenamento seguro estiver disponível.",
+    "changeFailed": "Não foi possível confirmar a alteração da chave de API. Desbloqueie o armazenamento seguro, atualize e tente novamente."
   },
   "audio": {
     "noMicrophone": "Nenhum microfone utilizável foi encontrado. Conecte ou ative um microfone, verifique as configurações de microfone do sistema e tente novamente."

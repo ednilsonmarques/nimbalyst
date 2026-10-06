@@ -815,7 +815,8 @@
       "dontSave": "Don't Save"
     },
     "agentNeedsWorkspace": "Agent mode requires a workspace",
-    "agentNeedsWorkspaceHint": "Open a workspace to use agent features"
+    "agentNeedsWorkspaceHint": "Open a workspace to use agent features",
+    "openWorkspaceToStart": "Open a workspace to get started"
   },
   "share": {
     "couldNotShare": "Could not share to team",
@@ -941,10 +942,14 @@
   "attachments": {
     "storageBudget": "Out of local space for pending uploads. Wait for earlier attachments to finish sending, then try again.",
     "uploadFailedWithReason": "{{file}} could not be attached: {{message}}",
-    "uploadFailed": "{{file}} could not be attached."
+    "uploadFailed": "{{file}} could not be attached.",
+    "empty": "{{file}} is empty.",
+    "tooLarge": "{{file}} is {{size}}. Attachments are limited to {{max}}.",
+    "tooLargeAfterCompression": "{{file}} is {{size}} after compression. Attachments are limited to {{max}}."
   },
   "providerCredentials": {
-    "loadFailed": "Could not load saved API keys. Retry when secure storage is available."
+    "loadFailed": "Could not load saved API keys. Retry when secure storage is available.",
+    "changeFailed": "Could not confirm the API key change. Unlock secure storage, refresh, and retry."
   },
   "audio": {
     "noMicrophone": "No usable microphone was found. Connect or enable a microphone, check your system microphone settings, and try again."

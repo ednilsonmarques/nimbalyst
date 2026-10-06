@@ -40,7 +40,7 @@ export function useOrgProjectLocalStates(orgId: string): {
     void window.electronAPI.team.resolveOrgProjectsLocalState(orgId)
       .then((result) => {
         if (cancelled) return;
-        if (!result?.success) throw new Error(result?.error ?? 'Could not load projects');
+        if (!result?.success) throw new Error(result?.error ?? translate('team:projects.loadFailedShort'));
         setProjects(result.projects ?? []);
       })
       .catch((reason) => {

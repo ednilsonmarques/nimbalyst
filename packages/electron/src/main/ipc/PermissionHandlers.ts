@@ -115,7 +115,7 @@ export function registerPermissionHandlers(): void {
           const domain = match ? match[1] : pattern;
           return {
             pattern: domain,
-            description: `Allow fetching from ${domain}`,
+            description: t('settings:projectPermissions.urls.allowFetchingFrom', { domain }),
             addedAt: Date.now() - index,
           };
         });
@@ -387,11 +387,15 @@ export function registerPermissionHandlers(): void {
         .filter(p => p.startsWith('WebFetch'))
         .map((pattern, index) => {
           if (pattern === 'WebFetch') {
-            return { pattern: '*', description: 'All URLs allowed', addedAt: Date.now() - index };
+            return { pattern: '*', description: t('settings:projectPermissions.urls.allUrlsAllowed'), addedAt: Date.now() - index };
           }
           const match = pattern.match(/^WebFetch\(domain:(.+)\)$/);
           const domain = match ? match[1] : pattern;
-          return { pattern: domain, description: `Allow fetching from ${domain}`, addedAt: Date.now() - index };
+          return {
+            pattern: domain,
+            description: t('settings:projectPermissions.urls.allowFetchingFrom', { domain }),
+            addedAt: Date.now() - index,
+          };
         });
     } catch (error) {
       logger.main.error('[PermissionHandlers] Failed to get allowed URL patterns:', error);

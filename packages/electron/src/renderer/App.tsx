@@ -1421,13 +1421,15 @@ export default function App() {
     try {
       const result = await window.electronAPI.invoke(`git:${action}`, gitRepoPath);
       if (!result?.success) {
-        throw new Error(result?.error || `Git ${action} failed`);
+        throw new Error(result?.error || translate('workspace:topBar.git.actionFailed', { action }));
       }
       setGitActionState({
         busyAction: null,
         feedback: {
           kind: 'success',
-          message: action === 'pull' ? 'Pull completed' : 'Push completed',
+          message: action === 'pull'
+            ? translate('workspace:topBar.git.pullCompleted')
+            : translate('workspace:topBar.git.pushCompleted'),
         },
       });
     } catch (error) {
@@ -2980,7 +2982,7 @@ export default function App() {
                 </TabsProvider>
               ) : (
                 <WorkspaceWelcome
-                  workspaceName="Open a workspace to get started"
+                  workspaceName={translate('general:app.openWorkspaceToStart')}
                   hasWorkspace={false}
                 />
               )}

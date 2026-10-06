@@ -19,6 +19,7 @@ import { spawn } from 'child_process';
 import AdmZip from 'adm-zip';
 import { BrowserWindow, net } from 'electron';
 import { AI_PROVIDER_TYPES } from '@nimbalyst/runtime/ai/server/types';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { logger } from '../utils/logger';
 import { safeHandle } from '../utils/ipcRegistry';
 import { getUserExtensionsDirectory, initializeExtensionFileTypes } from './ExtensionHandlers';
@@ -401,7 +402,7 @@ async function installFromPackageUrl(opts: InstallFromPackageUrlOptions): Promis
     const finalInstallPath = path.join(extensionsDir, extensionId);
 
     // 5. Replace any existing installation by moving staging to final
-    progress({ stage: 'installing', message: `Installing ${extensionId}...` });
+    progress({ stage: 'installing', message: translate('settings:marketplace.progress.installing', { id: extensionId }) });
     await fs.rm(finalInstallPath, { recursive: true, force: true });
     await fs.rename(stagingPath, finalInstallPath);
     stagingPath = null; // Moved successfully; do not clean up in finally
@@ -482,7 +483,7 @@ async function installFromGitHub(
   const [owner, repoName] = repo.split('/');
 
   logger.main.info(`[ExtMarketplace] GitHub install: ${githubUrl} -- trying release asset`);
-  progress({ stage: 'checking-release', message: 'Checking for release artifact...' });
+  progress({ stage: 'checking-release', message: translate('settings:marketplace.progress.checkingRelease') });
 
   // ---- Path 1: release asset ----------------------------------------------
   let release: GitHubRelease | null = null;
@@ -499,7 +500,10 @@ async function installFromGitHub(
     const asset = selectReleaseAsset(release.assets, { repoName, subdir });
     if (asset) {
       logger.main.info(`[ExtMarketplace] GitHub install: ${githubUrl} -- using release asset ${asset.name} (tag ${release.tag_name})`);
-      progress({ stage: 'downloading-release', message: `Downloading ${asset.name} (${release.tag_name})...` });
+      progress({
+        stage: 'downloading-release',
+        message: translate('settings:marketplace.progress.downloadingRelease', { asset: asset.name, tag: release.tag_name }),
+      });
 
       const releaseTag = release.tag_name;
       const releaseResult = await installFromPackageUrl({
@@ -524,7 +528,10 @@ async function installFromGitHub(
       if (releaseResult.success) {
         progress({
           stage: 'done',
-          message: `Installed ${releaseResult.extensionId} from release ${releaseTag}`,
+          message: translate('settings:marketplace.progress.installedFromRelease', {
+            id: releaseResult.extensionId,
+            tag: releaseTag,
+          }),
         });
       }
       // Hard fail: do not fall through if the release asset was present but broken.
@@ -536,7 +543,7 @@ async function installFromGitHub(
   }
 
   // ---- Path 2: clone-source fallback -------------------------------------
-  progress({ stage: 'cloning', message: 'No release artifact found, cloning source...' });
+  progress({ stage: 'cloning', message: translate('settings:marketplace.progress.cloningSource') });
   return installFromGitHubCloneSource(githubUrl, repo, subdir, progress);
 }
 
@@ -618,7 +625,7 @@ async function installFromGitHubCloneSource(
     }
 
     // Validation passed -- safe to replace any existing installation.
-    progress({ stage: 'installing', message: `Installing ${extensionId}...` });
+    progress({ stage: 'installing', message: translate('settings:marketplace.progress.installing', { id: extensionId }) });
     await fs.rm(installPath, { recursive: true, force: true });
     await copyDirectory(sourceDir, installPath);
 
@@ -640,7 +647,7 @@ async function installFromGitHubCloneSource(
     notifyExtensionsChanged(extensionId, installPath);
 
     logger.main.info(`[ExtMarketplace] [github-clone] installed ${extensionId} v${manifest.version ?? '0.0.0'}`);
-    progress({ stage: 'done', message: `Installed ${extensionId} from source` });
+    progress({ stage: 'done', message: translate('settings:marketplace.progress.installedFromSource', { id: extensionId }) });
     return { success: true, extensionId };
 
   } catch (err) {

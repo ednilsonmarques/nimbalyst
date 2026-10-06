@@ -12,6 +12,7 @@
  */
 
 import { store } from '@nimbalyst/runtime/store';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { stytchAuthAtom, type StytchAuthSnapshot } from '../atoms/stytchAuth';
 import {
   organizationDirectoryStateAtom,
@@ -60,7 +61,7 @@ export async function refreshPersonalAccountsDirectory(): Promise<PersonalAccoun
     return [];
   }
   const accounts = await stytch.getAccounts();
-  if (!Array.isArray(accounts)) throw new Error('Accounts could not be loaded.');
+  if (!Array.isArray(accounts)) throw new Error(translate('team:orgMode.directory.accountsFailed'));
   store.set(personalAccountsAtom, accounts as PersonalAccountSummary[]);
   // Explicit account changes also invalidate any directory request in flight.
   directoryLoader?.refresh();
@@ -83,12 +84,12 @@ export function initStytchAuthListeners(): () => void {
   const loader = createOrganizationDirectoryLoader({
     getAuth: async () => {
       const state = await stytch.getAuthState();
-      if (!state) throw new Error('Account status could not be loaded.');
+      if (!state) throw new Error(translate('team:orgMode.directory.accountStatusFailed'));
       return { isAuthenticated: !!state.isAuthenticated, user: state.user ?? null };
     },
     getAccounts: async () => {
       const accounts = await stytch.getAccounts();
-      if (!Array.isArray(accounts)) throw new Error('Accounts could not be loaded.');
+      if (!Array.isArray(accounts)) throw new Error(translate('team:orgMode.directory.accountsFailed'));
       return accounts as PersonalAccountSummary[];
     },
     list: (options) => window.electronAPI.team.list(options),

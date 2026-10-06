@@ -103,5 +103,29 @@
     "copied": "Copied!",
     "notAvailable": "Not available",
     "versionLabel": "Version"
+  },
+  "mcpOAuth": {
+    "errors": {
+      "invalidConfig": "Invalid OAuth configuration.",
+      "timeout": "OAuth authorization timed out. Please try again.",
+      "browserLaunch": "The authorization page could not be opened. Check your default browser and try again.",
+      "stalePendingAuth": "Another OAuth authorization is still pending. Clear the auth cache and try again.",
+      "portConflict": "Another process is using the OAuth callback port. Clear the auth cache and try again.",
+      "commandUnavailable": "The OAuth helper could not be started because a required command is unavailable.",
+      "providerRejected": "The provider did not approve authorization.",
+      "dynamicRegistrationUnsupported": "This provider does not support dynamic client registration, so it cannot be authorized from here. Add a pre-registered OAuth client ID for this server (oauth.staticClientInfo) and try again. Clearing the auth cache will not help.",
+      "callbackValidation": "The OAuth callback could not be validated. Please try again.",
+      "tokenExchange": "The provider did not accept the authorization response. Please try again.",
+      "network": "The OAuth provider could not be reached. Check your connection and try again.",
+      "processError": "The OAuth helper could not be started.",
+      "processExit": "The OAuth helper exited before authorization completed.",
+      "processExitWithCode": "The OAuth helper exited before authorization completed (exit code {{exitCode}}).",
+      "unknown": "OAuth authorization failed for an unknown reason."
+    },
+    "commandNotFound": {
+      "npx": "Command 'npx' not found. Node.js needs to be installed to use this MCP server.",
+      "node": "Command 'node' not found. Node.js needs to be installed to use this MCP server.",
+      "generic": "Command '{{command}}' not found. Please ensure it is installed and available in your PATH."
+    }
   }
 }
