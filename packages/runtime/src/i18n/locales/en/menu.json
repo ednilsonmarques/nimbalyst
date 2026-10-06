@@ -11,7 +11,9 @@
   },
   "windowList": {
     "openProjects": "Open Projects",
-    "openDocuments": "Open Documents"
+    "openDocuments": "Open Documents",
+    "untitled": "Untitled",
+    "about": "About"
   },
   "file": {
     "title": "File",

@@ -100,15 +100,15 @@ function createWindowListMenu(): any[] {
 
         const windowId = getWindowId(window);
         const state = windowId !== null ? windowStates.get(windowId) : undefined;
-        let title = 'Untitled';
+        let title = t('menu:windowList.untitled');
         let category: 'workspace' | 'document' | 'other' = 'document';
 
         // Check for special windows first
         if (isWorkspaceManagerWindow(window)) {
-            title = 'Project Manager';
+            title = t('menu:window.projectManager');
             category = 'other';
         } else if (isAboutWindow(window)) {
-            title = 'About';
+            title = t('menu:windowList.about');
             category = 'other';
         } else if (state) {
             if (state.mode === 'workspace' && state.workspacePath) {

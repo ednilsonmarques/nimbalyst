@@ -2,8 +2,18 @@ import { app, BrowserWindow, nativeTheme } from 'electron';
 import { join } from 'path';
 import { getPreloadPath } from '../utils/appPaths';
 import { getTheme } from '../utils/store';
+import { getLanguage, t } from '@nimbalyst/runtime/i18n';
 
 let aboutWindow: BrowserWindow | null = null;
+
+/** Localized strings for about.html, passed in the URL hash (the page has no i18n runtime). */
+function aboutStringsHash(): string {
+    const strings: Record<string, string> = { lang: getLanguage() };
+    for (const key of ['version', 'versionLabel', 'description', 'featureEditors', 'featureSessions', 'featureTracking', 'featureStorage', 'builtWith', 'thirdPartyNotices', 'supportIdLabel', 'clickToCopy', 'loading', 'copied', 'notAvailable']) {
+        strings[key] = t(`system:about.${key}`);
+    }
+    return `i18n=${encodeURIComponent(JSON.stringify(strings))}`;
+}
 
 export function createAboutWindow() {
     if (aboutWindow && !aboutWindow.isDestroyed()) {
@@ -37,7 +47,7 @@ export function createAboutWindow() {
     // In production, the file is copied to the renderer output directory
     // In development, it's served by the dev server
     if (process.env['ELECTRON_RENDERER_URL']) {
-        aboutWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/about.html`);
+        aboutWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/about.html#${aboutStringsHash()}`);
     } else {
         // Note: Due to code splitting, __dirname is out/main/chunks/, not out/main/
         // Use app.getAppPath() to reliably find the renderer
@@ -50,7 +60,7 @@ export function createAboutWindow() {
         } else {
             htmlPath = join(appPath, 'out/renderer/about.html');
         }
-        aboutWindow.loadFile(htmlPath);
+        aboutWindow.loadFile(htmlPath, { hash: aboutStringsHash() });
     }
 
     aboutWindow.once('ready-to-show', () => {

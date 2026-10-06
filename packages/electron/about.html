@@ -268,41 +268,61 @@
       <div class="about-logo">
         <img src="nimbalyst-logo.png" alt="Nimbalyst">
       </div>
-      <p class="about-version" id="about-version">Version</p>
+      <p class="about-version" id="about-version" data-i18n="versionLabel">Version</p>
 
-      <p class="about-description">
+      <p class="about-description" data-i18n="description">
         Nimbalyst is the visual workspace for building with Codex and Claude Code
       </p>
 
       <div class="about-features">
         <ul>
-          <li>Agentic WYSIWYG visual editors for markdown, mockups, excalidraw, mermaid, data models, csv and code. Extensions.</li>
-          <li>Parallel session management and kanban to understand session state, search and resume sessions, and link sessions to files and files to sessions</li>
-          <li>Item tracking and kanban to manage plans, bugs, and tasks with your agent</li>
-          <li>Open storage of content and status in plain files on disk and git.</li>
+          <li data-i18n="featureEditors">Agentic WYSIWYG visual editors for markdown, mockups, excalidraw, mermaid, data models, csv and code. Extensions.</li>
+          <li data-i18n="featureSessions">Parallel session management and kanban to understand session state, search and resume sessions, and link sessions to files and files to sessions</li>
+          <li data-i18n="featureTracking">Item tracking and kanban to manage plans, bugs, and tasks with your agent</li>
+          <li data-i18n="featureStorage">Open storage of content and status in plain files on disk and git.</li>
         </ul>
       </div>
 
       <div class="about-footer">
-        <p>Built with ❤️ by <a href="https://nimbalyst.com" id="nimbalyst-link">Nimbalyst</a></p>
+        <p><span data-i18n="builtWith">Built with ❤️ by</span> <a href="https://nimbalyst.com" id="nimbalyst-link">Nimbalyst</a></p>
         <p class="about-copyright">© 2025-2026  Nimbalyst</p>
-        <p><a href="#" id="third-party-notices-link">Third-Party Notices</a></p>
+        <p><a href="#" id="third-party-notices-link" data-i18n="thirdPartyNotices">Third-Party Notices</a></p>
 
         <div class="support-id-container">
-          <div class="support-id-label">Your Nimbalyst Support ID:</div>
-          <div class="support-id-value" id="support-id" title="Click to copy">
-            <span id="support-id-text">Loading...</span>
+          <div class="support-id-label" data-i18n="supportIdLabel">Your Nimbalyst Support ID:</div>
+          <div class="support-id-value" id="support-id" title="Click to copy" data-i18n-title="clickToCopy">
+            <span id="support-id-text" data-i18n="loading">Loading...</span>
             <svg class="copy-icon" viewBox="0 0 16 16" fill="currentColor">
               <path d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2Z"/>
               <path d="M2 6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1H6a3 3 0 0 1-3-3V6H2Z"/>
             </svg>
-            <span class="copy-feedback" id="copy-feedback">Copied!</span>
+            <span class="copy-feedback" id="copy-feedback" data-i18n="copied">Copied!</span>
           </div>
         </div>
       </div>
     </div>
 
     <script>
+      // Localized strings come from the main process in the URL hash
+      // (`#i18n=<json>`); the English markup above is the fallback. Text is only
+      // ever assigned through textContent/title.
+      const i18n = (() => {
+        try {
+          const match = /(?:^|&)i18n=([^&]*)/.exec(window.location.hash.slice(1));
+          return match ? JSON.parse(decodeURIComponent(match[1])) : {};
+        } catch {
+          return {};
+        }
+      })();
+      const text = (key, fallback) => (typeof i18n[key] === 'string' ? i18n[key] : fallback);
+      if (typeof i18n.lang === 'string') document.documentElement.lang = i18n.lang;
+      document.querySelectorAll('[data-i18n]').forEach((el) => {
+        el.textContent = text(el.dataset.i18n, el.textContent);
+      });
+      document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+        el.title = text(el.dataset.i18nTitle, el.title);
+      });
+
       // Apply theme from main window
       window.electronAPI?.onThemeChange((theme) => {
         const body = document.body;
@@ -332,7 +352,7 @@
           const version = await window.electronAPI?.getAppVersion?.();
           if (version) {
             const el = document.getElementById('about-version');
-            if (el) el.textContent = `Version ${version}`;
+            if (el) el.textContent = text('version', 'Version {{version}}').replace('{{version}}', version);
           }
         } catch {}
       })();
@@ -351,19 +371,22 @@
         }
       });
 
-      // Fetch and display Support ID
+      // Fetch and display Support ID. Whether it can be copied is tracked here,
+      // not inferred from the (localized) placeholder text.
+      let supportIdAvailable = false;
       (async () => {
         try {
           const distinctId = await window.electronAPI?.analytics?.getDistinctId?.();
           const supportIdText = document.getElementById('support-id-text');
           if (supportIdText) {
-            supportIdText.textContent = distinctId || 'Not available';
+            supportIdText.textContent = distinctId || text('notAvailable', 'Not available');
+            supportIdAvailable = Boolean(distinctId);
           }
         } catch (error) {
           console.error('Failed to fetch support ID:', error);
           const supportIdText = document.getElementById('support-id-text');
           if (supportIdText) {
-            supportIdText.textContent = 'Not available';
+            supportIdText.textContent = text('notAvailable', 'Not available');
           }
         }
       })();
@@ -373,7 +396,7 @@
         const supportIdText = document.getElementById('support-id-text');
         const copyFeedback = document.getElementById('copy-feedback');
 
-        if (!supportIdText || supportIdText.textContent === 'Loading...' || supportIdText.textContent === 'Not available') {
+        if (!supportIdText || !supportIdAvailable) {
           return;
         }
 

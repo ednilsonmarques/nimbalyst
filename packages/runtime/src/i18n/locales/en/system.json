@@ -87,5 +87,21 @@
       "aboutMinutes": "about {{minutes}} min left",
       "overMinutes": "{{minutes}}+ min left"
     }
+  },
+  "about": {
+    "version": "Version {{version}}",
+    "description": "Nimbalyst is the visual workspace for building with Codex and Claude Code",
+    "featureEditors": "Agentic WYSIWYG visual editors for markdown, mockups, excalidraw, mermaid, data models, csv and code. Extensions.",
+    "featureSessions": "Parallel session management and kanban to understand session state, search and resume sessions, and link sessions to files and files to sessions",
+    "featureTracking": "Item tracking and kanban to manage plans, bugs, and tasks with your agent",
+    "featureStorage": "Open storage of content and status in plain files on disk and git.",
+    "builtWith": "Built with ❤️ by",
+    "thirdPartyNotices": "Third-Party Notices",
+    "supportIdLabel": "Your Nimbalyst Support ID:",
+    "clickToCopy": "Click to copy",
+    "loading": "Loading...",
+    "copied": "Copied!",
+    "notAvailable": "Not available",
+    "versionLabel": "Version"
   }
 }

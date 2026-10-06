@@ -11,7 +11,9 @@
   },
   "windowList": {
     "openProjects": "Projetos abertos",
-    "openDocuments": "Documentos abertos"
+    "openDocuments": "Documentos abertos",
+    "untitled": "Sem título",
+    "about": "Sobre"
   },
   "file": {
     "title": "Arquivo",
