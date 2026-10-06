@@ -11,6 +11,7 @@ import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { getTypeIcon } from '@nimbalyst/runtime/plugins/TrackerPlugin/components/trackerColumns';
 import type { DuplicateMatch } from './scoreTrackerDuplicates';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export interface TrackerDuplicateStripProps {
   matches: DuplicateMatch[];
@@ -33,6 +34,7 @@ export const TrackerDuplicateStrip: React.FC<TrackerDuplicateStripProps> = ({
   onHoverItem,
   footer,
 }) => {
+  const { t } = useTranslation('tracker');
   if (matches.length === 0) return null;
 
   return (
@@ -45,7 +47,7 @@ export const TrackerDuplicateStrip: React.FC<TrackerDuplicateStripProps> = ({
       >
         <MaterialSymbol icon={expanded ? 'expand_more' : 'chevron_right'} size={14} />
         <span>
-          {matches.length === 1 ? '1 possible duplicate' : `${matches.length} possible duplicates`}
+          {t('quickCreate.possibleDuplicates', { count: matches.length })}
         </span>
       </button>
 
@@ -68,7 +70,7 @@ export const TrackerDuplicateStrip: React.FC<TrackerDuplicateStripProps> = ({
                 {match.entry.displayKey && (
                   <span
                     className="shrink-0 font-mono text-[10px] text-[var(--nim-text-muted)]"
-                    title={match.entry.keyIsShared ? undefined : 'Local number — not a shared issue key'}
+                    title={match.entry.keyIsShared ? undefined : t('quickCreate.localKeyHint')}
                   >
                     {match.entry.displayKey}
                   </span>
@@ -80,7 +82,7 @@ export const TrackerDuplicateStrip: React.FC<TrackerDuplicateStripProps> = ({
                   </span>
                 )}
                 <span className="shrink-0 text-[10px] text-[var(--nim-text-muted)]">
-                  {match.arms.includes('semantic') ? 'similar' : 'wording'}
+                  {match.arms.includes('semantic') ? t('quickCreate.matchSimilar') : t('quickCreate.matchWording')}
                 </span>
               </button>
             </li>

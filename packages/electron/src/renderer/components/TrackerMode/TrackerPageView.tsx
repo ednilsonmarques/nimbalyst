@@ -38,6 +38,7 @@ import { useTrackerItemFields } from './useTrackerItemFields';
 import { desktopPageLinksSource } from './TrackerLinksSection';
 import { TrackerSavedDescription } from './TrackerSavedDescription';
 import { createCollectionItem } from './createCollectionItem';
+import { Trans, useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 // Moved to collab-client with the shared layout; re-exported for existing imports.
 export { crumbItemLookup, legacyDescriptionToRecover, trackerPageCrumb, trackerPageCrumbFolders, type TrackerPageCrumb } from '@nimbalyst/collab-client/trackers-ui/page';
@@ -79,6 +80,7 @@ function useTrackerPageCrumb(
   workspacePath: string,
   collabScope: CollabScope | undefined,
 ): TrackerPageCrumb & { section: string | null } {
+  const { t } = useTranslation('tracker');
   const personal = sharing === 'personal';
   const teamScope = useTeamCrumbScope(workspacePath, collabScope, !personal);
   const session = useMemo(
@@ -99,7 +101,7 @@ function useTrackerPageCrumb(
     sameTrackerPageCrumb,
   ), [itemId, typeId, session]);
   const crumb = useAtomValue(crumbAtom);
-  return useMemo(() => ({ ...crumb, section: personal ? 'Personal' : null }), [crumb, personal]);
+  return useMemo(() => ({ ...crumb, section: personal ? t('page.personal') : null }), [crumb, personal, t]);
 }
 
 export interface TrackerPageViewProps {
@@ -117,6 +119,7 @@ export const TrackerPageView: React.FC<TrackerPageViewProps> = ({
   collabScope,
   onOpenItem,
 }) => {
+  const { t } = useTranslation('tracker');
   const item = useAtomValue(trackerItemByIdAtom(itemId));
   const trackerDataLoaded = useAtomValue(trackerDataLoadedAtom);
   const model = useMemo(() => globalRegistry.get(item?.primaryType ?? ''), [item?.primaryType]);
@@ -189,7 +192,7 @@ export const TrackerPageView: React.FC<TrackerPageViewProps> = ({
         <>
           {!body.hasSyncedOnce && (
             <div className="absolute inset-0 z-10 flex items-start justify-center bg-nim pt-6 pointer-events-none" data-testid="tracker-content-loading">
-              <span className="text-sm text-nim-muted">Loading content...</span>
+              <span className="text-sm text-nim-muted">{t('detail.loadingContent')}</span>
             </div>
           )}
           <TrackerReferenceSourceProvider value={referenceSource}>
@@ -199,16 +202,16 @@ export const TrackerPageView: React.FC<TrackerPageViewProps> = ({
       );
     }
     if ((contentMode === 'local-pglite' || contentMode === 'collaborative') && !body.contentLoaded) {
-      return <div className="tracker-page-view-gutter py-4 text-sm text-nim-faint">Loading...</div>;
+      return <div className="tracker-page-view-gutter py-4 text-sm text-nim-faint">{t('common:loading')}</div>;
     }
     if (contentMode === 'collaborative' && body.collabLoading) {
-      return <div className="tracker-page-view-gutter py-4 text-sm text-nim-faint">Connecting...</div>;
+      return <div className="tracker-page-view-gutter py-4 text-sm text-nim-faint">{t('detail.connecting')}</div>;
     }
     if (item.system.documentPath) {
       // File-backed pages keep their body in the file; Pages mode does not edit it.
       return (
         <div className="tracker-page-view-gutter py-4 text-sm text-nim-muted">
-          This page&apos;s body lives in <span className="font-mono">{item.system.documentPath}</span>.
+          <Trans t={t} i18nKey="page.bodyLivesIn" values={{ path: item.system.documentPath }} components={{ path: <span className="font-mono" /> }} />
         </div>
       );
     }

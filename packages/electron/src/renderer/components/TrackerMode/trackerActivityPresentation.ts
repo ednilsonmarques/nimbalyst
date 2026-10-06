@@ -1,3 +1,5 @@
+import { t } from '@nimbalyst/runtime/i18n';
+
 interface TrackerActivityLike {
   action: string;
   field?: string;
@@ -13,29 +15,29 @@ function quoted(value: string): string {
 
 function changed(label: string, entry: TrackerActivityLike): string {
   if (entry.oldValue !== undefined && entry.newValue !== undefined) {
-    return `changed ${label} from ${quoted(entry.oldValue)} to ${quoted(entry.newValue)}`;
+    return t('tracker:activity.changedFromTo', { field: label, from: quoted(entry.oldValue), to: quoted(entry.newValue) });
   }
-  if (entry.newValue !== undefined) return `changed ${label} to ${quoted(entry.newValue)}`;
-  return `updated ${label}`;
+  if (entry.newValue !== undefined) return t('tracker:activity.changedTo', { field: label, to: quoted(entry.newValue) });
+  return t('tracker:activity.updated', { field: label });
 }
 
 export function formatTrackerActivity(entry: TrackerActivityLike): string {
-  if (entry.action === 'created') return 'created this item';
-  if (entry.action === 'commented') return 'added a comment';
+  if (entry.action === 'created') return t('tracker:activity.created');
+  if (entry.action === 'commented') return t('tracker:activity.commented');
   if (entry.action === 'comment_updated') {
     if (entry.oldValue !== undefined && entry.newValue !== undefined) {
-      return `edited a comment from ${quoted(entry.oldValue)} to ${quoted(entry.newValue)}`;
+      return t('tracker:activity.commentEditedFromTo', { from: quoted(entry.oldValue), to: quoted(entry.newValue) });
     }
-    return 'edited a comment';
+    return t('tracker:activity.commentEdited');
   }
   if (entry.action === 'comment_deleted') {
-    return entry.oldValue !== undefined ? `deleted comment ${quoted(entry.oldValue)}` : 'deleted a comment';
+    return entry.oldValue !== undefined ? t('tracker:activity.commentDeletedValue', { value: quoted(entry.oldValue) }) : t('tracker:activity.commentDeleted');
   }
   if (entry.action === 'archived') {
-    return entry.newValue === 'true' ? 'archived this item' : 'unarchived this item';
+    return entry.newValue === 'true' ? t('tracker:activity.archived') : t('tracker:activity.unarchived');
   }
-  if (entry.action === 'status_changed') return changed('status', entry);
-  if (entry.action === 'type_changed') return changed('type', entry);
+  if (entry.action === 'status_changed') return changed(t('tracker:activity.field.status'), entry);
+  if (entry.action === 'type_changed') return changed(t('tracker:activity.field.type'), entry);
   if (entry.field) return changed(entry.field, entry);
   return entry.action.replace(/_/g, ' ');
 }

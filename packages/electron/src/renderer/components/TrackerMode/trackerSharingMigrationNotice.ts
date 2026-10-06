@@ -11,6 +11,8 @@
  * A workspace with no legacy disagreement (every fresh install) gets nothing.
  */
 
+import { t } from '@nimbalyst/runtime/i18n';
+
 export type LegacyTrackerSharingMode = 'local' | 'shared' | 'hybrid';
 
 /** Structural mirror of TrackerSharingMigrationEntry persisted in workspace state. */
@@ -50,8 +52,8 @@ export function selectTrackerSharingMigrationNotice(
 
 /** Where a diverged tracker landed, in the user's terms. */
 export function describeTrackerSharingOutcome(entry: TrackerSharingMigrationEntryLike): string {
-  if (entry.sharing === 'personal') return 'is now a personal tracker, kept on this machine';
+  if (entry.sharing === 'personal') return t('tracker:sharingMigration.outcome.personal');
   return entry.draftByDefault
-    ? 'is now a team tracker whose new items start as drafts'
-    : 'is now a team tracker, shared with everyone';
+    ? t('tracker:sharingMigration.outcome.teamDrafts')
+    : t('tracker:sharingMigration.outcome.team');
 }

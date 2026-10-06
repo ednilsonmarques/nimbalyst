@@ -16,11 +16,13 @@ import {
   isLocalIssueKey,
   resolveDisplayIssueKey,
 } from '@nimbalyst/runtime/plugins/TrackerPlugin/models/localIssueKey';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 const CreatedChip: React.FC<{ itemId: string; onOpenItem: (itemId: string) => void }> = ({
   itemId,
   onOpenItem,
 }) => {
+  const { t } = useTranslation('tracker');
   const record = useAtomValue(trackerItemByIdAtom(itemId));
   const displayKey = record ? resolveDisplayIssueKey(record) : undefined;
   const keyIsShared = Boolean(record?.issueKey && !isLocalIssueKey(record.issueKey));
@@ -32,7 +34,7 @@ const CreatedChip: React.FC<{ itemId: string; onOpenItem: (itemId: string) => vo
       data-testid={`tracker-quick-create-created-${itemId}`}
       className="flex max-w-[220px] items-center gap-1 rounded bg-[var(--nim-bg)] px-1.5 py-0.5 text-[11px] text-[var(--nim-text-muted)] hover:text-[var(--nim-text)]"
       onClick={() => onOpenItem(itemId)}
-      title={keyIsShared ? undefined : 'Local number — not a shared issue key'}
+      title={keyIsShared ? undefined : t('quickCreate.localKeyHint')}
     >
       {displayKey && <span className="shrink-0 font-mono">{displayKey}</span>}
       <span className="truncate">{title}</span>

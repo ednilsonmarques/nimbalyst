@@ -17,6 +17,7 @@
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import './TrackerDocumentView.css';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 /** Where the document's content is stored, as shown in the breadcrumb line. */
 export type TrackerDocumentBreadcrumb =
@@ -56,13 +57,14 @@ export const TrackerDocumentViewHeader: React.FC<TrackerDocumentViewHeaderProps>
   onCopyDocumentLink,
   onCollapseToTracker,
 }) => {
+  const { t } = useTranslation('tracker');
   return (
     <header
       className="tracker-document-view-header shrink-0 border-b border-nim bg-nim px-3 pt-2 pb-1.5"
       data-testid="tracker-document-view-header"
     >
       <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-nim-faint">
-        Expanded tracker content
+        {t('document.expandedContent')}
       </div>
 
       <div className="flex items-center gap-2 mt-0.5">
@@ -88,8 +90,8 @@ export const TrackerDocumentViewHeader: React.FC<TrackerDocumentViewHeaderProps>
             type="button"
             className="tracker-document-copy-link-button shrink-0 inline-flex items-center justify-center rounded p-1 text-nim-muted transition-colors hover:bg-nim-tertiary hover:text-nim"
             onClick={onCopyDocumentLink}
-            title="Copy collaborative tracker link"
-            aria-label="Copy collaborative tracker link"
+            title={t('document.copyLink')}
+            aria-label={t('document.copyLink')}
             data-testid="tracker-document-copy-link"
           >
             <MaterialSymbol icon="link" size={16} />
@@ -100,8 +102,8 @@ export const TrackerDocumentViewHeader: React.FC<TrackerDocumentViewHeaderProps>
           type="button"
           className="tracker-document-collapse-button shrink-0 inline-flex items-center justify-center rounded p-1 text-nim-muted transition-colors hover:bg-nim-tertiary hover:text-nim"
           onClick={onCollapseToTracker}
-          title="Collapse to tracker (Esc)"
-          aria-label="Collapse to tracker"
+          title={t('document.collapseTitle')}
+          aria-label={t('document.collapse')}
           data-testid="tracker-document-collapse"
         >
           <MaterialSymbol icon="close" size={16} />
@@ -134,7 +136,9 @@ export const TrackerDocumentListPaneHeader: React.FC<TrackerDocumentListPaneHead
   typeLabel,
   onCollapseToTracker,
   onNavigateToTypeList,
-}) => (
+}) => {
+  const { t } = useTranslation('tracker');
+  return (
   <header
     className="tracker-document-list-pane-header flex min-h-[68px] shrink-0 flex-col items-start justify-center gap-1 border-b border-nim px-3 py-2"
     data-testid="tracker-document-list-pane-header"
@@ -143,17 +147,17 @@ export const TrackerDocumentListPaneHeader: React.FC<TrackerDocumentListPaneHead
       type="button"
       className="tracker-document-back-button inline-flex items-center gap-1.5 rounded border border-nim bg-transparent px-2 py-1 text-[11px] font-medium text-nim-muted transition-colors hover:bg-nim-hover hover:text-nim"
       onClick={onCollapseToTracker}
-      title="Back to tracker (Esc)"
-      aria-label="Back to tracker"
+      title={t('document.backTitle')}
+      aria-label={t('document.back')}
       data-testid="tracker-document-back"
     >
       <MaterialSymbol icon="arrow_back" size={15} />
-      <span>Back to tracker</span>
+      <span>{t('document.back')}</span>
     </button>
 
     <nav
       className="flex min-w-0 max-w-full items-center gap-1 text-[10px] font-medium text-nim-faint"
-      aria-label="Tracker collection"
+      aria-label={t('document.collectionNav')}
       data-testid="tracker-document-list-breadcrumb"
     >
       <button
@@ -169,11 +173,12 @@ export const TrackerDocumentListPaneHeader: React.FC<TrackerDocumentListPaneHead
         type="button"
         className="tracker-document-type-navigation truncate rounded-sm border-0 bg-transparent p-0 font-[inherit] text-nim-muted cursor-pointer hover:text-nim hover:underline"
         onClick={onNavigateToTypeList}
-        title={`Back to ${typeLabel}`}
+        title={t('document.backToType', { type: typeLabel })}
         data-testid="tracker-document-type-navigation"
       >
         {typeLabel}
       </button>
     </nav>
   </header>
-);
+  );
+};

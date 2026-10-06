@@ -17,11 +17,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSetAtom } from 'jotai';
 import { openSettingsCommandAtom } from '../../store/atoms/settingsNavigation';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 const MEMORY_EXTENSION_ID = 'nimbalyst-memory';
 const DISMISSED_SETTINGS_KEY = 'trackerQuickCreateMemoryHintDismissed';
 
 export const MemorySuggestionHint: React.FC<{ workspacePath: string }> = ({ workspacePath }) => {
+  const { t } = useTranslation('tracker');
   const [dismissed, setDismissed] = useState(true);
   const openSettings = useSetAtom(openSettingsCommandAtom);
 
@@ -76,8 +78,7 @@ export const MemorySuggestionHint: React.FC<{ workspacePath: string }> = ({ work
   return (
     <div className="tracker-quick-create-memory-hint mt-2 flex items-start gap-2 border-t border-[var(--nim-border)] pt-2 text-[11px] text-[var(--nim-text-muted)]">
       <span className="flex-1">
-        These matches share your wording. Project Memory also catches duplicates worded
-        differently — it embeds tracker titles and bodies with OpenAI, billed to your own API key.
+        {t('quickCreate.memoryHint')}
       </span>
       <button
         type="button"
@@ -85,7 +86,7 @@ export const MemorySuggestionHint: React.FC<{ workspacePath: string }> = ({ work
         className="shrink-0 rounded px-1.5 py-0.5 text-[var(--nim-text)] hover:bg-[var(--nim-bg-hover)]"
         onClick={handleEnable}
       >
-        Turn on
+        {t('quickCreate.turnOn')}
       </button>
       <button
         type="button"
@@ -93,7 +94,7 @@ export const MemorySuggestionHint: React.FC<{ workspacePath: string }> = ({ work
         className="shrink-0 rounded px-1.5 py-0.5 hover:bg-[var(--nim-bg-hover)]"
         onClick={handleDismiss}
       >
-        Not now
+        {t('quickCreate.notNow')}
       </button>
     </div>
   );

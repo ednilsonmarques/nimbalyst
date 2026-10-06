@@ -34,12 +34,14 @@ import React, { useCallback, useMemo } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { trackerSyncDrainHoldAtom, trackerSyncRejectionAtom } from '../../store/atoms/trackerSync';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface TrackerSyncRejectionBannerProps {
   workspacePath?: string;
 }
 
 export const TrackerSyncRejectionBanner: React.FC<TrackerSyncRejectionBannerProps> = ({ workspacePath }) => {
+  const { t } = useTranslation('tracker');
   const state = useAtomValue(trackerSyncRejectionAtom);
   const setRejection = useSetAtom(trackerSyncRejectionAtom);
   const drainHoldState = useAtomValue(trackerSyncDrainHoldAtom);
@@ -96,11 +98,9 @@ export const TrackerSyncRejectionBanner: React.FC<TrackerSyncRejectionBannerProp
       >
         <MaterialSymbol icon="cloud_off" size={16} className="text-nim-warning" />
         <span className="flex-1">
-          {drainHold.rowsHeldBack === 1
-            ? "1 tracker item isn't syncing to your team yet."
-            : `${drainHold.rowsHeldBack} tracker items aren't syncing to your team yet.`}
+          {t('syncBanner.heldBack', { count: drainHold.rowsHeldBack })}
           {' '}
-          Nimbalyst couldn't confirm which of your trackers are shared, so it left them alone rather than risk removing your team's copies. Reopening the project usually resolves it.
+          {t('syncBanner.heldBackReason')}
         </span>
         <button
           type="button"
@@ -108,7 +108,7 @@ export const TrackerSyncRejectionBanner: React.FC<TrackerSyncRejectionBannerProp
           onClick={handleRetry}
           data-testid="tracker-sync-drain-hold-retry"
         >
-          Try again
+          {t('syncBanner.tryAgain')}
         </button>
       </div>
     );
@@ -130,21 +130,21 @@ export const TrackerSyncRejectionBanner: React.FC<TrackerSyncRejectionBannerProp
         <>
           <MaterialSymbol icon="key_off" size={16} className="text-nim-warning" />
           <span className="flex-1">
-            This organization's encryption isn't migrated, so your changes can't sync. Ask an organization admin to finish setting up the organization.
+            {t('syncBanner.custodyUnavailable')}
           </span>
         </>
       ) : isRotation ? (
         <>
           <MaterialSymbol icon="sync" size={16} className="text-nim-faint animate-spin" />
           <span className="flex-1">
-            Team key rotation in progress. Your changes will resume in a moment.
+            {t('syncBanner.rotationLocked')}
           </span>
         </>
       ) : (
         <>
           <MaterialSymbol icon="key_off" size={16} className="text-nim-warning" />
           <span className="flex-1">
-            Your team's encryption key changed. Ask your team admin to share the new key envelope with you.
+            {t('syncBanner.staleKey')}
           </span>
           <button
             type="button"
@@ -152,7 +152,7 @@ export const TrackerSyncRejectionBanner: React.FC<TrackerSyncRejectionBannerProp
             onClick={handleRetry}
             data-testid="tracker-sync-rejection-retry"
           >
-            Check again
+            {t('syncBanner.checkAgain')}
           </button>
         </>
       )}
@@ -160,7 +160,7 @@ export const TrackerSyncRejectionBanner: React.FC<TrackerSyncRejectionBannerProp
         type="button"
         className="text-nim-faint hover:text-nim p-0.5"
         onClick={handleDismiss}
-        aria-label="Dismiss"
+        aria-label={t('detail.dismiss')}
         data-testid="tracker-sync-rejection-dismiss"
       >
         <MaterialSymbol icon="close" size={14} />

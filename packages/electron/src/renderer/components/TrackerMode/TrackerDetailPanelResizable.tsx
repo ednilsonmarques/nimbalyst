@@ -14,6 +14,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 const MIN_WIDTH = 300;
 const MAX_WIDTH = 1200;
@@ -32,6 +33,7 @@ export const TrackerDetailPanelResizable: React.FC<TrackerDetailPanelResizablePr
   onWidthChange,
   children,
 }) => {
+  const { t } = useTranslation('tracker');
   const [isDragging, setIsDragging] = useState(false);
   const [currentWidth, setCurrentWidth] = useState(width);
   const startXRef = useRef(0);
@@ -83,7 +85,7 @@ export const TrackerDetailPanelResizable: React.FC<TrackerDetailPanelResizablePr
           onMouseDown={handleMouseDown}
           role="separator"
           aria-orientation="vertical"
-          aria-label="Resize detail panel"
+          aria-label={t('document.resizeDetailPanel')}
         />
       )}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">

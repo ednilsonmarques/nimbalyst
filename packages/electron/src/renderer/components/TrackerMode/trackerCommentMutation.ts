@@ -1,3 +1,5 @@
+import { t } from '@nimbalyst/runtime/i18n';
+
 export type TrackerCommentInvoke = (
   channel: string,
   payload: Record<string, unknown>,
@@ -10,7 +12,7 @@ export async function invokeTrackerCommentMutation(
 ): Promise<any> {
   const result = await invoke(channel, payload) as any;
   if (!result?.success) {
-    throw new Error(result?.error || 'Tracker comment update failed');
+    throw new Error(result?.error || t('tracker:comments.updateFailed'));
   }
   return result;
 }

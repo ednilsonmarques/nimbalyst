@@ -45,6 +45,8 @@ import {
   trackerSnoozedUntilByItemIdAtom,
 } from '../../store/atoms/trackerPersonalState';
 import { confirmTrackerItemDelete } from './confirmTrackerItemDelete';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 interface TrackerInboxViewProps {
   filterType?: TrackerItemType | 'all';
@@ -73,10 +75,10 @@ function ageLabel(record: TrackerRecord): string {
   const created = record.system.createdAt ? new Date(record.system.createdAt).getTime() : 0;
   if (!created || Number.isNaN(created)) return '';
   const days = Math.floor((Date.now() - created) / (24 * 60 * 60 * 1000));
-  if (days <= 0) return 'today';
-  if (days < 7) return `${days}d`;
-  if (days < 30) return `${Math.floor(days / 7)}w`;
-  return `${Math.floor(days / 30)}mo`;
+  if (days <= 0) return translate('tracker:inbox.age.today');
+  if (days < 7) return translate('tracker:inbox.age.days', { count: days });
+  if (days < 30) return translate('tracker:inbox.age.weeks', { count: Math.floor(days / 7) });
+  return translate('tracker:inbox.age.months', { count: Math.floor(days / 30) });
 }
 
 export function TrackerInboxView({
@@ -91,6 +93,7 @@ export function TrackerInboxView({
   onScopeChange,
   currentIdentity,
 }: TrackerInboxViewProps): JSX.Element {
+  const { t } = useTranslation('tracker');
   const atomItems = useAtomValue(trackerItemsByTypeAtom('all'));
   const dataLoaded = useAtomValue(trackerDataLoadedAtom);
   const snoozedUntilByItemId = useAtomValue(trackerSnoozedUntilByItemIdAtom);
@@ -251,7 +254,7 @@ export function TrackerInboxView({
     <div className="tracker-inbox-view h-full flex flex-col min-h-0" data-testid="tracker-inbox-view">
       <div className="flex items-center gap-3 px-3 py-2 border-b border-nim shrink-0">
         <span className="text-[12px] font-medium text-nim">
-          Triage inbox
+          {t('inbox.title')}
           <span className="ml-2 text-nim-faint">{queue.length}</span>
         </span>
         <div className="flex items-center rounded border border-nim overflow-hidden" role="group">
@@ -264,12 +267,12 @@ export function TrackerInboxView({
               onClick={() => onScopeChange(option)}
               data-testid={`tracker-inbox-scope-${option}`}
             >
-              {option === 'global' ? 'All types' : 'This type'}
+              {option === 'global' ? t('inbox.scopeAll') : t('inbox.scopeType')}
             </button>
           ))}
         </div>
         <span className="ml-auto text-[10px] text-nim-faint select-none">
-          j/k move &middot; a assign &middot; 1-4 priority &middot; e accept &middot; m milestone &middot; l leave it &middot; s snooze &middot; x dismiss
+          {t('inbox.shortcuts')}
         </span>
       </div>
 
@@ -281,11 +284,11 @@ export function TrackerInboxView({
         data-testid="tracker-inbox-queue"
       >
         {loading ? (
-          <div className="h-full flex items-center justify-center text-sm text-nim-muted">Loading...</div>
+          <div className="h-full flex items-center justify-center text-sm text-nim-muted">{t('common:loading')}</div>
         ) : queue.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center gap-2 text-nim-faint">
             <MaterialSymbol icon="inbox" size={28} />
-            <span className="text-sm">Inbox zero. Nothing is waiting on a decision.</span>
+            <span className="text-sm">{t('inbox.empty')}</span>
           </div>
         ) : (
           queue.map((item, index) => (
@@ -313,11 +316,11 @@ export function TrackerInboxView({
               {isAgentProposal(item) && (
                 <span
                   className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] text-[var(--nim-primary)] border border-[var(--nim-primary)]"
-                  title="Filed by an agent -- confirm or dismiss"
+                  title={t('inbox.proposedTitle')}
                   data-testid="tracker-inbox-agent-proposal"
                 >
                   <MaterialSymbol icon="smart_toy" size={11} />
-                  Proposed
+                  {t('inbox.proposed')}
                 </span>
               )}
               {item.source !== 'native' && (
@@ -339,20 +342,20 @@ export function TrackerInboxView({
             className="px-2 py-1 text-[11px] text-nim-muted hover:text-nim rounded hover:bg-nim-tertiary disabled:opacity-40"
             onClick={() => void assignToMe(focused)}
             disabled={!currentIdentity?.email}
-            title={currentIdentity?.email ? 'Assign to me (a)' : 'No identity configured'}
+            title={currentIdentity?.email ? t('inbox.assignToMeTitle') : t('inbox.noIdentity')}
             data-testid="tracker-inbox-assign"
           >
-            Assign to me
+            {t('inbox.assignToMe')}
           </button>
           {priorityOptionsFor(focused.primaryType).map((priority, index) => (
             <button
               key={priority}
               className="px-2 py-1 text-[11px] text-nim-muted hover:text-nim rounded hover:bg-nim-tertiary"
               onClick={() => void setPriority(focused, priority)}
-              title={`Set priority ${priority} (${index + 1})`}
+              title={t('inbox.setPriority', { priority: t(`inbox.priority.${priority}`, { defaultValue: priority }), shortcut: index + 1 })}
               data-testid={`tracker-inbox-priority-${priority}`}
             >
-              {priority}
+              {t(`inbox.priority.${priority}`, { defaultValue: priority })}
             </button>
           ))}
           <button
@@ -360,46 +363,46 @@ export function TrackerInboxView({
             className="px-2 py-1 text-[11px] text-nim-muted hover:text-nim rounded hover:bg-nim-tertiary disabled:opacity-40"
             onClick={() => setCollectionMenuOpen((open) => !open)}
             disabled={collectionTargets.length === 0}
-            title={collectionTargets.length === 0 ? 'No milestones or releases yet' : 'Add to collection (m)'}
+            title={collectionTargets.length === 0 ? t('inbox.noCollections') : t('inbox.addToCollectionTitle')}
             data-testid="tracker-inbox-collection"
           >
-            Add to...
+            {t('inbox.addTo')}
           </button>
           <button
             className="px-2 py-1 text-[11px] text-nim-muted hover:text-nim rounded hover:bg-nim-tertiary"
             onClick={() => void leaveIt(focused)}
-            title="Leave it -- it's fine where it is, clear it from the team's inbox (l)"
+            title={t('inbox.leaveItTitle')}
             data-testid="tracker-inbox-leave"
           >
-            Leave it
+            {t('inbox.leaveIt')}
           </button>
           <button
             className="px-2 py-1 text-[11px] text-nim-muted hover:text-nim rounded hover:bg-nim-tertiary disabled:opacity-40"
             onClick={() => void accept(focused)}
             disabled={!acceptStatusFor(focused.primaryType)}
-            title="Accept -- move to the working status (e)"
+            title={t('inbox.acceptTitle')}
             data-testid="tracker-inbox-accept"
           >
-            Accept
+            {t('inbox.accept')}
           </button>
           {SNOOZE_PRESETS.map((preset) => (
             <button
               key={preset.id}
               className="px-2 py-1 text-[11px] text-nim-muted hover:text-nim rounded hover:bg-nim-tertiary"
               onClick={() => snooze(focused, preset.ms)}
-              title={`Snooze until ${preset.label.toLowerCase()}`}
+              title={t(`inbox.snoozeTitle.${preset.id}`, { defaultValue: `Snooze until ${preset.label.toLowerCase()}` })}
               data-testid={`tracker-inbox-snooze-${preset.id}`}
             >
-              {preset.label}
+              {t(`inbox.snooze.${preset.id}`, { defaultValue: preset.label })}
             </button>
           ))}
           <button
             className="ml-auto px-2 py-1 text-[11px] text-nim-muted hover:text-[#ef4444] rounded hover:bg-nim-tertiary"
             onClick={() => dismiss(focused)}
-            title="Dismiss -- archive the item (x)"
+            title={t('inbox.dismissTitle')}
             data-testid="tracker-inbox-dismiss"
           >
-            Dismiss
+            {t('inbox.dismiss')}
           </button>
         </div>
       )}

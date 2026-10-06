@@ -44,6 +44,7 @@ import {
 } from './trackerBulkAssign';
 import { saveTrackerFields } from './trackerFieldSave';
 import '@nimbalyst/collab-client/trackers-ui/board.css';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface TrackerCardMilestoneChipProps {
   item: TrackerRecord;
@@ -54,8 +55,9 @@ interface TrackerCardMilestoneChipProps {
 function chipLabel(
   values: TrackerRelationshipValue[],
   resolveLabel: TrackerRelationshipLabelResolver,
+  noneLabel: string,
 ): string {
-  if (values.length === 0) return 'No milestone';
+  if (values.length === 0) return noneLabel;
   const first = resolveRelationshipLabel(values[0], resolveLabel);
   return values.length === 1 ? first : `${first} +${values.length - 1}`;
 }
@@ -64,11 +66,12 @@ export const TrackerCardMilestoneChip: React.FC<TrackerCardMilestoneChipProps> =
   item,
   onOpenItem,
 }) => {
+  const { t } = useTranslation('tracker');
   const [open, setOpen] = useState(false);
   const relationshipLabel = useAtomValue(trackerRelationshipLabelAtom);
   const values = cardMilestoneValues(item);
   const empty = values.length === 0;
-  const label = chipLabel(values, relationshipLabel);
+  const label = chipLabel(values, relationshipLabel, t('milestone.none'));
 
   const floating = useFloating({
     open,
@@ -116,8 +119,8 @@ export const TrackerCardMilestoneChip: React.FC<TrackerCardMilestoneChipProps> =
         data-empty={empty}
         aria-expanded={open}
         aria-haspopup="dialog"
-        aria-label={empty ? 'Assign a milestone' : `Milestone: ${label}`}
-        title={empty ? 'Assign a milestone' : `Milestone: ${label}`}
+        aria-label={empty ? t('milestone.assign') : t('milestone.chip', { label })}
+        title={empty ? t('milestone.assign') : t('milestone.chip', { label })}
         onClick={(event) => {
           // The card behind the chip selects on click and opens on double-click.
           event.stopPropagation();
@@ -153,7 +156,7 @@ export const TrackerCardMilestoneChip: React.FC<TrackerCardMilestoneChipProps> =
                   onClick={() => handleAssign({ itemId: null })}
                 >
                   <MaterialSymbol icon="remove" size={14} />
-                  Remove from milestone
+                  {t('milestone.removeFromMilestone')}
                 </button>
               )}
             />
