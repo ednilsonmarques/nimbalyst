@@ -77,6 +77,7 @@ function ProjectRailIcon({
   onClose,
   onContextMenu,
 }: ProjectRailIconProps) {
+  const { t } = useTranslation('menu');
   // Hover tooltip via floating-ui. Renders through FloatingPortal so the
   // tooltip escapes the rail container's `overflow: hidden` clip — the
   // earlier CSS-only `:hover > .project-rail-tooltip` approach was clipped
@@ -143,14 +144,14 @@ function ProjectRailIcon({
         type="button"
         className="project-rail-item-main"
         onClick={handleClick}
-        aria-label={`Switch to project ${project.name}`}
+        aria-label={t('workspace:projectRail.switchToProject', { name: project.name })}
         aria-current={isActive ? 'true' : undefined}
       >
         {projectInitials(project.name)}
         {showBadge && (
           <span
             className="project-rail-item-badge"
-            aria-label={processingCount > 0 ? `${processingCount} streaming session(s)` : `${unreadCount} unread`}
+            aria-label={processingCount > 0 ? t('workspace:projectRail.streamingSessions', { count: processingCount }) : t('workspace:projectRail.unread', { count: unreadCount })}
           >
             {badgeLabel}
           </span>
@@ -160,7 +161,7 @@ function ProjectRailIcon({
         type="button"
         className="project-rail-item-close"
         onClick={handleClose}
-        aria-label={`Close ${project.name}`}
+        aria-label={t('workspace:projectRail.closeProjectNamed', { name: project.name })}
       >
         ×
       </button>

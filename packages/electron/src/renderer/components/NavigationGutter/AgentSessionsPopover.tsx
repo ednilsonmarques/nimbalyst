@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type { SessionMeta } from '@nimbalyst/runtime/ai/adapters/sessionStore';
 import {
   agentBubbleStateAtom,
@@ -32,19 +33,20 @@ function clampWidth(width: number): number {
   return Math.round(Math.min(Math.max(width, MIN_POPOVER_WIDTH), Math.min(MAX_POPOVER_WIDTH, viewportLimit)));
 }
 
+// `label` is the i18n key (workspace namespace); translate at render time.
 const STATE_STYLES: Record<AttentionState, { label: string; colorClass: string; dotClass: string }> = {
   awaiting: {
-    label: 'Awaiting input',
+    label: 'agentSessions.state.awaiting',
     colorClass: 'text-nim-warning',
     dotClass: 'bg-[var(--nim-warning)]',
   },
   running: {
-    label: 'Running',
+    label: 'agentSessions.state.running',
     colorClass: 'text-nim-success',
     dotClass: 'bg-[var(--nim-success)]',
   },
   unread: {
-    label: 'Unread',
+    label: 'agentSessions.state.unread',
     colorClass: 'text-nim-primary',
     dotClass: 'bg-[var(--nim-primary)]',
   },
@@ -65,6 +67,7 @@ function AgentSessionAttentionRow({
   onPeekOpen: (sessionId: string, reference: HTMLElement) => void;
   onPeekToggle: (sessionId: string, reference: HTMLElement) => void;
 }) {
+  const { t } = useTranslation('workspace');
   const liveActivity = useAtomValue(sessionLastActivityAtom(session.id));
   const updatedAt = liveActivity > 0 ? liveActivity : session.updatedAt;
   const rowRef = useRef<HTMLDivElement | null>(null);
@@ -99,7 +102,7 @@ function AgentSessionAttentionRow({
     }
   }, []);
 
-  const title = session.title || 'Untitled Session';
+  const title = session.title || t('agentSessions.untitled');
 
   return (
     <SessionAttentionRow
@@ -119,8 +122,8 @@ function AgentSessionAttentionRow({
               ? 'bg-nim-tertiary text-nim'
               : 'text-nim-disabled hover:bg-nim-tertiary hover:text-nim-muted'
           }`}
-          title="Preview transcript"
-          aria-label={`Preview transcript for ${title}`}
+          title={t('agentSessions.previewTranscript')}
+          aria-label={t('agentSessions.previewTranscriptFor', { title })}
           aria-pressed={isPeekOpen}
           data-testid={`agent-sessions-peek-${session.id}`}
           onMouseEnter={handlePeekEnter}
@@ -140,6 +143,7 @@ function AgentSessionAttentionRow({
 }
 
 export function AgentSessionsPopover({ onOpenAgentMode }: AgentSessionsPopoverProps) {
+  const { t } = useTranslation('workspace');
   const bubble = useAtomValue(agentBubbleStateAtom);
   const groups = useAtomValue(agentSessionAttentionAtom);
   const selectSession = useSetAtom(selectSessionActionAtom);
@@ -263,7 +267,7 @@ export function AgentSessionsPopover({ onOpenAgentMode }: AgentSessionsPopoverPr
             event.stopPropagation();
             menu.setIsOpen(!menu.isOpen);
           }}
-          aria-label={`${bubble.count} ${STATE_STYLES[bubble.color === 'orange' ? 'awaiting' : bubble.color === 'green' ? 'running' : 'unread'].label.toLowerCase()} session${bubble.count === 1 ? '' : 's'}`}
+          aria-label={t(`agentSessions.bubbleAria.${bubble.color === 'orange' ? 'awaiting' : bubble.color === 'green' ? 'running' : 'unread'}`, { count: bubble.count })}
           aria-expanded={menu.isOpen}
           aria-haspopup="menu"
           data-state={bubble.color}
@@ -284,8 +288,8 @@ export function AgentSessionsPopover({ onOpenAgentMode }: AgentSessionsPopoverPr
             data-component="AgentSessionsPopover"
           >
             <div className="flex shrink-0 items-center justify-between border-b border-nim px-3.5 py-2.5">
-              <span className="text-[13px] font-semibold text-nim">Sessions</span>
-              <span className="text-[11px] text-nim-muted">{total} need attention</span>
+              <span className="text-[13px] font-semibold text-nim">{t('agentSessions.title')}</span>
+              <span className="text-[11px] text-nim-muted">{t('agentSessions.needAttention', { count: total })}</span>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto pb-1">
@@ -296,7 +300,7 @@ export function AgentSessionsPopover({ onOpenAgentMode }: AgentSessionsPopoverPr
                     <div className={`flex items-center justify-between gap-2 px-3.5 pb-1 pt-2.5 text-[10.5px] font-semibold uppercase tracking-wide ${style.colorClass}`}>
                       <span className="flex items-center gap-1.5">
                         <span className={`h-1.5 w-1.5 rounded-full ${style.dotClass}`} />
-                        <span>{style.label}</span>
+                        <span>{t(style.label)}</span>
                         <span aria-hidden>·</span>
                         <span>{sessions.length}</span>
                       </span>
@@ -307,7 +311,7 @@ export function AgentSessionsPopover({ onOpenAgentMode }: AgentSessionsPopoverPr
                           onClick={() => groups.unread.forEach((session) => markSessionRead(session.id))}
                           data-testid="agent-sessions-mark-all-read"
                         >
-                          Mark all as read
+                          {t('agentSessions.markAllRead')}
                         </button>
                       )}
                     </div>
@@ -331,7 +335,7 @@ export function AgentSessionsPopover({ onOpenAgentMode }: AgentSessionsPopoverPr
               className="agent-sessions-popover-resize-handle group absolute inset-y-0 right-0 flex w-2 cursor-col-resize justify-center"
               role="separator"
               aria-orientation="vertical"
-              aria-label="Resize sessions popover"
+              aria-label={t('agentSessions.resizeAria')}
               data-testid="agent-sessions-popover-resize"
               onPointerDown={handleResizeStart}
               onClick={(event) => event.stopPropagation()}

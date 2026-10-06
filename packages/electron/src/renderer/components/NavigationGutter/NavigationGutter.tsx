@@ -357,7 +357,7 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
       id: 'files', section: 'modes', icon: 'account_tree', label: t('gutterItems.files'), hideable: true,
       render: () => renderModeButton({
         icon: 'account_tree',
-        label: `Files (${getShortcutDisplay(KeyboardShortcuts.view.filesMode)})`,
+        label: t('workspace:gutter.labelWithShortcut', { label: t('gutterItems.files'), shortcut: getShortcutDisplay(KeyboardShortcuts.view.filesMode) }),
         contentMode: 'files', testId: 'files-mode-button',
         onReclick: () => onToggleFilesCollapsed?.(),
       }),
@@ -366,7 +366,7 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
       id: 'agent', section: 'modes', icon: 'code', label: t('gutterItems.agent'), hideable: true,
       render: () => renderModeButton({
         icon: 'code',
-        label: `Agent (${getShortcutDisplay(KeyboardShortcuts.view.agentMode)})`,
+        label: t('workspace:gutter.labelWithShortcut', { label: t('gutterItems.agent'), shortcut: getShortcutDisplay(KeyboardShortcuts.view.agentMode) }),
         contentMode: 'agent', testId: 'agent-mode-button',
         onReclick: () => onToggleAgentCollapsed?.(),
         overlay: <AgentSessionsPopover onOpenAgentMode={() => onContentModeChange('agent')} />,
@@ -376,7 +376,7 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
       id: 'tracker', section: 'modes', icon: 'assignment', label: t('gutterItems.tracker'), hideable: true,
       render: () => renderModeButton({
         icon: 'assignment',
-        label: `Tracker (${getShortcutDisplay(KeyboardShortcuts.view.trackerMode)})`,
+        label: t('workspace:gutter.labelWithShortcut', { label: t('gutterItems.tracker'), shortcut: getShortcutDisplay(KeyboardShortcuts.view.trackerMode) }),
         contentMode: 'tracker', testId: 'tracker-mode-button',
         onReclick: () => onToggleTrackerCollapsed?.(),
       }),
@@ -394,7 +394,7 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
       render: () => renderModeButton({
         icon: 'description',
         badgeIcon: 'groups',
-        label: `Pages (${getShortcutDisplay(KeyboardShortcuts.view.collabMode)})`,
+        label: t('workspace:gutter.labelWithShortcut', { label: t('gutterItems.pages'), shortcut: getShortcutDisplay(KeyboardShortcuts.view.collabMode) }),
         contentMode: 'collab', testId: 'collab-mode-button',
         onReclick: () => onToggleCollabCollapsed?.(),
         decoration: <AlphaBadge size="dot" className="absolute top-0 right-0.5 pointer-events-none" />,
@@ -406,9 +406,9 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
       id: 'org', section: 'modes' as GutterSection, icon: 'forum', label: t('gutterItems.organization'), hideable: true,
       render: () => renderModeButton({
         icon: 'forum',
-        label: `Organization (${getShortcutDisplay(KeyboardShortcuts.view.orgMode)})${
-          projectOrgUnread > 0 ? `, ${projectOrgUnread} unread` : ''
-        }`,
+        label: projectOrgUnread > 0
+          ? t('workspace:gutter.labelWithShortcutUnread', { label: t('gutterItems.organization'), shortcut: getShortcutDisplay(KeyboardShortcuts.view.orgMode), count: projectOrgUnread })
+          : t('workspace:gutter.labelWithShortcut', { label: t('gutterItems.organization'), shortcut: getShortcutDisplay(KeyboardShortcuts.view.orgMode) }),
         contentMode: 'org', testId: 'org-mode-button',
         onReclick: () => onToggleOrgCollapsed?.(),
         decoration: (
@@ -454,7 +454,7 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
           <button
             className={navBtnClass(!!terminalPanelVisible)}
             onClick={() => onToggleTerminalPanel?.()}
-            aria-label="Terminal (Ctrl+`)"
+            aria-label={t('workspace:gutter.labelWithShortcut', { label: t('gutterItems.terminal'), shortcut: 'Ctrl+`' })}
             data-testid="terminal-panel-button"
           >
             <MaterialSymbol icon="terminal" size={20} fill={!!terminalPanelVisible} />
@@ -510,7 +510,7 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
           <button
             className={`nimbalyst-feedback-button ${NAV_BTN_BASE} bg-transparent text-nim-muted hover:bg-nim-tertiary hover:text-nim`}
             onClick={() => onOpenFeedback?.()}
-            aria-label="Send Feedback"
+            aria-label={t('workspace:gutter.sendFeedback')}
             data-testid="gutter-feedback-button"
           >
             <MaterialSymbol icon="feedback" size={20} />
@@ -640,10 +640,10 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               aria-label={
                 needsSignIn
-                  ? 'User menu (signed out -- sync requires sign in)'
+                  ? t('workspace:gutter.userMenuSignedOut')
                   : syncSummary?.needsAttention
-                    ? `User menu (sync: ${syncSummary.detail})`
-                    : 'User menu'
+                    ? t('workspace:gutter.userMenuSyncAttention', { detail: syncSummary.detail })
+                    : t('workspace:gutter.userMenu')
               }
               aria-expanded={userMenuOpen}
               data-signed-in={isSignedIn === null ? undefined : isSignedIn}

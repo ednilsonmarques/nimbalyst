@@ -1,4 +1,5 @@
 import React from 'react';
+import { Trans, useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import type {
   OrganizationDirectoryEntry,
@@ -14,6 +15,7 @@ export function AccountExpiryBanner({
   organizations: OrganizationDirectoryEntry[];
   onReconnect: (account: PersonalAccountSummary) => void;
 }) {
+  const { t } = useTranslation('workspace');
   const expiredAccount = accounts.find((account) => account.sessionStatus === 'expired');
   if (!expiredAccount) return null;
   const affectedOrganizations = organizations
@@ -27,15 +29,15 @@ export function AccountExpiryBanner({
       <div className="flex min-w-0 items-center gap-3">
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--nim-bg-tertiary)] text-xs font-semibold">{(email[0] ?? '?').toUpperCase()}</span>
         <div className="min-w-0">
-          <p className="m-0 truncate select-text text-xs"><strong>{email}</strong>&apos;s session expired</p>
+          <p className="m-0 truncate select-text text-xs"><Trans t={t} i18nKey="accountExpiry.sessionExpired" values={{ email }} components={{ strong: <strong /> }} /></p>
           <p className="m-0 mt-0.5 truncate text-[11px] text-[var(--nim-warning)]">
             {affectedOrganizations.length > 0
-              ? `Team collaboration for ${affectedOrganizations.join(', ')} is paused until you reconnect.`
-              : 'Account access is paused until you reconnect.'}
+              ? t('accountExpiry.teamPaused', { organizations: affectedOrganizations.join(', ') })
+              : t('accountExpiry.accountPaused')}
           </p>
         </div>
       </div>
-      <button type="button" aria-label={`Reconnect ${email}`} className="shrink-0 rounded-md bg-[var(--nim-warning)] px-3 py-1.5 text-xs font-semibold text-neutral-950" onClick={() => onReconnect(expiredAccount)}>Reconnect</button>
+      <button type="button" aria-label={t('accountExpiry.reconnectAria', { email })} className="shrink-0 rounded-md bg-[var(--nim-warning)] px-3 py-1.5 text-xs font-semibold text-neutral-950" onClick={() => onReconnect(expiredAccount)}>{t('accountExpiry.reconnect')}</button>
     </aside>
   );
 }

@@ -1,1 +1,546 @@
-{}
+{
+  "gutter": {
+    "labelWithShortcut": "{{label}} ({{shortcut}})",
+    "labelWithShortcutUnread_zero": "{{label}} ({{shortcut}}), {{count}} não lidas",
+    "labelWithShortcutUnread_one": "{{label}} ({{shortcut}}), {{count}} não lida",
+    "labelWithShortcutUnread_other": "{{label}} ({{shortcut}}), {{count}} não lidas",
+    "sendFeedback": "Enviar feedback",
+    "userMenu": "Menu do usuário",
+    "userMenuSignedOut": "Menu do usuário (desconectado -- a sincronização exige login)",
+    "userMenuSyncAttention": "Menu do usuário (sincronização: {{detail}})"
+  },
+  "agentSessions": {
+    "title": "Sessões",
+    "needAttention_zero": "{{count}} precisam de atenção",
+    "needAttention_one": "{{count}} precisa de atenção",
+    "needAttention_other": "{{count}} precisam de atenção",
+    "state": {
+      "awaiting": "Aguardando entrada",
+      "running": "Em execução",
+      "unread": "Não lidas"
+    },
+    "bubbleAria": {
+      "awaiting_zero": "{{count}} sessões aguardando entrada",
+      "awaiting_one": "{{count}} sessão aguardando entrada",
+      "awaiting_other": "{{count}} sessões aguardando entrada",
+      "running_zero": "{{count}} sessões em execução",
+      "running_one": "{{count}} sessão em execução",
+      "running_other": "{{count}} sessões em execução",
+      "unread_zero": "{{count}} sessões não lidas",
+      "unread_one": "{{count}} sessão não lida",
+      "unread_other": "{{count}} sessões não lidas"
+    },
+    "markAllRead": "Marcar todas como lidas",
+    "untitled": "Sessão sem título",
+    "previewTranscript": "Pré-visualizar transcrição",
+    "previewTranscriptFor": "Visualizar transcrição de {{title}}",
+    "resizeAria": "Redimensionar painel de sessões"
+  },
+  "projectRail": {
+    "switchToProject": "Alternar para o projeto {{name}}",
+    "streamingSessions_zero": "{{count}} sessões em execução",
+    "streamingSessions_one": "{{count}} sessão em execução",
+    "streamingSessions_other": "{{count}} sessões em execução",
+    "unread_zero": "{{count}} não lidas",
+    "unread_one": "{{count}} não lida",
+    "unread_other": "{{count}} não lidas",
+    "closeProjectNamed": "Fechar {{name}}"
+  },
+  "accountLogin": {
+    "copy": {
+      "firstSignIn": {
+        "title": "Entre para começar",
+        "description": "Entre para sincronizar sessões, rascunhos e configurações entre seus dispositivos e para colaborar com sua equipe."
+      },
+      "orgOnboarding": {
+        "title": "Entre ou crie sua conta",
+        "description": "Uma organização pertence a uma conta Nimbalyst — qualquer um dos métodos funciona, para conta nova ou existente."
+      },
+      "addAccount": {
+        "title": "Adicionar outra conta",
+        "description": "Esta conta ficará disponível neste dispositivo. Ela não altera sua conta de sincronização nem afeta o acesso da equipe a nenhum espaço de trabalho."
+      },
+      "reauth": {
+        "title": "Reconectar esta conta",
+        "description": "Suas outras contas continuam conectadas enquanto esta conta se reconecta."
+      }
+    },
+    "errors": {
+      "startSignIn": "Não foi possível iniciar o login.",
+      "sendLink": "Não foi possível enviar o link de login."
+    },
+    "resendNoticeLink": "Outro link de login está a caminho de {{email}}.",
+    "resendNoticeBrowser": "O login foi reaberto no seu navegador.",
+    "signingBackIn": "Entrando novamente como <strong>{{email}}</strong>.",
+    "waitingMagicLink": "<strong>Verifique {{email}}</strong> — enviamos um link de login. Abra-o neste dispositivo e você voltará direto para cá.",
+    "waitingGoogle": "Conclua o login com o Google no seu navegador. Você voltará direto para cá.",
+    "waitingTitle": "Aguardando você concluir…",
+    "waitingHint": "Esta etapa continua automaticamente.",
+    "useDifferentMethod": "Usar outro método",
+    "resendLink": "Reenviar link",
+    "openSignInAgain": "Abrir o login novamente",
+    "continueAs": "Continuar como {{email}}",
+    "continueWithGoogle": "Continuar com o Google",
+    "or": "ou",
+    "emailLabel": "E-mail",
+    "sending": "Enviando…",
+    "sendMagicLinkTo": "Enviar link mágico para {{email}}",
+    "sendMagicLink": "Enviar link mágico",
+    "checkEmail": "Verifique {{email}} para encontrar o link de login.",
+    "securityNote": "A sincronização pessoal é criptografada de ponta a ponta com chaves que nunca saem dos seus dispositivos."
+  },
+  "accountExpiry": {
+    "sessionExpired": "A sessão de <strong>{{email}}</strong> expirou",
+    "teamPaused": "A colaboração em equipe de {{organizations}} está pausada até você se reconectar.",
+    "accountPaused": "O acesso à conta está pausado até você se reconectar.",
+    "reconnectAria": "Reconectar {{email}}",
+    "reconnect": "Reconectar"
+  },
+  "trust": {
+    "loadingStatus": "Carregando status de confiança...",
+    "modeLabel": "Modo: {{mode}}",
+    "notTrustedAria": "Espaço de trabalho não confiável para o agente",
+    "notTrustedDescription": "Confie neste espaço de trabalho para permitir que o agente de IA execute comandos.",
+    "menuTitle": "Permissões do agente",
+    "currentMode": "Modo atual:",
+    "notTrusted": "Não confiável",
+    "trustedOn": "Confiável desde {{date}}",
+    "changeMode": "Alterar modo de permissão",
+    "permissionSettings": "Configurações de permissão",
+    "choices": {
+      "agentVerified": {
+        "label": "Verificado pelo agente",
+        "description": "Trabalha sem interromper você; ações arriscadas, como deploys e comandos destrutivos, aguardam sua aprovação."
+      },
+      "allowEverything": {
+        "label": "Permitir tudo",
+        "description": "Sem confirmações nem verificações — toda ação é executada imediatamente. Para projetos em que você confia totalmente."
+      },
+      "allowEditsOnly": {
+        "label": "Permitir só edições",
+        "description": "Edições de arquivos são executadas automaticamente; comandos de shell e requisições web pedem permissão antes."
+      },
+      "askEveryTime": {
+        "label": "Perguntar sempre",
+        "description": "Aprove cada ação antes que ela seja executada. Suas aprovações ficam salvas."
+      }
+    }
+  },
+  "orgSwitcher": {
+    "organization": "Organização",
+    "organizationNamed": "Organização: {{name}}",
+    "switchOrganization": "Alternar organização",
+    "unreadAcrossOrgs_zero": "{{count}} não lidas entre as organizações",
+    "unreadAcrossOrgs_one": "{{count}} não lida entre as organizações",
+    "unreadAcrossOrgs_other": "{{count}} não lidas entre as organizações",
+    "unreadMessages": "Mensagens não lidas",
+    "unreadCount_zero": "{{count}} não lidas",
+    "unreadCount_one": "{{count}} não lida",
+    "unreadCount_other": "{{count}} não lidas",
+    "noUnreadMessages": "Nenhuma mensagem não lida",
+    "pendingInvitations_zero": "{{count}} convites pendentes",
+    "pendingInvitations_one": "{{count}} convite pendente",
+    "pendingInvitations_other": "{{count}} convites pendentes",
+    "joinProject": "Entrar em um projeto de {{name}}",
+    "manageOrganization": "Gerenciar organização…",
+    "newOrganization": "Nova organização"
+  },
+  "orgManagement": {
+    "title": "Organização",
+    "titleNamed": "{{name}} · Organização",
+    "loading": "Carregando organização…",
+    "allProjects": "Todos os projetos",
+    "tabs": {
+      "members": "Membros",
+      "projects": "Projetos",
+      "settings": "Configurações",
+      "billing": "Cobrança",
+      "danger": "Zona de perigo"
+    }
+  },
+  "workspaceManager": {
+    "openFolder": "Abrir pasta",
+    "newFolder": "Nova pasta",
+    "openTutorial": "Abrir tutorial",
+    "startTutorial": "Iniciar tutorial",
+    "searchPlaceholder": "Pesquisar projetos...",
+    "noRecentProjects": "Nenhum projeto recente",
+    "noMatchingProjects": "Nenhum projeto encontrado",
+    "markdownFilesCount": "{{value}} arquivos markdown",
+    "filesCount": "{{value}} arquivos",
+    "openProject": "Abrir projeto",
+    "removeFromRecent": "Remover dos recentes",
+    "rename": "Renomear",
+    "move": "Mover",
+    "stats": {
+      "totalFiles": "Total de arquivos",
+      "markdownFiles": "Arquivos Markdown",
+      "totalSize": "Tamanho total",
+      "lastOpened": "Último acesso",
+      "recentFiles": "Arquivos recentes"
+    },
+    "date": {
+      "unknown": "Desconhecido",
+      "never": "Nunca",
+      "today": "Hoje",
+      "yesterday": "Ontem",
+      "daysAgo_zero": "há {{count}} dias",
+      "daysAgo_one": "há {{count}} dia",
+      "daysAgo_other": "há {{count}} dias",
+      "weeksAgo_zero": "há {{count}} semanas",
+      "weeksAgo_one": "há {{count}} semana",
+      "weeksAgo_other": "há {{count}} semanas"
+    },
+    "operation": {
+      "moving": "Movendo projeto...",
+      "renaming": "Renomeando projeto...",
+      "openingTutorial": "Abrindo tutorial...",
+      "startingTutorial": "Iniciando tutorial..."
+    },
+    "errors": {
+      "cannotRename": "Não é possível renomear o projeto",
+      "cannotMove": "Não é possível mover o projeto",
+      "moveFailed": "Falha ao mover o projeto",
+      "renameFailed": "Falha ao renomear o projeto",
+      "invalidName": "O nome contém caracteres inválidos"
+    },
+    "welcome": {
+      "title": "Boas-vindas ao Nimbalyst",
+      "subtitle": "Espaço de trabalho visual para criar com agentes de programação",
+      "lede": "Tudo no Nimbalyst fica em um <strong>projeto</strong>: uma pasta de arquivos relacionados no seu computador. Para código, é o seu repositório git; para todo o resto, qualquer pasta que você escolher. Abra um para escrever documentos, executar agentes de programação com IA, acompanhar o trabalho e esboçar ideias em conjunto.",
+      "features": {
+        "documents": {
+          "title": "Documentos e notas",
+          "description": "Texto formatado, tabelas e arquivos que você edita visualmente."
+        },
+        "agents": {
+          "title": "Agentes de programação com IA",
+          "description": "Execute o Claude Code, o Codex e outros agentes dentro dos seus projetos."
+        },
+        "trackers": {
+          "title": "Rastreadores e planos",
+          "description": "Bugs, tarefas e decisões ao lado do seu trabalho."
+        },
+        "diagrams": {
+          "title": "Diagramas e mockups",
+          "description": "Excalidraw, Mermaid, mapas mentais, mockups, modelos de dados."
+        }
+      },
+      "tryTutorial": "Experimente o tutorial interativo",
+      "newBadge": "Novo",
+      "tutorialHint": "Abre um projeto de exemplo para você trabalhar na prática, sem nada para configurar.",
+      "orOpenOwn": "ou abra seu próprio projeto",
+      "openFolderHint": "<strong>Abra uma pasta</strong> pela barra lateral para trabalhar no seu próprio projeto."
+    },
+    "renameDialog": {
+      "title": "Renomear projeto",
+      "warningTitle": "Isso vai renomear a pasta do projeto no disco",
+      "warningBody": "Todo o histórico de sessões de IA, o histórico de arquivos e as configurações serão migrados. Isso pode demorar em projetos grandes.",
+      "projectSize": "Tamanho do projeto: {{files}} arquivos, {{size}}",
+      "newName": "Novo nome",
+      "renaming": "Renomeando..."
+    },
+    "moveDialog": {
+      "title": "Mover projeto",
+      "warningTitle": "Isso vai mover a pasta inteira do projeto",
+      "warningBody": "Todos os arquivos do projeto serão copiados para o novo local, e todo o histórico de sessões de IA, o histórico de arquivos e as configurações serão migrados. Isso pode demorar em projetos grandes.",
+      "from": "De",
+      "to": "Para",
+      "confirm": "Mover projeto"
+    },
+    "safeMode": {
+      "label": "Modo seguro:",
+      "message": "As janelas salvas não foram restauradas. Abra um projeto para retomar o salvamento normal da sessão ou reinicie sem <code>--safe-mode</code>."
+    }
+  },
+  "projectSelection": {
+    "title": "Selecionar um projeto",
+    "notInProject": "O arquivo <strong>{{fileName}}</strong> não está em um projeto conhecido.",
+    "suggestedDetected": "Foi detectada uma possível pasta de projeto.",
+    "suggestedProject": "Projeto sugerido",
+    "useThisProject": "Usar este projeto",
+    "recentProjects": "Projetos recentes",
+    "useSelectedProject": "Usar projeto selecionado",
+    "browse": "Procurar projeto...",
+    "createNew": "Criar novo projeto...",
+    "createDialogTitle": "Criar novo projeto",
+    "createDialogButton": "Criar projeto"
+  },
+  "history": {
+    "documentHistory": "Histórico do documento",
+    "renderedView": "Visualização renderizada",
+    "rich": "Formatado",
+    "rawSource": "Código-fonte bruto",
+    "raw": "Bruto",
+    "showDiffTitle": "Mostrar diferenças em relação à versão anterior",
+    "diff": "Diff",
+    "viewFullTitle": "Ver conteúdo completo",
+    "full": "Completo",
+    "snapshotsCount_zero": "Snapshots ({{count}})",
+    "snapshotsCount_one": "Snapshots ({{count}})",
+    "snapshotsCount_other": "Snapshots ({{count}})",
+    "snapshotsCountOf": "Snapshots ({{shown}} de {{total}})",
+    "showAllVersions": "Mostrar todas as versões",
+    "hideMinorAutoSaves": "Ocultar salvamentos automáticos menores",
+    "noHistory": "Nenhum histórico disponível para este documento",
+    "snapshotType": {
+      "auto-save": "Salvamento automático",
+      "manual": "Manual",
+      "ai-diff": "Diff de IA",
+      "pre-apply": "Pré-aplicação",
+      "external-change": "Alteração externa",
+      "ai-edit": "Edição de IA",
+      "pre-edit": "Pré-edição",
+      "incremental-approval": "Aprovação incremental",
+      "auto": "Automático"
+    },
+    "versionType": {
+      "aiDiff": "Edição de IA",
+      "preApply": "Pré-edição",
+      "preEdit": "Início da sessão de IA",
+      "incrementalApproval": "Revisão parcial",
+      "manual": "Salvamento manual",
+      "autoSave": "Salvamento automático",
+      "externalChange": "Alteração externa"
+    },
+    "versionLabel": "{{type}} {{time}}",
+    "time": {
+      "minutesAgo_zero": "há {{count}} minutos",
+      "minutesAgo_one": "há {{count}} minuto",
+      "minutesAgo_other": "há {{count}} minutos",
+      "hoursAgo_zero": "há {{count}} horas",
+      "hoursAgo_one": "há {{count}} hora",
+      "hoursAgo_other": "há {{count}} horas",
+      "daysAgo_zero": "há {{count}} dias",
+      "daysAgo_one": "há {{count}} dia",
+      "daysAgo_other": "há {{count}} dias"
+    },
+    "openSessionInChat": "Abrir sessão de IA no chat",
+    "deleteSnapshot": "Excluir snapshot",
+    "diffPreview": "Pré-visualização do diff",
+    "preview": "Pré-visualização",
+    "versus": "vs",
+    "previousChange": "Alteração anterior",
+    "nextChange": "Próxima alteração",
+    "restoreThisVersion": "Restaurar esta versão",
+    "selectToDiff": "Selecione um snapshot para ver o diff ou use Cmd+clique em dois para comparar",
+    "selectToView": "Selecione um snapshot para visualizar",
+    "loadingDiff": "Carregando diff...",
+    "loadingPreview": "Carregando pré-visualização...",
+    "failedToLoadSnapshot": "Falha ao carregar o snapshot",
+    "oldVersion": "Versão antiga",
+    "newVersion": "Versão nova",
+    "imageDiff": {
+      "sideBySide": "Lado a lado",
+      "swipe": "Deslizar",
+      "overlay": "Sobrepor",
+      "position": "Posição",
+      "opacity": "Opacidade",
+      "oldVersionAlt": "Versão antiga",
+      "newVersionAlt": "Versão nova"
+    }
+  },
+  "workspaceHistory": {
+    "title": "Histórico da pasta",
+    "filesHeader_zero": "Arquivos com histórico ({{count}} arquivos)",
+    "filesHeader_one": "Arquivos com histórico ({{count}} arquivo)",
+    "filesHeader_other": "Arquivos com histórico ({{count}} arquivos)",
+    "filesHeaderWithDeleted_zero": "Arquivos com histórico ({{count}} arquivos; excluídos: {{deleted}})",
+    "filesHeaderWithDeleted_one": "Arquivos com histórico ({{count}} arquivo; excluídos: {{deleted}})",
+    "filesHeaderWithDeleted_other": "Arquivos com histórico ({{count}} arquivos; excluídos: {{deleted}})",
+    "snapshotCount_zero": "({{count}} snapshots)",
+    "snapshotCount_one": "({{count}} snapshot)",
+    "snapshotCount_other": "({{count}} snapshots)",
+    "selectFile": "Selecione um arquivo para ver o histórico",
+    "restoreSelected_zero": "Restaurar selecionados ({{count}})",
+    "restoreSelected_one": "Restaurar selecionado ({{count}})",
+    "restoreSelected_other": "Restaurar selecionados ({{count}})",
+    "restoreFile": "Restaurar arquivo",
+    "loadingSnapshots": "Carregando snapshots...",
+    "noSnapshots": "Nenhum snapshot disponível",
+    "text": "Texto",
+    "selectSnapshot": "Selecione um snapshot para pré-visualizar",
+    "selectFileFromTree": "Selecione um arquivo na árvore para ver o histórico dele",
+    "deletedLabel": "(excluído)",
+    "noFiles": "Nenhum arquivo com histórico neste espaço de trabalho"
+  },
+  "topBar": {
+    "applicationMenu": "Menu do aplicativo",
+    "exitFullScreen": "Sair da tela cheia",
+    "trackerList": "lista do rastreador",
+    "trackerDocumentPanel": "painel do documento do rastreador",
+    "modes": {
+      "prReview": "Revisão de PR",
+      "settings": "Configurações"
+    },
+    "pane": {
+      "show": "Mostrar {{label}}",
+      "hide": "Ocultar {{label}}",
+      "withOption": "{{label}}: {{option}}",
+      "chooseWithOption": "Escolher {{label}}: {{option}}",
+      "choose": "Escolher {{label}}",
+      "none": "Nenhum"
+    },
+    "create": {
+      "choose": "Escolher o que criar",
+      "chooseAria": "Escolher o que criar: {{label}}",
+      "destination": "em {{destination}}"
+    },
+    "git": {
+      "agentSession": "Sessão do agente",
+      "activityEntry": "{{source}}: {{command}}",
+      "moreRunning_zero": "{{description}} (+{{count}} em execução)",
+      "moreRunning_one": "{{description}} (+{{count}} em execução)",
+      "moreRunning_other": "{{description}} (+{{count}} em execução)",
+      "modified": "Modificado",
+      "ahead_zero": "{{count}} à frente",
+      "ahead_one": "{{count}} à frente",
+      "ahead_other": "{{count}} à frente",
+      "behind_zero": "{{count}} atrás",
+      "behind_one": "{{count}} atrás",
+      "behind_other": "{{count}} atrás",
+      "unavailable": "Git indisponível",
+      "actionsAria": "Ações do Git: {{title}}",
+      "repositories": "Repositórios",
+      "pull": "Fazer pull",
+      "pulling": "Fazendo pull…",
+      "push": "Fazer push",
+      "pushing": "Fazendo push…",
+      "openLog": "Abrir log do Git",
+      "enableExtension": "Ativar extensão do Git…"
+    },
+    "labels": {
+      "filesSidebar": "barra lateral de arquivos",
+      "aiChat": "chat de IA",
+      "sessionHistory": "histórico de sessões",
+      "agentRightPanel": "painel direito do agente",
+      "sharedDocumentsSidebar": "barra lateral de documentos compartilhados",
+      "sharedDocumentsChat": "chat de documentos compartilhados",
+      "trackerSidebar": "barra lateral do rastreador",
+      "pullRequestChat": "chat do pull request",
+      "newSession": "Nova sessão",
+      "newFile": "Novo arquivo",
+      "newSharedDoc": "Novo documento compartilhado",
+      "newItem": "Novo item"
+    }
+  },
+  "sidebar": {
+    "newFileMenuItem": "Novo arquivo…",
+    "newFolderMenuItem": "Nova pasta",
+    "unknownError": "Erro desconhecido",
+    "createFileFailed": {
+      "title": "Falha ao criar arquivo",
+      "message": "Falha ao criar o arquivo: {{error}}"
+    },
+    "createFolderFailed": {
+      "title": "Falha ao criar pasta",
+      "message": "Falha ao criar a pasta: {{error}}"
+    },
+    "aiFilterHint": {
+      "noSession": "Abra uma sessão do Claude Agent para ver quais arquivos o agente lê ou grava."
+    },
+    "empty": {
+      "markdown": {
+        "title": "Nenhum arquivo Markdown",
+        "description": "Nenhum arquivo .md ou .markdown encontrado neste espaço de trabalho."
+      },
+      "known": {
+        "title": "Nenhum tipo de arquivo conhecido",
+        "description": "Nenhum arquivo com extensão reconhecida foi encontrado. São exibidos arquivos com extensões como .md, .txt, .json, .js, .ts etc."
+      },
+      "gitUncommitted": {
+        "title": "Nenhuma alteração não commitada",
+        "description": "Nenhum arquivo não commitado encontrado neste repositório git.",
+        "notRepo": "Este espaço de trabalho não é um repositório git."
+      },
+      "gitWorktree": {
+        "title": "Nenhuma alteração no worktree",
+        "description": "Nenhum arquivo modificado neste worktree git.",
+        "notWorktree": "Este espaço de trabalho não é um worktree git."
+      },
+      "aiRead": {
+        "title": "Nenhum arquivo lido",
+        "withSession": "Nenhum arquivo foi lido por esta sessão do Claude Agent ainda.",
+        "noSession": "Abra uma sessão do Claude Agent para ver quais arquivos o agente lê."
+      },
+      "aiWritten": {
+        "title": "Nenhum arquivo gravado",
+        "withSession": "Nenhum arquivo foi gravado por esta sessão do Claude Agent ainda.",
+        "noSession": "Abra uma sessão do Claude Agent para ver quais arquivos o agente grava."
+      },
+      "default": {
+        "title": "Nenhum arquivo",
+        "description": "Nenhum arquivo corresponde ao filtro atual."
+      }
+    },
+    "refreshFileTree": "Atualizar árvore de arquivos",
+    "searchFiles": "Pesquisar arquivos",
+    "filterFiles": "Filtrar arquivos",
+    "filterActive": "Filtro ativo",
+    "filesSection": "Arquivos",
+    "loadingFiles": "Carregando arquivos...",
+    "emptyFolder": {
+      "title": "Esta pasta está vazia",
+      "orgDescription": "Documentos compartilhados e itens do rastreador de {{name}} são abertos pela barra lateral, não por esta pasta. Os arquivos que você adicionar aqui ficam neste computador.",
+      "description": "Os arquivos que você adicionar a esta pasta aparecerão aqui."
+    },
+    "clearFilter": "Limpar filtro",
+    "dropToRoot": "Solte aqui para mover para a raiz do espaço de trabalho",
+    "newMarkdownFile": "Novo arquivo Markdown",
+    "newMarkdownFileIn": "Novo arquivo Markdown em {{folder}}",
+    "newMockup": "Novo mockup",
+    "newMockupIn": "Novo mockup em {{folder}}",
+    "fileFallback": "Arquivo",
+    "newType": "Novo {{type}}",
+    "newTypeIn": "Novo {{type}} em {{folder}}",
+    "newFile": "Novo arquivo",
+    "newFileIn": "Novo arquivo em {{folder}}",
+    "newFolder": "Nova pasta",
+    "newFolderIn": "Nova pasta em {{folder}}",
+    "enterName": "Digite o nome",
+    "enterFileNameWithExtension": "Digite o nome do arquivo com a extensão",
+    "enterFolderName": "Digite o nome da pasta"
+  },
+  "fileTreeFilter": {
+    "showFiles": "Mostrar arquivos",
+    "allFiles": "Todos os arquivos",
+    "markdownOnly": "Somente Markdown",
+    "knownFiles": "Arquivos conhecidos",
+    "git": "Git",
+    "uncommittedChanges": "Alterações não commitadas",
+    "worktreeChanges": "Alterações do worktree",
+    "notGitRepo": "Não é um repositório git.",
+    "claudeAgentSession": "Sessão do Claude Agent",
+    "filesRead": "Arquivos lidos",
+    "filesWritten": "Arquivos gravados",
+    "openSessionHint": "Abra uma sessão do Claude Agent para ativar estes filtros.",
+    "showIcons": "Mostrar ícones",
+    "showGitStatus": "Mostrar status do Git",
+    "autoScroll": "Rolar automaticamente até o arquivo ativo"
+  },
+  "fileTree": {
+    "gitStatus": {
+      "modified": "Modificado - alterações não preparadas para commit",
+      "staged": "Preparado - alterações prontas para commit",
+      "untracked": "Não rastreado - arquivo novo ainda não adicionado ao git",
+      "deleted": "Excluído - arquivo removido",
+      "containsModified": "Contém arquivos modificados",
+      "containsStaged": "Contém arquivos preparados",
+      "containsUntracked": "Contém arquivos não rastreados",
+      "containsDeleted": "Contém arquivos excluídos"
+    },
+    "copySuffix": "(cópia)",
+    "dragItems_zero": "{{count}} itens",
+    "dragItems_one": "{{count}} item",
+    "dragItems_other": "{{count}} itens",
+    "explorerAria": "Explorador de arquivos"
+  },
+  "newFileMenu": {
+    "markdownFile": "Arquivo Markdown",
+    "newFile": "Novo arquivo..."
+  },
+  "summaryHeader": {
+    "workspaceFallback": "Espaço de trabalho",
+    "remoteWorkspace": "Espaço de trabalho remoto"
+  }
+}

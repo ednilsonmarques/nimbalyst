@@ -26,6 +26,7 @@ import { dialogRef } from '../contexts/DialogContext';
 import { DIALOG_IDS } from '../dialogs/registry';
 import { requestConfirmation } from '../dialogs/requestConfirmation';
 import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface FlatFileTreeProps {
   items: RendererFileTreeItem[];
@@ -63,6 +64,7 @@ export function FlatFileTree({
   onFolderSelect,
   extensionFileTypes = [],
 }: FlatFileTreeProps) {
+  const { t } = useTranslation('workspace');
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
   // Atoms
@@ -508,7 +510,7 @@ export function FlatFileTree({
     // Custom drag image
     const dragImage = document.createElement('div');
     dragImage.textContent = sourcePaths.length > 1
-      ? `${sourcePaths.length} items`
+      ? translate('workspace:fileTree.dragItems', { count: sourcePaths.length })
       : node.name;
     dragImage.style.position = 'absolute';
     dragImage.style.top = '-1000px';
@@ -1001,7 +1003,7 @@ export function FlatFileTree({
         ref={containerRef}
         className="file-tree-container"
         role="tree"
-        aria-label="File Explorer"
+        aria-label={t('fileTree.explorerAria')}
         tabIndex={0}
         onKeyDown={handleKeyDown}
         onClick={handleContainerInteraction}

@@ -1,1 +1,546 @@
-{}
+{
+  "gutter": {
+    "labelWithShortcut": "{{label}} ({{shortcut}})",
+    "labelWithShortcutUnread_zero": "{{label}} ({{shortcut}}), {{count}} unread",
+    "labelWithShortcutUnread_one": "{{label}} ({{shortcut}}), {{count}} unread",
+    "labelWithShortcutUnread_other": "{{label}} ({{shortcut}}), {{count}} unread",
+    "sendFeedback": "Send Feedback",
+    "userMenu": "User menu",
+    "userMenuSignedOut": "User menu (signed out -- sync requires sign in)",
+    "userMenuSyncAttention": "User menu (sync: {{detail}})"
+  },
+  "agentSessions": {
+    "title": "Sessions",
+    "needAttention_zero": "{{count}} need attention",
+    "needAttention_one": "{{count}} need attention",
+    "needAttention_other": "{{count}} need attention",
+    "state": {
+      "awaiting": "Awaiting input",
+      "running": "Running",
+      "unread": "Unread"
+    },
+    "bubbleAria": {
+      "awaiting_zero": "{{count}} awaiting input sessions",
+      "awaiting_one": "{{count}} awaiting input session",
+      "awaiting_other": "{{count}} awaiting input sessions",
+      "running_zero": "{{count}} running sessions",
+      "running_one": "{{count}} running session",
+      "running_other": "{{count}} running sessions",
+      "unread_zero": "{{count}} unread sessions",
+      "unread_one": "{{count}} unread session",
+      "unread_other": "{{count}} unread sessions"
+    },
+    "markAllRead": "Mark all as read",
+    "untitled": "Untitled Session",
+    "previewTranscript": "Preview transcript",
+    "previewTranscriptFor": "Preview transcript for {{title}}",
+    "resizeAria": "Resize sessions popover"
+  },
+  "projectRail": {
+    "switchToProject": "Switch to project {{name}}",
+    "streamingSessions_zero": "{{count}} streaming session(s)",
+    "streamingSessions_one": "{{count}} streaming session(s)",
+    "streamingSessions_other": "{{count}} streaming session(s)",
+    "unread_zero": "{{count}} unread",
+    "unread_one": "{{count}} unread",
+    "unread_other": "{{count}} unread",
+    "closeProjectNamed": "Close {{name}}"
+  },
+  "accountLogin": {
+    "copy": {
+      "firstSignIn": {
+        "title": "Sign in to get started",
+        "description": "Sign in to sync sessions, drafts, and settings across your devices, and to collaborate with your team."
+      },
+      "orgOnboarding": {
+        "title": "Sign in, or create your account",
+        "description": "An organization belongs to a Nimbalyst account — either method works, new or existing."
+      },
+      "addAccount": {
+        "title": "Add another account",
+        "description": "This account will be available on this device. It won't change your sync account or affect any workspace's team access."
+      },
+      "reauth": {
+        "title": "Reconnect this account",
+        "description": "Your other accounts stay signed in while this account reconnects."
+      }
+    },
+    "errors": {
+      "startSignIn": "Could not start sign-in.",
+      "sendLink": "Could not send the sign-in link."
+    },
+    "resendNoticeLink": "Another sign-in link is on its way to {{email}}.",
+    "resendNoticeBrowser": "Sign-in reopened in your browser.",
+    "signingBackIn": "Signing back in for <strong>{{email}}</strong>.",
+    "waitingMagicLink": "<strong>Check {{email}}</strong> — we sent a sign-in link. Open it on this device and you will come straight back here.",
+    "waitingGoogle": "Finish signing in with Google in your browser. You will come straight back here.",
+    "waitingTitle": "Waiting for you to finish…",
+    "waitingHint": "This step continues on its own.",
+    "useDifferentMethod": "Use a different method",
+    "resendLink": "Resend link",
+    "openSignInAgain": "Open sign-in again",
+    "continueAs": "Continue as {{email}}",
+    "continueWithGoogle": "Continue with Google",
+    "or": "or",
+    "emailLabel": "Email",
+    "sending": "Sending…",
+    "sendMagicLinkTo": "Send magic link to {{email}}",
+    "sendMagicLink": "Send magic link",
+    "checkEmail": "Check {{email}} for the sign-in link.",
+    "securityNote": "Personal sync is end-to-end encrypted with keys that never leave your devices."
+  },
+  "accountExpiry": {
+    "sessionExpired": "<strong>{{email}}</strong>'s session expired",
+    "teamPaused": "Team collaboration for {{organizations}} is paused until you reconnect.",
+    "accountPaused": "Account access is paused until you reconnect.",
+    "reconnectAria": "Reconnect {{email}}",
+    "reconnect": "Reconnect"
+  },
+  "trust": {
+    "loadingStatus": "Loading trust status...",
+    "modeLabel": "{{mode}} mode",
+    "notTrustedAria": "Workspace not trusted for agent",
+    "notTrustedDescription": "Trust this workspace to allow the AI agent to run commands.",
+    "menuTitle": "Agent Permissions",
+    "currentMode": "Current mode:",
+    "notTrusted": "Not Trusted",
+    "trustedOn": "Trusted {{date}}",
+    "changeMode": "Change permission mode",
+    "permissionSettings": "Permission settings",
+    "choices": {
+      "agentVerified": {
+        "label": "Agent-verified",
+        "description": "Works without interrupting you; risky actions like deploys and destructive commands pause for your OK."
+      },
+      "allowEverything": {
+        "label": "Allow everything",
+        "description": "No prompts, no checks — every action runs immediately. For projects you fully trust."
+      },
+      "allowEditsOnly": {
+        "label": "Allow edits only",
+        "description": "File edits run automatically; shell commands and web requests ask first."
+      },
+      "askEveryTime": {
+        "label": "Ask every time",
+        "description": "Approve each action before it runs. Your approvals are remembered."
+      }
+    }
+  },
+  "orgSwitcher": {
+    "organization": "Organization",
+    "organizationNamed": "Organization: {{name}}",
+    "switchOrganization": "Switch organization",
+    "unreadAcrossOrgs_zero": "{{count}} unread across organizations",
+    "unreadAcrossOrgs_one": "{{count}} unread across organizations",
+    "unreadAcrossOrgs_other": "{{count}} unread across organizations",
+    "unreadMessages": "Unread messages",
+    "unreadCount_zero": "{{count}} unread",
+    "unreadCount_one": "{{count}} unread",
+    "unreadCount_other": "{{count}} unread",
+    "noUnreadMessages": "No unread messages",
+    "pendingInvitations_zero": "{{count}} pending invitations",
+    "pendingInvitations_one": "{{count}} pending invitation",
+    "pendingInvitations_other": "{{count}} pending invitations",
+    "joinProject": "Join {{name}} project",
+    "manageOrganization": "Manage organization…",
+    "newOrganization": "New organization"
+  },
+  "orgManagement": {
+    "title": "Organization",
+    "titleNamed": "{{name}} · Organization",
+    "loading": "Loading organization…",
+    "allProjects": "All projects",
+    "tabs": {
+      "members": "Members",
+      "projects": "Projects",
+      "settings": "Settings",
+      "billing": "Billing",
+      "danger": "Danger zone"
+    }
+  },
+  "workspaceManager": {
+    "openFolder": "Open Folder",
+    "newFolder": "New Folder",
+    "openTutorial": "Open tutorial",
+    "startTutorial": "Start tutorial",
+    "searchPlaceholder": "Search projects...",
+    "noRecentProjects": "No recent projects",
+    "noMatchingProjects": "No matching projects",
+    "markdownFilesCount": "{{value}} markdown files",
+    "filesCount": "{{value}} files",
+    "openProject": "Open Project",
+    "removeFromRecent": "Remove from Recent",
+    "rename": "Rename",
+    "move": "Move",
+    "stats": {
+      "totalFiles": "Total Files",
+      "markdownFiles": "Markdown Files",
+      "totalSize": "Total Size",
+      "lastOpened": "Last Opened",
+      "recentFiles": "Recent Files"
+    },
+    "date": {
+      "unknown": "Unknown",
+      "never": "Never",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo_zero": "{{count}} days ago",
+      "daysAgo_one": "{{count}} days ago",
+      "daysAgo_other": "{{count}} days ago",
+      "weeksAgo_zero": "{{count}} weeks ago",
+      "weeksAgo_one": "{{count}} week ago",
+      "weeksAgo_other": "{{count}} weeks ago"
+    },
+    "operation": {
+      "moving": "Moving project...",
+      "renaming": "Renaming project...",
+      "openingTutorial": "Opening tutorial...",
+      "startingTutorial": "Starting tutorial..."
+    },
+    "errors": {
+      "cannotRename": "Cannot rename project",
+      "cannotMove": "Cannot move project",
+      "moveFailed": "Failed to move project",
+      "renameFailed": "Failed to rename project",
+      "invalidName": "Name contains invalid characters"
+    },
+    "welcome": {
+      "title": "Welcome to Nimbalyst",
+      "subtitle": "Visual workspace for building with coding agents",
+      "lede": "Everything in Nimbalyst lives in a <strong>project</strong>: a folder of related files on your computer. For code that is your git repository, for anything else any folder you choose. Open one to write docs, run AI coding agents, track work, and sketch ideas together.",
+      "features": {
+        "documents": {
+          "title": "Documents & notes",
+          "description": "Rich text, tables, and files you edit visually."
+        },
+        "agents": {
+          "title": "AI coding agents",
+          "description": "Run Claude Code, Codex, and other agents inside your projects."
+        },
+        "trackers": {
+          "title": "Trackers & plans",
+          "description": "Bugs, tasks, and decisions beside your work."
+        },
+        "diagrams": {
+          "title": "Diagrams & mockups",
+          "description": "Excalidraw, Mermaid, mindmaps, mockups, data models."
+        }
+      },
+      "tryTutorial": "Try the interactive tutorial",
+      "newBadge": "New",
+      "tutorialHint": "Opens a sample project you work in, hands-on, nothing to set up.",
+      "orOpenOwn": "or open your own project",
+      "openFolderHint": "<strong>Open a folder</strong> from the sidebar to work in your own project."
+    },
+    "renameDialog": {
+      "title": "Rename Project",
+      "warningTitle": "This will rename the project folder on disk",
+      "warningBody": "All AI session history, file history, and settings will be migrated. This may take a while for large projects.",
+      "projectSize": "Project size: {{files}} files, {{size}}",
+      "newName": "New name",
+      "renaming": "Renaming..."
+    },
+    "moveDialog": {
+      "title": "Move Project",
+      "warningTitle": "This will move the entire project folder",
+      "warningBody": "All project files will be copied to the new location, and all AI session history, file history, and settings will be migrated. This may take a while for large projects.",
+      "from": "From",
+      "to": "To",
+      "confirm": "Move Project"
+    },
+    "safeMode": {
+      "label": "Safe mode:",
+      "message": "Saved windows were not restored. Open a project to resume normal session saving, or relaunch without <code>--safe-mode</code>."
+    }
+  },
+  "projectSelection": {
+    "title": "Select a Project",
+    "notInProject": "The file <strong>{{fileName}}</strong> is not in a known project.",
+    "suggestedDetected": "A potential project folder was detected.",
+    "suggestedProject": "Suggested Project",
+    "useThisProject": "Use This Project",
+    "recentProjects": "Recent Projects",
+    "useSelectedProject": "Use Selected Project",
+    "browse": "Browse for Project...",
+    "createNew": "Create New Project...",
+    "createDialogTitle": "Create New Project",
+    "createDialogButton": "Create Project"
+  },
+  "history": {
+    "documentHistory": "Document History",
+    "renderedView": "Rendered view",
+    "rich": "Rich",
+    "rawSource": "Raw source",
+    "raw": "Raw",
+    "showDiffTitle": "Show diff with previous version",
+    "diff": "Diff",
+    "viewFullTitle": "View full content",
+    "full": "Full",
+    "snapshotsCount_zero": "Snapshots ({{count}})",
+    "snapshotsCount_one": "Snapshots ({{count}})",
+    "snapshotsCount_other": "Snapshots ({{count}})",
+    "snapshotsCountOf": "Snapshots ({{shown}} of {{total}})",
+    "showAllVersions": "Show all versions",
+    "hideMinorAutoSaves": "Hide minor auto-saves",
+    "noHistory": "No history available for this document",
+    "snapshotType": {
+      "auto-save": "auto save",
+      "manual": "manual",
+      "ai-diff": "ai diff",
+      "pre-apply": "pre apply",
+      "external-change": "external change",
+      "ai-edit": "ai edit",
+      "pre-edit": "pre edit",
+      "incremental-approval": "incremental approval",
+      "auto": "auto"
+    },
+    "versionType": {
+      "aiDiff": "AI Edit",
+      "preApply": "Pre-edit",
+      "preEdit": "AI Session Start",
+      "incrementalApproval": "Partial Review",
+      "manual": "Manual Save",
+      "autoSave": "Auto-save",
+      "externalChange": "External Change"
+    },
+    "versionLabel": "{{type}} {{time}}",
+    "time": {
+      "minutesAgo_zero": "{{count}} minutes ago",
+      "minutesAgo_one": "{{count}} minute ago",
+      "minutesAgo_other": "{{count}} minutes ago",
+      "hoursAgo_zero": "{{count}} hours ago",
+      "hoursAgo_one": "{{count}} hour ago",
+      "hoursAgo_other": "{{count}} hours ago",
+      "daysAgo_zero": "{{count}} days ago",
+      "daysAgo_one": "{{count}} day ago",
+      "daysAgo_other": "{{count}} days ago"
+    },
+    "openSessionInChat": "Open AI session in chat",
+    "deleteSnapshot": "Delete snapshot",
+    "diffPreview": "Diff Preview",
+    "preview": "Preview",
+    "versus": "vs",
+    "previousChange": "Previous change",
+    "nextChange": "Next change",
+    "restoreThisVersion": "Restore This Version",
+    "selectToDiff": "Select a snapshot to see diff, or Cmd+Click two to compare",
+    "selectToView": "Select a snapshot to view",
+    "loadingDiff": "Loading diff...",
+    "loadingPreview": "Loading preview...",
+    "failedToLoadSnapshot": "Failed to load snapshot",
+    "oldVersion": "Old Version",
+    "newVersion": "New Version",
+    "imageDiff": {
+      "sideBySide": "Side by Side",
+      "swipe": "Swipe",
+      "overlay": "Overlay",
+      "position": "Position",
+      "opacity": "Opacity",
+      "oldVersionAlt": "Old version",
+      "newVersionAlt": "New version"
+    }
+  },
+  "workspaceHistory": {
+    "title": "Folder History",
+    "filesHeader_zero": "Files with History ({{count}} files)",
+    "filesHeader_one": "Files with History ({{count}} files)",
+    "filesHeader_other": "Files with History ({{count}} files)",
+    "filesHeaderWithDeleted_zero": "Files with History ({{count}} files, {{deleted}} deleted)",
+    "filesHeaderWithDeleted_one": "Files with History ({{count}} files, {{deleted}} deleted)",
+    "filesHeaderWithDeleted_other": "Files with History ({{count}} files, {{deleted}} deleted)",
+    "snapshotCount_zero": "({{count}} snapshots)",
+    "snapshotCount_one": "({{count}} snapshot)",
+    "snapshotCount_other": "({{count}} snapshots)",
+    "selectFile": "Select a file to view history",
+    "restoreSelected_zero": "Restore Selected ({{count}})",
+    "restoreSelected_one": "Restore Selected ({{count}})",
+    "restoreSelected_other": "Restore Selected ({{count}})",
+    "restoreFile": "Restore File",
+    "loadingSnapshots": "Loading snapshots...",
+    "noSnapshots": "No snapshots available",
+    "text": "Text",
+    "selectSnapshot": "Select a snapshot to preview",
+    "selectFileFromTree": "Select a file from the tree to view its history",
+    "deletedLabel": "(deleted)",
+    "noFiles": "No files with history in this workspace"
+  },
+  "topBar": {
+    "applicationMenu": "Application menu",
+    "exitFullScreen": "Exit Full Screen",
+    "trackerList": "Tracker list",
+    "trackerDocumentPanel": "Tracker document panel",
+    "modes": {
+      "prReview": "PR Review",
+      "settings": "Settings"
+    },
+    "pane": {
+      "show": "Show {{label}}",
+      "hide": "Hide {{label}}",
+      "withOption": "{{label}}: {{option}}",
+      "chooseWithOption": "Choose {{label}}: {{option}}",
+      "choose": "Choose {{label}}",
+      "none": "None"
+    },
+    "create": {
+      "choose": "Choose what to create",
+      "chooseAria": "Choose what to create: {{label}}",
+      "destination": "in {{destination}}"
+    },
+    "git": {
+      "agentSession": "Agent session",
+      "activityEntry": "{{source}}: {{command}}",
+      "moreRunning_zero": "{{description}} (+{{count}} more running)",
+      "moreRunning_one": "{{description}} (+{{count}} more running)",
+      "moreRunning_other": "{{description}} (+{{count}} more running)",
+      "modified": "Modified",
+      "ahead_zero": "{{count}} ahead",
+      "ahead_one": "{{count}} ahead",
+      "ahead_other": "{{count}} ahead",
+      "behind_zero": "{{count}} behind",
+      "behind_one": "{{count}} behind",
+      "behind_other": "{{count}} behind",
+      "unavailable": "Git unavailable",
+      "actionsAria": "Git actions: {{title}}",
+      "repositories": "Repositories",
+      "pull": "Pull",
+      "pulling": "Pulling…",
+      "push": "Push",
+      "pushing": "Pushing…",
+      "openLog": "Open Git Log",
+      "enableExtension": "Enable Git Extension…"
+    },
+    "labels": {
+      "filesSidebar": "Files sidebar",
+      "aiChat": "AI chat",
+      "sessionHistory": "Session history",
+      "agentRightPanel": "Agent right panel",
+      "sharedDocumentsSidebar": "Shared documents sidebar",
+      "sharedDocumentsChat": "Shared documents chat",
+      "trackerSidebar": "Tracker sidebar",
+      "pullRequestChat": "Pull request chat",
+      "newSession": "New session",
+      "newFile": "New file",
+      "newSharedDoc": "New shared doc",
+      "newItem": "New item"
+    }
+  },
+  "sidebar": {
+    "newFileMenuItem": "New File…",
+    "newFolderMenuItem": "New folder",
+    "unknownError": "Unknown error",
+    "createFileFailed": {
+      "title": "Create file failed",
+      "message": "Failed to create file: {{error}}"
+    },
+    "createFolderFailed": {
+      "title": "Create folder failed",
+      "message": "Failed to create folder: {{error}}"
+    },
+    "aiFilterHint": {
+      "noSession": "Open a Claude Agent session to see which files the agent reads or writes."
+    },
+    "empty": {
+      "markdown": {
+        "title": "No Markdown Files",
+        "description": "No .md or .markdown files found in this workspace."
+      },
+      "known": {
+        "title": "No Known File Types",
+        "description": "No files with recognized extensions found. Showing files with extensions like .md, .txt, .json, .js, .ts, etc."
+      },
+      "gitUncommitted": {
+        "title": "No Uncommitted Changes",
+        "description": "No uncommitted files found in this git repository.",
+        "notRepo": "This workspace is not a git repository."
+      },
+      "gitWorktree": {
+        "title": "No Worktree Changes",
+        "description": "No files modified in this git worktree.",
+        "notWorktree": "This workspace is not a git worktree."
+      },
+      "aiRead": {
+        "title": "No Files Read",
+        "withSession": "No files have been read by this Claude Agent session yet.",
+        "noSession": "Open a Claude Agent session to see which files the agent reads."
+      },
+      "aiWritten": {
+        "title": "No Files Written",
+        "withSession": "No files have been written by this Claude Agent session yet.",
+        "noSession": "Open a Claude Agent session to see which files the agent writes."
+      },
+      "default": {
+        "title": "No Files",
+        "description": "No files match the current filter."
+      }
+    },
+    "refreshFileTree": "Refresh file tree",
+    "searchFiles": "Search files",
+    "filterFiles": "Filter files",
+    "filterActive": "Filter active",
+    "filesSection": "Files",
+    "loadingFiles": "Loading files...",
+    "emptyFolder": {
+      "title": "This folder is empty",
+      "orgDescription": "Shared documents and tracker items for {{name}} open from the sidebar, not from this folder. Files you add here stay on this computer.",
+      "description": "Files you add to this folder will show up here."
+    },
+    "clearFilter": "Clear Filter",
+    "dropToRoot": "Drop here to move to workspace root",
+    "newMarkdownFile": "New Markdown File",
+    "newMarkdownFileIn": "New Markdown File in {{folder}}",
+    "newMockup": "New Mockup",
+    "newMockupIn": "New Mockup in {{folder}}",
+    "fileFallback": "File",
+    "newType": "New {{type}}",
+    "newTypeIn": "New {{type}} in {{folder}}",
+    "newFile": "New File",
+    "newFileIn": "New File in {{folder}}",
+    "newFolder": "New Folder",
+    "newFolderIn": "New Folder in {{folder}}",
+    "enterName": "Enter name",
+    "enterFileNameWithExtension": "Enter file name with extension",
+    "enterFolderName": "Enter folder name"
+  },
+  "fileTreeFilter": {
+    "showFiles": "Show Files",
+    "allFiles": "All Files",
+    "markdownOnly": "Markdown Only",
+    "knownFiles": "Known Files",
+    "git": "Git",
+    "uncommittedChanges": "Uncommitted Changes",
+    "worktreeChanges": "Worktree Changes",
+    "notGitRepo": "Not a git repository.",
+    "claudeAgentSession": "Claude Agent Session",
+    "filesRead": "Files Read",
+    "filesWritten": "Files Written",
+    "openSessionHint": "Open a Claude Agent session to enable these filters.",
+    "showIcons": "Show Icons",
+    "showGitStatus": "Show Git Status",
+    "autoScroll": "Auto-Scroll to Active File"
+  },
+  "fileTree": {
+    "gitStatus": {
+      "modified": "Modified - Changes not staged for commit",
+      "staged": "Staged - Changes ready to commit",
+      "untracked": "Untracked - New file not yet added to git",
+      "deleted": "Deleted - File removed",
+      "containsModified": "Contains modified files",
+      "containsStaged": "Contains staged files",
+      "containsUntracked": "Contains untracked files",
+      "containsDeleted": "Contains deleted files"
+    },
+    "copySuffix": "(copy)",
+    "dragItems_zero": "{{count}} items",
+    "dragItems_one": "{{count}} items",
+    "dragItems_other": "{{count}} items",
+    "explorerAria": "File Explorer"
+  },
+  "newFileMenu": {
+    "markdownFile": "Markdown File",
+    "newFile": "New File..."
+  },
+  "summaryHeader": {
+    "workspaceFallback": "Workspace",
+    "remoteWorkspace": "Remote workspace"
+  }
+}
