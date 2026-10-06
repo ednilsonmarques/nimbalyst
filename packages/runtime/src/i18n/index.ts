@@ -24,6 +24,10 @@ import enAi from './locales/en/ai.json';
 import enEditor from './locales/en/editor.json';
 import enTracker from './locales/en/tracker.json';
 import enOnboarding from './locales/en/onboarding.json';
+import enGeneral from './locales/en/general.json';
+import enTeam from './locales/en/team.json';
+import enPullRequest from './locales/en/pullRequest.json';
+import enSystem from './locales/en/system.json';
 import ptBRCommon from './locales/pt-BR/common.json';
 import ptBRDialogs from './locales/pt-BR/dialogs.json';
 import ptBRErrors from './locales/pt-BR/errors.json';
@@ -35,21 +39,27 @@ import ptBRAi from './locales/pt-BR/ai.json';
 import ptBREditor from './locales/pt-BR/editor.json';
 import ptBRTracker from './locales/pt-BR/tracker.json';
 import ptBROnboarding from './locales/pt-BR/onboarding.json';
+import ptBRGeneral from './locales/pt-BR/general.json';
+import ptBRTeam from './locales/pt-BR/team.json';
+import ptBRPullRequest from './locales/pt-BR/pullRequest.json';
+import ptBRSystem from './locales/pt-BR/system.json';
 import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES, isSupportedLanguage, type SupportedLanguage } from './resolveLocale';
 
 export * from './resolveLocale';
 
-export const I18N_NAMESPACES = ['common', 'settings', 'menu', 'dialogs', 'errors', 'workspace', 'agent', 'ai', 'editor', 'tracker', 'onboarding'] as const;
+export const I18N_NAMESPACES = ['common', 'settings', 'menu', 'dialogs', 'errors', 'workspace', 'agent', 'ai', 'editor', 'tracker', 'onboarding', 'general', 'team', 'pullRequest', 'system'] as const;
 export type I18nNamespace = (typeof I18N_NAMESPACES)[number];
 
 export const I18N_RESOURCES = {
   en: {
     common: enCommon, settings: enSettings, menu: enMenu, dialogs: enDialogs, errors: enErrors,
     workspace: enWorkspace, agent: enAgent, ai: enAi, editor: enEditor, tracker: enTracker, onboarding: enOnboarding,
+    general: enGeneral, team: enTeam, pullRequest: enPullRequest, system: enSystem,
   },
   'pt-BR': {
     common: ptBRCommon, settings: ptBRSettings, menu: ptBRMenu, dialogs: ptBRDialogs, errors: ptBRErrors,
     workspace: ptBRWorkspace, agent: ptBRAgent, ai: ptBRAi, editor: ptBREditor, tracker: ptBRTracker, onboarding: ptBROnboarding,
+    general: ptBRGeneral, team: ptBRTeam, pullRequest: ptBRPullRequest, system: ptBRSystem,
   },
 } as const satisfies Record<SupportedLanguage, Record<I18nNamespace, unknown>>;
 
