@@ -76,6 +76,7 @@ import {
 import { purgeOfflineCollabAccounts } from '../services/CollabOfflineAccountLifecycle';
 import { listPersonalSyncDevices, updatePersonalSyncDevices } from '../services/PersonalSyncDevicesService';
 import { recordProjectWalkOriginator } from '../services/ProjectWalkClaim';
+import { t } from '@nimbalyst/runtime/i18n';
 
 // Track if we've subscribed to sync status changes
 let syncStatusListenerSetup = false;
@@ -468,10 +469,10 @@ export function registerSettingsHandlers() {
     safeHandle('completion-sound:choose-custom', async (event) => {
         const window = BrowserWindow.fromWebContents(event.sender);
         const dialogOptions: Electron.OpenDialogOptions = {
-            title: 'Choose Completion Sound',
-            buttonLabel: 'Use Sound',
+            title: t('dialogs:completionSound.chooseCustom.title'),
+            buttonLabel: t('dialogs:completionSound.chooseCustom.buttonLabel'),
             properties: ['openFile'],
-            filters: [{ name: 'Audio', extensions: ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'] }],
+            filters: [{ name: t('dialogs:completionSound.chooseCustom.filterName'), extensions: ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'] }],
             // Deliberately window-less: sound files live in the user's music
             // library, not inside the open workspace.
             defaultPath: getDialogDefaultPath(),

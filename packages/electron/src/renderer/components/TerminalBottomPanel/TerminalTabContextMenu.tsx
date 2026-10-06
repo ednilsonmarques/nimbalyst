@@ -6,6 +6,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { useFloatingMenu, FloatingPortal, virtualElement } from '../../hooks/useFloatingMenu';
 
@@ -34,6 +35,7 @@ export function TerminalTabContextMenu({
   onCloseAll,
   onCloseToRight,
 }: TerminalTabContextMenuProps) {
+  const { t } = useTranslation('menu');
   const reference = useMemo(() => virtualElement(x, y), [x, y]);
   const menu = useFloatingMenu({
     placement: 'right-start',
@@ -74,7 +76,7 @@ export function TerminalTabContextMenu({
           onClick={() => handleAction(onCloseTab)}
         >
           <MaterialSymbol icon="close" size={18} />
-          <span>Close</span>
+          <span>{t('contextMenu.tab.close')}</span>
         </div>
 
         <div
@@ -82,7 +84,7 @@ export function TerminalTabContextMenu({
           onClick={hasOtherTabs ? () => handleAction(onCloseOthers) : undefined}
         >
           <MaterialSymbol icon="tab_close" size={18} />
-          <span>Close Others</span>
+          <span>{t('contextMenu.tab.closeOthers')}</span>
         </div>
 
         <div
@@ -90,7 +92,7 @@ export function TerminalTabContextMenu({
           onClick={tabsToRight > 0 ? () => handleAction(onCloseToRight) : undefined}
         >
           <MaterialSymbol icon="tab_close_right" size={18} />
-          <span>Close to the Right</span>
+          <span>{t('contextMenu.tab.closeToTheRight')}</span>
         </div>
 
         <div className="h-px my-1 bg-[var(--nim-border)]" />
@@ -100,7 +102,7 @@ export function TerminalTabContextMenu({
           onClick={() => handleAction(onCloseAll)}
         >
           <MaterialSymbol icon="cancel" size={18} />
-          <span>Close All</span>
+          <span>{t('contextMenu.tab.closeAll')}</span>
         </div>
       </div>
     </FloatingPortal>

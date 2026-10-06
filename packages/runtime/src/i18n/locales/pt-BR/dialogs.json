@@ -1,0 +1,601 @@
+{
+  "database": {
+    "buttons": {
+      "quit": "Quit",
+      "ok": "OK"
+    },
+    "startFresh": {
+      "title": "Nimbalyst - Start Fresh?",
+      "message": "This will clear your AI chat sessions.",
+      "detail": "Your files will not be affected, but all AI chat history will be permanently deleted.\n\nAre you sure you want to continue?",
+      "confirm": "Yes, Start Fresh"
+    },
+    "recovered": {
+      "title": "Nimbalyst - Database Recovered",
+      "message": "The application database was corrupted and has been automatically repaired.",
+      "detail": "A fresh database has been created. Your old data has been backed up to:\n\n{{dataDir}}.backup-[timestamp]\n\nYour document files have not been lost - they are still on disk. Only the internal application database (AI chat sessions and document history) needs to be rebuilt."
+    },
+    "lockAmbiguous": {
+      "title": "Nimbalyst - Database Locked (Ambiguous)",
+      "message": "Cannot tell whether another Nimbalyst is already running.",
+      "detail": "Nimbalyst found a database lock from a few seconds ago and cannot confirm whether the process holding it (PID {{lockPid}}, host {{lockHostname}}, acquired {{lockTimestamp}}) is still alive. Two scenarios are equally likely:\n\n  1. Another Nimbalyst window is open under a different user account or privilege level. Opening anyway will run two instances against the same database and may corrupt data.\n\n  2. A previous Nimbalyst crashed less than a minute ago and the OS has already reused the original PID for a system process. In this case the lock is safe to clear.\n\nIf unsure, choose Cancel and look for another Nimbalyst window before retrying.",
+      "openAnyway": "Open Anyway (clear lock)"
+    },
+    "locked": {
+      "title": "Database Locked",
+      "unlockFailedMessage": "Could not clear the database lock.",
+      "unlockFailedDetail": "Removing the lock file failed: {{error}}\n\nIf another Nimbalyst window is open, close it manually before retrying.",
+      "uncertainMessage": "Nimbalyst cannot start while the database lock state is uncertain.",
+      "uncertainDetail": "Close any other Nimbalyst windows you have open and try again. If you are sure no other Nimbalyst is running, restart this machine to clear any stale system locks.",
+      "otherInstanceMessage": "Another instance of Nimbalyst is already running.",
+      "otherInstanceDetail": "The database is locked by another process. Please close the other instance before starting a new one.\n\nRunning multiple instances simultaneously can cause data corruption."
+    },
+    "restored": {
+      "title": "Database Restored",
+      "successMessage": "Your database has been successfully restored from the {{source}} backup.",
+      "message": "Your database has been restored from the {{source}} backup."
+    },
+    "restoreFailed": {
+      "title": "Restore Failed",
+      "startingFreshMessage": "Failed to restore from backup. Starting with a fresh database.",
+      "message": "Failed to restore from backup."
+    },
+    "initFailed": {
+      "title": "Initialization Failed",
+      "afterRestoreMessage": "Database was restored but failed to initialize.",
+      "freshMessage": "Failed to initialize fresh database."
+    },
+    "reset": {
+      "title": "Database Reset",
+      "message": "A fresh database has been created.",
+      "detail": "Your previous AI chat sessions could not be recovered, but your document files are safe."
+    },
+    "deleteFailed": {
+      "title": "Delete Failed",
+      "message": "Failed to delete corrupted database."
+    },
+    "noBackups": {
+      "title": "No Backups Available",
+      "message": "No backups are available to test the recovery dialog."
+    },
+    "restoreData": {
+      "title": "Nimbalyst - Restore Your Data",
+      "message": "No file data has been lost.",
+      "detailWithDate": "Your files are safe, but your chat history will need to be restored from a backup dated {{date}}.",
+      "detail": "Your files are safe and your AI chat sessions can be restored from a recent backup.",
+      "restore": "Restore (Recommended)",
+      "startFresh": "Start Fresh"
+    }
+  },
+  "databaseFailure": {
+    "title": "Nimbalyst - Database Initialization Failed",
+    "message": "The database could not be started.",
+    "fatalMessage": "Failed to initialize the database system.\n\nError: {{error}}\n\nNimbalyst cannot continue without the database.",
+    "restoreFailedTitle": "Nimbalyst - Restore Failed",
+    "recoveryWithBackups": "Backup copies were found on this computer:\n\n{{backups}}\n\nDo not remove the database folder -- these backups are what it would be restored from.\n\nRestore Backup starts with the copy holding the most, and tries the next one if that copy does not check out. It keeps the current database alongside, so nothing on this computer is removed either way.",
+    "recoveryNoBackups": "Do not remove the database folder. Support can often recover a database that will not start.",
+    "stepsWithBackups": "If you would rather not restore yet:\n1. Close any other Nimbalyst windows and open it again\n2. Restart your computer, which clears stale database locks\n3. Show Backups reveals the copies above without changing anything",
+    "stepsNoBackups": "Things to try, in order:\n1. Close any other Nimbalyst windows and open it again\n2. Restart your computer, which clears stale database locks\n3. If it still will not start, contact support before changing anything on disk",
+    "rollbackDetail": "The database as it was before the switch to the new engine is also still here ({{name}}). Restore pre-migration database goes back to it: anything saved since the switch will not be in it, and the newer database is kept on disk.",
+    "quitNotice": "Nimbalyst will close if you quit.",
+    "rollbackIncomplete": "Pre-migration recovery did not complete. All copies have been retained.",
+    "restoreIncomplete": "the restore did not complete",
+    "restoreFailedSummary": "{{failures}}\n\nNothing was removed. Every copy of your database is still on this computer.",
+    "buttons": {
+      "retryStartup": "Retry startup",
+      "restoreBackup": "Restore Backup",
+      "showBackups": "Show Backups",
+      "restorePreMigration": "Restore pre-migration database",
+      "copyDiagnostics": "Copy diagnostics",
+      "quit": "Quit"
+    }
+  },
+  "uncaughtException": {
+    "title": "Nimbalyst - Uncaught Exception"
+  },
+  "unresponsive": {
+    "reload": "Reload",
+    "keepWaiting": "Keep Waiting",
+    "detail": "Would you like to reload the window?",
+    "windowMessage": "The window is not responding",
+    "projectManagerMessage": "Project Manager is not responding"
+  },
+  "appQuit": {
+    "activeSession": {
+      "title": "AI Session in Progress",
+      "message": "An AI session is currently running.",
+      "detail": "If you quit now, the current AI response will be lost. Are you sure you want to quit?",
+      "quitAnyway": "Quit Anyway"
+    }
+  },
+  "appRestart": {
+    "failedTitle": "Unable to restart Nimbalyst",
+    "failedMessage": "Restart stopped before closing your project windows. Please try restarting again.\n\n{{error}}"
+  },
+  "extensionScaffold": {
+    "intro": {
+      "title": "Build With Extensions",
+      "message": "Extensions can add custom editors, AI tools, panels, commands, and other workspace features.",
+      "detail": "Nimbalyst can load your extension project while you build it, so you can test changes inside the app without leaving your development flow.\n\nDescribe what you want to the agent, and watch it build, install, and test the extension right before your eyes.",
+      "dontShowAgain": "Don't Show Again"
+    },
+    "createProject": {
+      "title": "Create New Extension Project",
+      "buttonLabel": "Create Project"
+    },
+    "folderNotEmpty": {
+      "title": "Folder Not Empty",
+      "message": "Choose an empty folder for the new extension project.",
+      "detail": "The selected folder already contains files:\n{{path}}",
+      "ok": "OK"
+    }
+  },
+  "notifications": {
+    "testNotification": {
+      "title": "Notifications Enabled",
+      "body": "Nimbalyst will notify you when AI responses are ready."
+    },
+    "navigationFailure": {
+      "title": "{{source}} -- could not be opened",
+      "body": "Nimbalyst could not open the project for this session. Open the project, then retry."
+    },
+    "sourceLabel": {
+      "session": "Session {{id}}",
+      "aiSession": "AI session"
+    },
+    "blocked": {
+      "title": {
+        "permission": "Permission Required",
+        "question": "Question Waiting",
+        "planApproval": "Plan Ready for Review",
+        "gitCommit": "Commit Ready",
+        "default": "Session Needs Attention"
+      },
+      "body": {
+        "permission": "\"{{sessionName}}\" needs approval",
+        "question": "\"{{sessionName}}\" has a question",
+        "planApproval": "\"{{sessionName}}\" plan is ready",
+        "gitCommit": "\"{{sessionName}}\" has a commit proposal",
+        "default": "\"{{sessionName}}\" needs your input"
+      }
+    }
+  },
+  "sessionWakeup": {
+    "resumed": {
+      "title": "Session resumed",
+      "defaultBody": "A scheduled wakeup has fired."
+    }
+  },
+  "teamInbox": {
+    "directMessage": "Direct message"
+  },
+  "recovery": {
+    "deleteCopy": {
+      "title": "Delete a preserved database copy?",
+      "message": "Permanently delete {{name}}?",
+      "detailRollbackSource": "{{name}} ({{size}}) is the copy Nimbalyst would restore from if you rolled back to PGLite. Deleting it removes that option permanently. Your current database is not affected.",
+      "detailPreserved": "{{name}} ({{size}}) is a preserved copy of your database from before the switch to SQLite. Deleting it frees the space permanently. Your current database is not affected.",
+      "confirm": "Delete Permanently"
+    }
+  },
+  "projectRail": {
+    "attachFolder": {
+      "title": "Attach Folder to Workspace",
+      "message": "Attach \"{{folder}}\" to \"{{workspace}}\"?",
+      "detail": "The attached folder becomes part of this project and inherits its agent trust level. Agents in this project will be able to read and write it.",
+      "confirm": "Attach Folder"
+    },
+    "attachError": {
+      "capReached": "A workspace can hold at most {{max}} attached folders",
+      "alreadyAttached": "Folder is already attached",
+      "isWorkspace": "Folder is already this workspace"
+    },
+    "openProjectDialogTitle": "Open Project",
+    "limitReached": {
+      "title": "Project limit reached",
+      "message": "The project limit is eight per window. Close a project or enable Allow unlimited projects in Settings > Advanced."
+    },
+    "closeProject": {
+      "title": "Close project",
+      "message_one": "{{name}} has {{count}} streaming session. Close anyway? Sessions will be paused.",
+      "message_other": "{{name}} has {{count}} streaming sessions. Close anyway? Sessions will be paused.",
+      "confirm": "Close project"
+    }
+  },
+  "fileDialogs": {
+    "selectFile": "Select File",
+    "open": "Open",
+    "filters": {
+      "markdown": "Markdown Files",
+      "text": "Text Files",
+      "all": "All Files"
+    }
+  },
+  "fileOpener": {
+    "filters": {
+      "markdown": "Markdown Files",
+      "text": "Text Files",
+      "all": "All Files"
+    }
+  },
+  "trackerSync": {
+    "prefixUnavailable": {
+      "title": "Issue Key Prefix Unavailable",
+      "message": "That issue-key prefix could not be assigned.",
+      "detailWithSuggestion": "{{error}} Suggested prefix: {{prefix}}.",
+      "defaultError": "That prefix is unavailable",
+      "serverRejected": "The server rejected that prefix."
+    }
+  },
+  "export": {
+    "exportButton": "Export",
+    "pdf": {
+      "title": "Export to PDF",
+      "filterName": "PDF Files"
+    },
+    "sessionHtml": {
+      "title": "Export Session as HTML",
+      "filterName": "HTML Files"
+    }
+  },
+  "completionSound": {
+    "chooseCustom": {
+      "title": "Choose Completion Sound",
+      "buttonLabel": "Use Sound",
+      "filterName": "Audio"
+    }
+  },
+  "documentSync": {
+    "saveCopy": {
+      "title": "Save a copy"
+    }
+  },
+  "permissions": {
+    "selectDirectory": {
+      "title": "Select Directory",
+      "buttonLabel": "Select"
+    }
+  },
+  "confirm": {
+    "ok": "OK"
+  },
+  "account": {
+    "closeSignIn": "Close sign-in"
+  },
+  "input": {
+    "create": "Create"
+  },
+  "newFile": {
+    "title": "New File",
+    "typeLabel": "Type",
+    "locationLabel": "Location",
+    "nameLabel": "Name",
+    "types": {
+      "other": "Other"
+    },
+    "errors": {
+      "nameRequired": "Please enter a file name",
+      "invalidCharacters": "File name cannot contain / or \\"
+    },
+    "defaultWorkspaceName": "workspace",
+    "rootFolder": "{{name}} (root)",
+    "placeholder": "document",
+    "placeholderWithExtension": "document.txt",
+    "create": "Create"
+  },
+  "error": {
+    "copiedFeedback": "✓ Copied!",
+    "copyDebugInfo": "Copy Debug Info",
+    "sections": {
+      "errorDetails": "Error Details",
+      "prompt": "Prompt",
+      "aiResponse": "AI Response",
+      "attemptedReplacements": "Attempted Replacements ({{total}})",
+      "documentContent": "Document Content"
+    },
+    "fields": {
+      "message": "Message:",
+      "time": "Time:",
+      "file": "File:"
+    },
+    "replacementNumber": "Replacement {{number}}",
+    "oldText": "Old Text:",
+    "newText": "New Text:",
+    "help": {
+      "title": "What to do next:",
+      "checkModified": "Check if the document was modified after the AI started processing",
+      "verifyText": "Verify that the text the AI is trying to replace exists exactly as shown",
+      "retryRequest": "Try making the request again with the current document state",
+      "reportIssue": "If the problem persists, copy the debug info and report the issue"
+    },
+    "ok": "OK"
+  },
+  "errorToast": {
+    "dismiss": "Dismiss",
+    "copyDetails": "Copy Details"
+  },
+  "updateToast": {
+    "dismiss": "Dismiss",
+    "checking": "Checking for updates...",
+    "upToDateTitle": "You're up to date!",
+    "upToDateMessage": "Nimbalyst {{version}} is the latest version.",
+    "errorTitle": "Update Error",
+    "manualDownload": "You can <link>download the latest version manually</link>.",
+    "available": {
+      "title": "New Version: Nimbalyst {{version}}",
+      "subtitle": "There's a new app update available to download",
+      "updateNow": "Update Now",
+      "releaseNotes": "Release Notes",
+      "remindLater": "Remind me later"
+    },
+    "download": {
+      "title": "Downloading Nimbalyst {{version}}...",
+      "calculating": "Calculating...",
+      "lessThanMinute": "Less than 1 minute remaining",
+      "minutesRemaining_one": "About {{count}} minute remaining",
+      "minutesRemaining_other": "About {{count}} minutes remaining",
+      "hoursRemaining": "About {{hours}}h {{minutes}}m remaining",
+      "starting": "Starting download...",
+      "progress": "{{transferred}} of {{total}}",
+      "preparing": "Preparing..."
+    },
+    "ready": {
+      "waitingTitle": "Update ready",
+      "waitingMessage": "Update will apply when all AI sessions are finished",
+      "restartNow": "Restart Now",
+      "later": "Later",
+      "title": "Nimbalyst update is ready",
+      "message": "The app needs to be restarted to apply the update",
+      "relaunch": "Relaunch"
+    },
+    "releaseNotes": {
+      "noNotes": "No release notes available.",
+      "title": "A new version of Nimbalyst is available!",
+      "currentVersionLabel": "You are currently on:",
+      "latestVersionLabel": "The latest version is:",
+      "notesTitle": "{{version}} - Release Notes",
+      "later": "Later",
+      "updateTo": "Update to Nimbalyst {{version}}"
+    }
+  },
+  "projectTrust": {
+    "thisProject": "this project",
+    "stopTrusting": {
+      "title": "Stop trusting project",
+      "message": "Stop trusting \"{{projectName}}\"?\n\nThe AI agent won't run any tools in this workspace until you trust it again.",
+      "confirm": "Stop trusting"
+    },
+    "title": "Set up agents for \"{{projectName}}\"",
+    "subtitle": "Choose how much your coding agents can do on their own. You can change this anytime.",
+    "choiceLabels": {
+      "agentVerified": "Agent-verified",
+      "allowEverything": "Allow everything",
+      "allowEditsOnly": "Allow edits only",
+      "askEveryTime": "Ask every time"
+    },
+    "choiceDescriptions": {
+      "agentVerified": "Works without interrupting you; <bold>risky actions</bold> like deploys and destructive commands <bold>pause for your OK</bold>.",
+      "allowEverything": "No prompts, no checks — every action runs immediately. For projects you fully trust.",
+      "allowEditsOnly": "File edits run automatically; shell commands and web requests ask first.",
+      "askEveryTime": "Approve each action before it runs. Your approvals are remembered."
+    },
+    "recommended": "Recommended",
+    "footnote": "Agents can run this project's code. If you don't recognize where this project came from, <revokeLink>don't trust it</revokeLink>.",
+    "advancedSettings": "Advanced settings",
+    "notNow": "Not now",
+    "startWorking": "Start working"
+  },
+  "fileOps": {
+    "deleteItems": {
+      "title": "Delete items?",
+      "message": "Are you sure you want to delete {{itemCount}} items?"
+    },
+    "deleteItem": {
+      "title": "Delete item?",
+      "message": "Are you sure you want to delete \"{{name}}\"?"
+    },
+    "deleteFile": {
+      "title": "Delete file?",
+      "message": "Are you sure you want to delete \"{{name}}\"?"
+    },
+    "deleteFolder": {
+      "title": "Delete folder?",
+      "message": "Are you sure you want to delete the folder \"{{name}}\" and all its contents?"
+    },
+    "deleteFailed": {
+      "title": "Delete failed",
+      "message": "Could not delete {{name}}.",
+      "someTitle": "Some files could not be deleted",
+      "countMessage_one": "{{failed}} of {{count}} file could not be deleted.",
+      "countMessage_other": "{{failed}} of {{count}} files could not be deleted."
+    },
+    "copyFailed": {
+      "title": "Copy failed",
+      "someTitle": "Some files could not be copied",
+      "countMessage_one": "{{failed}} of {{count}} item could not be copied into {{folder}}.",
+      "countMessage_other": "{{failed}} of {{count}} items could not be copied into {{folder}}."
+    },
+    "moveFailed": {
+      "title": "Move failed",
+      "someTitle": "Some files could not be moved",
+      "countMessage_one": "{{failed}} of {{count}} item could not be moved into {{folder}}.",
+      "countMessage_other": "{{failed}} of {{count}} items could not be moved into {{folder}}."
+    }
+  },
+  "tabEditor": {
+    "overwriteExternal": {
+      "title": "Overwrite external changes?",
+      "message": "The file has been modified externally since you opened it.\n\nDo you want to overwrite the external changes with your edits?\n\nClick OK to overwrite, or Cancel to reload the file from disk.",
+      "confirm": "Overwrite"
+    },
+    "discardUnsaved": {
+      "title": "Discard unsaved edits?",
+      "message": "An AI edit is still pending review, so these edits cannot be saved yet.\n\nSwitching editors reloads the file from disk and discards them.\n\nClick OK to discard your edits, or Cancel to stay here and resolve the review first.",
+      "confirm": "Discard"
+    },
+    "autosaveConflict": {
+      "message": "File changed on disk. Your unsaved edits are kept until you reload.",
+      "reload": "Reload",
+      "dismiss": "Dismiss"
+    },
+    "fileChanged": {
+      "title": "File Changed on Disk",
+      "message": "The file \"{{fileName}}\" has been changed on disk but you have unsaved changes.",
+      "question": "Do you want to reload the file from disk and lose your changes?",
+      "keepMine": "Keep My Changes",
+      "reloadFromDisk": "Reload from Disk"
+    },
+    "exportPdfFailed": {
+      "title": "Export Failed",
+      "message": "Failed to export PDF: {{error}}"
+    }
+  },
+  "editorMode": {
+    "closeCollab": {
+      "title": "Close document?",
+      "replayingMessage": "This collaborative document is still replaying local changes to the server. Close it anyway?",
+      "unconfirmedMessage": "This collaborative document still has local changes that have not been confirmed by the server. Close it anyway?",
+      "confirm": "Close Anyway"
+    }
+  },
+  "history": {
+    "deleteSnapshot": {
+      "title": "Delete snapshot?",
+      "message": "Are you sure you want to delete this snapshot?"
+    }
+  },
+  "workspaceHistory": {
+    "restoreDeleted": {
+      "title": "Restore deleted file?",
+      "message": "This file has been deleted. Restoring will recreate the file on disk. Continue?",
+      "confirm": "Restore"
+    },
+    "batchRestore": {
+      "title_one": "Restore deleted file?",
+      "title_other": "Restore deleted files?",
+      "message_one": "Restore {{count}} deleted file to their most recent versions?",
+      "message_other": "Restore {{count}} deleted files to their most recent versions?"
+    },
+    "restoreFailed": {
+      "title": "Restore failed",
+      "fileMessage": "Failed to restore file: {{error}}",
+      "filesMessage": "Failed to restore files: {{error}}"
+    },
+    "partialRestore": {
+      "title": "Some files were not restored",
+      "message_one": "Restored {{count}} file. Failed: {{failedNames}}",
+      "message_other": "Restored {{count}} files. Failed: {{failedNames}}"
+    }
+  },
+  "collabOrigin": {
+    "relativeTime": {
+      "justNow": "just now",
+      "minutesAgo": "{{minutes}}m ago",
+      "hoursAgo": "{{hours}}h ago",
+      "daysAgo": "{{days}}d ago"
+    },
+    "sharedChange": {
+      "whoAndWhen": "{{who}} last edited this shared document {{when}}.",
+      "who": "{{who}} last edited this shared document.",
+      "when": "This shared document was last edited {{when}}."
+    },
+    "conflict": {
+      "missingBaselineSource": "No sync baseline exists for this local source yet.",
+      "sharedAhead": "The shared document changed since this local source was last linked.",
+      "diverged": "Both the local file and the shared document changed.",
+      "pushAction": "Your push will overwrite the shared document with the current local file. Continue?",
+      "missingBaselineFile": "No sync baseline exists for this local file yet.",
+      "localAhead": "The local file changed since it was last synced.",
+      "pullAction": "Pulling will replace the whole local file with the shared document. Continue?"
+    },
+    "overwriteShared": {
+      "title": "Overwrite shared document?",
+      "confirm": "Overwrite"
+    },
+    "overwriteLocal": {
+      "title": "Overwrite local file?",
+      "confirm": "Overwrite"
+    },
+    "errors": {
+      "sourceUnavailable": "The linked local source is not available.",
+      "readSourceFailed": "Could not read the linked local source.",
+      "sourceNotText": "The linked local source is not text-readable.",
+      "readSharedFailed": "Could not read the current shared document state.",
+      "writeSharedFailed": "Could not write the local file into the shared document."
+    },
+    "relinkDialog": {
+      "title": "Relink Local Source",
+      "button": "Relink"
+    },
+    "relinkFailed": {
+      "title": "Relink failed",
+      "message": "Could not relink the local source."
+    },
+    "linked": {
+      "title": "Local source linked",
+      "message": "The shared document is now linked to a local file."
+    },
+    "clear": {
+      "title": "Clear local source?",
+      "message": "Clear the local source link for this shared document?",
+      "confirm": "Clear"
+    },
+    "clearFailed": {
+      "title": "Clear failed",
+      "message": "Could not clear the local source link."
+    },
+    "cleared": {
+      "title": "Local source cleared",
+      "message": "This shared document no longer has a linked local file."
+    },
+    "sharedUpdated": {
+      "title": "Shared document updated",
+      "pushedMessage": "Pushed the current local file into the shared document.",
+      "uploadedMessage": "Uploaded the current local file to the shared document.",
+      "attachmentsUploaded_one": "Uploaded {{count}} attachment.",
+      "attachmentsUploaded_other": "Uploaded {{count}} attachments.",
+      "attachmentsUploadedWithFailures_one": "Uploaded {{count}} attachment; {{failed}} failed.",
+      "attachmentsUploadedWithFailures_other": "Uploaded {{count}} attachments; {{failed}} failed."
+    },
+    "nothingToUpload": {
+      "title": "Nothing to upload",
+      "baselineMatchMessage": "The local source and shared document already match the last synced baseline.",
+      "fileMatchMessage": "The local file already matches the shared document baseline."
+    },
+    "reuploadFailed": {
+      "title": "Re-upload failed",
+      "message": "Could not re-upload from the local source."
+    },
+    "pullFailed": {
+      "title": "Pull failed",
+      "saveFirstMessage": "Save the local file before pulling from the shared document.",
+      "changedBeforeConfirmMessage": "The shared document changed before the overwrite could be confirmed. Try again.",
+      "message": "Could not pull the shared document into the local file."
+    },
+    "localUpdated": {
+      "title": "Local file updated",
+      "message": "Pulled the latest shared document into {{name}}."
+    },
+    "upToDate": {
+      "title": "Already up to date",
+      "message": "The local file already matches the shared document."
+    },
+    "service": {
+      "noLinkedSource": "No local source is linked to this shared document.",
+      "noCodec": "No collab codec is available for document type '{{documentType}}'.",
+      "sourceFileUnavailable": "The linked local source file is not available in this workspace.",
+      "readSharedFailed": "Could not read the current shared document state.",
+      "localAlreadyMatches": "The local file already matches the shared document.",
+      "localUpdated": "Updated the local file from the shared document.",
+      "alreadyMatchBaseline": "The local source and shared document already match the last synced baseline.",
+      "writeSharedFailed": "Failed to write the local file back into the shared document.",
+      "uploaded": "Uploaded the current local file into the shared document."
+    }
+  },
+  "workspaceManager": {
+    "createWorkspace": {
+      "title": "Create New Workspace",
+      "button": "Create"
+    }
+  }
+}

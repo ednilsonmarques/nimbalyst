@@ -19,6 +19,7 @@ import {
   type UpdateAnalyticsState,
 } from './autoUpdaterUtils';
 import { installAtomFeedFilter } from './electronUpdaterPatch';
+import { t } from '@nimbalyst/runtime/i18n';
 
 // Install the atom-feed filter before any AutoUpdaterService is constructed
 // (which is the first thing that triggers electron-updater to read the feed).
@@ -205,7 +206,7 @@ export class AutoUpdaterService {
       if (!isTransientCheckError) {
         const message =
           errorType === 'release_pending'
-            ? 'A new release is being published. Check back in a few minutes.'
+            ? t('errors:update.releasePending')
             : err.message;
         this.sendToFrontmostWindow('update-toast:error', { message });
       }
@@ -486,7 +487,7 @@ export class AutoUpdaterService {
         }
 
         this.sendToFrontmostWindow('update-toast:error', {
-          message: error instanceof Error ? error.message : 'Unknown error'
+          message: error instanceof Error ? error.message : t('errors:update.unknownError')
         });
       }
     });
@@ -624,7 +625,7 @@ export class AutoUpdaterService {
       // Brief delay so user sees the checking state, then show error
       setTimeout(() => {
         this.sendToFrontmostWindow('update-toast:error', {
-          message: 'Update checking is not available in development mode'
+          message: t('errors:update.devModeUnavailable')
         });
       }, 500);
       return;
@@ -644,7 +645,7 @@ export class AutoUpdaterService {
       log.error('Failed to check for updates:', error);
       this.isManualCheck = false;
       this.sendToFrontmostWindow('update-toast:error', {
-        message: error instanceof Error ? error.message : 'Failed to check for updates'
+        message: error instanceof Error ? error.message : t('errors:update.checkFailed')
       });
     }
   }
@@ -672,7 +673,7 @@ export class AutoUpdaterService {
     } catch (error) {
       log.error('Failed to download latest:', error);
       this.sendToFrontmostWindow('update-toast:error', {
-        message: error instanceof Error ? error.message : 'Failed to download the update'
+        message: error instanceof Error ? error.message : t('errors:update.downloadFailed')
       });
     }
   }

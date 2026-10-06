@@ -15,6 +15,7 @@ import { ElectronFileSystemService } from '../services/ElectronFileSystemService
 import { isWorktreePath, resolveProjectPath, resolveProjectPathCandidates } from '../utils/workspaceDetection';
 import { getPreloadPath } from '../utils/appPaths';
 import { createUnresponsiveHandler } from './unresponsiveHandler';
+import { t } from '@nimbalyst/runtime/i18n';
 import { recoverAfterProjectWindowClosed } from './ApplicationWindowRecovery';
 import {
   setFileSystemService,
@@ -645,7 +646,7 @@ export function createWindow(
 
         // Handle unresponsive renderer
         window.webContents.on('unresponsive', createUnresponsiveHandler({
-            message: 'The window is not responding',
+            message: () => t('dialogs:unresponsive.windowMessage'),
             logLabel: '[MAIN]',
             getWindow: () => window
         }));

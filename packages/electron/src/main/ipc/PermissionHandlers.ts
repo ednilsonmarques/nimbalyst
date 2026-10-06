@@ -11,6 +11,7 @@ import { ClaudeCodeProvider } from '@nimbalyst/runtime/ai/server';
 import { getPermissionService, resolveWorkspacePathForPermissions } from '../services/PermissionService';
 import { ClaudeSettingsManager } from '../services/ClaudeSettingsManager';
 import { logger } from '../utils/logger';
+import { t } from '@nimbalyst/runtime/i18n';
 import { safeHandle, safeOn } from '../utils/ipcRegistry';
 import { resolveProjectPath, isWorktreePath } from '../utils/workspaceDetection';
 import { getDialogDefaultPath, rememberDialogSelection } from '../utils/dialogPaths';
@@ -54,8 +55,8 @@ export function registerPermissionHandlers(): void {
   ) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     const dialogOptions: Electron.OpenDialogOptions = {
-      title: options?.title || 'Select Directory',
-      buttonLabel: options?.buttonLabel || 'Select',
+      title: options?.title || t('dialogs:permissions.selectDirectory.title'),
+      buttonLabel: options?.buttonLabel || t('dialogs:permissions.selectDirectory.buttonLabel'),
       properties: ['openDirectory', 'createDirectory'],
       defaultPath: getDialogDefaultPath({ window }),
     };

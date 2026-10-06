@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { usePostHog } from 'posthog-js/react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type { ContentMode } from '../../types/WindowModeTypes';
 import type { SettingsCategory } from '../Settings/SettingsSidebar';
 import type { SettingsScope } from '../Settings/SettingsView';
@@ -124,6 +125,7 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
   activeExtensionBottomPanel,
   onExtensionBottomPanelChange,
 }) => {
+  const { t } = useTranslation('menu');
   const posthog = usePostHog();
   const developerMode = useAtomValue(developerModeAtom);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -352,7 +354,7 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
   // is applied at render time from the saved per-section order.
   const modeItems: GutterItem[] = [
     {
-      id: 'files', section: 'modes', icon: 'account_tree', label: 'Files', hideable: true,
+      id: 'files', section: 'modes', icon: 'account_tree', label: t('gutterItems.files'), hideable: true,
       render: () => renderModeButton({
         icon: 'account_tree',
         label: `Files (${getShortcutDisplay(KeyboardShortcuts.view.filesMode)})`,
@@ -361,7 +363,7 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
       }),
     },
     {
-      id: 'agent', section: 'modes', icon: 'code', label: 'Agent', hideable: true,
+      id: 'agent', section: 'modes', icon: 'code', label: t('gutterItems.agent'), hideable: true,
       render: () => renderModeButton({
         icon: 'code',
         label: `Agent (${getShortcutDisplay(KeyboardShortcuts.view.agentMode)})`,
@@ -371,7 +373,7 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
       }),
     },
     {
-      id: 'tracker', section: 'modes', icon: 'assignment', label: 'Tracker', hideable: true,
+      id: 'tracker', section: 'modes', icon: 'assignment', label: t('gutterItems.tracker'), hideable: true,
       render: () => renderModeButton({
         icon: 'assignment',
         label: `Tracker (${getShortcutDisplay(KeyboardShortcuts.view.trackerMode)})`,
@@ -388,7 +390,7 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
       }),
     }] : []),
     ...(pagesAvailable ? [{
-      id: 'collab', section: 'modes' as GutterSection, icon: 'description', label: 'Pages', hideable: true,
+      id: 'collab', section: 'modes' as GutterSection, icon: 'description', label: t('gutterItems.pages'), hideable: true,
       render: () => renderModeButton({
         icon: 'description',
         badgeIcon: 'groups',
@@ -401,7 +403,7 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
     // Org mode is gated on the project actually belonging to an organization,
     // the same rule Shared Docs uses. Without one there is no inbox to show.
     ...(projectOrg ? [{
-      id: 'org', section: 'modes' as GutterSection, icon: 'forum', label: 'Organization', hideable: true,
+      id: 'org', section: 'modes' as GutterSection, icon: 'forum', label: t('gutterItems.organization'), hideable: true,
       render: () => renderModeButton({
         icon: 'forum',
         label: `Organization (${getShortcutDisplay(KeyboardShortcuts.view.orgMode)})${
@@ -446,7 +448,7 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
         render: () => renderExtensionPanelButton(panel),
       })),
     ...(isTerminalAvailable ? [{
-      id: 'terminal', section: 'panels' as GutterSection, icon: 'terminal', label: 'Terminal', hideable: true,
+      id: 'terminal', section: 'panels' as GutterSection, icon: 'terminal', label: t('gutterItems.terminal'), hideable: true,
       render: () => (
         <HelpTooltip testId="terminal-panel-button" placement="right">
           <button
@@ -468,27 +470,27 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
 
   const indicatorItems: GutterItem[] = [
     {
-      id: 'voice-mode', section: 'indicators', icon: 'mic', label: 'Voice Mode', hideable: true,
+      id: 'voice-mode', section: 'indicators', icon: 'mic', label: t('gutterItems.voiceMode'), hideable: true,
       render: () => <VoiceModeButton workspacePath={workspacePath} />,
     },
     {
-      id: 'claude-usage', section: 'indicators', icon: 'speed', label: 'Claude Usage', hideable: true,
+      id: 'claude-usage', section: 'indicators', icon: 'speed', label: t('gutterItems.claudeUsage'), hideable: true,
       render: () => <ClaudeUsageIndicator />,
     },
     {
-      id: 'codex-usage', section: 'indicators', icon: 'speed', label: 'Codex Usage', hideable: true,
+      id: 'codex-usage', section: 'indicators', icon: 'speed', label: t('gutterItems.codexUsage'), hideable: true,
       render: () => <CodexUsageIndicator />,
     },
     {
-      id: 'gemini-usage', section: 'indicators', icon: 'gemini', label: 'Gemini Usage', hideable: true,
+      id: 'gemini-usage', section: 'indicators', icon: 'gemini', label: t('gutterItems.geminiUsage'), hideable: true,
       render: () => <GeminiUsageIndicator />,
     },
     {
-      id: 'extension-dev', section: 'indicators', icon: 'extension', label: 'Extension Dev', hideable: true,
+      id: 'extension-dev', section: 'indicators', icon: 'extension', label: t('gutterItems.extensionDev'), hideable: true,
       render: () => <ExtensionDevIndicator onOpenSettings={onOpenSettings} />,
     },
     {
-      id: 'trust-indicator', section: 'indicators', icon: 'verified_user', label: 'Permissions', hideable: true,
+      id: 'trust-indicator', section: 'indicators', icon: 'verified_user', label: t('gutterItems.permissions'), hideable: true,
       render: () => (
         <TrustIndicator
           workspacePath={workspacePath}
@@ -498,11 +500,11 @@ export const NavigationGutter: React.FC<NavigationGutterProps> = ({
       ),
     },
     {
-      id: 'theme-toggle', section: 'indicators', icon: 'dark_mode', label: 'Theme Toggle', hideable: true,
+      id: 'theme-toggle', section: 'indicators', icon: 'dark_mode', label: t('gutterItems.themeToggle'), hideable: true,
       render: () => <ThemeToggleButton />,
     },
     {
-      id: 'feedback', section: 'indicators', icon: 'feedback', label: 'Feedback', hideable: true,
+      id: 'feedback', section: 'indicators', icon: 'feedback', label: t('gutterItems.feedback'), hideable: true,
       render: () => (
         <HelpTooltip testId="gutter-feedback-button" placement="right">
           <button

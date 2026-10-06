@@ -13,16 +13,12 @@ export function useConfirmDialog() {
   const [options, setOptions] = useState<ConfirmDialogOptions>({
     title: '',
     message: '',
-    confirmLabel: 'OK',
-    cancelLabel: 'Cancel',
     destructive: false
   });
   const [resolvePromise, setResolvePromise] = useState<((value: boolean) => void) | null>(null);
 
   const confirm = useCallback((opts: ConfirmDialogOptions): Promise<boolean> => {
     setOptions({
-      confirmLabel: 'OK',
-      cancelLabel: 'Cancel',
       destructive: false,
       ...opts
     });

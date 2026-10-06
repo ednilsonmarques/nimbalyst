@@ -44,6 +44,7 @@ import {
 } from '../../store/atoms/workspaceLayout';
 import { refreshFileTree } from '../../store/listeners/fileTreeListeners';
 import { requestConfirmation } from '../../dialogs/requestConfirmation';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 export interface EditorModeRef {
   closeActiveTab: () => void;
@@ -375,11 +376,11 @@ const EditorMode = forwardRef<EditorModeRef, EditorModeProps>(function EditorMod
 
     if (isCollabUri(tab.filePath) && hasCollabUnsyncedChanges(collabStatus)) {
       const confirmed = await requestConfirmation({
-        title: 'Close document?',
+        title: translate('dialogs:editorMode.closeCollab.title'),
         message: collabStatus === 'replaying'
-          ? 'This collaborative document is still replaying local changes to the server. Close it anyway?'
-          : 'This collaborative document still has local changes that have not been confirmed by the server. Close it anyway?',
-        confirmLabel: 'Close Anyway',
+          ? translate('dialogs:editorMode.closeCollab.replayingMessage')
+          : translate('dialogs:editorMode.closeCollab.unconfirmedMessage'),
+        confirmLabel: translate('dialogs:editorMode.closeCollab.confirm'),
         destructive: true,
       });
       if (!confirmed) {

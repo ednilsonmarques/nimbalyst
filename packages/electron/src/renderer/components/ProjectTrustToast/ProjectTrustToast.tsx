@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAtomValue } from 'jotai';
 import { usePostHog } from 'posthog-js/react';
+import { useTranslation, Trans } from '@nimbalyst/runtime/i18n/react';
 import { permissionsChangedVersionAtom } from '../../store/atoms/permissions';
 import { requestConfirmation } from '../../dialogs/requestConfirmation';
 import {
   DEFAULT_PROJECT_TRUST_CHOICE,
-  PROJECT_TRUST_CHOICE_DESCRIPTIONS,
-  PROJECT_TRUST_CHOICE_LABELS,
   getProjectTrustChoice,
   persistProjectTrustChoice,
   type ProjectTrustChoice,
@@ -28,6 +27,13 @@ const PROJECT_TRUST_CHOICES: ProjectTrustChoice[] = [
   'ask-every-time',
 ];
 
+const PROJECT_TRUST_CHOICE_KEYS: Record<ProjectTrustChoice, string> = {
+  'agent-verified': 'agentVerified',
+  'allow-everything': 'allowEverything',
+  'allow-edits-only': 'allowEditsOnly',
+  'ask-every-time': 'askEveryTime',
+};
+
 /**
  * One-time dialog that appears when an untrusted project is opened.
  * The user must choose a permission mode before the agent can operate.
@@ -39,6 +45,7 @@ export const ProjectTrustToast: React.FC<ProjectTrustToastProps> = ({
   onDismiss,
 }) => {
   const posthog = usePostHog();
+  const { t } = useTranslation('dialogs');
   const [isVisible, setIsVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChangingMode, setIsChangingMode] = useState(false);
@@ -50,7 +57,7 @@ export const ProjectTrustToast: React.FC<ProjectTrustToastProps> = ({
   const permissionChangeTimeoutRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
-  const projectName = workspacePath?.split(/[\\/]/).pop() || 'this project';
+  const projectName = workspacePath?.split(/[\\/]/).pop() || t('projectTrust.thisProject');
 
   const releasePermissionChangeSuppression = useCallback(() => {
     if (permissionChangeTimeoutRef.current) {
@@ -239,9 +246,9 @@ export const ProjectTrustToast: React.FC<ProjectTrustToastProps> = ({
     if (!workspacePath || isSubmitting) return;
 
     const confirmed = await requestConfirmation({
-      title: 'Stop trusting project',
-      message: `Stop trusting "${projectName}"?\n\nThe AI agent won't run any tools in this workspace until you trust it again.`,
-      confirmLabel: 'Stop trusting',
+      title: t('projectTrust.stopTrusting.title'),
+      message: t('projectTrust.stopTrusting.message', { projectName }),
+      confirmLabel: t('projectTrust.stopTrusting.confirm'),
       destructive: true,
     });
     if (!confirmed) {
@@ -273,6 +280,7 @@ export const ProjectTrustToast: React.FC<ProjectTrustToastProps> = ({
     workspacePath,
     isSubmitting,
     projectName,
+    t,
     suppressPermissionChangeEvents,
     onDismiss,
     posthog,
@@ -333,14 +341,13 @@ export const ProjectTrustToast: React.FC<ProjectTrustToastProps> = ({
               id="project-trust-toast-title"
               className="project-trust-toast-title m-0 mb-[3px] text-[17px] font-semibold text-nim"
             >
-              Set up agents for "{projectName}"
+              {t('projectTrust.title', { projectName })}
             </h2>
             <p
               id="project-trust-toast-subtitle"
               className="project-trust-toast-subtitle m-0 text-[13px] leading-[1.45] text-nim-muted"
             >
-              Choose how much your coding agents can do on their own. You can
-              change this anytime.
+              {t('projectTrust.subtitle')}
             </p>
           </div>
         </div>
@@ -404,11 +411,11 @@ export const ProjectTrustToast: React.FC<ProjectTrustToastProps> = ({
                           : 'text-sm font-semibold text-nim'
                       }`}
                     >
-                      {PROJECT_TRUST_CHOICE_LABELS[choice]}
+                      {t(`projectTrust.choiceLabels.${PROJECT_TRUST_CHOICE_KEYS[choice]}`)}
                     </span>
                     {choice === 'agent-verified' && (
                       <span className="project-trust-toast-option-badge rounded-full bg-[color-mix(in_srgb,var(--nim-success)_15%,transparent)] px-2 py-0.5 text-[10.5px] font-semibold tracking-[0.02em] text-nim-success">
-                        Recommended
+                        {t('projectTrust.recommended')}
                       </span>
                     )}
                   </span>
@@ -422,19 +429,15 @@ export const ProjectTrustToast: React.FC<ProjectTrustToastProps> = ({
                     }`}
                   >
                     {choice === 'agent-verified' ? (
-                      <>
-                        Works without interrupting you;{' '}
-                        <strong className="font-medium text-nim">
-                          risky actions
-                        </strong>{' '}
-                        like deploys and destructive commands{' '}
-                        <strong className="font-medium text-nim">
-                          pause for your OK
-                        </strong>
-                        .
-                      </>
+                      <Trans
+                        t={t}
+                        i18nKey="projectTrust.choiceDescriptions.agentVerified"
+                        components={{
+                          bold: <strong className="font-medium text-nim" />,
+                        }}
+                      />
                     ) : (
-                      PROJECT_TRUST_CHOICE_DESCRIPTIONS[choice]
+                      t(`projectTrust.choiceDescriptions.${PROJECT_TRUST_CHOICE_KEYS[choice]}`)
                     )}
                   </span>
                 </span>
@@ -474,17 +477,20 @@ export const ProjectTrustToast: React.FC<ProjectTrustToastProps> = ({
             />
           </svg>
           <span>
-            Agents can run this project's code. If you don't recognize where
-            this project came from,{' '}
-            <button
-              type="button"
-              className="project-trust-toast-revoke-link cursor-pointer border-none bg-transparent p-0 font-inherit text-nim-muted underline disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={handleDontTrust}
-              disabled={isSubmitting}
-            >
-              don't trust it
-            </button>
-            .
+            <Trans
+              t={t}
+              i18nKey="projectTrust.footnote"
+              components={{
+                revokeLink: (
+                  <button
+                    type="button"
+                    className="project-trust-toast-revoke-link cursor-pointer border-none bg-transparent p-0 font-inherit text-nim-muted underline disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={handleDontTrust}
+                    disabled={isSubmitting}
+                  />
+                ),
+              }}
+            />
           </span>
         </div>
 
@@ -494,7 +500,7 @@ export const ProjectTrustToast: React.FC<ProjectTrustToastProps> = ({
             className="project-trust-toast-settings-link cursor-pointer rounded border-none bg-transparent px-0.5 py-1 text-[13px] text-nim-faint transition-colors duration-150 hover:underline"
             onClick={handleOpenSettings}
           >
-            Advanced settings
+            {t('projectTrust.advancedSettings')}
           </button>
           <div className="project-trust-toast-actions flex gap-2">
             <button
@@ -503,7 +509,7 @@ export const ProjectTrustToast: React.FC<ProjectTrustToastProps> = ({
               onClick={handleDismiss}
               disabled={isSubmitting}
             >
-              Not now
+              {t('projectTrust.notNow')}
             </button>
             <button
               type="button"
@@ -511,7 +517,7 @@ export const ProjectTrustToast: React.FC<ProjectTrustToastProps> = ({
               onClick={handleSave}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Saving...' : 'Start working'}
+              {isSubmitting ? t('common:saving') : t('projectTrust.startWorking')}
             </button>
           </div>
         </div>

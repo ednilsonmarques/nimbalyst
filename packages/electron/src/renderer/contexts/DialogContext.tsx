@@ -200,8 +200,6 @@ export function DialogProvider({
       return new Promise((resolve) => {
         confirmResolveRef.current = resolve;
         setConfirmOptions({
-          confirmLabel: 'OK',
-          cancelLabel: 'Cancel',
           destructive: false,
           ...options,
         });

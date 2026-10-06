@@ -84,6 +84,7 @@ import { sendTeamAnalyticsEvent } from './analytics/TeamAnalytics';
 import { CollaborationHealthAttemptTracker } from '../../shared/analytics/collaborationHealth';
 import { bucketItemCount, categorizeTeamAnalyticsError, toStableAnalyticsCategory } from '../../shared/analytics/teamAnalytics';
 import { setBodyLinkHomeScope } from './tracker/trackerBodyLinks';
+import { t } from '@nimbalyst/runtime/i18n';
 
 // ============================================================================
 // Engine registry (per workspace)
@@ -929,13 +930,13 @@ export function registerTrackerSyncHandlers(): void {
     const result = await setTrackerIssueKeyPrefix(payload.workspacePath, payload.value);
     if (!result.success) {
       const detail = result.suggestedPrefix
-        ? `${result.error ?? 'That prefix is unavailable'} Suggested prefix: ${result.suggestedPrefix}.`
-        : result.error ?? 'The server rejected that prefix.';
+        ? t('dialogs:trackerSync.prefixUnavailable.detailWithSuggestion', { error: result.error ?? t('dialogs:trackerSync.prefixUnavailable.defaultError'), prefix: result.suggestedPrefix })
+        : result.error ?? t('dialogs:trackerSync.prefixUnavailable.serverRejected');
       const parent = BrowserWindow.fromWebContents(event.sender);
       const options = {
         type: 'warning',
-        title: 'Issue Key Prefix Unavailable',
-        message: 'That issue-key prefix could not be assigned.',
+        title: t('dialogs:trackerSync.prefixUnavailable.title'),
+        message: t('dialogs:trackerSync.prefixUnavailable.message'),
         detail,
       } as const;
       if (parent) await dialog.showMessageBox(parent, options);

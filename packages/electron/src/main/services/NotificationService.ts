@@ -6,6 +6,7 @@
 
 import { Notification, BrowserWindow, app, ipcMain, shell } from 'electron';
 import { logger } from '../utils/logger';
+import { t } from '@nimbalyst/runtime/i18n';
 import { isOSNotificationsEnabled, isNotifyWhenFocusedEnabled, isSessionBlockedNotificationsEnabled } from '../utils/store';
 import {
   createWindow,
@@ -313,8 +314,8 @@ class NotificationService {
     }
 
     const notification = new Notification({
-      title: 'Notifications Enabled',
-      body: 'Nimbalyst will notify you when AI responses are ready.',
+      title: t('dialogs:notifications.testNotification.title'),
+      body: t('dialogs:notifications.testNotification.body'),
       icon: this.getAppIcon(),
       silent: true,
       urgency: 'normal',
@@ -502,8 +503,8 @@ class NotificationService {
 
     if (!Notification.isSupported()) return;
     const failure = new Notification({
-      title: `${navigation.sourceLabel} -- could not be opened`,
-      body: 'Nimbalyst could not open the project for this session. Open the project, then retry.',
+      title: t('dialogs:notifications.navigationFailure.title', { source: navigation.sourceLabel }),
+      body: t('dialogs:notifications.navigationFailure.body'),
       icon: this.getAppIcon(),
       silent: true,
     });
@@ -541,8 +542,8 @@ class NotificationService {
     if (explicit) return explicit;
 
     return options.sessionId
-      ? `Session ${options.sessionId.slice(0, 8)}`
-      : 'AI session';
+      ? t('dialogs:notifications.sourceLabel.session', { id: options.sessionId.slice(0, 8) })
+      : t('dialogs:notifications.sourceLabel.aiSession');
   }
 
   /**
@@ -597,15 +598,15 @@ class NotificationService {
   private getBlockedTitle(blockingType: BlockingType): string {
     switch (blockingType) {
       case 'permission':
-        return 'Permission Required';
+        return t('dialogs:notifications.blocked.title.permission');
       case 'question':
-        return 'Question Waiting';
+        return t('dialogs:notifications.blocked.title.question');
       case 'plan_approval':
-        return 'Plan Ready for Review';
+        return t('dialogs:notifications.blocked.title.planApproval');
       case 'git_commit':
-        return 'Commit Ready';
+        return t('dialogs:notifications.blocked.title.gitCommit');
       default:
-        return 'Session Needs Attention';
+        return t('dialogs:notifications.blocked.title.default');
     }
   }
 
@@ -624,15 +625,15 @@ class NotificationService {
   private getBlockedBody(blockingType: BlockingType, sessionName: string): string {
     switch (blockingType) {
       case 'permission':
-        return `"${sessionName}" needs approval`;
+        return t('dialogs:notifications.blocked.body.permission', { sessionName });
       case 'question':
-        return `"${sessionName}" has a question`;
+        return t('dialogs:notifications.blocked.body.question', { sessionName });
       case 'plan_approval':
-        return `"${sessionName}" plan is ready`;
+        return t('dialogs:notifications.blocked.body.planApproval', { sessionName });
       case 'git_commit':
-        return `"${sessionName}" has a commit proposal`;
+        return t('dialogs:notifications.blocked.body.gitCommit', { sessionName });
       default:
-        return `"${sessionName}" needs your input`;
+        return t('dialogs:notifications.blocked.body.default', { sessionName });
     }
   }
 

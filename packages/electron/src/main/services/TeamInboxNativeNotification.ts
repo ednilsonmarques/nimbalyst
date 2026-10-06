@@ -3,6 +3,7 @@ import { app, Notification } from 'electron';
 import { createTeamManagementWindow, isTeamManagementWindowFocusedOn } from '../window/TeamManagementWindow';
 import { logger } from '../utils/logger';
 import { resolveNotificationIcon } from './notificationIcons';
+import { t } from '@nimbalyst/runtime/i18n';
 import { isOSNotificationsEnabled } from '../utils/store';
 import { listConversations, listMembers } from './TeamService';
 import {
@@ -92,7 +93,7 @@ export function createTeamInboxNotificationService(
         (candidate) => candidate.id === conversationId,
       );
       return conversation?.title?.trim()
-        || (conversation?.kind === 'dm' ? 'Direct message' : null);
+        || (conversation?.kind === 'dm' ? t('dialogs:teamInbox.directMessage') : null);
     },
     resolveMemberLabel: async (orgId, memberId) => {
       const roster = await cached(

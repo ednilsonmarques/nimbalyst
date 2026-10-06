@@ -12,6 +12,7 @@ import { getFileName } from '../../utils/pathUtils';
 import { getRelativeTimeString } from '../../utils/dateFormatting';
 import { nimAssetUrl } from '../../utils/assetUrl';
 import { requestConfirmation } from '../../dialogs/requestConfirmation';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 interface HistoryDialogProps {
   isOpen: boolean;
@@ -389,9 +390,9 @@ export function HistoryDialog({ isOpen, onClose, filePath, onRestore, theme = 'l
 
   const handleDelete = async (snapshotId: string, timestamp: string) => {
     const confirmed = await requestConfirmation({
-      title: 'Delete snapshot?',
-      message: 'Are you sure you want to delete this snapshot?',
-      confirmLabel: 'Delete',
+      title: translate('dialogs:history.deleteSnapshot.title'),
+      message: translate('dialogs:history.deleteSnapshot.message'),
+      confirmLabel: translate('common:delete'),
       destructive: true,
     });
     if (confirmed) {

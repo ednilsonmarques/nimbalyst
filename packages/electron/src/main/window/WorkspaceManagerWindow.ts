@@ -1,6 +1,7 @@
 import { BrowserWindow, dialog, app } from 'electron';
 import { join, basename } from 'path';
 import { getPreloadPath } from '../utils/appPaths';
+import { t } from '@nimbalyst/runtime/i18n';
 import { createUnresponsiveHandler } from './unresponsiveHandler';
 import { existsSync, mkdirSync, statSync } from 'fs';
 import { readdir } from 'fs/promises';
@@ -258,7 +259,7 @@ export function createWorkspaceManagerWindow(options: WorkspaceManagerWindowOpti
 
   // Handle unresponsive renderer
   workspaceManagerWindow.webContents.on('unresponsive', createUnresponsiveHandler({
-    message: 'Project Manager is not responding',
+    message: () => t('dialogs:unresponsive.projectManagerMessage'),
     logLabel: '[WorkspaceManager]',
     getWindow: () => workspaceManagerWindow
   }));
@@ -409,9 +410,9 @@ export function setupWorkspaceManagerHandlers() {
   safeHandle('workspace-manager:create-workspace-dialog', async () => {
     const defaultPath = getDialogDefaultPath({ suggestedName: 'Untitled Workspace' });
     const result = await dialog.showSaveDialog({
-      title: 'Create New Workspace',
+      title: t('dialogs:workspaceManager.createWorkspace.title'),
       defaultPath,
-      buttonLabel: 'Create',
+      buttonLabel: t('dialogs:workspaceManager.createWorkspace.button'),
       properties: ['createDirectory', 'showOverwriteConfirmation']
     });
 

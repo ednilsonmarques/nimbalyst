@@ -10,7 +10,6 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { getShowInFileBrowserLabel } from '@nimbalyst/runtime';
 import {
   useFloating,
   autoUpdate,
@@ -44,9 +43,10 @@ import {
 import { generateWorkspaceAccentColor } from './WorkspaceSummaryHeader';
 import { requestConfirmation } from '../dialogs/requestConfirmation';
 import { errorNotificationService } from '../services/ErrorNotificationService';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { getLocalizedShowInFileBrowserLabel } from '../utils/showInFileBrowserLabel';
 import './ProjectRail.css';
-
-const REVEAL_LABEL = getShowInFileBrowserLabel();
 
 function projectInitials(name: string): string {
   const trimmed = name.trim();
@@ -182,6 +182,7 @@ function ProjectRailIcon({
 }
 
 export function ProjectRail() {
+  const { t } = useTranslation('menu');
   const store = useStore();
   const isMultiProjectMode = useAtomValue(multiProjectModeAtom);
   const openProjects = useAtomValue(openProjectsAtom);
@@ -258,7 +259,7 @@ export function ProjectRail() {
     try {
       const result = await window.electronAPI.invoke('dialog-show-open-dialog', {
         properties: ['openDirectory'],
-        title: 'Open Project',
+        title: translate('dialogs:projectRail.openProjectDialogTitle'),
       });
       if (result?.canceled) return;
       const picked: string | undefined = result?.filePaths?.[0];
@@ -282,8 +283,8 @@ export function ProjectRail() {
   const handleOpenAddMenu = useCallback(() => {
     if (atCap) {
       errorNotificationService.showWarning(
-        'Project limit reached',
-        'The project limit is eight per window. Close a project or enable Allow unlimited projects in Settings > Advanced.',
+        translate('dialogs:projectRail.limitReached.title'),
+        translate('dialogs:projectRail.limitReached.message'),
       );
       return;
     }
@@ -301,9 +302,9 @@ export function ProjectRail() {
       const streaming = activity.get(project.path)?.streaming.size ?? 0;
       if (streaming > 0) {
         const proceed = await requestConfirmation({
-          title: 'Close project',
-          message: `${project.name} has ${streaming} streaming session${streaming === 1 ? '' : 's'}. Close anyway? Sessions will be paused.`,
-          confirmLabel: 'Close project',
+          title: translate('dialogs:projectRail.closeProject.title'),
+          message: translate('dialogs:projectRail.closeProject.message', { name: project.name, count: streaming }),
+          confirmLabel: translate('dialogs:projectRail.closeProject.confirm'),
         });
         if (!proceed) return;
       }
@@ -458,7 +459,7 @@ export function ProjectRail() {
   if (!isMultiProjectMode) return null;
 
   return (
-    <nav className="project-rail" data-testid="project-rail" aria-label="Open projects">
+    <nav className="project-rail" data-testid="project-rail" aria-label={t('contextMenu.projectRail.openProjectsAriaLabel')}>
       {/* Epic H1: org switcher sits above the project switcher. */}
       <OrgSwitcher />
       <div ref={projectListRef} className="project-rail-projects" data-testid="project-rail-projects">
@@ -486,7 +487,7 @@ export function ProjectRail() {
         onClick={handleOpenAddMenu}
         disabled={atCap}
         data-testid="project-rail-add"
-        aria-label="Add project to rail"
+        aria-label={t('contextMenu.projectRail.addProjectAriaLabel')}
         {...getAddTooltipRefProps()}
       >
         +
@@ -499,7 +500,7 @@ export function ProjectRail() {
             style={addTooltipFloatingStyles}
             {...getAddTooltipFloatingProps()}
           >
-            {atCap ? 'Eight-project limit reached. Enable Allow unlimited projects in Settings > Advanced.' : 'Add project'}
+            {atCap ? t('contextMenu.projectRail.limitReachedTooltip') : t('contextMenu.projectRail.addProject')}
           </div>
         </FloatingPortal>
       )}
@@ -521,12 +522,12 @@ export function ProjectRail() {
                 handlePickFolder();
               }}
             >
-              Open folder…
+              {t('contextMenu.projectRail.openFolder')}
             </button>
             {filteredRecents.length > 0 && (
               <>
                 <div className="project-rail-context-menu-divider" />
-                <div className="project-rail-context-menu-heading">Recent projects</div>
+                <div className="project-rail-context-menu-heading">{t('contextMenu.projectRail.recentProjects')}</div>
                 {filteredRecents.map((recent) => (
                   <button
                     key={recent.path}
@@ -562,14 +563,14 @@ export function ProjectRail() {
               className="project-rail-context-menu-item"
               onClick={() => handleOpenInNewWindow(menu.project)}
             >
-              Open in new window
+              {t('contextMenu.projectRail.openInNewWindow')}
             </button>
             <button
               type="button"
               className="project-rail-context-menu-item"
               onClick={() => handleRevealInFinder(menu.project)}
             >
-              {REVEAL_LABEL}
+              {getLocalizedShowInFileBrowserLabel()}
             </button>
             <div className="project-rail-context-menu-divider" />
             <button
@@ -580,7 +581,7 @@ export function ProjectRail() {
                 handleClose(menu.project);
               }}
             >
-              Close project
+              {t('contextMenu.projectRail.closeProject')}
             </button>
           </div>
         </FloatingPortal>

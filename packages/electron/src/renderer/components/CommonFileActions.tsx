@@ -12,7 +12,6 @@
 
 import React, { useCallback, useMemo, useSyncExternalStore } from 'react';
 import {
-  getShowInFileBrowserLabel,
   MaterialSymbol,
 } from '@nimbalyst/runtime';
 import { useAtomValue } from 'jotai';
@@ -21,6 +20,8 @@ import { workspaceHasTeamAtom } from '../store/atoms/collabDocuments';
 import { isCollabUri } from '@nimbalyst/collab-protocol';
 import { getCollaborativeDocumentTypeCatalog } from '../services/CollaborativeDocumentTypeCatalog';
 import { askShareToTeam, shareFileToTeam } from '../services/shareToTeamFlow';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { getLocalizedShowInFileBrowserLabel } from '../utils/showInFileBrowserLabel';
 
 interface CommonFileActionsProps {
   filePath: string;
@@ -56,6 +57,7 @@ export function CommonFileActions({
   useButtons = false,
   isDirectory = false,
 }: CommonFileActionsProps) {
+  const { t } = useTranslation('menu');
   const actions = useFileActions(filePath, fileName);
   const hasTeam = useAtomValue(workspaceHasTeamAtom);
   const documentTypeCatalog = getCollaborativeDocumentTypeCatalog();
@@ -101,7 +103,7 @@ export function CommonFileActions({
         onClick={() => { actions.openInDefaultApp(); onClose(); }}
       >
         {showIcons && <MaterialSymbol icon="launch" size={iconSize} />}
-        <span>Open in Default App</span>
+        <span>{t('contextMenu.common.openInDefaultApp')}</span>
       </Item>
 
       {/* Open in External Editor (conditional) */}
@@ -111,7 +113,7 @@ export function CommonFileActions({
           onClick={() => { actions.openInExternalEditor(); onClose(); }}
         >
           {showIcons && <MaterialSymbol icon="open_in_new" size={iconSize} />}
-          <span>Open in {actions.externalEditorName}</span>
+          <span>{t('contextMenu.common.openInEditor', { editor: actions.externalEditorName })}</span>
         </Item>
       )}
 
@@ -121,7 +123,7 @@ export function CommonFileActions({
         onClick={() => { actions.revealInFinder(); onClose(); }}
       >
         {showIcons && <MaterialSymbol icon="folder_open" size={iconSize} />}
-        <span>{getShowInFileBrowserLabel()}</span>
+        <span>{getLocalizedShowInFileBrowserLabel()}</span>
       </Item>
 
       {/* Copy Path */}
@@ -131,7 +133,7 @@ export function CommonFileActions({
           onClick={() => { actions.copyFilePath(); onClose(); }}
         >
           {showIcons && <MaterialSymbol icon="content_copy" size={iconSize} />}
-          <span>Copy Path</span>
+          <span>{t('contextMenu.common.copyPath')}</span>
         </Item>
       )}
 
@@ -142,7 +144,7 @@ export function CommonFileActions({
           onClick={() => { actions.shareLink(); onClose(); }}
         >
           {showIcons && <MaterialSymbol icon="share" size={iconSize} />}
-          <span>Share Link</span>
+          <span>{t('contextMenu.common.shareLink')}</span>
         </Item>
       )}
 
@@ -163,7 +165,7 @@ export function CommonFileActions({
             <MaterialSymbol icon={isDirectory ? 'drive_folder_upload' : 'group'} size={iconSize} />
           )}
           <span className="min-w-0 flex-1">
-            <span className="block">{isDirectory ? 'Share Folder to Team' : 'Share to Team'}</span>
+            <span className="block">{isDirectory ? t('contextMenu.common.shareFolderToTeam') : t('contextMenu.common.shareToTeam')}</span>
             {shareability.state === 'unsupported' && (
               <span className="block text-[11px] leading-snug text-nim-disabled mt-0.5">
                 {shareability.reason}

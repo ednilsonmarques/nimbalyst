@@ -35,6 +35,7 @@ import * as fsp from 'fs/promises';
 import * as path from 'path';
 import { safeHandle } from '../utils/ipcRegistry';
 import { logger } from '../utils/logger';
+import { t } from '@nimbalyst/runtime/i18n';
 import { readBackendState } from '../database/sqlite/BackendSelector';
 import { readCutoverJournal } from '../database/sqlite/cutoverJournal';
 import { findRecoveryArtifacts, formatBytes } from '../database/sqlite/recoveryArtifacts';
@@ -194,19 +195,15 @@ function listMigratedCopies(userDataPath: string): MigratedCopyView[] {
  */
 async function confirmMigratedCopyDeletion(target: MigratedCopyView): Promise<boolean> {
   const detail = target.isRollbackSource
-    ? `${target.name} (${formatBytes(target.sizeBytes)}) is the copy Nimbalyst would restore from `
-      + 'if you rolled back to PGLite. Deleting it removes that option permanently. Your current '
-      + 'database is not affected.'
-    : `${target.name} (${formatBytes(target.sizeBytes)}) is a preserved copy of your database from `
-      + 'before the switch to SQLite. Deleting it frees the space permanently. Your current '
-      + 'database is not affected.';
+    ? t('dialogs:recovery.deleteCopy.detailRollbackSource', { name: target.name, size: formatBytes(target.sizeBytes) })
+    : t('dialogs:recovery.deleteCopy.detailPreserved', { name: target.name, size: formatBytes(target.sizeBytes) });
 
   const { response } = await dialog.showMessageBox({
     type: 'warning',
-    title: 'Delete a preserved database copy?',
-    message: `Permanently delete ${target.name}?`,
+    title: t('dialogs:recovery.deleteCopy.title'),
+    message: t('dialogs:recovery.deleteCopy.message', { name: target.name }),
     detail,
-    buttons: ['Cancel', 'Delete Permanently'],
+    buttons: [t('common:cancel'), t('dialogs:recovery.deleteCopy.confirm')],
     // The safe answer is the default and the escape key, in both directions.
     defaultId: 0,
     cancelId: 0,

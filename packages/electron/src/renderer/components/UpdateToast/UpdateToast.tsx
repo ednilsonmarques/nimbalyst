@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { useAtom } from 'jotai';
 import { usePostHog } from 'posthog-js/react';
+import { useTranslation, Trans } from '@nimbalyst/runtime/i18n/react';
 import { UpdateAvailableToast } from './UpdateAvailableToast';
 import { ReleaseNotesDialog } from './ReleaseNotesDialog';
 import { DownloadProgressToast } from './DownloadProgressToast';
@@ -14,6 +15,7 @@ export function UpdateToast(): React.ReactElement | null {
   const [updateState, setUpdateState] = useAtom(updateStateAtom);
   const { state, updateInfo, currentVersion, downloadProgress, errorMessage } = updateState;
   const posthog = usePostHog();
+  const { t } = useTranslation('dialogs');
 
   // Action handlers
   const handleUpdateNow = useCallback(() => {
@@ -129,7 +131,7 @@ export function UpdateToast(): React.ReactElement | null {
               data-testid="update-checking-toast"
             >
               <div className="update-toast-spinner w-5 h-5 border-2 border-[var(--nim-bg-tertiary)] border-t-[var(--nim-primary)] rounded-full animate-spin shrink-0" />
-              <div className="update-toast-title text-sm font-semibold text-[var(--nim-text)] mb-0 pr-0">Checking for updates...</div>
+              <div className="update-toast-title text-sm font-semibold text-[var(--nim-text)] mb-0 pr-0">{t('updateToast.checking')}</div>
             </div>
           )}
 
@@ -141,8 +143,8 @@ export function UpdateToast(): React.ReactElement | null {
               <button
                 className="update-toast-dismiss absolute top-3 right-3 w-6 h-6 border-none bg-transparent cursor-pointer rounded flex items-center justify-center p-0 text-[var(--nim-text-faint)] transition-colors duration-200 hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text-muted)] [&>svg]:w-3.5 [&>svg]:h-3.5"
                 onClick={handleDismiss}
-                title="Dismiss"
-                aria-label="Dismiss"
+                title={t('updateToast.dismiss')}
+                aria-label={t('updateToast.dismiss')}
                 data-testid="update-toast-dismiss"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -154,8 +156,8 @@ export function UpdateToast(): React.ReactElement | null {
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
               </div>
-              <div className="update-toast-title text-sm font-semibold text-[var(--nim-text)] mb-1 pr-7">You're up to date!</div>
-              <div className="update-toast-subtitle text-xs text-[var(--nim-text-muted)] leading-normal mb-0">Nimbalyst {currentVersion} is the latest version.</div>
+              <div className="update-toast-title text-sm font-semibold text-[var(--nim-text)] mb-1 pr-7">{t('updateToast.upToDateTitle')}</div>
+              <div className="update-toast-subtitle text-xs text-[var(--nim-text-muted)] leading-normal mb-0">{t('updateToast.upToDateMessage', { version: currentVersion })}</div>
             </div>
           )}
 
@@ -196,24 +198,32 @@ export function UpdateToast(): React.ReactElement | null {
               <button
                 className="update-toast-dismiss absolute top-3 right-3 w-6 h-6 border-none bg-transparent cursor-pointer rounded flex items-center justify-center p-0 text-[var(--nim-text-faint)] transition-colors duration-200 hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text-muted)] [&>svg]:w-3.5 [&>svg]:h-3.5"
                 onClick={handleDismiss}
-                title="Dismiss"
-                aria-label="Dismiss"
+                title={t('updateToast.dismiss')}
+                aria-label={t('updateToast.dismiss')}
                 data-testid="update-toast-dismiss"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
               </button>
-              <div className="update-toast-title text-sm font-semibold text-[var(--nim-error)] mb-1 pr-7">Update Error</div>
+              <div className="update-toast-title text-sm font-semibold text-[var(--nim-error)] mb-1 pr-7">{t('updateToast.errorTitle')}</div>
               <div className="update-toast-subtitle text-xs text-[var(--nim-text-muted)] leading-normal mb-1" data-testid="error-message">{errorMessage}</div>
               <div className="text-xs text-[var(--nim-text-muted)] leading-normal mb-4">
-                You can <a
-                  href="https://nimbalyst.com/download"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[var(--nim-primary)] hover:underline cursor-pointer"
-                  data-testid="manual-download-link"
-                >download the latest version manually</a>.
+                <Trans
+                  t={t}
+                  i18nKey="updateToast.manualDownload"
+                  components={{
+                    link: (
+                      <a
+                        href="https://nimbalyst.com/download"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[var(--nim-primary)] hover:underline cursor-pointer"
+                        data-testid="manual-download-link"
+                      />
+                    ),
+                  }}
+                />
               </div>
               <div className="update-toast-actions flex gap-2 flex-wrap">
                 <button
@@ -221,7 +231,7 @@ export function UpdateToast(): React.ReactElement | null {
                   onClick={handleDismiss}
                   data-testid="error-dismiss-btn"
                 >
-                  Dismiss
+                  {t('updateToast.dismiss')}
                 </button>
               </div>
             </div>

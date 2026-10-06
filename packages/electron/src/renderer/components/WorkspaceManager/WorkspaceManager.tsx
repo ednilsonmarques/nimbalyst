@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   useFloating,
   offset,
@@ -78,6 +79,7 @@ interface ContextMenuState {
 }
 
 export const WorkspaceManager: React.FC = () => {
+  const { t } = useTranslation('menu');
   const [workspaces, setWorkspaces] = useState<WorkspaceInfo[]>([]);
   const [selectedWorkspace, setSelectedWorkspace] = useState<WorkspaceInfo | null>(null);
   const [workspaceStats, setWorkspaceStats] = useState<WorkspaceStats | null>(null);
@@ -881,7 +883,7 @@ export const WorkspaceManager: React.FC = () => {
               onClick={() => handleContextMenuAction('open')}
             >
               <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}>folder_open</span>
-              Open Project
+              {t('contextMenu.projectManager.openProject')}
             </button>
             <div className="border-t border-[var(--nim-border)] my-1" />
             <button
@@ -889,14 +891,14 @@ export const WorkspaceManager: React.FC = () => {
               onClick={() => handleContextMenuAction('rename')}
             >
               <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}>edit</span>
-              Rename...
+              {t('contextMenu.projectManager.rename')}
             </button>
             <button
               className="w-full px-3 py-1.5 text-left text-[13px] text-[var(--nim-text)] hover:bg-[var(--nim-bg-hover)] flex items-center gap-2"
               onClick={() => handleContextMenuAction('move')}
             >
               <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}>drive_file_move</span>
-              Move to...
+              {t('contextMenu.projectManager.moveTo')}
             </button>
             <div className="border-t border-[var(--nim-border)] my-1" />
             <button
@@ -904,7 +906,7 @@ export const WorkspaceManager: React.FC = () => {
               onClick={() => handleContextMenuAction('remove')}
             >
               <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}>close</span>
-              Remove from Recent
+              {t('contextMenu.projectManager.removeFromRecent')}
             </button>
           </div>
         </FloatingPortal>

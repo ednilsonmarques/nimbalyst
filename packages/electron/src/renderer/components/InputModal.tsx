@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface InputModalProps {
   isOpen: boolean;
@@ -17,10 +18,11 @@ export function InputModal({
   placeholder,
   defaultValue = '',
   suffix,
-  confirmLabel = 'Create',
+  confirmLabel,
   onConfirm,
   onCancel
 }: InputModalProps) {
+  const { t } = useTranslation('dialogs');
   const [value, setValue] = useState(defaultValue);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -84,14 +86,14 @@ export function InputModal({
               className="input-modal-button input-modal-cancel nim-btn-secondary px-4 py-1.5 text-sm"
               onClick={onCancel}
             >
-              Cancel
+              {t('common:cancel')}
             </button>
             <button
               type="submit"
               className="input-modal-button input-modal-confirm nim-btn-primary px-4 py-1.5 text-sm"
               disabled={!value.trim()}
             >
-              {confirmLabel}
+              {confirmLabel ?? t('input.create')}
             </button>
           </div>
         </form>

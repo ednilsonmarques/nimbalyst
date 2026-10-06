@@ -16,6 +16,8 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { useAtomValue } from 'jotai';
 import { fileSessionLinkKey, fileSessionLinksRevisionAtom } from '../../store/atoms/fileSessionLinks';
 import { loadFileSessions } from '../../services/fileSessionsLoader';
@@ -64,10 +66,10 @@ function formatRelativeTime(timestamp: number): string {
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
 
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
+  if (minutes < 1) return translate('menu:contextMenu.documentSessions.justNow');
+  if (minutes < 60) return translate('menu:contextMenu.documentSessions.minutesAgo', { count: minutes });
+  if (hours < 24) return translate('menu:contextMenu.documentSessions.hoursAgo', { count: hours });
+  if (days < 7) return translate('menu:contextMenu.documentSessions.daysAgo', { count: days });
   return new Date(timestamp).toLocaleDateString();
 }
 
@@ -96,20 +98,20 @@ const SessionRow: React.FC<{
     </div>
     {isPrimary && (
       <span className="document-session-row-current text-[10px] uppercase tracking-wider text-[var(--nim-text-faint)] shrink-0">
-        Current
+        {translate('menu:contextMenu.documentSessions.current')}
       </span>
     )}
     {session.fileAttribution === 'inferred' && (
-      <span className="text-xs text-[var(--nim-text-faint)]" title="Inferred from a shell command and a file change during its execution. Other external writers may not be detected.">
-        Inferred edit
+      <span className="text-xs text-[var(--nim-text-faint)]" title={translate('menu:contextMenu.documentSessions.inferredEditTooltip')}>
+        {translate('menu:contextMenu.documentSessions.inferredEdit')}
       </span>
     )}
     <div className="document-session-row-time text-xs text-[var(--nim-text-faint)] shrink-0">{formatRelativeTime(session.lastFileEditAt ?? session.updatedAt)}</div>
     {onOpenInAgentMode && (
       <button
         className="shrink-0 w-6 h-6 flex items-center justify-center rounded text-[var(--nim-text-faint)] hover:text-[var(--nim-text)] hover:bg-[var(--nim-bg-tertiary)] transition-colors duration-150 bg-transparent border-none cursor-pointer"
-        title="Open in Agent mode"
-        aria-label="Open in Agent mode"
+        title={translate('menu:contextMenu.documentSessions.openInAgentMode')}
+        aria-label={translate('menu:contextMenu.documentSessions.openInAgentMode')}
         onClick={(e) => { e.stopPropagation(); onOpenInAgentMode(); }}
       >
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -126,6 +128,7 @@ export const DocumentSessionControl: React.FC<DocumentSessionControlProps> = ({
   workspaceId,
   actions,
 }) => {
+  const { t } = useTranslation('menu');
   const menu = useFloatingMenu({ placement: 'bottom-end' });
   const { isOpen, setIsOpen } = menu;
 
@@ -218,8 +221,8 @@ export const DocumentSessionControl: React.FC<DocumentSessionControlProps> = ({
       ref={menu.refs.setReference}
       {...menu.getReferenceProps()}
       data-testid="document-session-caret"
-      aria-label="AI sessions for this document"
-      title="AI sessions for this document"
+      aria-label={t('contextMenu.documentSessions.sessionsForDocument')}
+      title={t('contextMenu.documentSessions.sessionsForDocument')}
       className={`document-session-caret w-4 h-5 rounded-r border-none bg-transparent cursor-pointer flex items-center justify-center transition-colors duration-150 text-[var(--nim-text-muted)] hover:text-[var(--nim-text)] ${
         isOpen ? 'text-[var(--nim-text)]' : ''
       }`}
@@ -255,7 +258,7 @@ export const DocumentSessionControl: React.FC<DocumentSessionControlProps> = ({
         isOpen ? 'active bg-[var(--nim-bg-tertiary)] text-[var(--nim-text)]' : ''
       }`}
       onClick={() => setIsOpen(!isOpen)}
-      title="AI Sessions"
+      title={t('contextMenu.editorActions.aiSessionsTooltip')}
     >
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" opacity="0.8" />
@@ -279,14 +282,14 @@ export const DocumentSessionControl: React.FC<DocumentSessionControlProps> = ({
           >
             {loading ? (
               <div className="document-session-loading p-4 text-center text-[13px] text-[var(--nim-text-muted)]">
-                Loading sessions...
+                {t('contextMenu.documentSessions.loading')}
               </div>
             ) : sessions.length > 0 ? (
               hasGroups ? (
                 <>
-                  <GroupHeader>{isInWorktree ? 'This worktree' : 'This project'}</GroupHeader>
+                  <GroupHeader>{isInWorktree ? t('contextMenu.documentSessions.thisWorktree') : t('contextMenu.documentSessions.thisProject')}</GroupHeader>
                   {renderRows(currentWorkspaceSessions)}
-                  <GroupHeader>Other sessions</GroupHeader>
+                  <GroupHeader>{t('contextMenu.documentSessions.otherSessions')}</GroupHeader>
                   {renderRows(otherSessions)}
                 </>
               ) : (
@@ -294,7 +297,7 @@ export const DocumentSessionControl: React.FC<DocumentSessionControlProps> = ({
               )
             ) : (
               <div className="document-session-empty p-4 text-center text-[13px] text-[var(--nim-text-muted)]">
-                No AI sessions have opened this file yet
+                {t('contextMenu.documentSessions.empty')}
               </div>
             )}
 
@@ -310,7 +313,7 @@ export const DocumentSessionControl: React.FC<DocumentSessionControlProps> = ({
                     <line x1="12" y1="5" x2="12" y2="19" />
                     <line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
-                  Start new session on this file
+                  {t('contextMenu.documentSessions.startNew')}
                 </button>
               </div>
             )}

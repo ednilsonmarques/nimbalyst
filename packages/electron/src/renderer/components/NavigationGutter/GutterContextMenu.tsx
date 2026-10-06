@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { useFloatingMenu, FloatingPortal, virtualElement } from '../../hooks/useFloatingMenu';
 import type { GutterItemMeta } from './navGutterItems';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface GutterContextMenuProps {
   x: number;
@@ -35,6 +36,7 @@ export function GutterContextMenu({
   onReset,
   onOpenCustomize,
 }: GutterContextMenuProps) {
+  const { t } = useTranslation('menu');
   const vRef = useMemo(() => virtualElement(x, y), [x, y]);
   const labelOf = useMemo(() => {
     const map = new Map(items.map((it) => [it.id, it.label]));
@@ -73,7 +75,7 @@ export function GutterContextMenu({
               onClick={() => { onToggleHidden(targetButton!); onClose(); }}
             >
               <MaterialSymbol icon="visibility_off" size={16} className="text-nim-muted" />
-              <span>Hide {labelOf(targetButton!)}</span>
+              <span>{t('contextMenu.gutter.hideItem', { label: labelOf(targetButton!) })}</span>
             </button>
             <div className="my-1 border-t border-nim" />
           </>
@@ -89,7 +91,7 @@ export function GutterContextMenu({
                 onClick={() => { onToggleHidden(id); onClose(); }}
               >
                 <MaterialSymbol icon="visibility" size={16} className="text-nim-muted" />
-                <span>Show {labelOf(id)}</span>
+                <span>{t('contextMenu.gutter.showItem', { label: labelOf(id) })}</span>
               </button>
             ))}
             <div className="my-1 border-t border-nim" />
@@ -103,7 +105,7 @@ export function GutterContextMenu({
           data-testid="gutter-customize-button"
         >
           <MaterialSymbol icon="tune" size={16} className="text-nim-muted" />
-          <span>Customize Gutter…</span>
+          <span>{t('contextMenu.gutter.customize')}</span>
         </button>
 
         {hasHidden && (
@@ -112,7 +114,7 @@ export function GutterContextMenu({
             onClick={() => { onReset(); onClose(); }}
           >
             <MaterialSymbol icon="restart_alt" size={16} className="text-nim-muted" />
-            <span>Show All</span>
+            <span>{t('contextMenu.gutter.showAll')}</span>
           </button>
         )}
       </div>

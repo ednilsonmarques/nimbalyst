@@ -17,6 +17,7 @@
  * loop cannot start.
  */
 import { dialog } from 'electron';
+import { t } from '@nimbalyst/runtime/i18n';
 
 const ERROR_THROTTLE_MS = 5000; // suppress duplicate errors within this window
 const MAX_DIALOGS_PER_MINUTE = 3;
@@ -69,7 +70,7 @@ export function createUncaughtExceptionHandler(): (error: Error & { code?: strin
     dialogTimestamps.push(now);
 
     dialog.showErrorBox(
-      'Nimbalyst - Uncaught Exception',
+      t('dialogs:uncaughtException.title'),
       `${error.name}: ${error.message}\n\n${error.stack || ''}`,
     );
   };

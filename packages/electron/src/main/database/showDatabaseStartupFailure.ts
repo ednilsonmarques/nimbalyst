@@ -1,4 +1,5 @@
 import { app, clipboard, dialog, shell } from "electron";
+import { t } from "@nimbalyst/runtime/i18n";
 import { logger } from "../utils/logger";
 import { database } from "./PGLiteDatabaseWorker";
 import { stopPeriodicBackupTimer } from "./initialize";
@@ -187,7 +188,7 @@ export async function showDatabaseStartupFailure(
           }
         },
         onRestoreFailed: (message) => {
-          dialog.showErrorBox("Nimbalyst - Restore Failed", message);
+          dialog.showErrorBox(t("dialogs:databaseFailure.restoreFailedTitle"), message);
         },
       });
     } while (dialogOutcome.action === "diagnostics");
@@ -216,8 +217,8 @@ export async function showDatabaseStartupFailure(
     }
   } else {
     dialog.showErrorBox(
-      "Nimbalyst - Database Initialization Failed",
-      `Failed to initialize the database system.\n\nError: ${errorMessage}\n\nNimbalyst cannot continue without the database.`
+      t("dialogs:databaseFailure.title"),
+      t("dialogs:databaseFailure.fatalMessage", { error: errorMessage })
     );
   }
 }

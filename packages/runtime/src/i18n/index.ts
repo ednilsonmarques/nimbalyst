@@ -14,21 +14,43 @@
 
 import i18next, { type i18n as I18nInstance } from 'i18next';
 import enCommon from './locales/en/common.json';
+import enDialogs from './locales/en/dialogs.json';
+import enErrors from './locales/en/errors.json';
 import enMenu from './locales/en/menu.json';
 import enSettings from './locales/en/settings.json';
+import enWorkspace from './locales/en/workspace.json';
+import enAgent from './locales/en/agent.json';
+import enAi from './locales/en/ai.json';
+import enEditor from './locales/en/editor.json';
+import enTracker from './locales/en/tracker.json';
+import enOnboarding from './locales/en/onboarding.json';
 import ptBRCommon from './locales/pt-BR/common.json';
+import ptBRDialogs from './locales/pt-BR/dialogs.json';
+import ptBRErrors from './locales/pt-BR/errors.json';
 import ptBRMenu from './locales/pt-BR/menu.json';
 import ptBRSettings from './locales/pt-BR/settings.json';
+import ptBRWorkspace from './locales/pt-BR/workspace.json';
+import ptBRAgent from './locales/pt-BR/agent.json';
+import ptBRAi from './locales/pt-BR/ai.json';
+import ptBREditor from './locales/pt-BR/editor.json';
+import ptBRTracker from './locales/pt-BR/tracker.json';
+import ptBROnboarding from './locales/pt-BR/onboarding.json';
 import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES, isSupportedLanguage, type SupportedLanguage } from './resolveLocale';
 
 export * from './resolveLocale';
 
-export const I18N_NAMESPACES = ['common', 'settings', 'menu'] as const;
+export const I18N_NAMESPACES = ['common', 'settings', 'menu', 'dialogs', 'errors', 'workspace', 'agent', 'ai', 'editor', 'tracker', 'onboarding'] as const;
 export type I18nNamespace = (typeof I18N_NAMESPACES)[number];
 
 export const I18N_RESOURCES = {
-  en: { common: enCommon, settings: enSettings, menu: enMenu },
-  'pt-BR': { common: ptBRCommon, settings: ptBRSettings, menu: ptBRMenu },
+  en: {
+    common: enCommon, settings: enSettings, menu: enMenu, dialogs: enDialogs, errors: enErrors,
+    workspace: enWorkspace, agent: enAgent, ai: enAi, editor: enEditor, tracker: enTracker, onboarding: enOnboarding,
+  },
+  'pt-BR': {
+    common: ptBRCommon, settings: ptBRSettings, menu: ptBRMenu, dialogs: ptBRDialogs, errors: ptBRErrors,
+    workspace: ptBRWorkspace, agent: ptBRAgent, ai: ptBRAi, editor: ptBREditor, tracker: ptBRTracker, onboarding: ptBROnboarding,
+  },
 } as const satisfies Record<SupportedLanguage, Record<I18nNamespace, unknown>>;
 
 /** Dedicated instance so nothing else on the global i18next singleton can interfere. */

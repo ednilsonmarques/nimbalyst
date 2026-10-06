@@ -8,6 +8,7 @@ import { getFileName } from '../../utils/pathUtils';
 import { WorkspaceHistoryFileTree } from './WorkspaceHistoryFileTree';
 import { requestConfirmation } from '../../dialogs/requestConfirmation';
 import { errorNotificationService } from '../../services/ErrorNotificationService';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 interface WorkspaceFile {
   path: string;
@@ -220,9 +221,9 @@ export function WorkspaceHistoryDialog({
 
     if (isDeleted) {
       const confirmed = await requestConfirmation({
-        title: 'Restore deleted file?',
-        message: 'This file has been deleted. Restoring will recreate the file on disk. Continue?',
-        confirmLabel: 'Restore',
+        title: translate('dialogs:workspaceHistory.restoreDeleted.title'),
+        message: translate('dialogs:workspaceHistory.restoreDeleted.message'),
+        confirmLabel: translate('dialogs:workspaceHistory.restoreDeleted.confirm'),
       });
       if (!confirmed) return;
     }
@@ -240,11 +241,11 @@ export function WorkspaceHistoryDialog({
         await loadWorkspaceFiles();
         onFileRestored?.();
       } else {
-        errorNotificationService.showError('Restore failed', `Failed to restore file: ${result.error}`);
+        errorNotificationService.showError(translate('dialogs:workspaceHistory.restoreFailed.title'), translate('dialogs:workspaceHistory.restoreFailed.fileMessage', { error: result.error }));
       }
     } catch (error: any) {
       console.error('Failed to restore file:', error);
-      errorNotificationService.showError('Restore failed', `Failed to restore file: ${error.message}`);
+      errorNotificationService.showError(translate('dialogs:workspaceHistory.restoreFailed.title'), translate('dialogs:workspaceHistory.restoreFailed.fileMessage', { error: error.message }));
     } finally {
       setIsRestoring(false);
     }
@@ -255,9 +256,9 @@ export function WorkspaceHistoryDialog({
 
     const count = selectedDeletedFiles.size;
     const confirmed = await requestConfirmation({
-      title: count > 1 ? 'Restore deleted files?' : 'Restore deleted file?',
-      message: `Restore ${count} deleted file${count > 1 ? 's' : ''} to their most recent versions?`,
-      confirmLabel: 'Restore',
+      title: translate('dialogs:workspaceHistory.batchRestore.title', { count }),
+      message: translate('dialogs:workspaceHistory.batchRestore.message', { count }),
+      confirmLabel: translate('dialogs:workspaceHistory.restoreDeleted.confirm'),
     });
     if (!confirmed) return;
 
@@ -272,8 +273,8 @@ export function WorkspaceHistoryDialog({
       if (failed.length > 0) {
         const failedNames = failed.map((r: any) => getFileName(r.path)).join(', ');
         errorNotificationService.showWarning(
-          'Some files were not restored',
-          `Restored ${successful} file${successful !== 1 ? 's' : ''}. Failed: ${failedNames}`,
+          translate('dialogs:workspaceHistory.partialRestore.title'),
+          translate('dialogs:workspaceHistory.partialRestore.message', { count: successful, failedNames }),
         );
       }
 
@@ -283,7 +284,7 @@ export function WorkspaceHistoryDialog({
       onFileRestored?.();
     } catch (error: any) {
       console.error('Failed to batch restore:', error);
-      errorNotificationService.showError('Restore failed', `Failed to restore files: ${error.message}`);
+      errorNotificationService.showError(translate('dialogs:workspaceHistory.restoreFailed.title'), translate('dialogs:workspaceHistory.restoreFailed.filesMessage', { error: error.message }));
     } finally {
       setIsRestoring(false);
     }
