@@ -17,6 +17,7 @@
 import React, { useCallback, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { activeCollabScopeAtom, createSharedFolder } from '../../store/atoms/collabDocuments';
 import { normalizeCollabPath } from '../CollabMode/collabTree';
 import { SharedFolderTree } from './SharedFolderTree';
@@ -39,6 +40,7 @@ export function SharedFolderPickerPanel({
   highlightFolderId,
   canCreateFolder,
 }: SharedFolderPickerPanelProps) {
+  const { t } = useTranslation('team');
   const collabScope = useAtomValue(activeCollabScopeAtom);
   const {
     isRefreshing,
@@ -101,7 +103,7 @@ export function SharedFolderPickerPanel({
     <div className="shared-folder-picker-panel">
       <div className="flex items-center justify-between mb-1.5">
         <div className="text-[11px] uppercase tracking-wider font-semibold text-[var(--nim-text-faint)]">
-          Destination folder
+          {t('shareToTeam.destinationFolder')}
         </div>
         <button
           type="button"
@@ -110,18 +112,18 @@ export function SharedFolderPickerPanel({
           className="text-[11px] text-[var(--nim-primary)] hover:underline inline-flex items-center gap-1 disabled:opacity-50 disabled:no-underline"
         >
           <MaterialSymbol icon="create_new_folder" size={13} />
-          New folder
+          {t('shareToTeam.newFolder')}
         </button>
       </div>
       <div className="share-to-team-tree bg-[var(--nim-bg-secondary)] border border-[var(--nim-border-subtle,var(--nim-border))] rounded-md p-1 mb-3 max-h-[240px] overflow-y-auto">
         {isRefreshing ? (
           <div className="flex items-center justify-center gap-2 px-3 py-6 text-[12px] text-[var(--nim-text-muted)]">
             <MaterialSymbol icon="progress_activity" size={16} className="animate-spin" />
-            Refreshing shared folders…
+            {t('shareToTeam.refreshingFolders')}
           </div>
         ) : refreshFailed ? (
           <div className="px-3 py-6 text-center text-[12px] text-[var(--nim-text-muted)]">
-            Shared folders could not be refreshed. Close this dialog and try again.
+            {t('shareToTeam.refreshFailed')}
           </div>
         ) : (
           <>
@@ -153,10 +155,10 @@ export function SharedFolderPickerPanel({
               <span className={`inline-flex items-center justify-center ${selectedFolderId === null ? 'text-[var(--nim-primary)]' : 'text-[var(--nim-text-muted)]'}`}>
                 <MaterialSymbol icon="workspaces" size={18} />
               </span>
-              <span className="flex-1 truncate">Team root</span>
+              <span className="flex-1 truncate">{t('shareToTeam.teamRoot')}</span>
               {highlightFolderId === null && (
                 <span className="text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[var(--nim-primary)]/15 text-[var(--nim-primary)]">
-                  last used
+                  {t('shareToTeam.lastUsed')}
                 </span>
               )}
             </div>
@@ -194,7 +196,7 @@ export function SharedFolderPickerPanel({
                     }
                   }}
                   onBlur={() => { void commitNewFolder(); }}
-                  placeholder="Folder name"
+                  placeholder={t('shareToTeam.folderNamePlaceholder')}
                   className="flex-1 bg-[var(--nim-bg)] border border-[var(--nim-primary)] rounded text-[13px] text-[var(--nim-text)] px-2 py-1 outline-none"
                 />
               </div>

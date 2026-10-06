@@ -22,6 +22,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import {
   type CloneFailureKind,
@@ -61,18 +63,18 @@ type Step = 'intro' | 'project' | 'folder' | 'cloning' | 'done';
 const api = () => (window as { electronAPI?: any }).electronAPI;
 
 function projectLabel(project: OrgProjectWalkProject | null): string {
-  if (!project) return 'this project';
-  return project.name || project.slug || 'Untitled project';
+  if (!project) return translate('team:projects.thisProject');
+  return project.name || project.slug || translate('team:projects.untitled');
 }
 
 function statusChip(status: OrgProjectWalkProject['localStatus']): { label: string; className: string } {
   switch (status) {
     case 'open':
-      return { label: 'Open', className: 'bg-[color-mix(in_srgb,var(--nim-success)_16%,transparent)] text-[var(--nim-success)]' };
+      return { label: translate('team:projectWalk.status.open'), className: 'bg-[color-mix(in_srgb,var(--nim-success)_16%,transparent)] text-[var(--nim-success)]' };
     case 'closed':
-      return { label: 'On this computer', className: 'bg-[var(--nim-bg-tertiary)] text-[var(--nim-text-muted)]' };
+      return { label: translate('team:projectWalk.status.onThisComputer'), className: 'bg-[var(--nim-bg-tertiary)] text-[var(--nim-text-muted)]' };
     default:
-      return { label: 'Not on this computer', className: 'bg-[color-mix(in_srgb,var(--nim-warning)_16%,transparent)] text-[var(--nim-warning)]' };
+      return { label: translate('team:projectWalk.status.notOnThisComputer'), className: 'bg-[color-mix(in_srgb,var(--nim-warning)_16%,transparent)] text-[var(--nim-warning)]' };
   }
 }
 
@@ -81,20 +83,20 @@ function cloneFailureCopy(kind: CloneFailureKind, remote: string): { title: stri
   switch (kind) {
     case 'auth':
       return {
-        title: "Couldn't access the repository",
-        body: `Git could not authenticate to ${remote}. Nimbalyst uses your existing git credentials — set them up, or clone it yourself and choose the folder.`,
+        title: translate('team:projectWalk.clone.auth.title'),
+        body: translate('team:projectWalk.clone.auth.body', { remote }),
       };
     case 'network':
       return {
-        title: "Couldn't reach the repository",
-        body: `${remote} could not be reached. Check your connection, or clone it yourself and choose the folder.`,
+        title: translate('team:projectWalk.clone.network.title'),
+        body: translate('team:projectWalk.clone.network.body', { remote }),
       };
     case 'cancelled':
-      return { title: 'Clone cancelled', body: 'Nothing was changed. Start again, or choose a folder you already have.' };
+      return { title: translate('team:projectWalk.clone.cancelled.title'), body: translate('team:projectWalk.clone.cancelled.body') };
     default:
       return {
-        title: "Couldn't clone the repository",
-        body: `Git could not clone ${remote}. Clone it yourself and choose the folder instead.`,
+        title: translate('team:projectWalk.clone.failed.title'),
+        body: translate('team:projectWalk.clone.failed.body', { remote }),
       };
   }
 }
@@ -109,23 +111,24 @@ function folderRefusalCopy(
     case 'occupied':
       return {
         tone: 'warning',
-        title: "That folder isn't empty",
-        body: `${directoryPath} already contains files that aren't part of ${label}. Choose an empty folder, or a new one inside it.`,
+        title: translate('team:projectWalk.folder.occupied.title'),
+        body: translate('team:projectWalk.folder.occupied.body', { path: directoryPath, label }),
       };
     case 'wrongRemote':
       return {
         tone: 'error',
-        title: "That folder belongs to a different repository",
-        body: `${directoryPath} has a git remote that doesn't match ${label}. Choose the folder you cloned ${label} into.`,
+        title: translate('team:projectWalk.folder.wrongRemote.title'),
+        body: translate('team:projectWalk.folder.wrongRemote.body', { path: directoryPath, label }),
       };
     case 'notADirectory':
-      return { tone: 'error', title: 'That path is a file', body: `${directoryPath} is not a folder.` };
+      return { tone: 'error', title: translate('team:projectWalk.folder.notADirectory.title'), body: translate('team:projectWalk.folder.notADirectory.body', { path: directoryPath }) };
     default:
       return null;
   }
 }
 
 export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgProjectWalkDialogProps) {
+  const { t } = useTranslation('team');
   const [step, setStep] = useState<Step>('intro');
   const [projects, setProjects] = useState<OrgProjectWalkProject[]>([]);
   const [loading, setLoading] = useState(false);
@@ -157,7 +160,7 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
     void api()?.team?.resolveOrgProjectsLocalState?.(org.orgId)
       .then((result: any) => {
         if (cancelled) return;
-        if (!result?.success) throw new Error(result?.error ?? 'Could not load projects');
+        if (!result?.success) throw new Error(result?.error ?? translate('team:projects.loadFailedShort'));
         const rows: OrgProjectWalkProject[] = result.projects ?? [];
         setProjects(rows);
         // Preselect something that needs a folder, so the common case is one
@@ -194,8 +197,8 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
     setActionError(null);
     setCloneFailure(null);
     const selection = await api()?.invoke?.('dialog:openDirectory', {
-      title: mode === 'clone' ? `Choose where to clone ${label}` : `Choose the folder for ${label}`,
-      buttonLabel: mode === 'clone' ? 'Clone Here' : 'Use This Folder',
+      title: mode === 'clone' ? translate('team:projectWalk.browse.cloneTitle', { label }) : translate('team:projectWalk.browse.chooseTitle', { label }),
+      buttonLabel: mode === 'clone' ? translate('team:projectWalk.browse.cloneButton') : translate('team:projectWalk.browse.chooseButton'),
     });
     const chosen = selection?.filePaths?.[0];
     if (!chosen || !selectedProject) return;
@@ -207,7 +210,7 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
       directoryPath: chosen,
     });
     setVerdict(inspected?.success ? inspected.verdict : null);
-    if (!inspected?.success) setActionError(inspected?.error ?? 'Could not inspect that folder');
+    if (!inspected?.success) setActionError(inspected?.error ?? translate('team:projectWalk.errors.inspectFailed'));
     // The happy accident: they already have the repository. Bind it rather than
     // cloning a second copy.
     if (inspected?.verdict?.kind === 'alreadyCloned') setMode('choose');
@@ -230,7 +233,7 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
         directoryPath,
       });
       if (!result?.success) {
-        setActionError(result?.error ?? 'Could not use that folder');
+        setActionError(result?.error ?? translate('team:projectWalk.errors.useFailed'));
         return;
       }
       await openProject(result.workspacePath, folderSource);
@@ -295,21 +298,21 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
         data-step={step}
         role="dialog"
         aria-modal="true"
-        aria-label={`Join a project in ${org.name}`}
+        aria-label={t('projectWalk.aria', { org: org.name })}
         onClick={(event) => event.stopPropagation()}
       >
         <header className="org-project-walk-header flex items-start gap-3 border-b border-[var(--nim-border)] px-5 py-4">
           {avatar(step === 'intro' || step === 'project' ? org.name : label, step === 'intro' ? 'md' : 'sm')}
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-semibold text-[var(--nim-text)]">
-              {step === 'intro' && `You're a member of ${org.name}`}
-              {step === 'project' && 'Choose a project'}
-              {(step === 'folder' || step === 'cloning') && `Get a folder for ${label}`}
-              {step === 'done' && `You're in ${label}`}
+              {step === 'intro' && t('projectWalk.titles.intro', { org: org.name })}
+              {step === 'project' && t('projectWalk.chooseProject')}
+              {(step === 'folder' || step === 'cloning') && t('projectWalk.titles.folder', { label })}
+              {step === 'done' && t('projectWalk.titles.done', { label })}
             </div>
             <div className="mt-0.5 text-[12px] text-[var(--nim-text-muted)]">
               {step === 'project'
-                ? `${projects.length} project${projects.length === 1 ? '' : 's'} in ${org.name}`
+                ? t('projectWalk.projectCount', { count: projects.length, org: org.name })
                 : step === 'done'
                   ? `${org.name} · ${directoryPath ?? ''}`
                   : org.name}
@@ -320,7 +323,7 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
               type="button"
               className="org-project-walk-dismiss flex h-6 w-6 items-center justify-center rounded text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
               data-testid="org-project-walk-dismiss"
-              aria-label="Close — you can join the project later from the organization menu"
+              aria-label={t('projectWalk.closeAria')}
               onClick={() => dismiss('skip')}
             >
               <MaterialSymbol icon="close" size={14} />
@@ -333,11 +336,11 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
             className="org-project-walk-steps flex items-center gap-2 border-b border-[var(--nim-border)] px-5 py-2.5 text-[11px] text-[var(--nim-text-faint)]"
             data-testid="org-project-walk-steps"
           >
-            <span>Organization</span>
+            <span>{t('inbox.scope.organization')}</span>
             <span className="h-px flex-1 bg-[var(--nim-border)]" />
-            <span className={stepNumber >= 2 ? 'text-[var(--nim-text)]' : undefined}>Project</span>
+            <span className={stepNumber >= 2 ? 'text-[var(--nim-text)]' : undefined}>{t('inbox.scope.project')}</span>
             <span className="h-px flex-1 bg-[var(--nim-border)]" />
-            <span className={stepNumber >= 3 ? 'text-[var(--nim-text)]' : undefined}>Folder</span>
+            <span className={stepNumber >= 3 ? 'text-[var(--nim-text)]' : undefined}>{t('projectWalk.steps.folder')}</span>
           </div>
         )}
 
@@ -345,12 +348,10 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
           {step === 'intro' && (
             <>
               <p className="m-0 text-[13px] text-[var(--nim-text-muted)]">
-                Pick one of the organization's projects and point Nimbalyst at a folder for it.
-                After that, shared documents, trackers, and sessions for {org.name} open alongside
-                your files.
+                {t('projectWalk.intro', { org: org.name })}
               </p>
               <p className="m-0 mt-3 text-[12px] text-[var(--nim-text-faint)]">
-                You can do this later from the organization menu.
+                {t('projectWalk.later')}
               </p>
             </>
           )}
@@ -358,14 +359,14 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
           {step === 'project' && (
             <>
               {loading && (
-                <div className="text-[12px] text-[var(--nim-text-muted)]">Loading projects…</div>
+                <div className="text-[12px] text-[var(--nim-text-muted)]">{t('projects.loading')}</div>
               )}
               {loadError && (
-                <Alert tone="error" title="Couldn't load the organization's projects" body={loadError} />
+                <Alert tone="error" title={t('projectWalk.errors.loadFailed')} body={loadError} />
               )}
               {!loading && !loadError && projects.length === 0 && (
                 <div className="text-[12px] text-[var(--nim-text-muted)]">
-                  This organization has no projects yet. An admin can share one from its project settings.
+                  {t('projectWalk.noProjects')}
                 </div>
               )}
               {projects.length > 0 && (
@@ -423,7 +424,7 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
           {step === 'cloning' && (
             <>
               <p className="m-0 text-[13px] text-[var(--nim-text-muted)]">
-                Nimbalyst will open the project when this finishes. You can keep working in the meantime.
+                {t('projectWalk.cloning')}
               </p>
               <div className="mt-3.5 h-1.5 overflow-hidden rounded-full bg-[var(--nim-bg-tertiary)]">
                 <div
@@ -433,14 +434,14 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
                 />
               </div>
               <div className="mt-2 font-mono text-[11px] text-[var(--nim-text-faint)]">
-                {progress ? `${progress.phase} — ${progress.percent ?? 0}%` : 'Starting…'}
+                {progress ? `${progress.phase} — ${progress.percent ?? 0}%` : t('projectWalk.starting')}
               </div>
             </>
           )}
 
           {step === 'done' && (
             <p className="m-0 text-[13px] text-[var(--nim-text-muted)]">
-              Shared documents, trackers, and team sessions for {org.name} are available in this project.
+              {t('projectWalk.done', { org: org.name })}
             </p>
           )}
         </div>
@@ -449,16 +450,16 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
           {step === 'intro' && (
             <>
               <span className="flex-1" />
-              <GhostButton testId="org-project-walk-not-now" onClick={() => dismiss('skip')}>Not now</GhostButton>
+              <GhostButton testId="org-project-walk-not-now" onClick={() => dismiss('skip')}>{t('projectWalk.notNow')}</GhostButton>
               <PrimaryButton testId="org-project-walk-choose-project" onClick={() => setStep('project')}>
-                Choose a project
+                {t('projectWalk.chooseProject')}
               </PrimaryButton>
             </>
           )}
 
           {step === 'project' && (
             <>
-              <GhostButton testId="org-project-walk-not-now" onClick={() => dismiss('skip')}>Not now</GhostButton>
+              <GhostButton testId="org-project-walk-not-now" onClick={() => dismiss('skip')}>{t('projectWalk.notNow')}</GhostButton>
               <span className="flex-1" />
               <PrimaryButton
                 testId="org-project-walk-continue"
@@ -473,14 +474,14 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
                   setStep('folder');
                 }}
               >
-                Continue
+                {t('common:continue')}
               </PrimaryButton>
             </>
           )}
 
           {step === 'folder' && (
             <>
-              <GhostButton testId="org-project-walk-back" onClick={() => setStep('project')}>Back</GhostButton>
+              <GhostButton testId="org-project-walk-back" onClick={() => setStep('project')}>{t('common:back')}</GhostButton>
               <span className="flex-1" />
               {mode === 'clone' ? (
                 <PrimaryButton
@@ -488,7 +489,7 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
                   disabled={busy || !directoryPath || verdict?.kind !== 'clonable'}
                   onClick={() => void startClone()}
                 >
-                  Clone and open
+                  {t('projectWalk.cloneAndOpen')}
                 </PrimaryButton>
               ) : (
                 <PrimaryButton
@@ -496,7 +497,7 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
                   disabled={busy || !directoryPath || !(verdict?.kind === 'alreadyCloned' || verdict?.kind === 'bindable')}
                   onClick={() => void join('bind')}
                 >
-                  {busy ? 'Opening…' : 'Open project'}
+                  {busy ? t('compose.opening') : t('room.openProject')}
                 </PrimaryButton>
               )}
             </>
@@ -504,10 +505,10 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
 
           {step === 'cloning' && (
             <>
-              <GhostButton testId="org-project-walk-cancel-clone" onClick={cancelClone}>Cancel</GhostButton>
+              <GhostButton testId="org-project-walk-cancel-clone" onClick={cancelClone}>{t('common:cancel')}</GhostButton>
               <span className="flex-1" />
               <GhostButton testId="org-project-walk-clone-background" onClick={() => dismiss('background')}>
-                Continue in background
+                {t('projectWalk.continueInBackground')}
               </GhostButton>
             </>
           )}
@@ -515,7 +516,7 @@ export function OrgProjectWalkDialog({ isOpen, onClose, org, onFinished }: OrgPr
           {step === 'done' && (
             <>
               <span className="flex-1" />
-              <PrimaryButton testId="org-project-walk-done" onClick={() => dismiss('done')}>Done</PrimaryButton>
+              <PrimaryButton testId="org-project-walk-done" onClick={() => dismiss('done')}>{t('common:done')}</PrimaryButton>
             </>
           )}
         </footer>
@@ -547,6 +548,7 @@ function FolderStep({
   cloneFailure: { kind: CloneFailureKind; detail: string } | null;
   actionError: string | null;
 }) {
+  const { t } = useTranslation('team');
   const refusal = verdict && directoryPath ? folderRefusalCopy(verdict, directoryPath, label) : null;
   const failure = cloneFailure ? cloneFailureCopy(cloneFailure.kind, cloneUrl ?? label) : null;
 
@@ -557,18 +559,18 @@ function FolderStep({
       {verdict?.kind === 'alreadyCloned' && directoryPath && (
         <Alert
           tone="success"
-          title="You already have this repository"
-          body={`${directoryPath} is already a clone of ${label}. Use it instead of cloning again.`}
+          title={t('projectWalk.alreadyCloned.title')}
+          body={t('projectWalk.alreadyCloned.body', { path: directoryPath, label })}
         />
       )}
-      {actionError && <Alert tone="error" title="Couldn't use that folder" body={actionError} />}
+      {actionError && <Alert tone="error" title={t('projectWalk.errors.useFolderTitle')} body={actionError} />}
 
       <OptionCard
         icon="download"
-        title="Clone the repository"
+        title={t('projectWalk.options.clone.title')}
         description={canClone
-          ? 'Nimbalyst clones it for you and opens the project.'
-          : "No repository address is recorded for this project. An admin can add one from the organization's project settings."}
+          ? t('projectWalk.options.clone.description')
+          : t('projectWalk.options.clone.unavailable')}
         selected={mode === 'clone'}
         unavailable={!canClone}
         testId="org-project-walk-option-clone"
@@ -583,10 +585,10 @@ function FolderStep({
 
       <OptionCard
         icon="folder_open"
-        title="Choose an existing folder"
+        title={t('projectWalk.options.choose.title')}
         description={canClone
-          ? 'You already have this repository on disk.'
-          : 'Point Nimbalyst at the folder for this project.'}
+          ? t('projectWalk.options.choose.descriptionClone')
+          : t('projectWalk.options.choose.description')}
         selected={mode === 'choose'}
         testId="org-project-walk-option-choose"
         onSelect={() => onModeChange('choose')}
@@ -594,14 +596,14 @@ function FolderStep({
 
       <div className="mt-4">
         <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--nim-text-faint)]">
-          {mode === 'clone' ? 'Clone into' : 'Project folder'}
+          {mode === 'clone' ? t('projectWalk.cloneInto') : t('projectWalk.projectFolder')}
         </div>
         <div className="flex items-stretch overflow-hidden rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)]">
           <div
             className={`min-w-0 flex-1 truncate px-2.5 py-2 font-mono text-[12px] ${directoryPath ? 'text-[var(--nim-text)]' : 'text-[var(--nim-text-disabled)]'}`}
             data-testid="org-project-walk-path"
           >
-            {directoryPath ?? 'No folder chosen'}
+            {directoryPath ?? t('projectWalk.noFolder')}
           </div>
           <button
             type="button"
@@ -609,7 +611,7 @@ function FolderStep({
             data-testid="org-project-walk-browse"
             onClick={onBrowse}
           >
-            Browse…
+            {t('projectWalk.browseButton')}
           </button>
         </div>
       </div>

@@ -18,6 +18,8 @@
  *   tree so there is something to open. It grants nothing on its own.
  */
 
+import { t as translate } from '@nimbalyst/runtime/i18n';
+
 /** An organization project as the invite dialog needs to see it. */
 export interface InviteProjectOption {
   teamProjectId: string;
@@ -110,24 +112,24 @@ export interface InvitePlanSummary {
  * in an empty organization — the failure this whole dialog exists to prevent.
  */
 export function summarizeInvitePlan(plan: InvitePlanSummary): string {
-  if (plan.people === 0) return 'Add an email address to invite someone.';
-  const parts = [`${plan.people} ${plan.people === 1 ? 'person' : 'people'}`];
+  if (plan.people === 0) return translate('team:invite.summary.empty');
+  const parts = [translate('team:invite.summary.people', { count: plan.people })];
   if (plan.extraProjects > 0) {
-    parts.push(`${plan.extraProjects} extra ${plan.extraProjects === 1 ? 'project' : 'projects'}`);
+    parts.push(translate('team:invite.summary.extraProjects', { count: plan.extraProjects }));
   }
   if (plan.folders > 0) {
-    parts.push(`${plan.folders} ${plan.folders === 1 ? 'folder' : 'folders'} published`);
+    parts.push(translate('team:invite.summary.foldersPublished', { count: plan.folders }));
   }
   if (parts.length === 1) {
     parts.push(plan.teamHasSharedContent
-      ? 'the team already has shared content'
-      : 'nothing shared yet');
+      ? translate('team:invite.summary.teamHasContent')
+      : translate('team:invite.summary.nothingShared'));
   }
   return parts.join(' · ');
 }
 
 /** The primary action's label, so the outcome is legible before the click. */
 export function inviteActionLabel(plan: InvitePlanSummary): string {
-  if (plan.extraProjects === 0 && plan.folders === 0) return 'Send invitation only';
-  return 'Send invitations and share';
+  if (plan.extraProjects === 0 && plan.folders === 0) return translate('team:invite.action.inviteOnly');
+  return translate('team:invite.action.inviteAndShare');
 }

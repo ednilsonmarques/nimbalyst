@@ -14,6 +14,7 @@ import {
 } from '@floating-ui/react';
 import { windowControlsClearance } from '@nimbalyst/runtime/ui/floating/windowControlsClearance';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import {
   ProfileMenuDivider,
@@ -74,6 +75,7 @@ export function OrgUserIndicator({
   onOpenPreferences: () => void;
   placement?: 'right-end' | 'top-start';
 }) {
+  const { t } = useTranslation('team');
   const [open, setOpen] = useState(false);
   // Both of these used to be fetched into local state on mount, which meant
   // signing out left the menu naming an account and an organization the window
@@ -99,7 +101,7 @@ export function OrgUserIndicator({
       ?? null;
   }, [accounts, selectedEmail]);
   const email = selectedEmail ?? account?.email ?? null;
-  const name = account?.userName ?? email?.split('@')[0] ?? 'Signed in';
+  const name = account?.userName ?? email?.split('@')[0] ?? t('userIndicator.signedIn');
   const initials = initialsForIdentity(name, email);
   const expired = account?.sessionStatus === 'expired';
 
@@ -126,11 +128,11 @@ export function OrgUserIndicator({
 
   const dotClass = presenceDotClass(effectivePresence);
   const presenceLabel = effectivePresence === 'online'
-    ? 'Online'
+    ? t('userIndicator.presence.online')
     : effectivePresence === 'away'
-      ? 'Away'
-      : 'Offline';
-  const connectionLine = `${summary.orgCount} ${summary.orgCount === 1 ? 'org' : 'orgs'} · ${summary.reconnectingCount} reconnecting`;
+      ? t('userIndicator.presence.away')
+      : t('userIndicator.presence.offline');
+  const connectionLine = `${t('userIndicator.orgCount', { count: summary.orgCount })} · ${t('userIndicator.reconnecting', { count: summary.reconnectingCount })}`;
 
   return (
     <div
@@ -144,7 +146,7 @@ export function OrgUserIndicator({
         type="button"
         className="org-user-indicator-button org-window-no-drag flex w-full items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-[var(--nim-bg-hover)] bg-[var(--nim-bg-secondary)] text-[var(--nim-text)]"
         data-testid="org-user-indicator-button"
-        aria-label="Account and connection status"
+        aria-label={t('userIndicator.aria')}
       >
         <span className="org-user-indicator-avatar relative flex size-8 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--nim-primary)_62%,var(--nim-bg))] text-[11px] font-semibold text-[var(--nim-on-primary)]">
           {initials}
@@ -173,7 +175,7 @@ export function OrgUserIndicator({
             <div className="org-user-popover-actions">
               <ProfileMenuRow
                 icon="tune"
-                label="Organization Preferences"
+                label={t('userIndicator.orgPreferences')}
                 testId="org-user-popover-preferences"
                 className="org-user-popover-action"
                 onClick={() => {
@@ -183,7 +185,7 @@ export function OrgUserIndicator({
               />
               <ProfileMenuRow
                 icon="open_in_new"
-                label="Web Console"
+                label={t('userIndicator.webConsole')}
                 testId="org-user-popover-web-console"
                 className="org-user-popover-action"
                 onClick={() => {
@@ -193,7 +195,7 @@ export function OrgUserIndicator({
               />
               <ProfileMenuRow
                 icon={desiredPresence === 'away' ? 'check_circle' : 'schedule'}
-                label={desiredPresence === 'away' ? 'Set yourself online' : 'Set yourself away'}
+                label={desiredPresence === 'away' ? t('userIndicator.setOnline') : t('userIndicator.setAway')}
                 testId="org-user-popover-presence-extension"
                 className="org-user-popover-action"
                 chevron={false}
@@ -219,9 +221,9 @@ export function OrgUserIndicator({
                     dialogRef.current?.open(DIALOG_IDS.ORG_MANAGEMENT, { orgId: selectedOrgId });
                   }}
                 >
-                  <ProfileMenuOrgChip name={orgName ?? 'Organization'} />
+                  <ProfileMenuOrgChip name={orgName ?? t('sidebar.organization')} />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                    {orgName ?? 'Organization'}
+                    {orgName ?? t('sidebar.organization')}
                   </span>
                   <MaterialSymbol icon="chevron_right" size={18} className="text-[var(--nim-text-faint)]" />
                 </button>
@@ -240,7 +242,7 @@ export function OrgUserIndicator({
                 setError(null);
                 void window.electronAPI.openAccountSettings()
                   .then((result) => {
-                    if (!result?.success) setError(result?.error ?? 'Could not open account settings.');
+                    if (!result?.success) setError(result?.error ?? t('userIndicator.accountSettingsFailed'));
                     else setOpen(false);
                   })
                   .catch((reason) => setError(String(reason)));
@@ -254,10 +256,10 @@ export function OrgUserIndicator({
                 />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--nim-text-faint)]">Account</span>
+                <span className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--nim-text-faint)]">{t('userIndicator.account')}</span>
                 <span className="block truncate text-sm font-medium">{email ?? name}</span>
                 <span className={`block truncate text-[11px] ${expired ? 'text-[var(--nim-warning)]' : 'text-[var(--nim-text-muted)]'}`}>
-                  {expired ? 'Session expired — reconnect' : `${presenceLabel} · ${connectionLine}`}
+                  {expired ? t('userIndicator.sessionExpired') : `${presenceLabel} · ${connectionLine}`}
                 </span>
               </span>
               <MaterialSymbol icon="chevron_right" size={18} className="text-[var(--nim-text-faint)]" />

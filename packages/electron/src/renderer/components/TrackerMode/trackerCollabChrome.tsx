@@ -15,8 +15,10 @@ import { useAtomValue } from 'jotai';
 import {
   collabAwarenessAtom,
   collabProductStatusAtom,
+  localizeCollabProductStatus,
 } from '../../store/atoms/collabEditor';
 import { trackerContentCollabKey } from '../../hooks/trackerContentCollabKey';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export const TrackerCollabAvatars: React.FC<{ itemId: string }> = ({ itemId }) => {
   const collabKey = trackerContentCollabKey(itemId);
@@ -66,9 +68,11 @@ function trackerCollabStatusDotClass(
 }
 
 export const TrackerCollabSyncDot: React.FC<{ itemId: string }> = ({ itemId }) => {
-  const status = useAtomValue(
+  const { t } = useTranslation('tracker');
+  // label/detail are translated for display only; the atom value stays English.
+  const status = localizeCollabProductStatus(useAtomValue(
     collabProductStatusAtom(trackerContentCollabKey(itemId)),
-  );
+  ));
   const description = status.detail
     ? `${status.label}: ${status.detail}`
     : status.label;
@@ -78,7 +82,7 @@ export const TrackerCollabSyncDot: React.FC<{ itemId: string }> = ({ itemId }) =
       data-testid="tracker-collab-sync-dot"
       data-status-kind={status.kind}
       role="status"
-      aria-label={`Sync status: ${description}`}
+      aria-label={t('document.syncStatus', { description })}
       title={description}
     />
   );

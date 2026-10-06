@@ -6,6 +6,7 @@
 
 import type { CollabSidebarCreateMenu } from '@nimbalyst/collab-client/docs-ui';
 import type { TitleBarCreateMenu } from '../../store/atoms/titleBarCreate';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 export function composePagesCreateMenu(
   team: CollabSidebarCreateMenu | null,
@@ -29,33 +30,33 @@ export function composePagesCreateMenu(
     return {
       mode: 'collab',
       destination: primary.destination,
-      heading: { label: 'Personal', icon: 'person' },
+      heading: { label: translate('team:pages.personal'), icon: 'person' },
       onPrimary: primary.onPrimary,
       primaryTrailing: primary.primaryTrailing,
-      items: [...primary.items, ...folderItems(primary, 'folder', 'New folder')],
+      items: [...primary.items, ...folderItems(primary, 'folder', translate('team:shareToTeam.newFolder'))],
     };
   }
 
   return {
     mode: 'collab',
     destination: team.destination,
-    heading: { label: 'Shared with team', icon: 'groups' },
+    heading: { label: translate('team:pages.sharedWithTeam'), icon: 'groups' },
     onPrimary: team.onPrimary,
     primaryTrailing: team.primaryTrailing,
     items: [
       ...team.items,
-      ...folderItems(team, 'folder', 'New folder'),
+      ...folderItems(team, 'folder', translate('team:shareToTeam.newFolder')),
       ...(personal
         ? [
           {
             id: 'personal-page',
-            label: 'New personal page',
+            label: translate('team:pages.newPersonalPage'),
             icon: 'person',
             separatorBefore: true,
             trailing: personal.primaryTrailing,
             onSelect: personal.onPrimary,
           },
-          ...folderItems(personal, 'personal-folder', 'New personal folder')
+          ...folderItems(personal, 'personal-folder', translate('team:pages.newPersonalFolder'))
             .map((item) => ({ ...item, separatorBefore: false })),
         ]
         : []),

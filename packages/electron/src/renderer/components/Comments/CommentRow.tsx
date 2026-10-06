@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import { CommentActionMenu } from './CommentActionMenu';
 import { CommentBody } from './CommentBody';
@@ -66,6 +67,7 @@ export function CommentRow({
    */
   timestampMs?: number;
 }) {
+  const { t } = useTranslation('team');
   const isAgent = view.actor.kind === 'agent';
   const compact = density === 'compact';
   // Lifted out of the picker so the hover-revealed actions container can stay
@@ -172,7 +174,7 @@ export function CommentRow({
             data-testid="comment-row-failed"
           >
             <MaterialSymbol icon="error" size={13} />
-            <span>Not sent.</span>
+            <span>{t('comments.row.notSent')}</span>
             {onRetry && (
               <button
                 type="button"
@@ -180,7 +182,7 @@ export function CommentRow({
                 data-testid="comment-row-retry"
                 onClick={() => onRetry(view)}
               >
-                Retry
+                {t('comments.row.retry')}
               </button>
             )}
           </div>
@@ -208,7 +210,7 @@ export function CommentRow({
             onOpenChange={setReactionPickerOpen}
             onSelect={(emoji) => onToggleReaction(emoji, true, view)}
             trigger={(props) => (
-              <EmojiTriggerButton label="Add reaction" testId="reaction-add-trigger" triggerProps={props} />
+              <EmojiTriggerButton label={t('comments.row.addReaction')} testId="reaction-add-trigger" triggerProps={props} />
             )}
           />
         )}
@@ -266,19 +268,20 @@ export function formatClockTime(timestamp: number): string {
  * it, and both belong next to the name in either density.
  */
 function AgentBadges({ view }: { view: CommentView }) {
+  const { t } = useTranslation('team');
   return (
     <>
       <span
         className="comment-row-agent-badge inline-flex shrink-0 items-center gap-1 rounded-[4px] bg-[color-mix(in_srgb,var(--nim-primary)_16%,transparent)] px-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--nim-primary)]"
         data-testid="comment-row-agent-badge"
       >
-        <MaterialSymbol icon="smart_toy" size={10} /> Agent
+        <MaterialSymbol icon="smart_toy" size={10} /> {t('comments.agent')}
       </span>
       <span
         className="comment-row-agent-owner shrink-0 text-[12px] text-[var(--nim-text-faint)]"
         data-testid="comment-row-agent-owner"
       >
-        for {view.actor.ownerDisplayName}
+        {t('comments.row.forOwner', { owner: view.actor.ownerDisplayName })}
       </span>
     </>
   );
@@ -297,6 +300,7 @@ function RowStatusBadges({
   isAgent: boolean;
   onOpenSession?: (sessionId: string) => void;
 }) {
+  const { t } = useTranslation('team');
   return (
     <>
       {view.editedLabel && (
@@ -314,7 +318,7 @@ function RowStatusBadges({
           type="button"
           data-testid="comment-row-session-chip"
           data-session-id={view.actor.sessionId}
-          title={`Open session ${view.actor.sessionName}`}
+          title={t('comments.row.openSession', { session: view.actor.sessionName })}
           onClick={() => onOpenSession?.(view.actor.sessionId!)}
           className="comment-row-session-chip inline-flex min-w-0 shrink items-center gap-1 rounded-[5px] border border-[var(--nim-border)] px-1.5 text-[11px] text-[var(--nim-text-muted)] hover:border-[var(--nim-primary)] hover:bg-[var(--nim-bg-hover)]"
         >
@@ -329,7 +333,7 @@ function RowStatusBadges({
           data-testid="comment-row-pending"
           title={view.pendingLabel}
         >
-          <MaterialSymbol icon="hourglass_top" size={10} /> {view.pendingLabel ?? 'Pending'}
+          <MaterialSymbol icon="hourglass_top" size={10} /> {view.pendingLabel ?? t('comments.row.pending')}
         </span>
       )}
     </>
@@ -337,12 +341,13 @@ function RowStatusBadges({
 }
 
 function ActorAvatar({ view }: { view: CommentView }) {
+  const { t } = useTranslation('team');
   if (view.actor.kind === 'agent') {
     return (
       <span
         className="comment-row-avatar comment-row-avatar-agent flex size-7 items-center justify-center rounded-[6px] bg-[color-mix(in_srgb,var(--nim-primary)_18%,transparent)] text-[var(--nim-primary)]"
         data-testid="comment-row-agent-glyph"
-        aria-label="Agent"
+        aria-label={t('comments.agent')}
       >
         <MaterialSymbol icon="smart_toy" size={15} />
       </span>

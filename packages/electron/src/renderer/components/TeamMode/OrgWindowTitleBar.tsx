@@ -1,5 +1,6 @@
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import { AlphaBadge } from '../common/AlphaBadge';
 import { TEAM_BETA_TOOLTIP } from '../common/TeamBetaNotice';
@@ -25,6 +26,7 @@ export const OrgWindowTitleBar = React.memo(function OrgWindowTitleBar({
   name?: string;
   onOpenPreferences?: () => void;
 }) {
+  const { t } = useTranslation('team');
   return (
     <header
       className="org-window-titlebar org-sidebar-header org-window-drag-region flex shrink-0 items-center gap-2 border-b border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] pr-3"
@@ -47,8 +49,8 @@ export const OrgWindowTitleBar = React.memo(function OrgWindowTitleBar({
               type="button"
               className="org-window-preferences org-window-no-drag flex size-6 shrink-0 items-center justify-center rounded text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
               data-testid="org-window-preferences"
-              aria-label="Preferences"
-              title="Preferences"
+              aria-label={t('preferences.title')}
+              title={t('preferences.title')}
               onClick={onOpenPreferences}
             >
               <MaterialSymbol icon="settings" size={15} />

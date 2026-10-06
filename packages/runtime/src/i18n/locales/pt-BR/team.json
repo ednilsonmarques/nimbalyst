@@ -1,1 +1,1028 @@
-{}
+{
+  "collabStatus": {
+    "localCopyDamaged": {
+      "label": "Cópia local danificada — baixando uma cópia limpa",
+      "detail": "A réplica local danificada foi colocada em quarentena. Uma cópia completa será baixada quando o servidor estiver acessível."
+    },
+    "localSavingUnavailable": {
+      "label": "As alterações não estão sendo salvas localmente",
+      "detail": "O armazenamento local não está disponível. Mantenha este documento aberto e reconecte antes de fechá-lo."
+    },
+    "openingLocalCopy": "Abrindo cópia local…",
+    "accessChanged": {
+      "label": "O acesso mudou — as edições locais não foram enviadas",
+      "detail": "Copie o documento atual antes de descartar esta cópia local."
+    },
+    "notReceivingChanges": {
+      "label": "As alterações de outras pessoas não estão sendo exibidas",
+      "detail": "Edições de colaboradores estão chegando, mas não podem ser exibidas. Reabra este documento; se o problema persistir, evite editar para não entrar em conflito com alterações que você não consegue ver."
+    },
+    "synced": "Sincronizado",
+    "replaying": "Sincronizando alterações offline…",
+    "connecting": "Conectando…",
+    "offline": {
+      "label": "Offline",
+      "detail": "Reconecte para continuar sincronizando o corpo deste item do rastreador."
+    },
+    "offlineSafe": {
+      "label": "Offline — alterações salvas neste dispositivo",
+      "detail": "As alterações offline são salvas localmente e compartilhadas com outras janelas abertas neste dispositivo."
+    }
+  },
+  "comments": {
+    "agent": "Agente",
+    "actions": {
+      "reply": "Responder",
+      "edit": "Editar mensagem",
+      "copyLink": "Copiar link da mensagem",
+      "delete": "Excluir mensagem",
+      "menu": "Ações da mensagem"
+    },
+    "body": {
+      "agentSessionOwned": "Sessão de agente {{session}}, de {{owner}}",
+      "agentSession": "Sessão de agente {{session}}",
+      "pendingDispatch": "Envio pendente"
+    },
+    "composer": {
+      "send": "Enviar",
+      "sending": "Enviando",
+      "cancelReply": "Cancelar resposta",
+      "messageAria": "Mensagem para {{surface}}",
+      "placeholder": "Mensagem para {{surface}}. Digite @ para mencionar alguém ou um agente.",
+      "remove": "Remover {{name}}",
+      "attachFile": "Anexar um arquivo",
+      "attachReference": "Anexar uma referência",
+      "attaching": "Anexando…",
+      "failed": "Falhou",
+      "maxAttachments": "Uma mensagem pode ter no máximo {{max}} arquivos.",
+      "partialAttachments": "Apenas {{accepted}} de {{total}} arquivos foram adicionados; uma mensagem pode ter no máximo {{max}}.",
+      "attachFailed": "Não foi possível anexar {{fileName}}.",
+      "limitOf": "{{actual}} de {{limit}}",
+      "bounds": {
+        "bytes": "{{used}}K de {{limit}}K",
+        "links": "{{used}}/{{limit}} links",
+        "mentions": "{{used}}/{{limit}} menções",
+        "agents": "{{used}}/{{limit}} agentes"
+      }
+    },
+    "row": {
+      "notSent": "Não enviada.",
+      "retry": "Tentar novamente",
+      "addReaction": "Adicionar reação",
+      "forOwner": "para {{owner}}",
+      "openSession": "Abrir sessão {{session}}",
+      "pending": "Pendente",
+      "edited": "editada",
+      "editedTitle": "Editada em {{time}}",
+      "deleted": "Mensagem excluída"
+    },
+    "thread": {
+      "empty": "Nenhuma mensagem ainda.",
+      "loading": "Carregando conversa…",
+      "loadFailed": "Não foi possível carregar o histórico da conversa.",
+      "loadingEarlier": "Carregando",
+      "loadEarlier": "Carregar mensagens anteriores",
+      "noReactions": "As reações ainda não estão disponíveis aqui."
+    },
+    "emoji": {
+      "groups": {
+        "reactions": "Usados com frequência",
+        "people": "Pessoas",
+        "objects": "Objetos",
+        "symbols": "Símbolos"
+      },
+      "results": "Resultados",
+      "search": "Pesquisar emoji",
+      "noMatch": "Nenhum emoji corresponde a essa busca.",
+      "suggestions": "Sugestões de emoji"
+    },
+    "mention": {
+      "aria": "Mencionar uma pessoa ou um agente",
+      "people": "Pessoas",
+      "agents": "Agentes nesta conversa"
+    },
+    "pill": {
+      "notInWorkspace": "Fora do seu espaço de trabalho",
+      "notInWorkspaceHint": {
+        "tracker": "Este item do rastreador pertence a um projeto que você não tem aberto.",
+        "document": "Este documento pertence a um projeto que você não tem aberto.",
+        "session": "Esta sessão pertence a um projeto que você não tem aberto.",
+        "file": "Este arquivo pertence a um projeto que você não tem aberto.",
+        "commit": "Este commit pertence a um projeto que você não tem aberto.",
+        "pullRequest": "Este pull request pertence a um projeto que você não tem aberto.",
+        "conversation": "Esta conversa pertence a um projeto que você não tem aberto.",
+        "feedbackRequest": "Esta solicitação de feedback pertence a um projeto que você não tem aberto."
+      },
+      "loading": "Carregando",
+      "unavailable": "Indisponível",
+      "unavailableHint": "Você não tem acesso a este item, ou ele não existe mais.",
+      "untitledDocument": "Documento sem título"
+    },
+    "restriction": {
+      "noAccess": {
+        "title": "Você não tem acesso a esta conversa",
+        "detail": "Peça a um administrador da organização ou da sala para adicionar você."
+      },
+      "archived": {
+        "title": "Conversa arquivada: {{surface}}",
+        "detail": "Conversas arquivadas podem ser lidas, mas não aceitam novas mensagens."
+      },
+      "readOnly": {
+        "title": "Você tem acesso somente leitura aqui",
+        "detail": "Para publicar, é necessária a permissão \"comment\" em {{surface}}. Seu papel concede apenas acesso de leitura."
+      }
+    },
+    "actor": {
+      "teammate": "um colega de equipe",
+      "agentSession": "Sessão de agente",
+      "unknownMember": "Membro desconhecido"
+    },
+    "reply": {
+      "cannotSee": "Respondendo a uma mensagem que você não pode ver",
+      "earlier": "Respondendo a uma mensagem anterior",
+      "deleted": "Respondendo a uma mensagem excluída"
+    },
+    "time": {
+      "now": "agora",
+      "minutes": "{{value}} min",
+      "hours": "{{value}} h",
+      "days": "{{value}} d",
+      "weeks": "{{value}} sem",
+      "years": "{{value}} a"
+    }
+  },
+  "share": {
+    "titleSession": "Compartilhar sessão",
+    "titleFile": "Compartilhar arquivo",
+    "signIn": "Entre para compartilhar links criptografados.",
+    "anyoneSession": "Qualquer pessoa com o link pode ver esta sessão",
+    "anyoneFile": "Qualquer pessoa com o link pode ver este arquivo",
+    "encrypted": "O conteúdo é criptografado de ponta a ponta.",
+    "noOneElse": "Ninguém sem o link -- incluindo os servidores da Nimbalyst -- pode vê-lo.",
+    "expiresAfter": "O link expira após",
+    "expirationDays_zero": "{{count}} dias",
+    "expirationDays_one": "{{count}} dia",
+    "expirationDays_other": "{{count}} dias",
+    "remembered": "Sua escolha será lembrada na próxima vez",
+    "shareLink": "Link de compartilhamento",
+    "sharing": "Compartilhando...",
+    "updateLink": "Atualizar link",
+    "copyLink": "Copiar link",
+    "failed": "Falha ao compartilhar",
+    "unexpectedError": "Ocorreu um erro inesperado",
+    "accountPicker": {
+      "createAs": "Criar link como",
+      "syncAccount": "Conta de sincronização",
+      "defaultWorkspace": "Selecionada por padrão: a conta vinculada a este espaço de trabalho.",
+      "defaultSync": "Selecionada por padrão: a conta usada para sincronização.",
+      "onlyAccount": "Esta é a sua única conta conectada."
+    }
+  },
+  "shareToTeam": {
+    "title": "Compartilhar com a equipe",
+    "subtitle": "Escolha onde este documento deve ficar no espaço da sua equipe.",
+    "sourceFile": "Arquivo de origem",
+    "sharedName": "Nome compartilhado",
+    "documentNamePlaceholder": "Nome do documento",
+    "willBeSharedAs": "Será compartilhado como",
+    "linkedDocuments": "Documentos vinculados",
+    "linkedDocumentsHint": "Compartilhar este documento também compartilhará os documentos incorporados a ele, para que sua equipe possa vê-los.",
+    "shareDocumentAria": "Compartilhar {{name}}",
+    "alreadyShared": "Já compartilhado",
+    "uncheckedHint": "Documentos desmarcados continuam como links locais que os colegas de equipe não conseguem abrir.",
+    "shareDocuments_zero": "Compartilhar {{count}} documentos",
+    "shareDocuments_one": "Compartilhar {{count}} documento",
+    "shareDocuments_other": "Compartilhar {{count}} documentos",
+    "teamRoot": "Raiz da equipe",
+    "destinationFolder": "Pasta de destino",
+    "newFolder": "Nova pasta",
+    "refreshingFolders": "Atualizando pastas compartilhadas…",
+    "refreshFailed": "Não foi possível atualizar as pastas compartilhadas. Feche esta caixa de diálogo e tente novamente.",
+    "lastUsed": "último usado",
+    "folderNamePlaceholder": "Nome da pasta",
+    "collapse": "Recolher",
+    "expand": "Expandir"
+  },
+  "shareFolder": {
+    "title": "Compartilhar pasta com a equipe",
+    "subtitle": "Publica uma cópia dos arquivos compartilháveis desta pasta. Arquivos adicionados depois continuam locais.",
+    "sourceFolder": "Pasta de origem",
+    "sharedFolderName": "Nome da pasta compartilhada",
+    "willBeCreatedAs": "Será criada como",
+    "documentCount_zero": "{{count}} documentos",
+    "documentCount_one": "{{count}} documento",
+    "documentCount_other": "{{count}} documentos",
+    "acrossSubfolders_zero": "em {{count}} subpastas",
+    "acrossSubfolders_one": "em {{count}} subpasta",
+    "acrossSubfolders_other": "em {{count}} subpastas",
+    "willBeShared_zero": "serão compartilhados.",
+    "willBeShared_one": "será compartilhado.",
+    "willBeShared_other": "serão compartilhados.",
+    "wereFound_zero": "foram encontrados.",
+    "wereFound_one": "foi encontrado.",
+    "wereFound_other": "foram encontrados.",
+    "overLimit": "Isso é mais do que os {{max}} que uma única promoção consegue publicar. Compartilhe as subpastas desta pasta separadamente para que nada chegue incompleto ao espaço da equipe.",
+    "skippedFiles_zero": "{{count}} arquivos não serão compartilhados",
+    "skippedFiles_one": "{{count}} arquivo não será compartilhado",
+    "skippedFiles_other": "{{count}} arquivos não serão compartilhados",
+    "skippedHint": "Eles não têm um tipo de documento colaborativo e permanecem na sua máquina.",
+    "truncated": "Esta pasta tem mais arquivos do que uma única promoção consegue verificar, então alguns não foram considerados. Compartilhe as subpastas separadamente para cobrir o restante.",
+    "tooManyDocuments": "Documentos demais"
+  },
+  "feedbackDestination": {
+    "aria": "Escolher um destino",
+    "title": "Para onde devem ir?",
+    "subjects_zero": "{{count}} itens serão publicados aqui quando você enviar.",
+    "subjects_one": "{{count}} item será publicado aqui quando você enviar.",
+    "subjects_other": "{{count}} itens serão publicados aqui quando você enviar.",
+    "teamFolders": "Pastas da equipe",
+    "loadFailed": "Não foi possível carregar as pastas da sua equipe, então ainda não há onde escolher.",
+    "loading": "Carregando pastas da equipe…",
+    "use": "Usar {{destination}}"
+  },
+  "roles": {
+    "admin": "Administrador",
+    "member": "Membro",
+    "viewer": "Visualizador",
+    "owner": "Proprietário"
+  },
+  "invite": {
+    "title": "Convidar para {{org}}",
+    "subtitle": "As pessoas convidadas terão acesso ao que você escolher aqui assim que aceitarem.",
+    "emailAddresses": "Endereços de e-mail",
+    "invalidEmails": "Não é um endereço de e-mail: {{list}}",
+    "role": "Papel",
+    "whatTheyGet": "O que recebem",
+    "teamProject": "O projeto da equipe",
+    "grantedAutomatically": "concedido automaticamente",
+    "publishFoldersToo": "Publicar também pastas deste espaço de trabalho",
+    "publishFoldersEmpty": "Publique pastas deste espaço de trabalho para que haja algo para abrir. Uma publicação é uma cópia única; arquivos adicionados depois continuam locais.",
+    "publishOneTimeCopy": "Uma publicação é uma cópia única; arquivos adicionados depois continuam locais.",
+    "emptyWarning": "Eles chegarão a um espaço de trabalho vazio. Você pode compartilhar pastas com eles depois.",
+    "sending": "Enviando…",
+    "sendFailed": "Não foi possível enviar o convite",
+    "sendAllFailed": "Não foi possível enviar os convites.",
+    "summary": {
+      "empty": "Adicione um endereço de e-mail para convidar alguém.",
+      "people_zero": "{{count}} pessoas",
+      "people_one": "{{count}} pessoa",
+      "people_other": "{{count}} pessoas",
+      "extraProjects_zero": "{{count}} projetos adicionais",
+      "extraProjects_one": "{{count}} projeto adicional",
+      "extraProjects_other": "{{count}} projetos adicionais",
+      "foldersPublished_zero": "{{count}} pastas publicadas",
+      "foldersPublished_one": "{{count}} pasta publicada",
+      "foldersPublished_other": "{{count}} pastas publicadas",
+      "teamHasContent": "a equipe já tem conteúdo compartilhado",
+      "nothingShared": "nada compartilhado ainda"
+    },
+    "action": {
+      "inviteOnly": "Enviar apenas o convite",
+      "inviteAndShare": "Enviar convites e compartilhar"
+    },
+    "folderPicker": {
+      "collapse": "Recolher {{name}}",
+      "expand": "Expandir {{name}}",
+      "reading": "Lendo o espaço de trabalho…",
+      "empty": "Este espaço de trabalho não tem pastas para publicar."
+    }
+  },
+  "pages": {
+    "personal": "Pessoal",
+    "team": "Equipe",
+    "sharedWithTeam": "Compartilhado com a equipe",
+    "newPersonalPage": "Nova página pessoal",
+    "newPersonalFolder": "Nova pasta pessoal",
+    "openSharedDocFailed": "Falha ao abrir o documento compartilhado",
+    "resizeSidebar": "Redimensionar a barra lateral de documentos compartilhados",
+    "emptyHint": "Abra uma página ou clique com o botão direito na barra lateral e escolha Nova página",
+    "signInForTeamPages": "Entre e compartilhe este projeto para ver as páginas da equipe",
+    "dismiss": "Dispensar",
+    "loadFailed": "Não foi possível carregar esta página.",
+    "changedElsewhere": "Esta página foi alterada em outro lugar; suas edições foram mantidas no histórico local.",
+    "saveFailed": "Não foi possível salvar esta página. Sua próxima edição tentará novamente.",
+    "typePage": {
+      "creating": "Criando a página...",
+      "describe": "Descreva o tipo \"{{item}}\" e o que pertence aqui",
+      "createFailed": "Não foi possível criar esta página: {{error}}",
+      "type": "Tipo",
+      "pages": "Páginas",
+      "fields": "Campos"
+    },
+    "setType": {
+      "refused": "Não é possível definir o tipo",
+      "failed": "A definição do tipo não foi concluída"
+    }
+  },
+  "embed": {
+    "agentDispatch": {
+      "startFailed": {
+        "title": "Não foi possível iniciar uma sessão para esse comentário",
+        "message": "A menção @agent foi salva, mas não foi possível criar uma sessão para ela."
+      },
+      "started": {
+        "title": "Sessão iniciada para este comentário",
+        "message": "{{title}}. Ela responderá na conversa quando terminar."
+      },
+      "handoffFailed": "Não foi possível entregar esse comentário a uma sessão"
+    },
+    "revision": {
+      "noTeam": "Este projeto não está conectado a uma equipe, então as revisões anteriores não podem ser carregadas.",
+      "unsupportedType": "Revisões anteriores de documentos {{documentType}} ainda não podem ser exibidas."
+    },
+    "errors": {
+      "editorUnavailable": "O editor colaborativo deste documento não está disponível.",
+      "onlyCustomEditors": "Somente documentos colaborativos de editores personalizados podem ser incorporados.",
+      "editorNoCollab": "O editor instalado não oferece suporte a incorporações colaborativas.",
+      "teamWorkspaceUnavailable": "O espaço de trabalho da equipe ativa não está disponível.",
+      "differentTeam": "Este documento incorporado pertence a outra equipe.",
+      "resolveSharedFailed": "Não foi possível resolver a incorporação compartilhada.",
+      "resolvePathFailed": "Não foi possível resolver o caminho da incorporação"
+    },
+    "changeNotSaved": "A alteração não foi salva",
+    "renderFailed": "Falha ao renderizar a incorporação:",
+    "unknownError": "erro desconhecido",
+    "loadingShared": "Carregando incorporação compartilhada...",
+    "loadSharedFailed": "Não foi possível carregar a incorporação compartilhada",
+    "loadingSharedDocument": "Carregando documento compartilhado...",
+    "loading": "Carregando incorporação...",
+    "loadingPreview": "Carregando prévia…",
+    "loadingRevision": "Carregando revisão...",
+    "resolving": "Resolvendo arquivo incorporado…",
+    "noExtension": "Nenhuma extensão instalada consegue renderizar <code>{{name}}</code> em linha.",
+    "chrome": {
+      "unsavedAutosaving": "Alterações não salvas -- salvando automaticamente",
+      "unsaved": "Alterações não salvas",
+      "linkLabel": "Rótulo do link: {{label}}",
+      "editInPlace": "Editar no local (salva automaticamente no arquivo incorporado)",
+      "doneEditing": "Concluir edição -- voltar ao modo de visualização",
+      "openInTab": "Abrir arquivo em uma nova aba",
+      "open": "Abrir"
+    },
+    "card": {
+      "noWorkspace": "Nenhum espaço de trabalho está aberto.",
+      "noExtension": "Nenhuma extensão instalada renderiza {{name}}.",
+      "noSharedDocument": "Este cartão não indica um documento compartilhado.",
+      "differentTeam": "Este cartão pertence a outra equipe.",
+      "noMarkdownRevisions": "Revisões fixadas ainda não estão disponíveis para cartões markdown.",
+      "waitingConnection": "Aguardando uma conexão disponível para cartões compartilhados."
+    },
+    "picker": {
+      "sharedDocument": "Documento compartilhado",
+      "searchPlaceholder": "Pesquisar arquivos e documentos compartilhados",
+      "searching": "Pesquisando…",
+      "noMatch": "Nada corresponde a essa busca."
+    },
+    "placedView": {
+      "openProject": "{{label}}: abra um projeto para ver esta visualização.",
+      "view": "Visualização"
+    }
+  },
+  "inbox": {
+    "title": "Caixa de entrada",
+    "loading": "Carregando caixa de entrada",
+    "filters": {
+      "all": "Todas",
+      "mentions": "Menções",
+      "assigned": "Atribuídas a mim",
+      "awaiting": "Aguardando minha resposta",
+      "follows": "Seguindo",
+      "archived": "Arquivadas"
+    },
+    "reason": {
+      "mention": "Mencionou você",
+      "agentMention": "Mencionou seu agente",
+      "assignment": "Atribuído a você",
+      "reply": "Respondeu a você",
+      "dm": "Mensagem direta",
+      "follow": "Em uma conversa que você segue",
+      "newActivity": "Nova atividade"
+    },
+    "chip": {
+      "mention": "Menção",
+      "agentMention": "Menção ao agente",
+      "assignment": "Atribuído",
+      "reply": "Resposta"
+    },
+    "types": {
+      "room": "Sala",
+      "direct": "Direta",
+      "tracker": "Rastreador",
+      "question": "Pergunta",
+      "doc": "Doc",
+      "feedback": "Feedback",
+      "unavailable": "Indisponível"
+    },
+    "sourceKinds": {
+      "roomMessage": "Salas",
+      "documentDiscussion": "Discussões de documentos",
+      "documentDecision": "Perguntas de documentos",
+      "dmMessage": "Mensagens diretas",
+      "trackerComment": "Comentários do rastreador",
+      "documentInlineComment": "Comentários em linha",
+      "feedbackRequest": "Solicitações de feedback"
+    },
+    "open": {
+      "itemType": "Abrir {{type}}",
+      "trackerItem": "Abrir item do rastreador",
+      "document": "Abrir documento",
+      "room": "Abrir sala",
+      "conversation": "Abrir conversa",
+      "feedbackRequest": "Abrir solicitação de feedback",
+      "generic": "Abrir"
+    },
+    "unavailable": {
+      "revoked": "Não está mais disponível",
+      "deleted": "Excluído ou indisponível"
+    },
+    "groups": {
+      "today": "Hoje",
+      "yesterday": "Ontem",
+      "thisWeek": "No início desta semana",
+      "older": "Mais antigas"
+    },
+    "stale": "Desatualizado",
+    "context": {
+      "selectHint": "Selecione uma entrega para ver o contexto dela aqui ou inicie uma nova mensagem para escolher um destino.",
+      "conversation": "Conversa",
+      "accessRemoved": "Você não tem mais acesso à origem desta entrega. Dispense-a para removê-la da sua caixa de entrada.",
+      "sourceDeleted": "A origem desta entrega foi excluída. Dispense-a para removê-la da sua caixa de entrada.",
+      "previewHint": "Esta é a prévia limitada armazenada com a entrega. Abra a origem para ver o conteúdo atual.",
+      "mute": "Silenciar",
+      "unmute": "Reativar notificações",
+      "composerPlaceholder": "O editor compartilhado aparece aqui — respostas e novas mensagens a partir da caixa de entrada passam pelo fluxo de criação do próprio destino.",
+      "readOnly": "Você pode ler esta conversa, mas não pode publicar nela."
+    },
+    "resizeContextPane": "Redimensionar painel de contexto",
+    "empty": {
+      "all": {
+        "title": "Sua caixa de entrada está vazia",
+        "body": "Menções, atribuições, respostas e atividades nas conversas que você segue chegam aqui."
+      },
+      "mentions": {
+        "title": "Nenhuma menção",
+        "body": "Alguém precisa @mencionar você — ou um agente seu — para que uma entrega chegue aqui."
+      },
+      "assigned": {
+        "title": "Nada atribuído a você",
+        "body": "Atribuições do rastreador e entregas equivalentes que exigem ação ficam aqui."
+      },
+      "awaiting": {
+        "title": "Ninguém está aguardando você",
+        "body": "Solicitações de feedback endereçadas a você ficam aqui até que você as responda."
+      },
+      "follows": {
+        "title": "Você não está seguindo nada",
+        "body": "Publicar em uma conversa faz você segui-la automaticamente, ou você pode seguir uma explicitamente."
+      },
+      "archived": {
+        "title": "Nada arquivado",
+        "body": "Dispensar uma entrega a arquiva aqui, fora das outras listas, mas ainda legível."
+      },
+      "unread": {
+        "title": "Nada não lido",
+        "body": "Você está em dia com as entregas e com as conversas que segue."
+      },
+      "browseRooms": "Explorar salas",
+      "openTrackers": "Abrir rastreadores",
+      "noSearchMatch": "Nenhuma entrega corresponde à sua pesquisa",
+      "nothingMatches": "Nada em {{scope}} corresponde a “{{query}}”.",
+      "yourInbox": "sua caixa de entrada"
+    },
+    "clearFilters": "Limpar filtros",
+    "offlineEmpty": {
+      "title": "A caixa de entrada precisa de conexão",
+      "body": "Ainda não há entregas em cache neste dispositivo. Os indicadores de não lidos nos seus rastreadores e documentos continuam funcionando offline na janela do projeto."
+    },
+    "filtersAria": "Filtros da caixa de entrada",
+    "unreadOnly": "Somente não lidas",
+    "typesLabel": "Tipos",
+    "row": {
+      "responseRequestedTitle": "Isto pede uma resposta sua",
+      "responseRequested": "Resposta solicitada",
+      "muted": "Silenciado",
+      "pendingTitle": "Enviado ao seu agente; aguardando a sessão assumir",
+      "readOnly": "Somente leitura",
+      "openTitle": "Abrir (Enter)",
+      "unread": "Não lida"
+    },
+    "scope": {
+      "all": "Todas as organizações e projetos",
+      "orgs_zero": "{{count}} organizações",
+      "orgs_one": "{{count}} organização",
+      "orgs_other": "{{count}} organizações",
+      "projects_zero": "{{count}} projetos",
+      "projects_one": "{{count}} projeto",
+      "projects_other": "{{count}} projetos",
+      "organization": "Organização",
+      "project": "Projeto",
+      "reset": "Redefinir escopo"
+    },
+    "search": {
+      "aria": "Pesquisar em {{filter}}",
+      "placeholder": "Pesquisar em {{filter}} por pessoa, conversa ou texto",
+      "clear": "Limpar pesquisa",
+      "previewsOnly": "A pesquisa da caixa de entrada abrange apenas as prévias limitadas armazenadas com cada entrega.",
+      "previewsOnlyMatches": "Aqui são pesquisadas apenas as prévias das entregas — não o conteúdo completo das mensagens.",
+      "all": "Pesquisar todas as mensagens"
+    },
+    "openFailed": "Não foi possível abrir essa conversa. Ela continua não lida.",
+    "markAllReadTitle": "Marcar tudo em {{filter}} como lido",
+    "markRead": "Marcar tudo em {{filter}} como lido",
+    "newMessageTitle": "Escrever para uma sala ou uma pessoa",
+    "composeUnavailable": "A criação de mensagens está disponível na janela da organização",
+    "newMessage": "Nova mensagem",
+    "messagingUnavailable": "As mensagens não estão disponíveis para {{org}}. Migre esta organização para a criptografia gerenciada pelo servidor para ativá-las.",
+    "migrateOrganization": "Migrar organização",
+    "status": {
+      "offline": "Offline — mostrando entregas em cache. As prévias podem estar desatualizadas e as alterações ficam na fila até você se reconectar.",
+      "offlineSince": "Offline — mostrando entregas em cache de {{time}} atrás. As prévias podem estar desatualizadas e as alterações ficam na fila até você se reconectar.",
+      "reconnecting": "Reconectando — a lista está pausada até que a sequência canônica seja reconciliada."
+    }
+  },
+  "sidebar": {
+    "organization": "Organização",
+    "organizations": "Organizações",
+    "organizationActions": "Ações da organização",
+    "openAnotherOrganization": "Abrir outra organização",
+    "searchConversations": "Pesquisar conversas",
+    "feedback": "Feedback",
+    "roomsTitle": "Salas",
+    "roomActions": "Ações da sala",
+    "newRoom": "Nova sala",
+    "onlyAdminsCreateRooms": "Somente administradores da organização podem criar salas",
+    "newDirectMessage": "Nova mensagem direta",
+    "subjects": {
+      "rooms": "as salas",
+      "directMessages": "as mensagens diretas"
+    },
+    "loadFailed": "Não foi possível carregar {{subject}}.",
+    "rooms": {
+      "noMatch": "Nenhuma sala corresponde a essa pesquisa.",
+      "loading": "Carregando salas…",
+      "emptyCanCreate": "Ainda não há salas. Crie uma com + ou explore o diretório.",
+      "empty": "Ainda não há salas. Use + para explorar o diretório e entrar em uma."
+    },
+    "dms": {
+      "noMatch": "Nenhuma mensagem direta corresponde a essa pesquisa.",
+      "emptyCanCreate": "Ainda não há mensagens diretas. Inicie uma com +.",
+      "empty": "Ainda não há mensagens diretas."
+    },
+    "connection": {
+      "ready": "Conectado",
+      "connecting": "Conectando…",
+      "offline": "Offline",
+      "messagingUnavailable": "Mensagens indisponíveis",
+      "thisProject": "{{status}} · este projeto"
+    },
+    "unreadCount": "{{count}} não lidas",
+    "presence": {
+      "online": "online",
+      "away": "ausente",
+      "offline": "offline"
+    },
+    "reconnecting": "Reconectando"
+  },
+  "adminTabs": {
+    "members": "Membros",
+    "projects": "Projetos",
+    "settings": "Configurações",
+    "billing": "Cobrança",
+    "danger": "Zona de perigo"
+  },
+  "preferences": {
+    "title": "Preferências",
+    "description": "Estas configurações se aplicam a esta janela neste dispositivo.",
+    "messageDisplay": "Exibição de mensagens",
+    "messageDisplayHint": "Como as mensagens são organizadas em salas e mensagens diretas.",
+    "density": {
+      "comfortable": {
+        "label": "Confortável",
+        "detail": "Avatar, nome em linha própria, mais espaço."
+      },
+      "compact": {
+        "label": "Compacta",
+        "detail": "Uma linha por mensagem: hora, nome e depois a mensagem."
+      }
+    }
+  },
+  "orgWindow": {
+    "betaStatus": "Nimbalyst Teams beta — podem ocorrer bugs; as organizações são gratuitas durante o beta.",
+    "title": "Mensagens da organização - Nimbalyst"
+  },
+  "compose": {
+    "description": "Escolha uma sala ou uma pessoa para quem escrever.",
+    "searchPlaceholder": "Pesquisar salas e pessoas",
+    "noMatch": "Nada corresponde a “{{query}}”.",
+    "empty": "Ainda não há para onde escrever.",
+    "opening": "Abrindo…"
+  },
+  "createRoom": {
+    "title": "Criar uma sala",
+    "description": "Salas são conversas de toda a organização. Salas públicas são abertas a todos; salas privadas ficam restritas às pessoas que você adicionar.",
+    "creating": "Criando…",
+    "submit": "Criar sala",
+    "namePlaceholder": "Revisões de design",
+    "roomId": "ID da sala",
+    "roomIdHint": "Como a sala é identificada. Letras, números, pontos, hífens e sublinhados.",
+    "topicOptional": "Tópico (opcional)",
+    "topicHint": "Uma descrição de uma linha exibida no cabeçalho da sala.",
+    "topicPlaceholder": "Para que serve esta sala",
+    "visibility": "Visibilidade",
+    "public": "Pública",
+    "publicDescription": "Todos na organização podem encontrar e entrar nesta sala.",
+    "private": "Privada",
+    "privateDescription": "Somente as pessoas que você adicionar podem ver esta sala.",
+    "membersHint": "Você é adicionado como administrador da sala. Qualquer outra pessoa precisa ser adicionada aqui ou depois.",
+    "agentPostingHint": "Agentes mencionados podem responder nesta sala. Você pode alterar isso depois nas configurações da sala."
+  },
+  "memberPicker": {
+    "search": "Pesquisar pessoas",
+    "noMatch": "Nenhum membro correspondente.",
+    "empty": "Ainda não há outros membros nesta organização."
+  },
+  "newDm": {
+    "description_zero": "Escolha até {{count}} pessoas. Mensagens diretas são privadas para os participantes e não podem ser renomeadas nem receber novos participantes depois.",
+    "description_one": "Escolha até {{count}} pessoa. Mensagens diretas são privadas para os participantes e não podem ser renomeadas nem receber novos participantes depois.",
+    "description_other": "Escolha até {{count}} pessoas. Mensagens diretas são privadas para os participantes e não podem ser renomeadas nem receber novos participantes depois.",
+    "submit": "Iniciar conversa",
+    "participants_zero": "{{count}} participantes, incluindo você.",
+    "participants_one": "{{count}} participante, incluindo você.",
+    "participants_other": "{{count}} participantes, incluindo você."
+  },
+  "roomsDirectory": {
+    "showArchived": "Mostrar arquivadas",
+    "description": "Salas públicas são abertas a todos nesta organização. Salas privadas só aparecem quando você faz parte delas.",
+    "archived": "Arquivada",
+    "joinTitle": "Entrar nesta sala",
+    "resolvingMembership": "Verificando sua participação…",
+    "joined": "Participando",
+    "joining": "Entrando…",
+    "join": "Entrar",
+    "empty": {
+      "title": "Nenhuma sala para mostrar",
+      "withArchived": "Esta organização não tem salas que você possa ver, incluindo as arquivadas.",
+      "body": "Esta organização ainda não tem salas que você possa ver. Salas privadas aparecem aqui quando você é adicionado a elas.",
+      "createFirst": "Criar a primeira sala"
+    }
+  },
+  "room": {
+    "you": "Você",
+    "fields": {
+      "name": "Nome",
+      "topic": "Tópico"
+    },
+    "agentPosting": {
+      "label": "Permitir que agentes publiquem",
+      "hint": "Agentes mencionados podem responder nesta sala."
+    },
+    "errors": {
+      "idEmpty": "Digite um nome de sala para gerar um ID.",
+      "idInvalid": "IDs de sala só podem conter letras, números, pontos, hífens e sublinhados.",
+      "idTaken": "Já existe uma sala com este ID.",
+      "nameRequired": "O nome da sala é obrigatório.",
+      "membershipResolving": "Sua participação nesta organização ainda está sendo verificada.",
+      "pickOne": "Escolha pelo menos uma pessoa.",
+      "dmTooMany": "Uma mensagem direta comporta no máximo {{max}} pessoas, incluindo você."
+    },
+    "memberCount_zero": "{{count}} membros",
+    "memberCount_one": "{{count}} membro",
+    "memberCount_other": "{{count}} membros",
+    "openProject": "Abrir projeto",
+    "notifications": {
+      "aria": "Notificações: {{level}}",
+      "title": "Nível de notificação: {{level}}",
+      "updating": "Atualizando o nível de notificação",
+      "all": {
+        "label": "Todas as mensagens",
+        "description": "Todas as mensagens desta conversa chegam à sua caixa de entrada."
+      },
+      "mentions": {
+        "label": "Somente menções",
+        "description": "Somente mensagens que mencionam você chegam à sua caixa de entrada."
+      },
+      "none": {
+        "label": "Nada",
+        "description": "Nada desta conversa chega à sua caixa de entrada."
+      }
+    },
+    "actions": {
+      "invite": "Convidar membros",
+      "settings": "Configurações da sala",
+      "cannotManage": "Você não pode gerenciar esta conversa"
+    },
+    "settings": {
+      "saved": "Detalhes da sala salvos.",
+      "saving": "Salvando…",
+      "save": "Salvar alterações",
+      "details": "Detalhes",
+      "topicHint": "Exibido abaixo do nome da sala. Apagar o texto remove o tópico.",
+      "archive": "Arquivar sala",
+      "archiving": "Arquivando…",
+      "archiveDescription": "A sala sai da barra lateral de todos e deixa de aceitar mensagens. O histórico continua legível pelo diretório de salas.",
+      "generalCannotArchive": "A sala general é a sala padrão da organização e não pode ser arquivada.",
+      "alreadyArchived": "Esta sala já está arquivada.",
+      "loadingRoles": "Carregando os papéis atuais da sala…",
+      "publicHint": "Todos na organização podem ler esta sala pública. A participação aqui só muda quem a segue e quem pode gerenciá-la.",
+      "noMembers": "Ainda não há membros nesta organização."
+    },
+    "members": {
+      "add": "Adicionar à sala",
+      "promote": "Tornar administrador da sala",
+      "demote": "Remover administrador da sala",
+      "remove": "Remover da sala",
+      "roleAdmin": "Administrador da sala",
+      "notInRoom": "Fora da sala",
+      "youSuffix": "(você)",
+      "aria": "Participação na sala de {{name}}"
+    },
+    "empty": {
+      "archived": "{{name}} foi arquivada sem nenhuma mensagem.",
+      "dmCanComment": "Este é o início da sua conversa com {{name}}. Diga olá.",
+      "dm": "Este é o início da sua conversa com {{name}}.",
+      "roomCanComment": "Este é o início de {{name}}. Envie a primeira mensagem para começar.",
+      "room": "Este é o início de {{name}}. Nada foi publicado aqui ainda."
+    }
+  },
+  "orgMode": {
+    "directoryUnavailable": "Diretório indisponível",
+    "messagingOff": "Salas e mensagens diretas estão desativadas para esta organização",
+    "conversationMissing": "Essa conversa não está mais disponível.",
+    "organizationsLoadFailed": "Não foi possível carregar as organizações.",
+    "loadingOrganization": "Carregando organização…",
+    "refreshingOrganizations": "Atualizando organizações…",
+    "unbound": {
+      "notAvailable": "Esta organização ainda não está disponível. Seu destino foi preservado.",
+      "loadFailed": "Não foi possível carregar suas organizações.",
+      "create": "Crie uma organização para colaborar com uma equipe ou aceite um convite pendente.",
+      "creationUnavailable": "A criação de organizações está temporariamente indisponível. Aceite um convite pendente para começar.",
+      "settingsFor": "Configurações da organização {{name}}",
+      "waitingMembership": "Aguardando o carregamento da sua participação na organização."
+    },
+    "workspaceOrgLoadFailed": "Não foi possível carregar a organização do espaço de trabalho."
+  },
+  "projects": {
+    "chooseFolderFor": "Escolha uma pasta para {{name}}",
+    "thisProject": "este projeto",
+    "openProjectButton": "Abrir projeto",
+    "openFailed": "Não foi possível abrir esse projeto",
+    "loading": "Carregando projetos…",
+    "empty": "Ainda não há projetos.",
+    "loadFailed": "Não foi possível carregar os projetos.",
+    "untitled": "Projeto sem título",
+    "status": {
+      "open": "Aberto localmente",
+      "cloned": "Clonado localmente",
+      "chooseFolder": "Escolha uma pasta para este projeto",
+      "notLocal": "Não está local"
+    },
+    "cloneHint": "Clone o repositório deste projeto e depois abra-o para trabalhar nele aqui.",
+    "openLocallyShort": "abrir localmente…",
+    "notLocalShort": "não está local",
+    "loadFailedShort": "Não foi possível carregar os projetos"
+  },
+  "userIndicator": {
+    "signedIn": "Conectado",
+    "presence": {
+      "online": "Online",
+      "away": "Ausente",
+      "offline": "Offline"
+    },
+    "orgCount_zero": "{{count}} organizações",
+    "orgCount_one": "{{count}} organização",
+    "orgCount_other": "{{count}} organizações",
+    "reconnecting": "{{count}} reconectando",
+    "aria": "Status da conta e da conexão",
+    "orgPreferences": "Preferências da organização",
+    "webConsole": "Console web",
+    "setOnline": "Ficar online",
+    "setAway": "Ficar ausente",
+    "accountSettingsFailed": "Não foi possível abrir as configurações da conta.",
+    "account": "Conta",
+    "sessionExpired": "Sessão expirada — reconecte"
+  },
+  "feedback": {
+    "age": {
+      "justNow": "agora",
+      "minutes": "há {{value}} min",
+      "hours": "há {{value}} h",
+      "days": "há {{value}} d",
+      "weeks": "há {{value}} sem"
+    },
+    "status": {
+      "open": "Aberta",
+      "answered": "Respondida",
+      "closed": "Encerrada",
+      "expired": "Expirada",
+      "cancelled": "Cancelada",
+      "questionRemoved": "Pergunta removida",
+      "settled": "Resolvida"
+    },
+    "author": {
+      "agentOf": "Agente de {{name}}",
+      "anAgent": "Um agente",
+      "aTeammate": "Um colega de equipe",
+      "teammate": "Colega de equipe"
+    },
+    "progress": {
+      "responded": "{{answered}}/{{total}} responderam",
+      "answered": "{{answered}} de {{total}} responderam"
+    },
+    "openFailed": "Não foi possível abrir esta pergunta.",
+    "searchPlaceholder": "Pesquisar solicitações…",
+    "searchAria": "Pesquisar solicitações de feedback",
+    "filtersAria": "Filtros de feedback",
+    "filters": {
+      "needsMyResponse": "Precisa da minha resposta",
+      "sentByMe": "Enviadas por mim",
+      "open": "Abertas",
+      "answered": "Respondidas",
+      "closed": "Encerradas",
+      "all": "Todas"
+    },
+    "documentIndex": {
+      "unsupported": "Perguntas de documentos exigem um servidor de colaboração atualizado.",
+      "error": "Não foi possível carregar algumas perguntas de documentos. Tentando novamente…",
+      "disconnected": "Reconecte para carregar as perguntas de documentos.",
+      "loading": "Carregando perguntas de documentos…"
+    },
+    "notices": {
+      "noWorkspace": "Conectando à área compartilhada deste projeto. As solicitações de feedback aparecerão quando a conexão for concluída.",
+      "noIdentity": "Nenhuma solicitação de feedback chegou a este dispositivo ainda. Elas aparecerão quando sua conexão com a equipe estiver autenticada e sincronizada.",
+      "empty": "Ainda não há solicitações de feedback. Quando alguém pedir seu feedback — ou você pedir à sua equipe — a solicitação chega aqui e permanece depois de respondida.",
+      "inventoryPending": "As perguntas de documentos aparecerão quando o inventário estiver disponível.",
+      "noMatch": "Nenhuma solicitação corresponde a este filtro."
+    },
+    "allRequests": "Todas as solicitações",
+    "selectHint": "Selecione uma solicitação para respondê-la ou para ler as respostas que ela já tem.",
+    "yourAnswer": "Sua resposta"
+  },
+  "wizard": {
+    "aria": "Criar uma organização",
+    "steps": {
+      "account": "Conta",
+      "identity": "Nome",
+      "invite": "Convite",
+      "done": "Pronto"
+    },
+    "newOrganization": "Nova organização",
+    "close": {
+      "aria": "Fechar a configuração e descartá-la",
+      "busy": "Concluindo a etapa atual…",
+      "created": "Fechar a configuração — a organização continua e você pode convidar pessoas a qualquer momento",
+      "discard": "Fechar e descartar esta configuração"
+    },
+    "invited": {
+      "title": "Você foi convidado",
+      "signedInAs": "Conectado como <email>{{email}}</email>. Já existe uma organização esperando por você.",
+      "join": "Entrar em {{name}}",
+      "recommended": "Recomendado — você já tem acesso",
+      "createInstead": "Criar uma nova organização em vez disso",
+      "createInsteadHint": "Comece sua própria equipe — o convite continua disponível",
+      "joinHint": "Entrar pula o restante da configuração. Abra a organização pelo seletor de organizações quando quiser — ela começa em #general."
+    },
+    "identity": {
+      "title": "Dê um nome à sua organização",
+      "description": "Todos que você convidar verão este nome. Você pode alterá-lo depois.",
+      "nameLabel": "Nome da organização",
+      "namePlaceholder": "Acme Pesquisa",
+      "ownedBy": "Pertence a <email>{{email}}</email>",
+      "owningAccount": "Conta pessoal proprietária"
+    },
+    "invite": {
+      "title": "Convide sua equipe",
+      "description": "Os colegas recebem um convite por e-mail. Você pode convidar mais pessoas depois.",
+      "addAnother": "Adicionar outro e-mail…",
+      "rolesHint": "As pessoas convidadas entram como membros. Os papéis são alterados em Membros e papéis.",
+      "shareFoldersHint": "Compartilhe pastas para que eles tenham algo para abrir. Sem isso, todos que você convidar chegarão a um espaço de trabalho vazio.",
+      "sendAndContinue": "Enviar convites e continuar"
+    },
+    "done": {
+      "title": "{{name}} está pronta",
+      "yourOrganization": "Sua organização",
+      "created": "Organização criada",
+      "invitationsSent_zero": "{{count}} convites enviados",
+      "invitationsSent_one": "{{count}} convite enviado",
+      "invitationsSent_other": "{{count}} convites enviados",
+      "noInvitations": "Nenhum convite enviado ainda",
+      "openHint": "Abra a organização pelo seletor de organizações quando estiver pronto."
+    },
+    "stepCount": "Etapa {{current}} de {{total}}",
+    "finishLater": "Concluir depois",
+    "skipForNow": "Pular por enquanto",
+    "continuing": "Continuando…",
+    "createOrganization": "Criar organização",
+    "errors": {
+      "nameRequired": "Digite um nome para a organização.",
+      "notCreated": "A organização ainda não foi criada.",
+      "invitesFailed": "Alguns convites falharam — {{details}}",
+      "publishFailed": "Algumas pastas não foram publicadas — {{details}}"
+    }
+  },
+  "welcome": {
+    "yourOrganization": "sua organização",
+    "title": "Boas-vindas a {{name}}",
+    "subtitleInvited": "{{inviter}} convidou você. {{members}} até agora.",
+    "subtitle": "{{members}} até agora.",
+    "points": {
+      "inbox": "A caixa de entrada reúne menções, respostas e atividades endereçadas a você.",
+      "rooms": "Salas e mensagens diretas ficam na barra lateral — todos estão em #general.",
+      "admin": "A administração fica em Admin, na parte inferior da barra lateral."
+    },
+    "dismiss": "Dispensar boas-vindas"
+  },
+  "projectWalk": {
+    "aria": "Entrar em um projeto de {{org}}",
+    "status": {
+      "open": "Aberto",
+      "onThisComputer": "Neste computador",
+      "notOnThisComputer": "Não está neste computador"
+    },
+    "clone": {
+      "auth": {
+        "title": "Não foi possível acessar o repositório",
+        "body": "O Git não conseguiu se autenticar em {{remote}}. O Nimbalyst usa suas credenciais git existentes — configure-as ou clone você mesmo e escolha a pasta."
+      },
+      "network": {
+        "title": "Não foi possível alcançar o repositório",
+        "body": "Não foi possível alcançar {{remote}}. Verifique sua conexão ou clone você mesmo e escolha a pasta."
+      },
+      "cancelled": {
+        "title": "Clonagem cancelada",
+        "body": "Nada foi alterado. Comece de novo ou escolha uma pasta que você já tem."
+      },
+      "failed": {
+        "title": "Não foi possível clonar o repositório",
+        "body": "O Git não conseguiu clonar {{remote}}. Clone você mesmo e escolha a pasta."
+      }
+    },
+    "folder": {
+      "occupied": {
+        "title": "Essa pasta não está vazia",
+        "body": "{{path}} já contém arquivos que não fazem parte de {{label}}. Escolha uma pasta vazia ou uma nova dentro dela."
+      },
+      "wrongRemote": {
+        "title": "Essa pasta pertence a outro repositório",
+        "body": "{{path}} tem um remote git que não corresponde a {{label}}. Escolha a pasta em que você clonou {{label}}."
+      },
+      "notADirectory": {
+        "title": "Esse caminho é um arquivo",
+        "body": "{{path}} não é uma pasta."
+      }
+    },
+    "browse": {
+      "cloneTitle": "Escolha onde clonar {{label}}",
+      "chooseTitle": "Escolha a pasta de {{label}}",
+      "cloneButton": "Clonar aqui",
+      "chooseButton": "Usar esta pasta"
+    },
+    "errors": {
+      "inspectFailed": "Não foi possível inspecionar essa pasta",
+      "useFailed": "Não foi possível usar essa pasta",
+      "useFolderTitle": "Não foi possível usar essa pasta",
+      "loadFailed": "Não foi possível carregar os projetos da organização"
+    },
+    "titles": {
+      "intro": "Você é membro de {{org}}",
+      "folder": "Obtenha uma pasta para {{label}}",
+      "done": "Você está em {{label}}"
+    },
+    "chooseProject": "Escolher um projeto",
+    "projectCount_zero": "{{count}} projetos em {{org}}",
+    "projectCount_one": "{{count}} projeto em {{org}}",
+    "projectCount_other": "{{count}} projetos em {{org}}",
+    "closeAria": "Fechar — você pode entrar no projeto depois pelo menu da organização",
+    "steps": {
+      "folder": "Pasta"
+    },
+    "intro": "Escolha um dos projetos da organização e indique ao Nimbalyst uma pasta para ele. Depois disso, documentos compartilhados, rastreadores e sessões de {{org}} abrem junto com seus arquivos.",
+    "later": "Você pode fazer isso depois pelo menu da organização.",
+    "noProjects": "Esta organização ainda não tem projetos. Um administrador pode compartilhar um nas configurações do projeto.",
+    "cloning": "O Nimbalyst abrirá o projeto quando isso terminar. Você pode continuar trabalhando enquanto isso.",
+    "starting": "Iniciando…",
+    "done": "Documentos compartilhados, rastreadores e sessões da equipe de {{org}} estão disponíveis neste projeto.",
+    "notNow": "Agora não",
+    "cloneAndOpen": "Clonar e abrir",
+    "continueInBackground": "Continuar em segundo plano",
+    "alreadyCloned": {
+      "title": "Você já tem este repositório",
+      "body": "{{path}} já é um clone de {{label}}. Use-o em vez de clonar novamente."
+    },
+    "options": {
+      "clone": {
+        "title": "Clonar o repositório",
+        "description": "O Nimbalyst clona para você e abre o projeto.",
+        "unavailable": "Nenhum endereço de repositório está registrado para este projeto. Um administrador pode adicionar um nas configurações de projetos da organização."
+      },
+      "choose": {
+        "title": "Escolher uma pasta existente",
+        "descriptionClone": "Você já tem este repositório no disco.",
+        "description": "Indique ao Nimbalyst a pasta deste projeto."
+      }
+    },
+    "cloneInto": "Clonar em",
+    "projectFolder": "Pasta do projeto",
+    "noFolder": "Nenhuma pasta escolhida",
+    "browseButton": "Procurar…"
+  }
+}

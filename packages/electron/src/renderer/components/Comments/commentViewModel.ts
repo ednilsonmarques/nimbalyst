@@ -13,6 +13,7 @@
  *      never the security boundary -- the server re-checks every mutation.
  */
 
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
   MAX_MENTIONED_AGENTS_PER_MESSAGE,
   MAX_MENTIONED_USERS_PER_MESSAGE,
@@ -63,15 +64,16 @@ const KIND_ICON: Record<ResourceKind, string> = {
   feedbackRequest: 'ballot',
 };
 
-const KIND_LABEL: Record<ResourceKind, string> = {
-  tracker: 'Tracker item',
-  document: 'Document',
-  session: 'Session',
-  file: 'File',
-  commit: 'Commit',
-  pullRequest: 'Pull request',
-  conversation: 'Conversation',
-  feedbackRequest: 'Feedback request',
+/** i18n keys (team namespace) for "This <kind> belongs to a project you do not have open." */
+const KIND_NOT_IN_WORKSPACE_HINT: Record<ResourceKind, string> = {
+  tracker: 'team:comments.pill.notInWorkspaceHint.tracker',
+  document: 'team:comments.pill.notInWorkspaceHint.document',
+  session: 'team:comments.pill.notInWorkspaceHint.session',
+  file: 'team:comments.pill.notInWorkspaceHint.file',
+  commit: 'team:comments.pill.notInWorkspaceHint.commit',
+  pullRequest: 'team:comments.pill.notInWorkspaceHint.pullRequest',
+  conversation: 'team:comments.pill.notInWorkspaceHint.conversation',
+  feedbackRequest: 'team:comments.pill.notInWorkspaceHint.feedbackRequest',
 };
 
 /** Kinds that can degrade to "Not in your workspace" rather than "Unavailable". */
@@ -114,14 +116,14 @@ export function toPillView(ref: ResourceRef, state: ResourcePreviewState | undef
       availability,
       icon: KIND_ICON[kind],
       label: localRefIdentity(ref),
-      secondary: 'Not in your workspace',
+      secondary: translate('team:comments.pill.notInWorkspace'),
       actionable: false,
-      hint: `This ${KIND_LABEL[kind].toLowerCase()} belongs to a project you do not have open.`,
+      hint: translate(KIND_NOT_IN_WORKSPACE_HINT[kind]),
     };
   }
 
   if (availability === 'loading') {
-    return { urn, kind, availability, icon: KIND_ICON[kind], label: 'Loading', actionable: false };
+    return { urn, kind, availability, icon: KIND_ICON[kind], label: translate('team:comments.pill.loading'), actionable: false };
   }
 
   return {
@@ -129,9 +131,9 @@ export function toPillView(ref: ResourceRef, state: ResourcePreviewState | undef
     kind,
     availability: 'unavailable',
     icon: 'lock',
-    label: 'Unavailable',
+    label: translate('team:comments.pill.unavailable'),
     actionable: false,
-    hint: 'You do not have access to this, or it no longer exists.',
+    hint: translate('team:comments.pill.unavailableHint'),
   };
 }
 
@@ -209,22 +211,22 @@ export function describeComposerRestriction(
 ): ComposerRestriction | null {
   if (!capabilities.read) {
     return {
-      title: 'You do not have access to this conversation',
-      detail: 'Ask an organization admin or a room admin to add you.',
+      title: translate('team:comments.restriction.noAccess.title'),
+      detail: translate('team:comments.restriction.noAccess.detail'),
       icon: 'lock',
     };
   }
   if (context.archived) {
     return {
-      title: `${context.surfaceLabel} is archived`,
-      detail: 'Archived conversations are readable but closed to new messages.',
+      title: translate('team:comments.restriction.archived.title', { surface: context.surfaceLabel }),
+      detail: translate('team:comments.restriction.archived.detail'),
       icon: 'inventory_2',
     };
   }
   if (!capabilities.comment) {
     return {
-      title: 'You have read-only access here',
-      detail: `Posting needs the "comment" permission on ${context.surfaceLabel}. Your role grants read access only.`,
+      title: translate('team:comments.restriction.readOnly.title'),
+      detail: translate('team:comments.restriction.readOnly.detail', { surface: context.surfaceLabel }),
       icon: 'visibility_lock',
     };
   }
@@ -341,10 +343,10 @@ export function buildCommentView(comment: Comment, ctx: BuildCommentViewContext)
     actor,
     timestampLabel: formatRelativeTime(comment.createdAt, ctx.now),
     timestampTitle: formatAbsoluteTime(comment.createdAt),
-    editedLabel: comment.editedAt !== undefined && !deleted ? 'edited' : undefined,
-    editedTitle: comment.editedAt !== undefined ? `Edited ${formatAbsoluteTime(comment.editedAt)}` : undefined,
+    editedLabel: comment.editedAt !== undefined && !deleted ? translate('team:comments.row.edited') : undefined,
+    editedTitle: comment.editedAt !== undefined ? translate('team:comments.row.editedTitle', { time: formatAbsoluteTime(comment.editedAt) }) : undefined,
     deleted,
-    deletedLabel: deleted ? 'Message deleted' : undefined,
+    deletedLabel: deleted ? translate('team:comments.row.deleted') : undefined,
     segments,
     reactions: deleted ? [] : comment.reactions ?? [],
     reactionsSupported: ctx.reactionsSupported && !deleted,
@@ -377,10 +379,10 @@ function buildActorView(comment: Comment, directory: MentionDirectory, viewerUse
   const ownerName =
     directory.displayNames[actor.onBehalfOfUserId] ??
     directory.people.find((person) => person.userId === actor.onBehalfOfUserId)?.displayName ??
-    'a teammate';
+    translate('team:comments.actor.teammate');
 
   if (actor.kind === 'agent') {
-    const sessionName = actor.sessionName ?? 'Agent session';
+    const sessionName = actor.sessionName ?? translate('team:comments.actor.agentSession');
     return {
       kind: 'agent',
       displayName: sessionName,
@@ -394,7 +396,7 @@ function buildActorView(comment: Comment, directory: MentionDirectory, viewerUse
 
   const userId = actor.userId ?? actor.onBehalfOfUserId;
   const person = directory.people.find((entry) => entry.userId === userId);
-  const displayName = person?.displayName ?? directory.displayNames[userId] ?? 'Unknown member';
+  const displayName = person?.displayName ?? directory.displayNames[userId] ?? translate('team:comments.actor.unknownMember');
   return {
     kind: 'user',
     displayName,
@@ -416,14 +418,14 @@ function buildReplyParent(
   if (!comment.replyToCommentId) return undefined;
 
   if (ctx.replyParentUnavailable || (ctx.replyParent === null && ctx.replyParent !== undefined)) {
-    return { commentId: comment.replyToCommentId, unavailableLabel: 'Replying to a message you cannot see' };
+    return { commentId: comment.replyToCommentId, unavailableLabel: translate('team:comments.reply.cannotSee') };
   }
   const parent = ctx.replyParent;
   if (!parent) {
-    return { commentId: comment.replyToCommentId, unavailableLabel: 'Replying to an earlier message' };
+    return { commentId: comment.replyToCommentId, unavailableLabel: translate('team:comments.reply.earlier') };
   }
   if (parent.deletedAt !== undefined) {
-    return { commentId: comment.replyToCommentId, unavailableLabel: 'Replying to a deleted message' };
+    return { commentId: comment.replyToCommentId, unavailableLabel: translate('team:comments.reply.deleted') };
   }
 
   const parentActor = buildActorView(parent, directory, ctx.viewerUserId);
@@ -563,13 +565,13 @@ export function validateDraft(draft: DraftState): DraftValidation {
 
 export function formatRelativeTime(timestamp: number, now: number): string {
   const seconds = Math.round((now - timestamp) / 1000);
-  if (seconds < 45) return 'now';
+  if (seconds < 45) return translate('team:comments.time.now');
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 60) return translate('team:comments.time.minutes', { value: minutes });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h`;
+  if (hours < 24) return translate('team:comments.time.hours', { value: hours });
   const days = Math.round(hours / 24);
-  if (days < 7) return `${days}d`;
+  if (days < 7) return translate('team:comments.time.days', { value: days });
   return new Date(timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 

@@ -5,6 +5,7 @@ import { isUnreadDelivery } from '../../store/conversationDirectoryViewModel';
 import type { OrgSettings } from '../../../shared/orgSettings';
 import { DEFAULT_ORG_SETTINGS } from '../../../shared/orgSettings';
 import type { AdminTab } from './orgWindowState';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 /**
  * The organization-wide room every member is in. The server auto-seeds it with
@@ -70,7 +71,10 @@ export const ORG_ADMIN_TABS: readonly OrgAdminTabDescriptor[] = [
 export function visibleAdminTabs(
   isOrgAdmin: boolean | undefined,
 ): OrgAdminTabDescriptor[] {
-  return ORG_ADMIN_TABS.filter((tab) => !tab.adminOnly || isOrgAdmin === true);
+  return ORG_ADMIN_TABS
+    .filter((tab) => !tab.adminOnly || isOrgAdmin === true)
+    // `label` is display-only; `id` stays the stable identifier.
+    .map((tab) => ({ ...tab, label: translate(`team:adminTabs.${tab.id}`) }));
 }
 
 /**
@@ -156,7 +160,7 @@ export function dmLabel(
   viewerUserId?: string,
 ): string {
   const others = participants.filter((userId) => userId !== viewerUserId);
-  if (others.length === 0) return 'Direct message';
+  if (others.length === 0) return translate('team:inbox.reason.dm');
   return others
     .map((userId) => memberNames[userId] ?? userId)
     .sort((left, right) => left.localeCompare(right))

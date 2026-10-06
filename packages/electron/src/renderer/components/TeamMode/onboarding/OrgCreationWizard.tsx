@@ -10,6 +10,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { Trans, useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { useAtomValue } from 'jotai';
 
 import { AlphaBadge } from '../../common/AlphaBadge';
@@ -109,6 +110,7 @@ function StepIndicator({
   state: OrgWizardState;
   isAuthenticated: boolean;
 }) {
+  const { t } = useTranslation('team');
   const steps = orgWizardSteps(isAuthenticated);
   return (
     <ol className="org-wizard-steps m-0 flex list-none items-center gap-1 p-0" data-testid="org-wizard-steps">
@@ -137,7 +139,7 @@ function StepIndicator({
                 status === 'upcoming' ? 'text-[var(--nim-text-disabled)]' : 'text-[var(--nim-text)]'
               }`}
             >
-              {ORG_WIZARD_STEP_LABELS[step]}
+              {t(`wizard.steps.${step}`, { defaultValue: ORG_WIZARD_STEP_LABELS[step] })}
             </span>
             {index < steps.length - 1 && (
               <span className="org-wizard-step-connector mx-1 h-px w-5 bg-[var(--nim-border)]" />
@@ -159,6 +161,7 @@ export function OrgCreationWizard({
   onOrganizationCreated,
   api,
 }: OrgCreationWizardProps) {
+  const { t } = useTranslation('team');
   const auth = useAtomValue(stytchAuthAtom);
   const wizardApi = useMemo(() => api ?? createOrgWizardApi(), [api]);
   const [state, setState] = useState<OrgWizardState>(() => (
@@ -578,7 +581,7 @@ export function OrgCreationWizard({
         data-step={state.step}
         role="dialog"
         aria-modal="true"
-        aria-label="Create an organization"
+        aria-label={t('wizard.aria')}
         onClick={(event) => event.stopPropagation()}
       >
         <header className="org-creation-wizard-header flex items-center gap-2 border-b border-[var(--nim-border)] px-5 py-3">
@@ -602,7 +605,7 @@ export function OrgCreationWizard({
             </span>
           )}
           <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--nim-text)]">
-            {state.orgName.trim() || 'New organization'}
+            {state.orgName.trim() || t('wizard.newOrganization')}
           </span>
           <AlphaBadge size="xs" stage="beta" tooltip={TEAM_BETA_TOOLTIP} />
           <button
@@ -610,13 +613,13 @@ export function OrgCreationWizard({
             disabled={state.busy}
             className="org-wizard-close flex h-6 w-6 items-center justify-center rounded text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)] disabled:pointer-events-none disabled:opacity-40"
             data-testid="org-wizard-close"
-            aria-label="Close setup and discard it"
+            aria-label={t('wizard.close.aria')}
             title={
               state.busy
-                ? 'Finishing the current step…'
+                ? t('wizard.close.busy')
                 : state.createdOrgId
-                  ? 'Close setup — the organization stays, and you can invite people any time'
-                  : 'Close and discard this setup'
+                  ? t('wizard.close.created')
+                  : t('wizard.close.discard')
             }
             onClick={() => void dismiss('discard')}
           >
@@ -637,14 +640,15 @@ export function OrgCreationWizard({
               data-testid="org-wizard-pending-invitation"
             >
               <h2 className="m-0 text-base font-semibold text-[var(--nim-text)]">
-                You have been invited
+                {t('wizard.invited.title')}
               </h2>
               <p className="m-0 mt-1 text-[12px] text-[var(--nim-text-muted)]">
-                Signed in as{' '}
-                <span className="select-text text-[var(--nim-text)]">
-                  {state.pendingInvitation.email}
-                </span>
-                . There is already an organization waiting for you.
+                <Trans
+                  t={t}
+                  i18nKey="wizard.invited.signedInAs"
+                  values={{ email: state.pendingInvitation.email }}
+                  components={{ email: <span className="select-text text-[var(--nim-text)]" /> }}
+                />
               </p>
 
               {/* Joining is the recommended action: a second organization is
@@ -664,14 +668,14 @@ export function OrgCreationWizard({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-semibold text-[var(--nim-text)]">
-                    Join {state.pendingInvitation.name}
+                    {t('wizard.invited.join', { name: state.pendingInvitation.name })}
                   </span>
                   <span className="block text-[11px] text-[var(--nim-text-muted)]">
-                    Recommended — you already have access
+                    {t('wizard.invited.recommended')}
                   </span>
                 </span>
                 <span className="shrink-0 text-[12px] font-semibold text-[var(--nim-primary)]">
-                  {state.busy ? 'Joining…' : 'Join'}
+                  {state.busy ? t('roomsDirectory.joining') : t('roomsDirectory.join')}
                 </span>
               </button>
 
@@ -690,17 +694,17 @@ export function OrgCreationWizard({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-medium text-[var(--nim-text)]">
-                    Create a new organization instead
+                    {t('wizard.invited.createInstead')}
                   </span>
                   <span className="block text-[11px] text-[var(--nim-text-muted)]">
-                    Start your own team — the invitation stays available
+                    {t('wizard.invited.createInsteadHint')}
                   </span>
                 </span>
-                <span className="shrink-0 text-[12px] text-[var(--nim-text-muted)]">Continue</span>
+                <span className="shrink-0 text-[12px] text-[var(--nim-text-muted)]">{t('common:continue')}</span>
               </button>
 
               <p className="m-0 mt-3 text-[11px] text-[var(--nim-text-muted)]">
-                Joining skips the rest of the setup. Open the organization from the org switcher whenever you like — it starts on #general.
+                {t('wizard.invited.joinHint')}
               </p>
             </section>
           )}
@@ -709,13 +713,13 @@ export function OrgCreationWizard({
             && !state.pendingInvitation
             && state.inviteLookupStatus === 'complete' && (
             <section className="org-wizard-identity-step mt-4" data-testid="org-wizard-identity-step">
-              <h2 className="m-0 text-base font-semibold text-[var(--nim-text)]">Name your organization</h2>
+              <h2 className="m-0 text-base font-semibold text-[var(--nim-text)]">{t('wizard.identity.title')}</h2>
               <p className="m-0 mt-1 text-[12px] text-[var(--nim-text-muted)]">
-                Everyone you invite sees this name. You can change it later.
+                {t('wizard.identity.description')}
               </p>
               <TeamBetaNotice className="mt-3" />
               <label className="mt-3 block text-[11px] font-medium text-[var(--nim-text-muted)]">
-                Organization name
+                {t('wizard.identity.nameLabel')}
                 <input
                   className="org-wizard-name-input mt-1 w-full rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] px-3 py-2 text-[13px] text-[var(--nim-text)] outline-none focus:border-[var(--nim-primary)]"
                   data-testid="org-wizard-name-input"
@@ -725,7 +729,7 @@ export function OrgCreationWizard({
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' && canAdvance(state)) void handleCreateOrganization();
                   }}
-                  placeholder="Acme Research"
+                  placeholder={t('wizard.identity.namePlaceholder')}
                 />
               </label>
               {/* With one account there is no choice to make, but the user
@@ -735,12 +739,17 @@ export function OrgCreationWizard({
                   className="org-wizard-owner-hint m-0 mt-1.5 text-[11px] text-[var(--nim-text-muted)]"
                   data-testid="org-wizard-owner-hint"
                 >
-                  Owned by <span className="select-text text-[var(--nim-text)]">{ownerEmail}</span>
+                  <Trans
+                    t={t}
+                    i18nKey="wizard.identity.ownedBy"
+                    values={{ email: ownerEmail }}
+                    components={{ email: <span className="select-text text-[var(--nim-text)]" /> }}
+                  />
                 </p>
               )}
               {showAccountPicker && (
                 <label className="mt-3 block text-[11px] font-medium text-[var(--nim-text-muted)]">
-                  Owning personal account
+                  {t('wizard.identity.owningAccount')}
                   <select
                     className="org-wizard-account-select mt-1 w-full rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] px-2 py-2 text-[13px] text-[var(--nim-text)]"
                     data-testid="org-wizard-account-select"
@@ -760,9 +769,9 @@ export function OrgCreationWizard({
 
           {state.step === 'invite' && (
             <section className="org-wizard-invite-step mt-4" data-testid="org-wizard-invite-step">
-              <h2 className="m-0 text-base font-semibold text-[var(--nim-text)]">Invite your team</h2>
+              <h2 className="m-0 text-base font-semibold text-[var(--nim-text)]">{t('wizard.invite.title')}</h2>
               <p className="m-0 mt-1 text-[12px] text-[var(--nim-text-muted)]">
-                Teammates get an email invitation. You can always invite more people later.
+                {t('wizard.invite.description')}
               </p>
               <div className="org-wizard-email-field mt-3 flex flex-wrap items-center gap-1.5 rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] p-2">
                 {state.emails.map((email) => (
@@ -774,7 +783,7 @@ export function OrgCreationWizard({
                     <span className="select-text">{email}</span>
                     <button
                       type="button"
-                      aria-label={`Remove ${email}`}
+                      aria-label={t('comments.composer.remove', { name: email })}
                       className="text-[var(--nim-text-muted)] hover:text-[var(--nim-text)]"
                       onClick={() => update((current) => removeEmail(current, email))}
                     >
@@ -787,7 +796,7 @@ export function OrgCreationWizard({
                   data-testid="org-wizard-email-input"
                   value={emailDraft}
                   autoFocus
-                  placeholder={state.emails.length > 0 ? 'Add another email…' : 'teammate@example.com'}
+                  placeholder={state.emails.length > 0 ? t('wizard.invite.addAnother') : 'teammate@example.com'}
                   onChange={(event) => {
                     const value = event.target.value;
                     // A separator ends the address the user just typed, which is
@@ -806,18 +815,17 @@ export function OrgCreationWizard({
               </div>
               {invalidEmails.length > 0 && (
                 <p className="org-wizard-email-invalid m-0 mt-1.5 text-[11px] text-[var(--nim-warning)]" data-testid="org-wizard-email-invalid">
-                  Not an email address: {invalidEmails.join(', ')}
+                  {t('invite.invalidEmails', { list: invalidEmails.join(', ') })}
                 </p>
               )}
               <p className="m-0 mt-2 text-[11px] text-[var(--nim-text-muted)]">
-                Invited people join as members. Roles are changed from Members &amp; Roles.
+                {t('wizard.invite.rolesHint')}
               </p>
 
               {state.workspacePath && (
                 <div className="org-wizard-publish-folders mt-3" data-testid="org-wizard-publish-folders">
                   <p className="m-0 mb-1.5 text-[11px] text-[var(--nim-text-muted)]">
-                    Share folders so they have something to open. Without this, everyone you invite
-                    arrives to an empty workspace.
+                    {t('wizard.invite.shareFoldersHint')}
                   </p>
                   <WorkspaceFolderPicker
                     workspacePath={state.workspacePath}
@@ -832,22 +840,22 @@ export function OrgCreationWizard({
           {state.step === 'done' && (
             <section className="org-wizard-done-step mt-4" data-testid="org-wizard-done-step">
               <h2 className="m-0 text-base font-semibold text-[var(--nim-text)]">
-                {state.orgName.trim() || 'Your organization'} is ready
+                {t('wizard.done.title', { name: state.orgName.trim() || t('wizard.done.yourOrganization') })}
               </h2>
               <ul className="org-wizard-done-summary m-0 mt-3 flex list-none flex-col gap-1.5 p-0 text-[12px] text-[var(--nim-text-muted)]">
                 <li className="flex items-center gap-2">
                   <MaterialSymbol icon="check_circle" size={14} className="text-[var(--nim-success)]" />
-                  Organization created
+                  {t('wizard.done.created')}
                 </li>
                 <li className="flex items-center gap-2">
                   <MaterialSymbol icon={state.invitedEmails.length > 0 ? 'check_circle' : 'radio_button_unchecked'} size={14} className={state.invitedEmails.length > 0 ? 'text-[var(--nim-success)]' : 'text-[var(--nim-text-disabled)]'} />
                   {state.invitedEmails.length > 0
-                    ? `${state.invitedEmails.length} ${state.invitedEmails.length === 1 ? 'invitation' : 'invitations'} sent`
-                    : 'No invitations sent yet'}
+                    ? t('wizard.done.invitationsSent', { count: state.invitedEmails.length })
+                    : t('wizard.done.noInvitations')}
                 </li>
               </ul>
               <p className="m-0 mt-3 text-[12px] text-[var(--nim-text-muted)]">
-                Open the organization from the org switcher whenever you're ready.
+                {t('wizard.done.openHint')}
               </p>
             </section>
           )}
@@ -861,7 +869,7 @@ export function OrgCreationWizard({
 
         <footer className="org-creation-wizard-footer flex items-center justify-between border-t border-[var(--nim-border)] px-5 py-3">
           <span className="text-[11px] text-[var(--nim-text-disabled)]" data-testid="org-wizard-step-count">
-            {stepPosition >= 0 ? `Step ${stepPosition + 1} of ${visibleSteps.length}` : ''}
+            {stepPosition >= 0 ? t('wizard.stepCount', { current: stepPosition + 1, total: visibleSteps.length }) : ''}
           </span>
           <div className="flex items-center gap-2">
             {state.step !== 'done' && (
@@ -872,7 +880,7 @@ export function OrgCreationWizard({
                 data-testid="org-wizard-cancel"
                 onClick={() => void dismiss('later')}
               >
-                {state.createdOrgId ? 'Finish later' : 'Cancel'}
+                {state.createdOrgId ? t('wizard.finishLater') : t('common:cancel')}
               </button>
             )}
             {canSkip(state) && (
@@ -882,7 +890,7 @@ export function OrgCreationWizard({
                 data-testid="org-wizard-skip"
                 onClick={handleSkip}
               >
-                Skip for now
+                {t('wizard.skipForNow')}
               </button>
             )}
             {state.step === 'identity'
@@ -898,8 +906,8 @@ export function OrgCreationWizard({
                 {/* A restored draft can land here with the organization already
                     created; the runner will not create a second one. */}
                 {state.createdOrgId
-                  ? (state.busy ? 'Continuing…' : 'Continue')
-                  : (state.busy ? 'Creating…' : 'Create organization')}
+                  ? (state.busy ? t('wizard.continuing') : t('common:continue'))
+                  : (state.busy ? t('createRoom.creating') : t('wizard.createOrganization'))}
               </button>
             )}
             {state.step === 'invite' && (
@@ -910,7 +918,7 @@ export function OrgCreationWizard({
                 data-testid="org-wizard-primary"
                 onClick={() => void handleSendInvites()}
               >
-                {state.busy ? 'Sending…' : 'Send invites and continue'}
+                {state.busy ? t('invite.sending') : t('wizard.invite.sendAndContinue')}
               </button>
             )}
             {state.step === 'done' && (
@@ -920,7 +928,7 @@ export function OrgCreationWizard({
                 data-testid="org-wizard-primary"
                 onClick={() => void handleFinish()}
               >
-                Done
+                {t('common:done')}
               </button>
             )}
           </div>

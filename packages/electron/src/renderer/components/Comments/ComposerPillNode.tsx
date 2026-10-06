@@ -8,6 +8,7 @@ import {
   type Spread,
 } from 'lexical';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import { labeledToken } from './composerDraft';
 import { initialsFor } from './commentBodyParser';
@@ -139,6 +140,7 @@ function ComposerPill({
   kind: ComposerPillKind;
   icon?: string;
 }) {
+  const { t } = useTranslation('team');
   if (kind === 'person') {
     return (
       <span
@@ -166,7 +168,7 @@ function ComposerPill({
         <span
           className="comment-mention-agent-glyph flex size-[14px] shrink-0 items-center justify-center rounded-[4px] text-[var(--nim-primary)]"
           data-testid="composer-pill-agent-glyph"
-          aria-label="Agent"
+          aria-label={t('comments.agent')}
         >
           <MaterialSymbol icon="smart_toy" size={11} />
         </span>

@@ -80,6 +80,8 @@ import { setWindowModeAtom } from '../../store/atoms/windowMode';
 import { openSharedDocumentInTab as openSharedDocument } from '../../utils/openSharedDocumentInTab';
 import { getCollaborativeDocumentTypeCatalog } from '../../services/CollaborativeDocumentTypeCatalog';
 import { isCollabUri, parseCollabUri } from '@nimbalyst/collab-protocol';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { Trans, useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import './EmbedFrame.css';
 
@@ -128,8 +130,8 @@ class EmbedErrorBoundary extends Component<
         <div className="embed-frame__error" data-testid="embed-frame-error">
           <MaterialSymbol icon="error" size={20} />
           <span>
-            Failed to render embed:&nbsp;
-            {this.state.error?.message ?? 'unknown error'}
+            {translate('team:embed.renderFailed')}&nbsp;
+            {this.state.error?.message ?? translate('team:embed.unknownError')}
           </span>
         </div>
       );
@@ -273,6 +275,7 @@ function useEmbedResize(
 
 export const EmbedFrame: React.FC<EmbedFrameProps> = (props) => {
   const { src, label, attrs, nodeKey, detached = false } = props;
+  const { t } = useTranslation('team');
   const { documentDir, documentPath } = useDocumentPath();
   const { theme } = useTheme();
   const sharedDocuments = useAtomValue(sharedDocumentsAtom);
@@ -359,10 +362,10 @@ export const EmbedFrame: React.FC<EmbedFrameProps> = (props) => {
   } | { error: string } | null>(() => {
     if (!collaborativeReference) return null;
     if (!activeWorkspacePath || !effectiveTeamOrgId) {
-      return { error: 'The active team workspace is unavailable.' };
+      return { error: translate('team:embed.errors.teamWorkspaceUnavailable') };
     }
     if (collaborativeReference.orgId !== effectiveTeamOrgId) {
-      return { error: 'This embedded document belongs to a different team.' };
+      return { error: translate('team:embed.errors.differentTeam') };
     }
 
     const resolution = resolveCollaborativeEmbedRequest({
@@ -380,7 +383,7 @@ export const EmbedFrame: React.FC<EmbedFrameProps> = (props) => {
     // Unreachable without `allowLexical`, which this caller deliberately does
     // not pass: an in-document embed is already inside a Lexical editor.
     if (resolution.editor.kind !== 'extension') {
-      return { error: 'Only collaborative custom-editor documents can be embedded.' };
+      return { error: translate('team:embed.errors.onlyCustomEditors') };
     }
     return {
       displayName: resolution.displayName,
@@ -669,7 +672,7 @@ export const EmbedFrame: React.FC<EmbedFrameProps> = (props) => {
   // ---- Failure / missing-capability placeholders -----------------------
   if (collaborativeReference) {
     if (!collaborativeResolution || 'error' in collaborativeResolution) {
-      const error = collaborativeResolution?.error ?? 'Could not resolve shared embed.';
+      const error = collaborativeResolution?.error ?? t('embed.errors.resolveSharedFailed');
       return (
         <div
           className="embed-frame embed-frame--error"
@@ -729,7 +732,7 @@ export const EmbedFrame: React.FC<EmbedFrameProps> = (props) => {
           >
             <EmbedErrorBoundary onError={setRenderError} absolutePath={null}>
               <React.Suspense
-                fallback={<div className="embed-frame__loading">Loading shared embed...</div>}
+                fallback={<div className="embed-frame__loading">{t('embed.loadingShared')}</div>}
               >
                 <CollaborativeEmbedEditor
                   editor={{ kind: 'extension', registration }}
@@ -776,7 +779,7 @@ export const EmbedFrame: React.FC<EmbedFrameProps> = (props) => {
   }
 
   if (pathPending) {
-    return <div className="embed-frame" data-testid="embed-frame-loading">Resolving embedded file…</div>;
+    return <div className="embed-frame" data-testid="embed-frame-loading">{t('embed.resolving')}</div>;
   }
 
   if (!absolutePath) {
@@ -793,7 +796,7 @@ export const EmbedFrame: React.FC<EmbedFrameProps> = (props) => {
         />
         <div className="embed-frame__body embed-frame__body--placeholder">
           <MaterialSymbol icon="link_off" size={28} />
-          <p>{pathError || 'Could not resolve embed path'}</p>
+          <p>{pathError || t('embed.errors.resolvePathFailed')}</p>
           <code>{src}</code>
         </div>
       </div>
@@ -815,7 +818,12 @@ export const EmbedFrame: React.FC<EmbedFrameProps> = (props) => {
         <div className="embed-frame__body embed-frame__body--placeholder">
           <MaterialSymbol icon="extension_off" size={28} />
           <p>
-            No installed extension can render <code>{basename(absolutePath)}</code> inline.
+            <Trans
+              t={t}
+              i18nKey="embed.noExtension"
+              values={{ name: basename(absolutePath) }}
+              components={{ code: <code /> }}
+            />
           </p>
         </div>
       </div>
@@ -896,7 +904,7 @@ export const EmbedFrame: React.FC<EmbedFrameProps> = (props) => {
           <EmbedErrorBoundary onError={setRenderError} absolutePath={absolutePath}>
             {host && (
               <React.Suspense
-                fallback={<div className="embed-frame__loading">Loading embed...</div>}
+                fallback={<div className="embed-frame__loading">{t('embed.loading')}</div>}
               >
                 <ExtensionComponent host={host} />
               </React.Suspense>
@@ -968,6 +976,7 @@ const EmbedChrome: React.FC<EmbedChromeProps> = ({
   // Show the label if it differs from the bare file name, so users can
   // tell at a glance why the link said one thing and the embed shows
   // another file.
+  const { t } = useTranslation('team');
   const showLabel = !!label && label !== basename(relativePath);
   const workspacePath = (window as unknown as { __workspacePath?: string }).__workspacePath ?? null;
   return (
@@ -986,13 +995,13 @@ const EmbedChrome: React.FC<EmbedChromeProps> = ({
       {isDirty && (
         <span
           className="embed-frame__dirty-dot"
-          title="Unsaved changes -- autosaving"
+          title={t('embed.chrome.unsavedAutosaving')}
           data-testid="embed-frame-dirty-dot"
-          aria-label="Unsaved changes"
+          aria-label={t('embed.chrome.unsaved')}
         />
       )}
       {showLabel && (
-        <span className="embed-frame__label" title={`Link label: ${label}`}>
+        <span className="embed-frame__label" title={t('embed.chrome.linkLabel', { label })}>
           {label}
         </span>
       )}
@@ -1004,8 +1013,8 @@ const EmbedChrome: React.FC<EmbedChromeProps> = ({
           onClick={onToggleReadOnly}
           title={
             isReadOnly
-              ? 'Edit in place (autosaves to the embedded file)'
-              : 'Done editing -- back to view mode'
+              ? t('embed.chrome.editInPlace')
+              : t('embed.chrome.doneEditing')
           }
           data-testid="embed-frame-mode-toggle"
           data-mode={isReadOnly ? 'view' : 'edit'}
@@ -1018,11 +1027,11 @@ const EmbedChrome: React.FC<EmbedChromeProps> = ({
         type="button"
         className="embed-frame__edit-btn"
         onClick={onEditClick}
-        title="Open file in a new tab"
+        title={t('embed.chrome.openInTab')}
         data-testid="embed-frame-edit"
       >
         <MaterialSymbol icon="open_in_new" size={14} />
-        Open
+        {t('embed.chrome.open')}
       </button>
     </div>
   );

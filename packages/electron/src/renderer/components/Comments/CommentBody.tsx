@@ -1,5 +1,6 @@
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   TrackerReferenceChip,
 } from '@nimbalyst/runtime/plugins/TrackerLinkPlugin';
@@ -57,6 +58,7 @@ function Segment({
   onOpenMention?: (userId: string) => void;
   onOpenSession?: (sessionId: string) => void;
 }) {
+  const { t } = useTranslation('team');
   switch (segment.type) {
     case 'text':
       return <>{segment.text}</>;
@@ -116,8 +118,8 @@ function Segment({
           data-pending={segment.pending ? 'true' : 'false'}
           title={
             segment.ownerDisplayName
-              ? `Agent session ${segment.sessionName}, owned by ${segment.ownerDisplayName}`
-              : `Agent session ${segment.sessionName}`
+              ? t('comments.body.agentSessionOwned', { session: segment.sessionName, owner: segment.ownerDisplayName })
+              : t('comments.body.agentSession', { session: segment.sessionName })
           }
           onClick={() => onOpenSession?.(segment.sessionId)}
           className="comment-mention comment-mention-agent inline-flex items-center gap-1 rounded-[5px] border border-[color-mix(in_srgb,var(--nim-primary)_30%,transparent)] bg-[color-mix(in_srgb,var(--nim-primary)_14%,transparent)] px-1 align-baseline text-[12px] font-medium text-[var(--nim-text)] hover:bg-[color-mix(in_srgb,var(--nim-primary)_18%,transparent)]"
@@ -127,13 +129,13 @@ function Segment({
           <span
             className="comment-mention-agent-glyph flex size-[14px] shrink-0 items-center justify-center rounded-[4px] text-[var(--nim-primary)]"
             data-testid="comment-mention-agent-glyph"
-            aria-label="Agent"
+            aria-label={t('comments.agent')}
           >
             <MaterialSymbol icon="smart_toy" size={11} />
           </span>
           @{segment.sessionName}
           {segment.pending && (
-            <MaterialSymbol icon="hourglass_top" size={10} aria-label="Pending dispatch" />
+            <MaterialSymbol icon="hourglass_top" size={10} aria-label={t('comments.body.pendingDispatch')} />
           )}
         </button>
       );

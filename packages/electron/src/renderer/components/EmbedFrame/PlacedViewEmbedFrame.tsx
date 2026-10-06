@@ -16,6 +16,7 @@
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useAtomValue, useStore } from 'jotai';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type { PlacedViewTarget } from '@nimbalyst/runtime/core/placedViewUrl';
 import { DESKTOP_TRACKER_UI_CAPABILITIES, TrackersUIProvider } from '@nimbalyst/collab-client/trackers-ui';
 import { PlacedViewEmbed, PlacedViewNote } from '@nimbalyst/collab-client/trackers-ui/embed';
@@ -35,9 +36,10 @@ export interface PlacedViewEmbedFrameProps {
 }
 
 export const PlacedViewEmbedFrame: React.FC<PlacedViewEmbedFrameProps> = (props) => {
+  const { t } = useTranslation('team');
   const workspacePath = useAtomValue(activeWorkspacePathAtom);
   if (!workspacePath) {
-    return <PlacedViewNote>{props.label || 'View'}: open a project to see this view.</PlacedViewNote>;
+    return <PlacedViewNote>{t('embed.placedView.openProject', { label: props.label || t('embed.placedView.view') })}</PlacedViewNote>;
   }
   return <WorkspacePlacedView workspacePath={workspacePath} {...props} />;
 };

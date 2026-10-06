@@ -28,6 +28,7 @@
  */
 
 import { validateRichCommentBody } from '@nimbalyst/collab-protocol';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import type {
   BodyEntity,
   BodySegment,
@@ -328,7 +329,7 @@ function userMentionSegment(
   ctx: ParseBodyContext,
 ): BodySegment {
   const person = ctx.directory.people.find((entry) => entry.userId === userId);
-  const displayName = person?.displayName ?? ctx.directory.displayNames[userId] ?? label ?? 'Unknown member';
+  const displayName = person?.displayName ?? ctx.directory.displayNames[userId] ?? label ?? translate('team:comments.actor.unknownMember');
   return {
     type: 'mention',
     userId,
@@ -347,7 +348,7 @@ function agentMentionSegment(
   return {
     type: 'agentMention',
     sessionId,
-    sessionName: agent?.sessionName ?? label ?? 'Agent session',
+    sessionName: agent?.sessionName ?? label ?? translate('team:comments.actor.agentSession'),
     ownerDisplayName: agent?.ownerDisplayName,
     pending: ctx.pendingAgentSessionIds?.includes(sessionId) || undefined,
   };

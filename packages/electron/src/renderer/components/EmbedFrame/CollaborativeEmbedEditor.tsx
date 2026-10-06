@@ -5,6 +5,7 @@ import type { EditorHost, EditorViewport } from "@nimbalyst/runtime";
 import type { CollaborativeEmbedEditorChoice } from "./resolveCollaborativeEmbedRequest";
 import { CollaborativeMarkdownEmbed } from "./CollaborativeMarkdownEmbed";
 import { useTheme } from "../../hooks/useTheme";
+import { useTranslation } from "@nimbalyst/runtime/i18n/react";
 import {
   collaborativeEmbedProviderCache,
   collaborativeEmbedResourceKey,
@@ -48,6 +49,7 @@ export const CollaborativeEmbedEditor: React.FC<
   onViewportRegistered,
   toolbar,
 }) => {
+  const { t } = useTranslation("team");
   const { theme } = useTheme();
   const themeRef = useRef(theme);
   themeRef.current = theme;
@@ -181,7 +183,7 @@ export const CollaborativeEmbedEditor: React.FC<
         className="embed-frame__body--placeholder"
         data-testid="collaborative-embed-error"
       >
-        <p>Could not load shared embed</p>
+        <p>{t("embed.loadSharedFailed")}</p>
         <code>{error.message}</code>
       </div>
     );
@@ -193,7 +195,7 @@ export const CollaborativeEmbedEditor: React.FC<
         className="embed-frame__loading"
         data-testid="collaborative-embed-loading"
       >
-        Loading shared embed...
+        {t("embed.loadingShared")}
       </div>
     );
   }

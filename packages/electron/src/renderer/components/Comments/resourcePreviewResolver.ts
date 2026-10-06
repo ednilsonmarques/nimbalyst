@@ -30,6 +30,7 @@
 
 import type { ResourcePreviewResolver, ResourcePreviewState, ResourceRef } from './commentTypes';
 import { resourceRefToUrn } from './resourceUrn';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 /** The fields of a shared document a preview may be built from. */
 export interface PreviewableSharedDocument {
@@ -99,7 +100,7 @@ function previewFor(
     availability: 'available',
     // A shared document may legitimately have no title yet. Naming that state
     // is client-side presentation, not source state the resolver learned.
-    title: title === '' ? 'Untitled document' : title,
+    title: title === '' ? translate('team:comments.pill.untitledDocument') : title,
     ...(secondary ? { secondary } : {}),
   };
 }

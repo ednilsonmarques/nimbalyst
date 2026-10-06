@@ -12,6 +12,7 @@
  */
 
 import React, { useMemo, useRef } from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { NimbalystEditor, type EditorConfig } from '@nimbalyst/runtime/editor';
 import type { UploadedEditorAsset } from '@nimbalyst/runtime/editor/EditorConfig';
 import { DocumentPathProvider } from '@nimbalyst/runtime/DocumentPathContext';
@@ -71,6 +72,7 @@ export interface PersonalPageBodyEditorProps {
 }
 
 export const PersonalPageBodyEditor: React.FC<PersonalPageBodyEditorProps> = ({ documentId, workspacePath, className }) => {
+  const { t } = useTranslation('team');
   const body = usePersonalPageBody({ workspacePath, documentId });
   const getContentRef = useRef<(() => string) | null>(null);
   const onEditRef = useRef(body.onEdit);
@@ -109,7 +111,7 @@ export const PersonalPageBodyEditor: React.FC<PersonalPageBodyEditorProps> = ({ 
         <div className="personal-page-tab-notice flex shrink-0 items-center gap-2 px-6 py-1.5 text-sm text-nim-muted" role="status">
           <span className="flex-1">{body.notice}</span>
           <button type="button" className="text-xs text-nim-muted hover:text-nim" onClick={body.dismissNotice}>
-            Dismiss
+            {t('pages.dismiss')}
           </button>
         </div>
       )}
@@ -120,7 +122,7 @@ export const PersonalPageBodyEditor: React.FC<PersonalPageBodyEditorProps> = ({ 
           </DocumentPathProvider>
         ) : (
           <div className="py-4 text-center text-sm text-nim-faint">
-            {body.status === 'error' ? 'This page could not be loaded.' : 'Loading...'}
+            {body.status === 'error' ? t('pages.loadFailed') : t('common:loading')}
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { useAtomValue, useSetAtom } from 'jotai';
 
 import { SidebarSection } from '../common/SidebarSection';
@@ -19,7 +20,7 @@ import {
   type OrgSidebarSectionId,
 } from './orgSidebarPreferences';
 import type { InboxFilterId } from './Inbox/inboxTypes';
-import { INBOX_FILTERS } from './Inbox/inboxViewModel';
+import { INBOX_FILTERS, inboxFilterLabel } from './Inbox/inboxViewModel';
 import type { OrgModeChrome } from './orgModeTypes';
 import type { OrgSidebarModel } from './orgSidebarViewModel';
 import { filterOrgSidebarModel, matchesOrgSidebarQuery } from './orgSidebarViewModel';
@@ -98,6 +99,7 @@ export const OrgSidebar = React.memo(function OrgSidebar({
 }) {
   // Presentation gating only: an organization that turned rooms or DMs off
   // loses the sections, and the server rejects the disabled kinds regardless.
+  const { t } = useTranslation('team');
   const { gating } = model;
   const [query, setQuery] = useState('');
   const searching = query.trim().length > 0;
@@ -112,7 +114,9 @@ export const OrgSidebar = React.memo(function OrgSidebar({
   const isCollapsed = (sectionId: OrgSidebarSectionId) =>
     !searching && collapsedSections.includes(sectionId);
 
-  const inboxRows = INBOX_NAV_ROWS.filter((row) => matchesOrgSidebarQuery(row.label, query));
+  const inboxRows = INBOX_NAV_ROWS
+    .map((row) => ({ ...row, label: inboxFilterLabel(row.id) }))
+    .filter((row) => matchesOrgSidebarQuery(row.label, query));
 
   return (
     <nav
@@ -122,7 +126,7 @@ export const OrgSidebar = React.memo(function OrgSidebar({
       data-testid="org-sidebar"
       data-component="OrgSidebar"
       data-window-drag-region={chrome === 'window' ? 'true' : undefined}
-      aria-label="Organization"
+      aria-label={t('sidebar.organization')}
     >
       <OrgSidebarHeader orgId={orgId} orgName={orgName} chrome={chrome} />
 
@@ -135,8 +139,8 @@ export const OrgSidebar = React.memo(function OrgSidebar({
             type="text"
             value={query}
             data-testid="org-sidebar-search-input"
-            aria-label="Search conversations"
-            placeholder="Search conversations"
+            aria-label={t('sidebar.searchConversations')}
+            placeholder={t('sidebar.searchConversations')}
             className="org-sidebar-search-input org-window-no-drag min-w-0 flex-1 select-text border-none bg-transparent text-[12px] text-nim outline-none placeholder:text-nim-faint"
             onChange={(event) => setQuery(event.target.value)}
           />
@@ -145,7 +149,7 @@ export const OrgSidebar = React.memo(function OrgSidebar({
               type="button"
               className="org-sidebar-search-clear org-window-no-drag shrink-0 rounded p-0.5 text-nim-faint hover:bg-nim-hover hover:text-nim"
               data-testid="org-sidebar-search-clear"
-              aria-label="Clear search"
+              aria-label={t('inbox.search.clear')}
               onClick={() => setQuery('')}
             >
               <MaterialSymbol icon="close" size={12} />
@@ -157,7 +161,7 @@ export const OrgSidebar = React.memo(function OrgSidebar({
       <div className="org-sidebar-scroll min-h-0 flex-1 overflow-y-auto pb-2">
         <SidebarSection
           sectionId="inbox"
-          title="Inbox"
+          title={t('inbox.title')}
           testId="org-inbox-section"
           collapsed={isCollapsed('inbox')}
           onToggleCollapsed={() => toggleSection('inbox')}
@@ -181,14 +185,14 @@ export const OrgSidebar = React.memo(function OrgSidebar({
             is the only source that holds a request this member sent (#3704).
             Folding it in with the six would make it read as a seventh filter
             over the same deliveries, which it is not. */}
-        {matchesOrgSidebarQuery('Feedback', query) && (
+        {matchesOrgSidebarQuery(t('sidebar.feedback'), query) && (
           <div className="org-feedback-nav mt-0.5">
             <OrgSidebarRow
               surfaceId={surfaceId}
               className="org-feedback-item"
               testId="org-feedback"
               icon="ballot"
-              label="Feedback"
+              label={t('sidebar.feedback')}
               route={FEEDBACK_ROUTE}
               onNavigate={onNavigate}
             />
@@ -198,7 +202,7 @@ export const OrgSidebar = React.memo(function OrgSidebar({
         {gating.roomsVisible && (
           <SidebarSection
             sectionId="rooms"
-            title="Rooms"
+            title={t('sidebar.roomsTitle')}
             testId="org-rooms-section"
             collapsed={isCollapsed('rooms')}
             onToggleCollapsed={() => toggleSection('rooms')}
@@ -209,18 +213,18 @@ export const OrgSidebar = React.memo(function OrgSidebar({
               <OrgSidebarSectionAdd
                 surfaceId={surfaceId}
                 testId="org-rooms-section"
-                addLabel="Room actions"
+                addLabel={t('sidebar.roomActions')}
                 menuItems={[
                   {
                     testId: 'org-create-room',
-                    label: 'New room',
+                    label: t('sidebar.newRoom'),
                     icon: 'add',
                     onSelect: gating.canCreateRoom ? onCreateRoom : undefined,
-                    disabledLabel: 'Only organization admins can create rooms',
+                    disabledLabel: t('sidebar.onlyAdminsCreateRooms'),
                   },
                   {
                     testId: 'org-browse-rooms',
-                    label: 'Browse rooms',
+                    label: t('inbox.empty.browseRooms'),
                     icon: 'search',
                     // The menu only exists while it is open, so reading the
                     // route here costs nothing between openings.
@@ -242,7 +246,7 @@ export const OrgSidebar = React.memo(function OrgSidebar({
             {directoryError
               ? (
                 <OrgDirectoryLoadError
-                  subject="rooms"
+                  subject={t('sidebar.subjects.rooms')}
                   testId="org-rooms-error"
                   onRetry={onRetryDirectory}
                 />
@@ -250,12 +254,12 @@ export const OrgSidebar = React.memo(function OrgSidebar({
               : filtered.rooms.length === 0 && (
                 <OrgSidebarSectionNote testId="org-rooms-empty" className="org-rooms-empty">
                   {searching
-                    ? 'No rooms match that search.'
+                    ? t('sidebar.rooms.noMatch')
                     : directoryLoading
-                      ? 'Loading rooms…'
+                      ? t('sidebar.rooms.loading')
                       : gating.canCreateRoom
-                        ? 'No rooms yet. Create one with + or browse the directory.'
-                        : 'No rooms yet. Use + to browse the directory for one to join.'}
+                        ? t('sidebar.rooms.emptyCanCreate')
+                        : t('sidebar.rooms.empty')}
                 </OrgSidebarSectionNote>
               )}
           </SidebarSection>
@@ -264,7 +268,7 @@ export const OrgSidebar = React.memo(function OrgSidebar({
         {gating.dmsVisible && (
           <SidebarSection
             sectionId="dms"
-            title="Direct messages"
+            title={t('inbox.sourceKinds.dmMessage')}
             testId="org-dms-section"
             collapsed={isCollapsed('dms')}
             onToggleCollapsed={() => toggleSection('dms')}
@@ -272,7 +276,7 @@ export const OrgSidebar = React.memo(function OrgSidebar({
               <OrgSidebarSectionAdd
                 surfaceId={surfaceId}
                 testId="org-dms-section"
-                addLabel="New direct message"
+                addLabel={t('sidebar.newDirectMessage')}
                 onAdd={onCreateDirectMessage}
               />
             }
@@ -288,7 +292,7 @@ export const OrgSidebar = React.memo(function OrgSidebar({
             {directoryError
               ? (
                 <OrgDirectoryLoadError
-                  subject="direct messages"
+                  subject={t('sidebar.subjects.directMessages')}
                   testId="org-dms-error"
                   onRetry={onRetryDirectory}
                 />
@@ -296,10 +300,10 @@ export const OrgSidebar = React.memo(function OrgSidebar({
               : filtered.dms.length === 0 && (
                 <OrgSidebarSectionNote testId="org-dms-empty" className="org-dms-empty">
                   {searching
-                    ? 'No direct messages match that search.'
+                    ? t('sidebar.dms.noMatch')
                     : gating.canCreateDirectMessage
-                      ? 'No direct messages yet. Start one with +.'
-                      : 'No direct messages yet.'}
+                      ? t('sidebar.dms.emptyCanCreate')
+                      : t('sidebar.dms.empty')}
                 </OrgSidebarSectionNote>
               )}
           </SidebarSection>

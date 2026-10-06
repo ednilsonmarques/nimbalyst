@@ -16,6 +16,7 @@
 
 import type { CollaborativeEmbedProviderRequest } from '../../services/CollaborativeEmbedProviderCache';
 import { customEditorRegistry } from '../CustomEditors/registry';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import type { CustomEditorRegistration } from '../CustomEditors/types';
 import { getCollaborativeDocumentTypeCatalog } from '../../services/CollaborativeDocumentTypeCatalog';
 
@@ -80,13 +81,13 @@ export function resolveCollaborativeEmbedRequest(
       ? catalog.resolveShareability(`embedded${hintedExtension}`)
       : null;
   if (!metadataResolution || metadataResolution.state !== 'ready') {
-    return { status: 'unavailable', error: 'The collaborative editor for this document is unavailable.' };
+    return { status: 'unavailable', error: translate('team:embed.errors.editorUnavailable') };
   }
 
   const descriptor = metadataResolution.descriptor;
   const isLexical = descriptor.editor.kind === 'lexical';
   if (descriptor.editor.kind !== 'extension' && !(isLexical && input.allowLexical === true)) {
-    return { status: 'unavailable', error: 'Only collaborative custom-editor documents can be embedded.' };
+    return { status: 'unavailable', error: translate('team:embed.errors.onlyCustomEditors') };
   }
 
   const fileExtension = input.sharedFileExtension
@@ -103,7 +104,7 @@ export function resolveCollaborativeEmbedRequest(
   } else {
     const registration = customEditorRegistry.findRegistrationForFile(`embedded${fileExtension}`);
     if (!registration || registration.collaboration?.supported !== true) {
-      return { status: 'unavailable', error: 'The installed editor does not support collaborative embeds.' };
+      return { status: 'unavailable', error: translate('team:embed.errors.editorNoCollab') };
     }
     editor = { kind: 'extension', registration };
   }

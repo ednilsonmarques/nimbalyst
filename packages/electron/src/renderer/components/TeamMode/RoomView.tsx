@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   FloatingPortal,
   autoUpdate,
@@ -91,6 +92,7 @@ export function RoomView({
   projectWorkspacePath?: string | null;
   onOpenProject?: (workspacePath: string) => void;
 }) {
+  const { t, i18n } = useTranslation('team');
   const targetStore = useStore();
   // The org window's message-display preference. Read here rather than inside
   // the thread so document comments, which mount the same thread, keep the
@@ -160,7 +162,9 @@ export function RoomView({
       ),
       viewerUserId: viewerUserId ?? undefined,
     }),
-    [dmParticipants, entry, members, viewerUserId],
+    // The header carries translated text (composerLabel), so it follows the UI language.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dmParticipants, entry, members, viewerUserId, i18n.language],
   );
   const directory = useMemo(
     () => toMentionDirectory(members, viewerUserId ?? undefined),
@@ -258,7 +262,7 @@ export function RoomView({
         data-testid="org-room-view"
         data-component="RoomView"
       >
-        Loading conversation…
+        {t('comments.thread.loading')}
       </section>
     );
   }
@@ -285,7 +289,7 @@ export function RoomView({
             )}
             {header.archived && (
               <span className="org-room-archived rounded bg-[var(--nim-bg-tertiary)] px-1.5 text-[10px] uppercase tracking-wide text-[var(--nim-text-faint)]">
-                Archived
+                {t('roomsDirectory.archived')}
               </span>
             )}
           </h2>
@@ -302,7 +306,7 @@ export function RoomView({
             data-testid="org-room-member-count"
           >
             <MaterialSymbol icon="group" size={14} />
-            {memberCount} {memberCount === 1 ? 'member' : 'members'}
+            {t('room.memberCount', { count: memberCount })}
           </span>
         )}
 
@@ -314,7 +318,7 @@ export function RoomView({
             onClick={() => onOpenProject(projectWorkspacePath)}
           >
             <MaterialSymbol icon="folder_open" size={14} />
-            Open project
+            {t('room.openProject')}
           </button>
         )}
 
@@ -381,6 +385,7 @@ function NotificationLevelMenu({
   level: RoomNotificationLevel;
   onSelect?: (level: RoomNotificationLevel) => void;
 }) {
+  const { t } = useTranslation('team');
   const [open, setOpen] = useState(false);
   const { refs, floatingStyles, context } = useFloating({
     open,
@@ -404,10 +409,10 @@ function NotificationLevelMenu({
           type="button"
           className="org-room-notifications org-window-no-drag flex size-7 shrink-0 items-center justify-center rounded-md text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)] disabled:cursor-not-allowed disabled:text-[var(--nim-text-disabled)]"
           data-testid="org-room-notifications"
-          aria-label={`Notifications: ${active.label}`}
+          aria-label={t('room.notifications.aria', { level: t(`room.notifications.${active.id}.label`) })}
           title={onSelect
-            ? `Notification level: ${active.label}`
-            : 'Updating notification level'}
+            ? t('room.notifications.title', { level: t(`room.notifications.${active.id}.label`) })
+            : t('room.notifications.updating')}
           disabled={!onSelect}
           {...getReferenceProps({ onClick: () => setOpen((value) => !value) })}
         >
@@ -435,8 +440,8 @@ function NotificationLevelMenu({
               >
                 <MaterialSymbol icon={entry.icon} size={14} className="mt-px shrink-0" />
                 <span className="min-w-0">
-                  <span className="block font-medium">{entry.label}</span>
-                  <span className="block text-[11px] text-[var(--nim-text-faint)]">{entry.description}</span>
+                  <span className="block font-medium">{t(`room.notifications.${entry.id}.label`)}</span>
+                  <span className="block text-[11px] text-[var(--nim-text-faint)]">{t(`room.notifications.${entry.id}.description`)}</span>
                 </span>
               </button>
             ))}
@@ -456,6 +461,7 @@ function RoomActionsMenu({
   onOpenRoomSettings?: () => void;
   onInviteMembers?: () => void;
 }) {
+  const { t } = useTranslation('team');
   const [open, setOpen] = useState(false);
   const { refs, floatingStyles, context } = useFloating({
     open,
@@ -476,13 +482,13 @@ function RoomActionsMenu({
     ? [
       {
         id: 'invite',
-        label: 'Invite members',
+        label: t('room.actions.invite'),
         icon: 'person_add',
         action: onInviteMembers,
       },
       {
         id: 'settings',
-        label: 'Room settings',
+        label: t('room.actions.settings'),
         icon: 'settings',
         action: onOpenRoomSettings,
       },
@@ -499,8 +505,8 @@ function RoomActionsMenu({
           type="button"
           className="org-room-actions org-window-no-drag flex size-7 shrink-0 items-center justify-center rounded-md text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)] disabled:cursor-not-allowed disabled:text-[var(--nim-text-disabled)]"
           data-testid="org-room-actions"
-          aria-label="Room actions"
-          title={available ? 'Room actions' : 'You cannot manage this conversation'}
+          aria-label={t('sidebar.roomActions')}
+          title={available ? t('sidebar.roomActions') : t('room.actions.cannotManage')}
           disabled={!available}
           {...getReferenceProps({ onClick: () => setOpen((value) => !value) })}
         >

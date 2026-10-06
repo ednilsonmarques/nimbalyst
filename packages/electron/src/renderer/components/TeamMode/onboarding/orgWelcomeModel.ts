@@ -9,6 +9,7 @@
 
 import { conversationRoute, type OrgWindowRoute } from '../orgWindowState';
 import { GENERAL_ROOM_ID } from './orgWizardModel';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 /** app-settings key holding the orgs whose welcome card has been dismissed. */
 export const ORG_WELCOME_DISMISSED_SETTING_KEY = 'orgWelcomeDismissedOrgIds';
@@ -105,19 +106,17 @@ export function shouldShowOrgWelcome(input: OrgWelcomeCardInput): boolean {
 export function buildOrgWelcomeCard(
   input: OrgWelcomeCardInput,
 ): OrgWelcomeCardView {
-  const name = input.orgName.trim() || 'your organization';
-  const members = input.memberCount === 1
-    ? '1 member'
-    : `${input.memberCount} members`;
+  const name = input.orgName.trim() || translate('team:welcome.yourOrganization');
+  const members = translate('team:room.memberCount', { count: input.memberCount });
   return {
-    title: `Welcome to ${name}`,
+    title: translate('team:welcome.title', { name }),
     subtitle: input.inviterName
-      ? `${input.inviterName} invited you. ${members} so far.`
-      : `${members} so far.`,
+      ? translate('team:welcome.subtitleInvited', { inviter: input.inviterName, members })
+      : translate('team:welcome.subtitle', { members }),
     points: [
-      'Inbox collects mentions, replies and activity addressed to you.',
-      'Rooms and direct messages are in the sidebar — #general has everyone in it.',
-      'Administration lives under Admin at the bottom of the sidebar.',
+      translate('team:welcome.points.inbox'),
+      translate('team:welcome.points.rooms'),
+      translate('team:welcome.points.admin'),
     ],
   };
 }

@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { useAtomValue, useStore } from 'jotai';
 
 import { settingAtom } from '../../../store/atoms/settingAtomFamily';
@@ -41,6 +43,7 @@ export function InboxContextPane({
   onSubscriptionChange: (row: InboxRowView, state: InboxSubscriptionState) => void;
   onOpenSource: (row: InboxRowView) => void;
 }) {
+  const { t } = useTranslation('team');
   if (!row) {
     return (
       <aside
@@ -50,7 +53,7 @@ export function InboxContextPane({
       >
         <MaterialSymbol icon="chat" size={22} className="text-[var(--nim-text-faint)]" />
         <p className="m-0 max-w-[260px] text-[12px] leading-relaxed text-[var(--nim-text-muted)]">
-          Select a delivery to see its context here, or start a new message to pick a destination.
+          {t('inbox.context.selectHint')}
         </p>
       </aside>
     );
@@ -103,7 +106,7 @@ export function InboxContextPane({
           </span>
         </div>
         <h3 className="m-0 mt-1 truncate text-[14px] font-semibold text-[var(--nim-text)]">
-          {unavailable ? row.unavailableLabel : row.sourceTitle ?? 'Conversation'}
+          {unavailable ? row.unavailableLabel : row.sourceTitle ?? t('inbox.context.conversation')}
         </h3>
         <p className="m-0 mt-0.5 text-[11px] text-[var(--nim-text-faint)]">
           {row.orgName}
@@ -141,8 +144,8 @@ export function InboxContextPane({
             <p className="m-0 flex items-start gap-2 text-[12px] leading-relaxed text-[var(--nim-text-muted)]" data-testid="inbox-context-unavailable">
               <MaterialSymbol icon="lock" size={14} className="mt-px shrink-0" />
               {row.availability === 'accessRemoved'
-                ? 'You no longer have access to the source of this delivery. Dismiss it to clear it from your inbox.'
-                : 'The source of this delivery was deleted. Dismiss it to clear it from your inbox.'}
+                ? t('inbox.context.accessRemoved')
+                : t('inbox.context.sourceDeleted')}
             </p>
           )
           : (
@@ -162,11 +165,11 @@ export function InboxContextPane({
                     )}
                   <span className="text-[13px] font-medium text-[var(--nim-text)]">{row.actor.displayName}</span>
                   {row.actor.onBehalfOfDisplayName && (
-                    <span className="text-[12px] text-[var(--nim-text-faint)]">for {row.actor.onBehalfOfDisplayName}</span>
+                    <span className="text-[12px] text-[var(--nim-text-faint)]">{t('comments.row.forOwner', { owner: row.actor.onBehalfOfDisplayName })}</span>
                   )}
                   {row.actor.pending && (
                     <span className="flex items-center gap-1 rounded-full bg-[var(--nim-bg-tertiary)] px-1.5 text-[10px] text-[var(--nim-text-muted)]">
-                      <MaterialSymbol icon="hourglass_top" size={10} /> Pending dispatch
+                      <MaterialSymbol icon="hourglass_top" size={10} /> {t('comments.body.pendingDispatch')}
                     </span>
                   )}
                 </div>
@@ -175,14 +178,14 @@ export function InboxContextPane({
               {row.preview && (
                 <p className="inbox-context-preview m-0 select-text text-[13px] leading-relaxed text-[var(--nim-text)]">
                   {row.previewStale && (
-                    <span className="mr-1.5 rounded bg-[var(--nim-bg-tertiary)] px-1 py-px text-[10px] uppercase tracking-wide text-[var(--nim-text-faint)]">Stale</span>
+                    <span className="mr-1.5 rounded bg-[var(--nim-bg-tertiary)] px-1 py-px text-[10px] uppercase tracking-wide text-[var(--nim-text-faint)]">{t('inbox.stale')}</span>
                   )}
                   {row.preview}
                 </p>
               )}
 
               <p className="m-0 mt-3 text-[11px] text-[var(--nim-text-faint)]">
-                This is the bounded preview stored with the delivery. Open the source for the current content.
+                {t('inbox.context.previewHint')}
               </p>
 
               <div className="inbox-context-actions mt-4 flex flex-wrap items-center gap-2">
@@ -194,7 +197,7 @@ export function InboxContextPane({
                     onClick={() => onSubscriptionChange(row, row.subscription === 'muted' ? 'following' : 'muted')}
                   >
                     <MaterialSymbol icon={row.subscription === 'muted' ? 'notifications' : 'notifications_off'} size={14} />
-                    {row.subscription === 'muted' ? 'Unmute' : 'Mute'}
+                    {row.subscription === 'muted' ? t('inbox.context.unmute') : t('inbox.context.mute')}
                   </button>
                 )}
               </div>
@@ -206,7 +209,7 @@ export function InboxContextPane({
         {row.canReply
           ? (
             <div className="inbox-composer-placeholder rounded-md border border-dashed border-[var(--nim-border)] px-3 py-2 text-[12px] text-[var(--nim-text-faint)]">
-              The shared composer mounts here — replies and compose-from-inbox route through the destination's own create flow.
+              {t('inbox.context.composerPlaceholder')}
             </div>
           )
           : (
@@ -215,7 +218,7 @@ export function InboxContextPane({
               data-testid="inbox-composer-read-only"
             >
               <MaterialSymbol icon="visibility_lock" size={13} className="mt-px shrink-0" />
-              {row.readOnlyReason ?? 'You can read this conversation but not post to it.'}
+              {row.readOnlyReason ?? t('inbox.context.readOnly')}
             </p>
           )}
       </footer>}
@@ -329,7 +332,7 @@ function InboxConversationThread({
           // the delivery (or a conversation lookup) can answer it.
           agentPostingEnabled: false,
           attachedAgentSessionIds: [],
-          surfaceLabel: row.sourceTitle ?? 'Conversation',
+          surfaceLabel: row.sourceTitle ?? translate('team:inbox.context.conversation'),
         }}
         directory={directory}
         orgId={row.orgId}

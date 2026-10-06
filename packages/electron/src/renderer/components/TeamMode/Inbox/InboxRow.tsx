@@ -1,5 +1,6 @@
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import { reasonChipLabel } from './inboxViewModel';
 import type { InboxRowView } from './inboxTypes';
@@ -31,6 +32,7 @@ export function InboxRow({
   onOpen: (row: InboxRowView) => void;
   onDismiss: (row: InboxRowView) => void;
 }) {
+  const { t } = useTranslation('team');
   const unavailable = row.availability !== 'available';
   const chip = reasonChipLabel(row.reason);
   const emphasized = row.reason === 'mention' || row.reason === 'agentMention';
@@ -72,7 +74,7 @@ export function InboxRow({
           row.unread ? 'bg-[var(--nim-primary)]' : 'bg-transparent'
         }`}
         data-testid={row.unread ? 'inbox-row-unread-marker' : undefined}
-        aria-label={row.unread ? 'Unread' : undefined}
+        aria-label={row.unread ? t('inbox.row.unread') : undefined}
       />
 
       <span
@@ -113,10 +115,10 @@ export function InboxRow({
             <span
               className="inbox-row-response-chip flex shrink-0 items-center gap-1 rounded bg-[color-mix(in_srgb,var(--nim-purple)_18%,transparent)] px-1.5 text-[10px] font-bold uppercase tracking-wide text-[var(--nim-purple)]"
               data-testid="inbox-row-response-chip"
-              title="This asks you for a typed answer"
+              title={t('inbox.row.responseRequestedTitle')}
             >
               <MaterialSymbol icon="pending_actions" size={10} />
-              Response requested
+              {t('inbox.row.responseRequested')}
             </span>
           )}
 
@@ -134,7 +136,7 @@ export function InboxRow({
           </span>
 
           {row.subscription === 'muted' && (
-            <span className="inbox-row-muted shrink-0 text-[var(--nim-text-faint)]" title="Muted">
+            <span className="inbox-row-muted shrink-0 text-[var(--nim-text-faint)]" title={t('inbox.row.muted')}>
               <MaterialSymbol icon="notifications_off" size={12} />
             </span>
           )}
@@ -152,7 +154,7 @@ export function InboxRow({
                   <span
                     className="inbox-row-agent-glyph flex size-4 shrink-0 items-center justify-center rounded-[4px] bg-[color-mix(in_srgb,var(--nim-primary)_18%,transparent)] text-[var(--nim-primary)]"
                     data-testid="inbox-row-agent-glyph"
-                    aria-label="Agent"
+                    aria-label={t('comments.agent')}
                   >
                     <MaterialSymbol icon="smart_toy" size={11} />
                   </span>
@@ -170,16 +172,16 @@ export function InboxRow({
               </span>
               {row.actor.onBehalfOfDisplayName && (
                 <span className="inbox-row-actor-owner shrink-0 text-[11px] text-[var(--nim-text-faint)]">
-                  for {row.actor.onBehalfOfDisplayName}
+                  {t('comments.row.forOwner', { owner: row.actor.onBehalfOfDisplayName })}
                 </span>
               )}
               {row.actor.pending && (
                 <span
                   className="inbox-row-agent-pending flex shrink-0 items-center gap-1 rounded bg-[var(--nim-bg-tertiary)] px-1.5 text-[10px] text-[var(--nim-text-muted)]"
                   data-testid="inbox-row-agent-pending"
-                  title="Dispatched to your agent; waiting for the session to pick it up"
+                  title={t('inbox.row.pendingTitle')}
                 >
-                  <MaterialSymbol icon="hourglass_top" size={10} /> Pending
+                  <MaterialSymbol icon="hourglass_top" size={10} /> {t('comments.row.pending')}
                 </span>
               )}
             </>
@@ -203,7 +205,7 @@ export function InboxRow({
                       className="inbox-row-stale-label mr-1.5 rounded bg-[var(--nim-bg-tertiary)] px-1 py-px text-[10px] uppercase tracking-wide text-[var(--nim-text-faint)]"
                       data-testid="inbox-row-stale-label"
                     >
-                      Stale
+                      {t('inbox.stale')}
                     </span>
                   )}
                   {row.preview}
@@ -214,7 +216,7 @@ export function InboxRow({
           {row.readOnlyReason && (
             <span
               className="inbox-row-read-only shrink-0 text-[var(--nim-text-faint)]"
-              title="Read-only"
+              title={t('inbox.row.readOnly')}
             >
               <MaterialSymbol icon="visibility_lock" size={12} />
             </span>
@@ -228,8 +230,8 @@ export function InboxRow({
             type="button"
             className="inbox-row-open rounded p-1 text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-active)] hover:text-[var(--nim-text)]"
             data-testid={`inbox-row-open-${row.id}`}
-            aria-label="Open"
-            title="Open (Enter)"
+            aria-label={t('inbox.open.generic')}
+            title={t('inbox.row.openTitle')}
             onClick={(event) => { event.stopPropagation(); onOpen(row); }}
           >
             <MaterialSymbol icon="open_in_new" size={14} />
@@ -240,8 +242,8 @@ export function InboxRow({
             type="button"
             className="inbox-row-dismiss rounded p-1 text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-active)] hover:text-[var(--nim-text)]"
             data-testid={`inbox-row-dismiss-${row.id}`}
-            aria-label="Dismiss"
-            title="Dismiss"
+            aria-label={t('pages.dismiss')}
+            title={t('pages.dismiss')}
             onClick={(event) => { event.stopPropagation(); onDismiss(row); }}
           >
             <MaterialSymbol icon="close" size={14} />

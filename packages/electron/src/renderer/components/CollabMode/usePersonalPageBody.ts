@@ -17,6 +17,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 const DEFAULT_SAVE_DELAY_MS = 800;
 /** Delays before each retry of a failed save; one initial attempt plus these. */
@@ -185,7 +186,7 @@ export function usePersonalPageBody({
           if (!mountedRef.current) return;
           setInitialContent(result.content);
           setEditorEpoch((epoch) => epoch + 1);
-          setNotice('This page changed elsewhere; your edits were kept in local history.');
+          setNotice(translate('team:pages.changedElsewhere'));
           return;
         }
         if (pendingRef.current !== null && timerRef.current === null) flush();
@@ -204,7 +205,7 @@ export function usePersonalPageBody({
         if (attempt >= PERSONAL_PAGE_SAVE_RETRY_DELAYS_MS.length) {
           // Out of retries: the text stays pending for the next edit to retry.
           failedAttemptsRef.current = 0;
-          setNotice('This page could not be saved. Your next edit will retry.');
+          setNotice(translate('team:pages.saveFailed'));
           return;
         }
         failedAttemptsRef.current = attempt + 1;

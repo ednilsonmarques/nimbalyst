@@ -10,6 +10,7 @@
 
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type { ShareFolderNode } from './shareFolderTree';
 
 export interface SharedFolderTreeProps {
@@ -36,13 +37,14 @@ export const SharedFolderTree: React.FC<SharedFolderTreeProps> = ({
   expandedFolders,
   onToggleFolder,
   highlightFolderId,
-  highlightLabel = 'last used',
+  highlightLabel,
   newFolderParentId,
   newFolderName = '',
   onNewFolderNameChange,
   onCommitNewFolder,
   onCancelNewFolder,
 }) => {
+  const { t } = useTranslation('team');
   const renderRow = (node: ShareFolderNode): React.ReactNode => {
     const isExpanded = expandedFolders.has(node.folderId);
     const isSelected = selectedFolderId === node.folderId;
@@ -87,7 +89,7 @@ export const SharedFolderTree: React.FC<SharedFolderTreeProps> = ({
             className={`w-4 h-4 inline-flex items-center justify-center text-[var(--nim-text-faint)] ${
               hasChildren ? 'cursor-pointer' : 'cursor-default invisible'
             }`}
-            aria-label={isExpanded ? 'Collapse' : 'Expand'}
+            aria-label={isExpanded ? t('shareToTeam.collapse') : t('shareToTeam.expand')}
           >
             <MaterialSymbol icon={isExpanded ? 'expand_more' : 'chevron_right'} size={16} />
           </button>
@@ -101,7 +103,7 @@ export const SharedFolderTree: React.FC<SharedFolderTreeProps> = ({
           <span className="flex-1 truncate">{node.name}</span>
           {isHighlighted && (
             <span className="text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[var(--nim-primary)]/15 text-[var(--nim-primary)]">
-              {highlightLabel}
+              {highlightLabel ?? t('shareToTeam.lastUsed')}
             </span>
           )}
         </div>
@@ -123,7 +125,7 @@ export const SharedFolderTree: React.FC<SharedFolderTreeProps> = ({
                 }
               }}
               onBlur={() => onCommitNewFolder?.()}
-              placeholder="Folder name"
+              placeholder={t('shareToTeam.folderNamePlaceholder')}
               className="flex-1 bg-[var(--nim-bg)] border border-[var(--nim-primary)] rounded text-[13px] text-[var(--nim-text)] px-2 py-1 outline-none"
             />
           </div>

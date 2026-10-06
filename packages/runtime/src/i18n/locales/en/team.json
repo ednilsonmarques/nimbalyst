@@ -1,1 +1,1028 @@
-{}
+{
+  "collabStatus": {
+    "localCopyDamaged": {
+      "label": "Local copy damaged — downloading a clean copy",
+      "detail": "The damaged local replica was quarantined. A complete copy will be downloaded when the server is reachable."
+    },
+    "localSavingUnavailable": {
+      "label": "Changes are not saved locally",
+      "detail": "Local persistence is unavailable. Keep this document open and reconnect before closing it."
+    },
+    "openingLocalCopy": "Opening local copy…",
+    "accessChanged": {
+      "label": "Access changed — local edits have not been uploaded",
+      "detail": "Copy the current document before discarding this local copy."
+    },
+    "notReceivingChanges": {
+      "label": "Not showing other people’s changes",
+      "detail": "Edits from collaborators are arriving but cannot be displayed. Reopen this document; if it persists, avoid editing to prevent conflicting with changes you cannot see."
+    },
+    "synced": "Synced",
+    "replaying": "Syncing offline changes…",
+    "connecting": "Connecting…",
+    "offline": {
+      "label": "Offline",
+      "detail": "Reconnect to continue syncing this tracker body."
+    },
+    "offlineSafe": {
+      "label": "Offline — changes saved on this device",
+      "detail": "Offline changes are saved locally and shared with other open windows on this device."
+    }
+  },
+  "comments": {
+    "agent": "Agent",
+    "actions": {
+      "reply": "Reply",
+      "edit": "Edit message",
+      "copyLink": "Copy link to message",
+      "delete": "Delete message",
+      "menu": "Message actions"
+    },
+    "body": {
+      "agentSessionOwned": "Agent session {{session}}, owned by {{owner}}",
+      "agentSession": "Agent session {{session}}",
+      "pendingDispatch": "Pending dispatch"
+    },
+    "composer": {
+      "send": "Send",
+      "sending": "Sending",
+      "cancelReply": "Cancel reply",
+      "messageAria": "Message {{surface}}",
+      "placeholder": "Message {{surface}}. Type @ to mention someone or an agent.",
+      "remove": "Remove {{name}}",
+      "attachFile": "Attach a file",
+      "attachReference": "Attach a reference",
+      "attaching": "Attaching…",
+      "failed": "Failed",
+      "maxAttachments": "A message can carry at most {{max}} files.",
+      "partialAttachments": "Only {{accepted}} of {{total}} files were added; a message can carry at most {{max}}.",
+      "attachFailed": "{{fileName}} could not be attached.",
+      "limitOf": "{{actual}} of {{limit}}",
+      "bounds": {
+        "bytes": "{{used}}K of {{limit}}K",
+        "links": "{{used}}/{{limit}} links",
+        "mentions": "{{used}}/{{limit}} mentions",
+        "agents": "{{used}}/{{limit}} agents"
+      }
+    },
+    "row": {
+      "notSent": "Not sent.",
+      "retry": "Retry",
+      "addReaction": "Add reaction",
+      "forOwner": "for {{owner}}",
+      "openSession": "Open session {{session}}",
+      "pending": "Pending",
+      "edited": "edited",
+      "editedTitle": "Edited {{time}}",
+      "deleted": "Message deleted"
+    },
+    "thread": {
+      "empty": "No messages yet.",
+      "loading": "Loading conversation…",
+      "loadFailed": "Could not load conversation history.",
+      "loadingEarlier": "Loading",
+      "loadEarlier": "Load earlier messages",
+      "noReactions": "Reactions are not available on this surface yet."
+    },
+    "emoji": {
+      "groups": {
+        "reactions": "Frequently used",
+        "people": "People",
+        "objects": "Objects",
+        "symbols": "Symbols"
+      },
+      "results": "Results",
+      "search": "Search emoji",
+      "noMatch": "No emoji match that.",
+      "suggestions": "Emoji suggestions"
+    },
+    "mention": {
+      "aria": "Mention a person or agent",
+      "people": "People",
+      "agents": "Agents in this conversation"
+    },
+    "pill": {
+      "notInWorkspace": "Not in your workspace",
+      "notInWorkspaceHint": {
+        "tracker": "This tracker item belongs to a project you do not have open.",
+        "document": "This document belongs to a project you do not have open.",
+        "session": "This session belongs to a project you do not have open.",
+        "file": "This file belongs to a project you do not have open.",
+        "commit": "This commit belongs to a project you do not have open.",
+        "pullRequest": "This pull request belongs to a project you do not have open.",
+        "conversation": "This conversation belongs to a project you do not have open.",
+        "feedbackRequest": "This feedback request belongs to a project you do not have open."
+      },
+      "loading": "Loading",
+      "unavailable": "Unavailable",
+      "unavailableHint": "You do not have access to this, or it no longer exists.",
+      "untitledDocument": "Untitled document"
+    },
+    "restriction": {
+      "noAccess": {
+        "title": "You do not have access to this conversation",
+        "detail": "Ask an organization admin or a room admin to add you."
+      },
+      "archived": {
+        "title": "{{surface}} is archived",
+        "detail": "Archived conversations are readable but closed to new messages."
+      },
+      "readOnly": {
+        "title": "You have read-only access here",
+        "detail": "Posting needs the \"comment\" permission on {{surface}}. Your role grants read access only."
+      }
+    },
+    "actor": {
+      "teammate": "a teammate",
+      "agentSession": "Agent session",
+      "unknownMember": "Unknown member"
+    },
+    "reply": {
+      "cannotSee": "Replying to a message you cannot see",
+      "earlier": "Replying to an earlier message",
+      "deleted": "Replying to a deleted message"
+    },
+    "time": {
+      "now": "now",
+      "minutes": "{{value}}m",
+      "hours": "{{value}}h",
+      "days": "{{value}}d",
+      "weeks": "{{value}}w",
+      "years": "{{value}}y"
+    }
+  },
+  "share": {
+    "titleSession": "Share session",
+    "titleFile": "Share file",
+    "signIn": "Sign in to share encrypted links.",
+    "anyoneSession": "Anyone with the link can view this session",
+    "anyoneFile": "Anyone with the link can view this file",
+    "encrypted": "Content is end-to-end encrypted.",
+    "noOneElse": "No one without the link -- including Nimbalyst Servers -- can see it.",
+    "expiresAfter": "Link expires after",
+    "expirationDays_zero": "{{count}} days",
+    "expirationDays_one": "{{count}} day",
+    "expirationDays_other": "{{count}} days",
+    "remembered": "Your choice will be remembered for next time",
+    "shareLink": "Share link",
+    "sharing": "Sharing...",
+    "updateLink": "Update link",
+    "copyLink": "Copy link",
+    "failed": "Failed to share",
+    "unexpectedError": "An unexpected error occurred",
+    "accountPicker": {
+      "createAs": "Create link as",
+      "syncAccount": "Sync account",
+      "defaultWorkspace": "Defaulted to the account bound to this workspace.",
+      "defaultSync": "Defaulted to the account used for sync.",
+      "onlyAccount": "This is your only signed-in account."
+    }
+  },
+  "shareToTeam": {
+    "title": "Share to Team",
+    "subtitle": "Pick where this document should live in your team space.",
+    "sourceFile": "Source file",
+    "sharedName": "Shared name",
+    "documentNamePlaceholder": "Document name",
+    "willBeSharedAs": "Will be shared as",
+    "linkedDocuments": "Linked documents",
+    "linkedDocumentsHint": "Sharing this document will also share the documents it embeds so your team can see them.",
+    "shareDocumentAria": "Share {{name}}",
+    "alreadyShared": "Already shared",
+    "uncheckedHint": "Unchecked documents stay as local links that teammates cannot open.",
+    "shareDocuments_zero": "Share {{count}} documents",
+    "shareDocuments_one": "Share {{count}} document",
+    "shareDocuments_other": "Share {{count}} documents",
+    "teamRoot": "Team root",
+    "destinationFolder": "Destination folder",
+    "newFolder": "New folder",
+    "refreshingFolders": "Refreshing shared folders…",
+    "refreshFailed": "Shared folders could not be refreshed. Close this dialog and try again.",
+    "lastUsed": "last used",
+    "folderNamePlaceholder": "Folder name",
+    "collapse": "Collapse",
+    "expand": "Expand"
+  },
+  "shareFolder": {
+    "title": "Share Folder to Team",
+    "subtitle": "Publishes a copy of the shareable files in this folder. Files added later stay local.",
+    "sourceFolder": "Source folder",
+    "sharedFolderName": "Shared folder name",
+    "willBeCreatedAs": "Will be created as",
+    "documentCount_zero": "{{count}} documents",
+    "documentCount_one": "{{count}} document",
+    "documentCount_other": "{{count}} documents",
+    "acrossSubfolders_zero": "across {{count}} subfolders",
+    "acrossSubfolders_one": "across {{count}} subfolder",
+    "acrossSubfolders_other": "across {{count}} subfolders",
+    "willBeShared_zero": "will be shared.",
+    "willBeShared_one": "will be shared.",
+    "willBeShared_other": "will be shared.",
+    "wereFound_zero": "were found.",
+    "wereFound_one": "were found.",
+    "wereFound_other": "were found.",
+    "overLimit": "That is more than the {{max}} one promote can publish. Share this folder's subfolders separately so nothing lands in the team space half-finished.",
+    "skippedFiles_zero": "{{count}} files will not be shared",
+    "skippedFiles_one": "{{count}} file will not be shared",
+    "skippedFiles_other": "{{count}} files will not be shared",
+    "skippedHint": "These have no collaborative document type and stay on your machine.",
+    "truncated": "This folder holds more files than one promote can scan, so some were not considered. Share its subfolders separately to cover the rest.",
+    "tooManyDocuments": "Too many documents"
+  },
+  "feedbackDestination": {
+    "aria": "Choose a destination",
+    "title": "Where should these go?",
+    "subjects_zero": "{{count}} subjects will be published here when you send.",
+    "subjects_one": "{{count}} subject will be published here when you send.",
+    "subjects_other": "{{count}} subjects will be published here when you send.",
+    "teamFolders": "Team folders",
+    "loadFailed": "Your team folders could not be loaded, so there is nowhere to choose from yet.",
+    "loading": "Loading team folders…",
+    "use": "Use {{destination}}"
+  },
+  "roles": {
+    "admin": "Admin",
+    "member": "Member",
+    "viewer": "Viewer",
+    "owner": "Owner"
+  },
+  "invite": {
+    "title": "Invite to {{org}}",
+    "subtitle": "People you invite get access to what you pick here as soon as they accept.",
+    "emailAddresses": "Email addresses",
+    "invalidEmails": "Not an email address: {{list}}",
+    "role": "Role",
+    "whatTheyGet": "What they get",
+    "teamProject": "The team project",
+    "grantedAutomatically": "granted automatically",
+    "publishFoldersToo": "Publish folders from this workspace too",
+    "publishFoldersEmpty": "Publish folders from this workspace so there is something to open. A publish is a one-time copy; files added later stay local.",
+    "publishOneTimeCopy": "A publish is a one-time copy; files added later stay local.",
+    "emptyWarning": "They will arrive to an empty workspace. You can share folders with them later.",
+    "sending": "Sending…",
+    "sendFailed": "Could not send invitation",
+    "sendAllFailed": "Could not send the invitations.",
+    "summary": {
+      "empty": "Add an email address to invite someone.",
+      "people_zero": "{{count}} people",
+      "people_one": "{{count}} person",
+      "people_other": "{{count}} people",
+      "extraProjects_zero": "{{count}} extra projects",
+      "extraProjects_one": "{{count}} extra project",
+      "extraProjects_other": "{{count}} extra projects",
+      "foldersPublished_zero": "{{count}} folders published",
+      "foldersPublished_one": "{{count}} folder published",
+      "foldersPublished_other": "{{count}} folders published",
+      "teamHasContent": "the team already has shared content",
+      "nothingShared": "nothing shared yet"
+    },
+    "action": {
+      "inviteOnly": "Send invitation only",
+      "inviteAndShare": "Send invitations and share"
+    },
+    "folderPicker": {
+      "collapse": "Collapse {{name}}",
+      "expand": "Expand {{name}}",
+      "reading": "Reading the workspace…",
+      "empty": "This workspace has no folders to publish."
+    }
+  },
+  "pages": {
+    "personal": "Personal",
+    "team": "Team",
+    "sharedWithTeam": "Shared with team",
+    "newPersonalPage": "New personal page",
+    "newPersonalFolder": "New personal folder",
+    "openSharedDocFailed": "Failed to open shared document",
+    "resizeSidebar": "Resize shared documents sidebar",
+    "emptyHint": "Open a page, or right-click in the sidebar and choose New page",
+    "signInForTeamPages": "Sign in and share this project to see team pages",
+    "dismiss": "Dismiss",
+    "loadFailed": "This page could not be loaded.",
+    "changedElsewhere": "This page changed elsewhere; your edits were kept in local history.",
+    "saveFailed": "This page could not be saved. Your next edit will retry.",
+    "typePage": {
+      "creating": "Creating the page...",
+      "describe": "Describe what a {{item}} is and what belongs here",
+      "createFailed": "This page could not be created: {{error}}",
+      "type": "Type",
+      "pages": "Pages",
+      "fields": "Fields"
+    },
+    "setType": {
+      "refused": "Cannot set the type",
+      "failed": "Set type did not finish"
+    }
+  },
+  "embed": {
+    "agentDispatch": {
+      "startFailed": {
+        "title": "Could not start a session for that comment",
+        "message": "The @agent mention was saved, but no session could be created for it."
+      },
+      "started": {
+        "title": "Session started for this comment",
+        "message": "{{title}}. It will reply in the thread when it is done."
+      },
+      "handoffFailed": "Could not hand that comment to a session"
+    },
+    "revision": {
+      "noTeam": "This project is not connected to a team, so past revisions cannot be loaded.",
+      "unsupportedType": "Past revisions of {{documentType}} documents cannot be shown yet."
+    },
+    "errors": {
+      "editorUnavailable": "The collaborative editor for this document is unavailable.",
+      "onlyCustomEditors": "Only collaborative custom-editor documents can be embedded.",
+      "editorNoCollab": "The installed editor does not support collaborative embeds.",
+      "teamWorkspaceUnavailable": "The active team workspace is unavailable.",
+      "differentTeam": "This embedded document belongs to a different team.",
+      "resolveSharedFailed": "Could not resolve shared embed.",
+      "resolvePathFailed": "Could not resolve embed path"
+    },
+    "changeNotSaved": "The change was not saved",
+    "renderFailed": "Failed to render embed:",
+    "unknownError": "unknown error",
+    "loadingShared": "Loading shared embed...",
+    "loadSharedFailed": "Could not load shared embed",
+    "loadingSharedDocument": "Loading shared document...",
+    "loading": "Loading embed...",
+    "loadingPreview": "Loading preview…",
+    "loadingRevision": "Loading revision...",
+    "resolving": "Resolving embedded file…",
+    "noExtension": "No installed extension can render <code>{{name}}</code> inline.",
+    "chrome": {
+      "unsavedAutosaving": "Unsaved changes -- autosaving",
+      "unsaved": "Unsaved changes",
+      "linkLabel": "Link label: {{label}}",
+      "editInPlace": "Edit in place (autosaves to the embedded file)",
+      "doneEditing": "Done editing -- back to view mode",
+      "openInTab": "Open file in a new tab",
+      "open": "Open"
+    },
+    "card": {
+      "noWorkspace": "No workspace is open.",
+      "noExtension": "No installed extension renders {{name}}.",
+      "noSharedDocument": "This card does not name a shared document.",
+      "differentTeam": "This card belongs to a different team.",
+      "noMarkdownRevisions": "Pinned revisions are not available for markdown cards yet.",
+      "waitingConnection": "Waiting for an available shared-card connection."
+    },
+    "picker": {
+      "sharedDocument": "Shared document",
+      "searchPlaceholder": "Search files and shared documents",
+      "searching": "Searching…",
+      "noMatch": "Nothing matches that."
+    },
+    "placedView": {
+      "openProject": "{{label}}: open a project to see this view.",
+      "view": "View"
+    }
+  },
+  "inbox": {
+    "title": "Inbox",
+    "loading": "Loading inbox",
+    "filters": {
+      "all": "All",
+      "mentions": "Mentions",
+      "assigned": "Assigned to me",
+      "awaiting": "Awaiting my reply",
+      "follows": "Following",
+      "archived": "Archived"
+    },
+    "reason": {
+      "mention": "Mentioned you",
+      "agentMention": "Mentioned your agent",
+      "assignment": "Assigned to you",
+      "reply": "Replied to you",
+      "dm": "Direct message",
+      "follow": "In a conversation you follow",
+      "newActivity": "New activity"
+    },
+    "chip": {
+      "mention": "Mention",
+      "agentMention": "Agent mention",
+      "assignment": "Assigned",
+      "reply": "Reply"
+    },
+    "types": {
+      "room": "Room",
+      "direct": "Direct",
+      "tracker": "Tracker",
+      "question": "Question",
+      "doc": "Doc",
+      "feedback": "Feedback",
+      "unavailable": "Unavailable"
+    },
+    "sourceKinds": {
+      "roomMessage": "Rooms",
+      "documentDiscussion": "Document discussions",
+      "documentDecision": "Document questions",
+      "dmMessage": "Direct messages",
+      "trackerComment": "Tracker comments",
+      "documentInlineComment": "Inline comments",
+      "feedbackRequest": "Feedback requests"
+    },
+    "open": {
+      "itemType": "Open {{type}}",
+      "trackerItem": "Open tracker item",
+      "document": "Open document",
+      "room": "Open room",
+      "conversation": "Open conversation",
+      "feedbackRequest": "Open feedback request",
+      "generic": "Open"
+    },
+    "unavailable": {
+      "revoked": "No longer available",
+      "deleted": "Deleted or unavailable"
+    },
+    "groups": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "Earlier this week",
+      "older": "Older"
+    },
+    "stale": "Stale",
+    "context": {
+      "selectHint": "Select a delivery to see its context here, or start a new message to pick a destination.",
+      "conversation": "Conversation",
+      "accessRemoved": "You no longer have access to the source of this delivery. Dismiss it to clear it from your inbox.",
+      "sourceDeleted": "The source of this delivery was deleted. Dismiss it to clear it from your inbox.",
+      "previewHint": "This is the bounded preview stored with the delivery. Open the source for the current content.",
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "composerPlaceholder": "The shared composer mounts here — replies and compose-from-inbox route through the destination's own create flow.",
+      "readOnly": "You can read this conversation but not post to it."
+    },
+    "resizeContextPane": "Resize context pane",
+    "empty": {
+      "all": {
+        "title": "Your inbox is clear",
+        "body": "Mentions, assignments, replies, and activity in conversations you follow land here."
+      },
+      "mentions": {
+        "title": "No mentions",
+        "body": "Someone has to @mention you — or an agent you own — for a delivery to arrive here."
+      },
+      "assigned": {
+        "title": "Nothing assigned to you",
+        "body": "Tracker assignments and equivalent actionable deliveries collect here."
+      },
+      "awaiting": {
+        "title": "Nobody is waiting on you",
+        "body": "Feedback requests addressed to you collect here until you answer them."
+      },
+      "follows": {
+        "title": "You are not following anything",
+        "body": "Posting in a conversation follows it automatically, or you can follow one explicitly."
+      },
+      "archived": {
+        "title": "Nothing archived",
+        "body": "Dismissing a delivery files it here, out of every other row but still readable."
+      },
+      "unread": {
+        "title": "Nothing unread",
+        "body": "You are caught up on deliveries and on the conversations you follow."
+      },
+      "browseRooms": "Browse rooms",
+      "openTrackers": "Open trackers",
+      "noSearchMatch": "No deliveries match your search",
+      "nothingMatches": "Nothing in {{scope}} matches “{{query}}”.",
+      "yourInbox": "your inbox"
+    },
+    "clearFilters": "Clear filters",
+    "offlineEmpty": {
+      "title": "Inbox needs a connection",
+      "body": "There are no cached deliveries on this device yet. Unread indicators on your trackers and documents keep working offline in the project window."
+    },
+    "filtersAria": "Inbox filters",
+    "unreadOnly": "Unread only",
+    "typesLabel": "Types",
+    "row": {
+      "responseRequestedTitle": "This asks you for a typed answer",
+      "responseRequested": "Response requested",
+      "muted": "Muted",
+      "pendingTitle": "Dispatched to your agent; waiting for the session to pick it up",
+      "readOnly": "Read-only",
+      "openTitle": "Open (Enter)",
+      "unread": "Unread"
+    },
+    "scope": {
+      "all": "All orgs & projects",
+      "orgs_zero": "{{count}} orgs",
+      "orgs_one": "{{count}} org",
+      "orgs_other": "{{count}} orgs",
+      "projects_zero": "{{count}} projects",
+      "projects_one": "{{count}} project",
+      "projects_other": "{{count}} projects",
+      "organization": "Organization",
+      "project": "Project",
+      "reset": "Reset scope"
+    },
+    "search": {
+      "aria": "Search {{filter}}",
+      "placeholder": "Search {{filter}} by person, conversation, or text",
+      "clear": "Clear search",
+      "previewsOnly": "Inbox search only covers the bounded previews stored with each delivery.",
+      "previewsOnlyMatches": "Only delivery previews are searched here — the full message bodies are not.",
+      "all": "Search all messages"
+    },
+    "openFailed": "Could not open that conversation. It stays unread.",
+    "markAllReadTitle": "Mark everything in {{filter}} as read",
+    "markRead": "Mark {{filter}} read",
+    "newMessageTitle": "Write to a room or a person",
+    "composeUnavailable": "Compose is available in the organization window",
+    "newMessage": "New message",
+    "messagingUnavailable": "Messaging is not available for {{org}}. Migrate this organization to server-managed encryption to enable it.",
+    "migrateOrganization": "Migrate organization",
+    "status": {
+      "offline": "Offline — showing cached deliveries. Previews may be out of date and changes queue until you reconnect.",
+      "offlineSince": "Offline — showing cached deliveries from {{time}} ago. Previews may be out of date and changes queue until you reconnect.",
+      "reconnecting": "Reconnecting — the list is paused until the canonical sequence is reconciled."
+    }
+  },
+  "sidebar": {
+    "organization": "Organization",
+    "organizations": "Organizations",
+    "organizationActions": "Organization actions",
+    "openAnotherOrganization": "Open another organization",
+    "searchConversations": "Search conversations",
+    "feedback": "Feedback",
+    "roomsTitle": "Rooms",
+    "roomActions": "Room actions",
+    "newRoom": "New room",
+    "onlyAdminsCreateRooms": "Only organization admins can create rooms",
+    "newDirectMessage": "New direct message",
+    "subjects": {
+      "rooms": "rooms",
+      "directMessages": "direct messages"
+    },
+    "loadFailed": "Couldn’t load {{subject}}.",
+    "rooms": {
+      "noMatch": "No rooms match that search.",
+      "loading": "Loading rooms…",
+      "emptyCanCreate": "No rooms yet. Create one with + or browse the directory.",
+      "empty": "No rooms yet. Use + to browse the directory for one to join."
+    },
+    "dms": {
+      "noMatch": "No direct messages match that search.",
+      "emptyCanCreate": "No direct messages yet. Start one with +.",
+      "empty": "No direct messages yet."
+    },
+    "connection": {
+      "ready": "Connected",
+      "connecting": "Connecting…",
+      "offline": "Offline",
+      "messagingUnavailable": "Messaging unavailable",
+      "thisProject": "{{status}} · this project"
+    },
+    "unreadCount": "{{count}} unread",
+    "presence": {
+      "online": "online",
+      "away": "away",
+      "offline": "offline"
+    },
+    "reconnecting": "Reconnecting"
+  },
+  "adminTabs": {
+    "members": "Members",
+    "projects": "Projects",
+    "settings": "Settings",
+    "billing": "Billing",
+    "danger": "Danger zone"
+  },
+  "preferences": {
+    "title": "Preferences",
+    "description": "These settings apply to this window on this device.",
+    "messageDisplay": "Message display",
+    "messageDisplayHint": "How messages are laid out in rooms and direct messages.",
+    "density": {
+      "comfortable": {
+        "label": "Comfortable",
+        "detail": "Avatar, name on its own line, room to breathe."
+      },
+      "compact": {
+        "label": "Compact",
+        "detail": "One line per message: time, name, then the message."
+      }
+    }
+  },
+  "orgWindow": {
+    "betaStatus": "Nimbalyst Teams beta — expect bugs; organizations are free during beta.",
+    "title": "Organization Messages - Nimbalyst"
+  },
+  "compose": {
+    "description": "Pick a room or a person to write to.",
+    "searchPlaceholder": "Search rooms and people",
+    "noMatch": "Nothing matches “{{query}}”.",
+    "empty": "Nothing to write to yet.",
+    "opening": "Opening…"
+  },
+  "createRoom": {
+    "title": "Create a room",
+    "description": "Rooms are organization-wide conversations. Public rooms are open to everyone; private rooms are limited to the people you add.",
+    "creating": "Creating…",
+    "submit": "Create room",
+    "namePlaceholder": "Design reviews",
+    "roomId": "Room id",
+    "roomIdHint": "How the room is addressed. Letters, numbers, dots, dashes and underscores.",
+    "topicOptional": "Topic (optional)",
+    "topicHint": "A one-line description shown in the room header.",
+    "topicPlaceholder": "What this room is for",
+    "visibility": "Visibility",
+    "public": "Public",
+    "publicDescription": "Everyone in the organization can find and join this room.",
+    "private": "Private",
+    "privateDescription": "Only the people you add can see this room.",
+    "membersHint": "You are added as the room admin. Anyone else has to be added here or later.",
+    "agentPostingHint": "Mentioned agents can reply in this room. You can change this later in room settings."
+  },
+  "memberPicker": {
+    "search": "Search people",
+    "noMatch": "No matching members.",
+    "empty": "No other members in this organization yet."
+  },
+  "newDm": {
+    "description_zero": "Pick up to {{count}} people. Direct messages are private to their participants and cannot be renamed or joined later.",
+    "description_one": "Pick up to {{count}} people. Direct messages are private to their participants and cannot be renamed or joined later.",
+    "description_other": "Pick up to {{count}} people. Direct messages are private to their participants and cannot be renamed or joined later.",
+    "submit": "Start conversation",
+    "participants_zero": "{{count}} participants, including you.",
+    "participants_one": "{{count}} participants, including you.",
+    "participants_other": "{{count}} participants, including you."
+  },
+  "roomsDirectory": {
+    "showArchived": "Show archived",
+    "description": "Public rooms are open to everyone in this organization. Private rooms appear only when you belong to them.",
+    "archived": "Archived",
+    "joinTitle": "Join this room",
+    "resolvingMembership": "Resolving your membership…",
+    "joined": "Joined",
+    "joining": "Joining…",
+    "join": "Join",
+    "empty": {
+      "title": "No rooms to show",
+      "withArchived": "This organization has no rooms you can see, archived ones included.",
+      "body": "This organization has no rooms you can see yet. Private rooms appear here once you are added to them.",
+      "createFirst": "Create the first room"
+    }
+  },
+  "room": {
+    "you": "You",
+    "fields": {
+      "name": "Name",
+      "topic": "Topic"
+    },
+    "agentPosting": {
+      "label": "Allow agents to post",
+      "hint": "Mentioned agents can reply in this room."
+    },
+    "errors": {
+      "idEmpty": "Enter a room name to generate an id.",
+      "idInvalid": "Room ids may only contain letters, numbers, dots, dashes and underscores.",
+      "idTaken": "A room with this id already exists.",
+      "nameRequired": "Room name is required.",
+      "membershipResolving": "Your membership in this organization is still resolving.",
+      "pickOne": "Pick at least one person.",
+      "dmTooMany": "A direct message holds at most {{max}} people, including you."
+    },
+    "memberCount_zero": "{{count}} members",
+    "memberCount_one": "{{count}} member",
+    "memberCount_other": "{{count}} members",
+    "openProject": "Open project",
+    "notifications": {
+      "aria": "Notifications: {{level}}",
+      "title": "Notification level: {{level}}",
+      "updating": "Updating notification level",
+      "all": {
+        "label": "All messages",
+        "description": "Every message in this conversation reaches your inbox."
+      },
+      "mentions": {
+        "label": "Mentions only",
+        "description": "Only messages that mention you reach your inbox."
+      },
+      "none": {
+        "label": "Nothing",
+        "description": "Nothing from this conversation reaches your inbox."
+      }
+    },
+    "actions": {
+      "invite": "Invite members",
+      "settings": "Room settings",
+      "cannotManage": "You cannot manage this conversation"
+    },
+    "settings": {
+      "saved": "Room details saved.",
+      "saving": "Saving…",
+      "save": "Save changes",
+      "details": "Details",
+      "topicHint": "Shown under the room name. Clearing it removes the topic.",
+      "archive": "Archive room",
+      "archiving": "Archiving…",
+      "archiveDescription": "The room leaves everyone's sidebar and stops accepting messages. Its history stays readable from the rooms directory.",
+      "generalCannotArchive": "The general room is the organization's default room and cannot be archived.",
+      "alreadyArchived": "This room is already archived.",
+      "loadingRoles": "Loading current room roles…",
+      "publicHint": "Everyone in the organization can read this public room. Membership here only changes who follows it and who can manage it.",
+      "noMembers": "No members in this organization yet."
+    },
+    "members": {
+      "add": "Add to room",
+      "promote": "Make room admin",
+      "demote": "Remove room admin",
+      "remove": "Remove from room",
+      "roleAdmin": "Room admin",
+      "notInRoom": "Not in room",
+      "youSuffix": "(you)",
+      "aria": "Room membership for {{name}}"
+    },
+    "empty": {
+      "archived": "{{name}} was archived without any messages.",
+      "dmCanComment": "This is the beginning of your conversation with {{name}}. Say hello.",
+      "dm": "This is the beginning of your conversation with {{name}}.",
+      "roomCanComment": "This is the beginning of {{name}}. Send the first message to get it started.",
+      "room": "This is the beginning of {{name}}. Nothing has been posted here yet."
+    }
+  },
+  "orgMode": {
+    "directoryUnavailable": "Directory unavailable",
+    "messagingOff": "Rooms and direct messages are turned off for this organization",
+    "conversationMissing": "That conversation is no longer available.",
+    "organizationsLoadFailed": "Organizations could not be loaded.",
+    "loadingOrganization": "Loading organization…",
+    "refreshingOrganizations": "Refreshing organizations…",
+    "unbound": {
+      "notAvailable": "This organization is not available yet. Your destination has been preserved.",
+      "loadFailed": "Your organizations could not be loaded.",
+      "create": "Create an organization to collaborate with a team, or accept a pending invitation.",
+      "creationUnavailable": "Creating an organization is temporarily unavailable. Accept a pending invitation to get started.",
+      "settingsFor": "Organization settings for {{name}}",
+      "waitingMembership": "Waiting for your organization membership to finish loading."
+    },
+    "workspaceOrgLoadFailed": "Workspace organization could not be loaded."
+  },
+  "projects": {
+    "chooseFolderFor": "Choose a folder for {{name}}",
+    "thisProject": "this project",
+    "openProjectButton": "Open Project",
+    "openFailed": "Could not open that project",
+    "loading": "Loading projects…",
+    "empty": "No projects yet.",
+    "loadFailed": "Couldn't load projects.",
+    "untitled": "Untitled project",
+    "status": {
+      "open": "Open locally",
+      "cloned": "Cloned locally",
+      "chooseFolder": "Choose a folder for this project",
+      "notLocal": "Not local"
+    },
+    "cloneHint": "Clone this project’s repository, then open it to work in it here.",
+    "openLocallyShort": "open locally…",
+    "notLocalShort": "not local",
+    "loadFailedShort": "Could not load projects"
+  },
+  "userIndicator": {
+    "signedIn": "Signed in",
+    "presence": {
+      "online": "Online",
+      "away": "Away",
+      "offline": "Offline"
+    },
+    "orgCount_zero": "{{count}} orgs",
+    "orgCount_one": "{{count}} org",
+    "orgCount_other": "{{count}} orgs",
+    "reconnecting": "{{count}} reconnecting",
+    "aria": "Account and connection status",
+    "orgPreferences": "Organization Preferences",
+    "webConsole": "Web Console",
+    "setOnline": "Set yourself online",
+    "setAway": "Set yourself away",
+    "accountSettingsFailed": "Could not open account settings.",
+    "account": "Account",
+    "sessionExpired": "Session expired — reconnect"
+  },
+  "feedback": {
+    "age": {
+      "justNow": "just now",
+      "minutes": "{{value}}m ago",
+      "hours": "{{value}}h ago",
+      "days": "{{value}}d ago",
+      "weeks": "{{value}}w ago"
+    },
+    "status": {
+      "open": "Open",
+      "answered": "Answered",
+      "closed": "Closed",
+      "expired": "Expired",
+      "cancelled": "Cancelled",
+      "questionRemoved": "Question removed",
+      "settled": "Settled"
+    },
+    "author": {
+      "agentOf": "{{name}}'s agent",
+      "anAgent": "An agent",
+      "aTeammate": "A teammate",
+      "teammate": "Teammate"
+    },
+    "progress": {
+      "responded": "{{answered}}/{{total}} responded",
+      "answered": "{{answered}} of {{total}} answered"
+    },
+    "openFailed": "This question could not be opened.",
+    "searchPlaceholder": "Search requests…",
+    "searchAria": "Search feedback requests",
+    "filtersAria": "Feedback filters",
+    "filters": {
+      "needsMyResponse": "Needs my response",
+      "sentByMe": "Sent by me",
+      "open": "Open",
+      "answered": "Answered",
+      "closed": "Closed",
+      "all": "All"
+    },
+    "documentIndex": {
+      "unsupported": "Document questions require an updated collaboration server.",
+      "error": "Some document questions could not be loaded. Retrying…",
+      "disconnected": "Reconnect to load document questions.",
+      "loading": "Loading document questions…"
+    },
+    "notices": {
+      "noWorkspace": "Connecting to this project's shared area. Feedback requests appear once it resolves.",
+      "noIdentity": "No feedback requests have reached this device yet. They appear once your team connection is signed in and synced.",
+      "empty": "No feedback requests yet. When someone asks you for feedback — or you ask your team — the request lands here and stays after it is answered.",
+      "inventoryPending": "Document questions will appear once the inventory is available.",
+      "noMatch": "No requests match this filter."
+    },
+    "allRequests": "All requests",
+    "selectHint": "Select a request to answer it, or to read the answers it already has.",
+    "yourAnswer": "Your answer"
+  },
+  "wizard": {
+    "aria": "Create an organization",
+    "steps": {
+      "account": "Account",
+      "identity": "Name",
+      "invite": "Invite",
+      "done": "Done"
+    },
+    "newOrganization": "New organization",
+    "close": {
+      "aria": "Close setup and discard it",
+      "busy": "Finishing the current step…",
+      "created": "Close setup — the organization stays, and you can invite people any time",
+      "discard": "Close and discard this setup"
+    },
+    "invited": {
+      "title": "You have been invited",
+      "signedInAs": "Signed in as <email>{{email}}</email>. There is already an organization waiting for you.",
+      "join": "Join {{name}}",
+      "recommended": "Recommended — you already have access",
+      "createInstead": "Create a new organization instead",
+      "createInsteadHint": "Start your own team — the invitation stays available",
+      "joinHint": "Joining skips the rest of the setup. Open the organization from the org switcher whenever you like — it starts on #general."
+    },
+    "identity": {
+      "title": "Name your organization",
+      "description": "Everyone you invite sees this name. You can change it later.",
+      "nameLabel": "Organization name",
+      "namePlaceholder": "Acme Research",
+      "ownedBy": "Owned by <email>{{email}}</email>",
+      "owningAccount": "Owning personal account"
+    },
+    "invite": {
+      "title": "Invite your team",
+      "description": "Teammates get an email invitation. You can always invite more people later.",
+      "addAnother": "Add another email…",
+      "rolesHint": "Invited people join as members. Roles are changed from Members & Roles.",
+      "shareFoldersHint": "Share folders so they have something to open. Without this, everyone you invite arrives to an empty workspace.",
+      "sendAndContinue": "Send invites and continue"
+    },
+    "done": {
+      "title": "{{name}} is ready",
+      "yourOrganization": "Your organization",
+      "created": "Organization created",
+      "invitationsSent_zero": "{{count}} invitations sent",
+      "invitationsSent_one": "{{count}} invitation sent",
+      "invitationsSent_other": "{{count}} invitations sent",
+      "noInvitations": "No invitations sent yet",
+      "openHint": "Open the organization from the org switcher whenever you're ready."
+    },
+    "stepCount": "Step {{current}} of {{total}}",
+    "finishLater": "Finish later",
+    "skipForNow": "Skip for now",
+    "continuing": "Continuing…",
+    "createOrganization": "Create organization",
+    "errors": {
+      "nameRequired": "Enter a name for the organization.",
+      "notCreated": "The organization has not been created yet.",
+      "invitesFailed": "Some invitations failed — {{details}}",
+      "publishFailed": "Some folders were not published — {{details}}"
+    }
+  },
+  "welcome": {
+    "yourOrganization": "your organization",
+    "title": "Welcome to {{name}}",
+    "subtitleInvited": "{{inviter}} invited you. {{members}} so far.",
+    "subtitle": "{{members}} so far.",
+    "points": {
+      "inbox": "Inbox collects mentions, replies and activity addressed to you.",
+      "rooms": "Rooms and direct messages are in the sidebar — #general has everyone in it.",
+      "admin": "Administration lives under Admin at the bottom of the sidebar."
+    },
+    "dismiss": "Dismiss welcome"
+  },
+  "projectWalk": {
+    "aria": "Join a project in {{org}}",
+    "status": {
+      "open": "Open",
+      "onThisComputer": "On this computer",
+      "notOnThisComputer": "Not on this computer"
+    },
+    "clone": {
+      "auth": {
+        "title": "Couldn't access the repository",
+        "body": "Git could not authenticate to {{remote}}. Nimbalyst uses your existing git credentials — set them up, or clone it yourself and choose the folder."
+      },
+      "network": {
+        "title": "Couldn't reach the repository",
+        "body": "{{remote}} could not be reached. Check your connection, or clone it yourself and choose the folder."
+      },
+      "cancelled": {
+        "title": "Clone cancelled",
+        "body": "Nothing was changed. Start again, or choose a folder you already have."
+      },
+      "failed": {
+        "title": "Couldn't clone the repository",
+        "body": "Git could not clone {{remote}}. Clone it yourself and choose the folder instead."
+      }
+    },
+    "folder": {
+      "occupied": {
+        "title": "That folder isn't empty",
+        "body": "{{path}} already contains files that aren't part of {{label}}. Choose an empty folder, or a new one inside it."
+      },
+      "wrongRemote": {
+        "title": "That folder belongs to a different repository",
+        "body": "{{path}} has a git remote that doesn't match {{label}}. Choose the folder you cloned {{label}} into."
+      },
+      "notADirectory": {
+        "title": "That path is a file",
+        "body": "{{path}} is not a folder."
+      }
+    },
+    "browse": {
+      "cloneTitle": "Choose where to clone {{label}}",
+      "chooseTitle": "Choose the folder for {{label}}",
+      "cloneButton": "Clone Here",
+      "chooseButton": "Use This Folder"
+    },
+    "errors": {
+      "inspectFailed": "Could not inspect that folder",
+      "useFailed": "Could not use that folder",
+      "useFolderTitle": "Couldn't use that folder",
+      "loadFailed": "Couldn't load the organization's projects"
+    },
+    "titles": {
+      "intro": "You're a member of {{org}}",
+      "folder": "Get a folder for {{label}}",
+      "done": "You're in {{label}}"
+    },
+    "chooseProject": "Choose a project",
+    "projectCount_zero": "{{count}} projects in {{org}}",
+    "projectCount_one": "{{count}} project in {{org}}",
+    "projectCount_other": "{{count}} projects in {{org}}",
+    "closeAria": "Close — you can join the project later from the organization menu",
+    "steps": {
+      "folder": "Folder"
+    },
+    "intro": "Pick one of the organization's projects and point Nimbalyst at a folder for it. After that, shared documents, trackers, and sessions for {{org}} open alongside your files.",
+    "later": "You can do this later from the organization menu.",
+    "noProjects": "This organization has no projects yet. An admin can share one from its project settings.",
+    "cloning": "Nimbalyst will open the project when this finishes. You can keep working in the meantime.",
+    "starting": "Starting…",
+    "done": "Shared documents, trackers, and team sessions for {{org}} are available in this project.",
+    "notNow": "Not now",
+    "cloneAndOpen": "Clone and open",
+    "continueInBackground": "Continue in background",
+    "alreadyCloned": {
+      "title": "You already have this repository",
+      "body": "{{path}} is already a clone of {{label}}. Use it instead of cloning again."
+    },
+    "options": {
+      "clone": {
+        "title": "Clone the repository",
+        "description": "Nimbalyst clones it for you and opens the project.",
+        "unavailable": "No repository address is recorded for this project. An admin can add one from the organization's project settings."
+      },
+      "choose": {
+        "title": "Choose an existing folder",
+        "descriptionClone": "You already have this repository on disk.",
+        "description": "Point Nimbalyst at the folder for this project."
+      }
+    },
+    "cloneInto": "Clone into",
+    "projectFolder": "Project folder",
+    "noFolder": "No folder chosen",
+    "browseButton": "Browse…"
+  }
+}

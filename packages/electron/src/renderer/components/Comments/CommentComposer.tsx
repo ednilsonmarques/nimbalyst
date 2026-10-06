@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { MAX_ATTACHMENTS_PER_MESSAGE } from '@nimbalyst/collab-protocol';
 
 import { FloatingPortal, useFloatingMenu } from '../../hooks/useFloatingMenu';
@@ -130,7 +132,7 @@ export function CommentComposer({
   initialText = '',
   initialPool = EMPTY_POOL,
   initialAttachments = EMPTY_ATTACHMENTS,
-  submitLabel = 'Send',
+  submitLabel,
   onCancel,
   onDraftChange,
   onDraftCleared,
@@ -164,6 +166,7 @@ export function CommentComposer({
   /** Main conversation composer only: flush the cleared draft after send. */
   onDraftCleared?: () => void;
 }) {
+  const { t } = useTranslation('team');
   const [text, setText] = useState(initialText);
   const [pool, setPool] = useState<DraftPool>(initialPool);
   const [sending, setSending] = useState(false);
@@ -272,7 +275,7 @@ export function CommentComposer({
       const room = MAX_ATTACHMENTS_PER_MESSAGE - pendingRef.current.length;
       if (room <= 0) {
         setAttachmentErrors([
-          `A message can carry at most ${MAX_ATTACHMENTS_PER_MESSAGE} files.`,
+          translate('team:comments.composer.maxAttachments', { max: MAX_ATTACHMENTS_PER_MESSAGE }),
         ]);
         return;
       }
@@ -281,7 +284,7 @@ export function CommentComposer({
       setAttachmentErrors(
         accepted.length < files.length
           ? [
-            `Only ${accepted.length} of ${files.length} files were added; a message can carry at most ${MAX_ATTACHMENTS_PER_MESSAGE}.`,
+            translate('team:comments.composer.partialAttachments', { accepted: accepted.length, total: files.length, max: MAX_ATTACHMENTS_PER_MESSAGE }),
           ]
           : [],
       );
@@ -327,7 +330,7 @@ export function CommentComposer({
               ...now,
               error instanceof Error && error.message
                 ? error.message
-                : `${entry.fileName} could not be attached.`,
+                : translate('team:comments.composer.attachFailed', { fileName: entry.fileName }),
             ]);
           });
       });
@@ -442,7 +445,7 @@ export function CommentComposer({
           <button
             type="button"
             className="ml-auto shrink-0 rounded p-0.5 hover:bg-[var(--nim-bg-hover)]"
-            aria-label="Cancel reply"
+            aria-label={t('comments.composer.cancelReply')}
             data-testid="comment-composer-cancel-reply"
             onClick={onCancelReply}
           >
@@ -456,8 +459,8 @@ export function CommentComposer({
         initialText={initialText}
         initialPool={initialPool}
         autoFocus={autoFocus}
-        ariaLabel={`Message ${context.surfaceLabel}`}
-        placeholder={placeholder ?? `Message ${context.surfaceLabel}. Type @ to mention someone or an agent.`}
+        ariaLabel={t('comments.composer.messageAria', { surface: context.surfaceLabel })}
+        placeholder={placeholder ?? t('comments.composer.placeholder', { surface: context.surfaceLabel })}
         onChange={handleTextChange}
         onSubmit={() => void submit()}
         mentionCandidatesFor={candidatesFor}
@@ -494,7 +497,7 @@ export function CommentComposer({
               <span className="max-w-[160px] truncate">{pills[urn].label}</span>
               <button
                 type="button"
-                aria-label={`Remove ${pills[urn].label}`}
+                aria-label={t('comments.composer.remove', { name: pills[urn].label })}
                 className="rounded hover:bg-[var(--nim-bg-hover)]"
                 onClick={() => removeAttachment(urn)}
               >
@@ -527,7 +530,7 @@ export function CommentComposer({
             >
               <MaterialSymbol icon="error" size={12} />
               {error.message}
-              {error.actual !== undefined && error.limit !== undefined && ` (${error.actual} of ${error.limit})`}
+              {error.actual !== undefined && error.limit !== undefined && ` (${t('comments.composer.limitOf', { actual: error.actual, limit: error.limit })})`}
             </li>
           ))}
         </ul>
@@ -554,8 +557,8 @@ export function CommentComposer({
             <button
               type="button"
               data-testid="comment-composer-attach-file"
-              aria-label="Attach a file"
-              title="Attach a file"
+              aria-label={t('comments.composer.attachFile')}
+              title={t('comments.composer.attachFile')}
               onClick={() => fileInputRef.current?.click()}
               className="comment-composer-attach-file flex size-6 items-center justify-center rounded border border-transparent text-[var(--nim-text-muted)] hover:border-[var(--nim-border)] hover:bg-[var(--nim-bg-hover)]"
             >
@@ -600,7 +603,7 @@ export function CommentComposer({
           }`}
         >
           <MaterialSymbol icon="send" size={13} />
-          {sending ? 'Sending' : submitLabel}
+          {sending ? t('comments.composer.sending') : (submitLabel ?? t('comments.composer.send'))}
         </button>
       </div>
     </div>
@@ -622,6 +625,7 @@ function PendingAttachmentChip({
   entry: PendingAttachment;
   onRemove: () => void;
 }) {
+  const { t } = useTranslation('team');
   const failed = entry.status === 'failed';
   return (
     <span
@@ -648,15 +652,15 @@ function PendingAttachmentChip({
         <span className="max-w-[160px] truncate text-[var(--nim-text)]">{entry.fileName}</span>
         <span className="text-[11px] text-[var(--nim-text-faint)]">
           {entry.status === 'uploading'
-            ? 'Attaching…'
+            ? t('comments.composer.attaching')
             : failed
-              ? 'Failed'
+              ? t('comments.composer.failed')
               : formatAttachmentSize(entry.byteSize)}
         </span>
       </span>
       <button
         type="button"
-        aria-label={`Remove ${entry.fileName}`}
+        aria-label={t('comments.composer.remove', { name: entry.fileName })}
         className="rounded p-0.5 hover:bg-[var(--nim-bg-hover)]"
         onClick={onRemove}
       >
@@ -681,18 +685,19 @@ function BoundsMeter({
   nearBody: boolean;
   validation: ReturnType<typeof validateDraft>;
 }) {
+  const { t } = useTranslation('team');
   const parts: string[] = [];
   if (overBody || nearBody) {
-    parts.push(`${Math.round(validation.bodyBytes / 1024)}K of ${Math.round(validation.bodyBytesLimit / 1024)}K`);
+    parts.push(t('comments.composer.bounds.bytes', { used: Math.round(validation.bodyBytes / 1024), limit: Math.round(validation.bodyBytesLimit / 1024) }));
   }
   if (validation.refCount > validation.refLimit * 0.75) {
-    parts.push(`${validation.refCount}/${validation.refLimit} links`);
+    parts.push(t('comments.composer.bounds.links', { used: validation.refCount, limit: validation.refLimit }));
   }
   if (validation.mentionedUserCount > validation.mentionedUserLimit * 0.75) {
-    parts.push(`${validation.mentionedUserCount}/${validation.mentionedUserLimit} mentions`);
+    parts.push(t('comments.composer.bounds.mentions', { used: validation.mentionedUserCount, limit: validation.mentionedUserLimit }));
   }
   if (validation.mentionedAgentCount > validation.mentionedAgentLimit * 0.75) {
-    parts.push(`${validation.mentionedAgentCount}/${validation.mentionedAgentLimit} agents`);
+    parts.push(t('comments.composer.bounds.agents', { used: validation.mentionedAgentCount, limit: validation.mentionedAgentLimit }));
   }
   if (parts.length === 0) return null;
 
@@ -714,6 +719,7 @@ function ResourceAttachMenu({
   candidates: ResourceCandidate[];
   onAttach: (candidate: ResourceCandidate) => void;
 }) {
+  const { t } = useTranslation('team');
   const menu = useFloatingMenu({ placement: 'top-start' });
   return (
     <>
@@ -722,8 +728,8 @@ function ResourceAttachMenu({
         {...menu.getReferenceProps()}
         type="button"
         data-testid="composer-attach-trigger"
-        aria-label="Attach a reference"
-        title="Attach a reference"
+        aria-label={t('comments.composer.attachReference')}
+        title={t('comments.composer.attachReference')}
         onClick={() => menu.setIsOpen(!menu.isOpen)}
         className="composer-attach-trigger flex size-6 items-center justify-center rounded border border-transparent text-[var(--nim-text-muted)] hover:border-[var(--nim-border)] hover:bg-[var(--nim-bg-hover)]"
       >

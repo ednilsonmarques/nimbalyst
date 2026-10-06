@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import type { OrgWelcomeCardView } from './orgWelcomeModel';
 
@@ -16,6 +17,7 @@ export function OrgWelcomeCard({
   card: OrgWelcomeCardView;
   onDismiss: () => void;
 }) {
+  const { t } = useTranslation('team');
   return (
     <aside
       className="org-welcome-card mx-5 mt-3 flex items-start gap-3 rounded-lg border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] px-3 py-2.5"
@@ -37,7 +39,7 @@ export function OrgWelcomeCard({
       </div>
       <button
         type="button"
-        aria-label="Dismiss welcome"
+        aria-label={t('welcome.dismiss')}
         className="org-welcome-dismiss shrink-0 rounded p-1 text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
         data-testid="org-welcome-dismiss"
         onClick={onDismiss}

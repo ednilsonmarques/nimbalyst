@@ -52,6 +52,7 @@ import type { EditorHost } from '@nimbalyst/runtime';
 import { MarkdownEditor, DocumentPathProvider } from '@nimbalyst/runtime';
 import { CollabLexicalProvider } from '@nimbalyst/runtime/collab-lexical';
 import { buildCollabUri } from '@nimbalyst/collab-protocol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import type { CollaborativeEmbedProviderResource } from '../../services/CollaborativeEmbedProviderCache';
 import { LexicalDiffHeaderAdapter } from '../UnifiedDiffHeader';
@@ -66,6 +67,7 @@ interface CollaborativeMarkdownEmbedProps {
 export const CollaborativeMarkdownEmbed: React.FC<
   CollaborativeMarkdownEmbedProps
 > = ({ host, resource, toolbar = true }) => {
+  const { t } = useTranslation('team');
   const [readOnly, setReadOnly] = useState(host.readOnly !== false);
   useEffect(() => {
     // `onReadOnlyChanged` invokes the callback immediately with the current
@@ -141,7 +143,7 @@ export const CollaborativeMarkdownEmbed: React.FC<
   if (epoch === 0) {
     return (
       <div className="embed-frame__loading" data-testid="collab-markdown-loading">
-        Loading shared document...
+        {t('embed.loadingSharedDocument')}
       </div>
     );
   }

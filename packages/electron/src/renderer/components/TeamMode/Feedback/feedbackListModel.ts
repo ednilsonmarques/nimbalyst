@@ -15,6 +15,7 @@ import type {
   FeedbackArtifact,
   FeedbackRequestIndexEntry,
 } from '@nimbalyst/collab-protocol';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 /**
  * Relative age, in the shared area's own voice ("2h ago"), and taking `now`
@@ -24,14 +25,14 @@ import type {
  */
 export function formatFeedbackAge(timestamp: number, now: number): string {
   const minutes = Math.floor(Math.max(0, now - timestamp) / 60_000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return translate('team:feedback.age.justNow');
+  if (minutes < 60) return translate('team:feedback.age.minutes', { value: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return translate('team:feedback.age.hours', { value: hours });
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return translate('team:feedback.age.days', { value: days });
   const weeks = Math.floor(days / 7);
-  if (days < 365) return `${weeks}w ago`;
+  if (days < 365) return translate('team:feedback.age.weeks', { value: weeks });
   return new Date(timestamp).toLocaleDateString();
 }
 
@@ -91,11 +92,11 @@ export interface FeedbackListRowView {
 }
 
 const STATUS_LABELS: Record<FeedbackListStatus, string> = {
-  open: 'Open',
-  answered: 'Answered',
-  closed: 'Closed',
-  expired: 'Expired',
-  cancelled: 'Cancelled',
+  open: 'team:feedback.status.open',
+  answered: 'team:feedback.status.answered',
+  closed: 'team:feedback.status.closed',
+  expired: 'team:feedback.status.expired',
+  cancelled: 'team:feedback.status.cancelled',
 };
 
 /**
@@ -296,13 +297,13 @@ export function feedbackAuthorLabel(
   viewerUserId: string,
   memberNames: Record<string, string>,
 ): string {
-  if (isViewerAuthor(entry, viewerUserId)) return 'You';
+  if (isViewerAuthor(entry, viewerUserId)) return translate('team:room.you');
   const name = memberNames[entry.author.onBehalfOfUserId]
     ?? (entry.author.userId ? memberNames[entry.author.userId] : undefined);
   if (entry.author.kind === 'agent') {
-    return name ? `${name}'s agent` : entry.author.sessionName ?? 'An agent';
+    return name ? translate('team:feedback.author.agentOf', { name }) : entry.author.sessionName ?? translate('team:feedback.author.anAgent');
   }
-  return name ?? 'A teammate';
+  return name ?? translate('team:feedback.author.aTeammate');
 }
 
 export interface FeedbackRowViewInput {
@@ -323,8 +324,8 @@ export function toFeedbackRowView(
     title: entry.title,
     authorLabel: feedbackAuthorLabel(entry, viewerUserId, memberNames),
     status,
-    statusLabel: STATUS_LABELS[status],
-    progressLabel: `${answeredRecipientCount}/${totalRecipientCount} responded`,
+    statusLabel: translate(STATUS_LABELS[status]),
+    progressLabel: translate('team:feedback.progress.responded', { answered: answeredRecipientCount, total: totalRecipientCount }),
     awaitingFirstResponse: answeredRecipientCount === 0,
     timeLabel: formatFeedbackAge(entry.updatedAt, now),
     needsViewerResponse: needsViewerResponse(entry, viewerUserId),

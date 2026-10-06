@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAtomValue } from "jotai";
+import { useTranslation } from "@nimbalyst/runtime/i18n/react";
 import type { CanvasCardPreviewProps } from "@nimbalyst/runtime/canvas/canvasCallbacks";
 import { resolveCanvasCardRevision } from "@nimbalyst/runtime/canvas/canvasRevisions";
 import { fileChangedOnDiskAtomFamily } from "../../store/atoms/fileWatch";
@@ -28,6 +29,7 @@ function MockupPreview({
   width,
   height,
 }: CanvasCardPreviewProps & { path: string }) {
+  const { t } = useTranslation("team");
   const version = useAtomValue(fileChangedOnDiskAtomFamily(path));
   const container = useRef<HTMLDivElement>(null);
   const [seen, setSeen] = useState(typeof IntersectionObserver === "undefined");
@@ -115,7 +117,7 @@ function MockupPreview({
             ? source.error
             : preview?.key === key && preview.error
             ? preview.error
-            : "Loading preview…"}
+            : t("embed.loadingPreview")}
         </div>
       </div>
     );

@@ -1,5 +1,6 @@
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import type { InboxFilterId } from './inboxTypes';
 import { inboxFilterLabel } from './inboxViewModel';
@@ -19,37 +20,37 @@ interface EmptyCopy {
 const FILTER_EMPTY: Record<InboxFilterId, EmptyCopy> = {
   all: {
     icon: 'inbox',
-    title: 'Your inbox is clear',
-    body: 'Mentions, assignments, replies, and activity in conversations you follow land here.',
-    actionLabel: 'Browse rooms',
+    title: 'inbox.empty.all.title',
+    body: 'inbox.empty.all.body',
+    actionLabel: 'inbox.empty.browseRooms',
   },
   mentions: {
     icon: 'alternate_email',
-    title: 'No mentions',
-    body: 'Someone has to @mention you — or an agent you own — for a delivery to arrive here.',
-    actionLabel: 'Browse rooms',
+    title: 'inbox.empty.mentions.title',
+    body: 'inbox.empty.mentions.body',
+    actionLabel: 'inbox.empty.browseRooms',
   },
   assigned: {
     icon: 'assignment_ind',
-    title: 'Nothing assigned to you',
-    body: 'Tracker assignments and equivalent actionable deliveries collect here.',
-    actionLabel: 'Open trackers',
+    title: 'inbox.empty.assigned.title',
+    body: 'inbox.empty.assigned.body',
+    actionLabel: 'inbox.empty.openTrackers',
   },
   awaiting: {
     icon: 'ballot',
-    title: 'Nobody is waiting on you',
-    body: 'Feedback requests addressed to you collect here until you answer them.',
+    title: 'inbox.empty.awaiting.title',
+    body: 'inbox.empty.awaiting.body',
   },
   follows: {
     icon: 'visibility',
-    title: 'You are not following anything',
-    body: 'Posting in a conversation follows it automatically, or you can follow one explicitly.',
-    actionLabel: 'Browse rooms',
+    title: 'inbox.empty.follows.title',
+    body: 'inbox.empty.follows.body',
+    actionLabel: 'inbox.empty.browseRooms',
   },
   archived: {
     icon: 'archive',
-    title: 'Nothing archived',
-    body: 'Dismissing a delivery files it here, out of every other row but still readable.',
+    title: 'inbox.empty.archived.title',
+    body: 'inbox.empty.archived.body',
   },
 };
 
@@ -60,8 +61,8 @@ const FILTER_EMPTY: Record<InboxFilterId, EmptyCopy> = {
  */
 const UNREAD_EMPTY: EmptyCopy = {
   icon: 'mark_email_read',
-  title: 'Nothing unread',
-  body: 'You are caught up on deliveries and on the conversations you follow.',
+  title: 'inbox.empty.unread.title',
+  body: 'inbox.empty.unread.body',
 };
 
 export function InboxEmptyState({
@@ -83,6 +84,7 @@ export function InboxEmptyState({
   /** Slot for the `Search all messages` escalation when a query is active. */
   children?: React.ReactNode;
 }) {
+  const { t } = useTranslation('team');
   const copy = unreadOnly ? UNREAD_EMPTY : FILTER_EMPTY[filter];
   const narrowed = !!query || scopeActive || unreadOnly || filter !== 'all';
 
@@ -97,12 +99,12 @@ export function InboxEmptyState({
         <MaterialSymbol icon={query ? 'search_off' : copy.icon} size={22} />
       </span>
       <h3 className="m-0 text-[14px] font-semibold text-[var(--nim-text)]">
-        {query ? 'No deliveries match your search' : copy.title}
+        {query ? t('inbox.empty.noSearchMatch') : t(copy.title)}
       </h3>
       <p className="m-0 max-w-[420px] text-[12px] leading-relaxed text-[var(--nim-text-muted)]">
         {query
-          ? `Nothing in ${filter === 'all' ? 'your inbox' : inboxFilterLabel(filter)} matches “${query}”.`
-          : copy.body}
+          ? t('inbox.empty.nothingMatches', { scope: filter === 'all' ? t('inbox.empty.yourInbox') : inboxFilterLabel(filter), query })
+          : t(copy.body)}
       </p>
 
       <div className="inbox-empty-actions mt-1 flex items-center gap-2">
@@ -113,7 +115,7 @@ export function InboxEmptyState({
             data-testid="inbox-empty-clear-filters"
             onClick={onClearFilters}
           >
-            Clear filters
+            {t('inbox.clearFilters')}
           </button>
         )}
         {!query && copy.actionLabel && onBrowse && (
@@ -123,7 +125,7 @@ export function InboxEmptyState({
             data-testid="inbox-empty-browse"
             onClick={onBrowse}
           >
-            {copy.actionLabel}
+            {t(copy.actionLabel)}
           </button>
         )}
       </div>
@@ -135,6 +137,7 @@ export function InboxEmptyState({
 
 /** No connection and no cached rows to fall back on. */
 export function InboxOfflineWithoutCache() {
+  const { t } = useTranslation('team');
   return (
     <div
       className="inbox-offline-empty flex flex-col items-center gap-2 px-8 py-14 text-center"
@@ -144,10 +147,9 @@ export function InboxOfflineWithoutCache() {
       <span className="flex size-11 items-center justify-center rounded-full bg-[var(--nim-bg-tertiary)] text-[var(--nim-text-faint)]">
         <MaterialSymbol icon="cloud_off" size={22} />
       </span>
-      <h3 className="m-0 text-[14px] font-semibold text-[var(--nim-text)]">Inbox needs a connection</h3>
+      <h3 className="m-0 text-[14px] font-semibold text-[var(--nim-text)]">{t('inbox.offlineEmpty.title')}</h3>
       <p className="m-0 max-w-[420px] text-[12px] leading-relaxed text-[var(--nim-text-muted)]">
-        There are no cached deliveries on this device yet. Unread indicators on your trackers and documents
-        keep working offline in the project window.
+        {t('inbox.offlineEmpty.body')}
       </p>
     </div>
   );

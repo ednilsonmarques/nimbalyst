@@ -33,6 +33,7 @@ import type { CanvasAgentDispatch } from '@nimbalyst/runtime/canvas';
 import { createNewSessionActionAtom } from '../../store/actions/sessionHistoryActions';
 import { activeWorkspacePathAtom } from '../../store/atoms/openProjects';
 import { errorNotificationService } from '../../services/ErrorNotificationService';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { isClaudeCliTerminalSession } from '../UnifiedAI/claudeCliInputRouting';
 
 const MAX_SESSION_TITLE = 80;
@@ -58,8 +59,8 @@ export async function dispatchCanvasAgentThread(
   });
   if (!sessionId) {
     errorNotificationService.showError(
-      'Could not start a session for that comment',
-      'The @agent mention was saved, but no session could be created for it.',
+      translate('team:embed.agentDispatch.startFailed.title'),
+      translate('team:embed.agentDispatch.startFailed.message'),
     );
     return;
   }
@@ -103,12 +104,12 @@ export async function dispatchCanvasAgentThread(
       );
     }
     errorNotificationService.showInfo(
-      'Session started for this comment',
-      `${title}. It will reply in the thread when it is done.`,
+      translate('team:embed.agentDispatch.started.title'),
+      translate('team:embed.agentDispatch.started.message', { title }),
     );
   } catch (error) {
     errorNotificationService.showError(
-      'Could not hand that comment to a session',
+      translate('team:embed.agentDispatch.handoffFailed'),
       error instanceof Error ? error.message : String(error),
     );
   }

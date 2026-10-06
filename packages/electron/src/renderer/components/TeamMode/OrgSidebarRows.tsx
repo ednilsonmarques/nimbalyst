@@ -1,5 +1,6 @@
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { useAtomValue } from 'jotai';
 
 import {
@@ -46,6 +47,7 @@ export const OrgSidebarRow = React.memo(function OrgSidebarRow({
   route: OrgWindowRoute;
   onNavigate: (route: OrgWindowRoute) => void;
 }) {
+  const { t } = useTranslation('team');
   const selected = useAtomValue(
     orgWindowRouteSelectedAtomFamily(
       orgWindowRouteSelectionKey(surfaceId, orgWindowRouteKey(route)),
@@ -78,7 +80,7 @@ export const OrgSidebarRow = React.memo(function OrgSidebarRow({
       {badge > 0 && (
         <span
           className="org-unread-pill shrink-0 rounded-full bg-nim-primary px-1.5 text-[10px] font-bold leading-4 text-nim-on-primary"
-          aria-label={`${badge} unread`}
+          aria-label={t('sidebar.unreadCount', { count: badge })}
         >
           {badge}
         </span>
@@ -156,6 +158,7 @@ export const OrgConversationRow = React.memo(function OrgConversationRow({
 });
 
 function PresenceDot({ status }: { status: 'online' | 'away' | 'offline' }) {
+  const { t } = useTranslation('team');
   const color = status === 'online'
     ? 'bg-nim-success'
     : status === 'away'
@@ -164,7 +167,7 @@ function PresenceDot({ status }: { status: 'online' | 'away' | 'offline' }) {
   return (
     <span
       className={`org-presence-dot absolute -bottom-0.5 -right-0.5 size-2 rounded-full border border-nim ${color}`}
-      aria-label={status}
+      aria-label={t(`sidebar.presence.${status}`)}
     />
   );
 }
@@ -184,6 +187,7 @@ export function OrgDirectoryLoadError({
   testId: string;
   onRetry?: () => void;
 }) {
+  const { t } = useTranslation('team');
   return (
     <div
       className="org-directory-error m-0 flex items-center gap-1.5 px-3 py-1 text-[11px] leading-relaxed text-nim-muted"
@@ -191,7 +195,7 @@ export function OrgDirectoryLoadError({
       role="status"
     >
       <MaterialSymbol icon="error" size={12} className="shrink-0" />
-      <span className="min-w-0 flex-1">Couldn&rsquo;t load {subject}.</span>
+      <span className="min-w-0 flex-1">{t('sidebar.loadFailed', { subject })}</span>
       {onRetry && (
         <button
           type="button"
@@ -199,7 +203,7 @@ export function OrgDirectoryLoadError({
           data-testid={`${testId}-retry`}
           onClick={onRetry}
         >
-          Retry
+          {t('common:retry')}
         </button>
       )}
     </div>

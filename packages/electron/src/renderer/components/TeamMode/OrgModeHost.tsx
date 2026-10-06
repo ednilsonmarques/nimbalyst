@@ -8,6 +8,8 @@ import {
   useState,
 } from 'react';
 import { useAtomValue, useStore } from 'jotai';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import { organizationDirectoryStateAtom, personalAccountsAtom } from '../../store/atoms/settingsDomains';
 import { refreshOrganizationDirectory } from '../../store/listeners/stytchAuthListeners';
@@ -57,6 +59,7 @@ function OrgModeHostContent({
   onOrgIdChange,
   sidebarCollapsed,
 }: OrgModeHostProps & { sidebarCollapsed: boolean }) {
+  const { t } = useTranslation('team');
   const directory = useAtomValue(organizationDirectoryStateAtom);
   const accounts = useAtomValue(personalAccountsAtom);
   const organizations = directory.entries;
@@ -68,7 +71,7 @@ function OrgModeHostContent({
     organization.orgId === (orgId ?? workspaceOrgId) && isActiveMembership(organization.membershipType)) ?? null;
   const personalOrgId = team?.boundPersonalOrgId ?? team?.owningPersonalOrgId;
   const boundEmail = accounts.find((account) => account.personalOrgId === personalOrgId)?.email ?? team?.sourceEmail ?? null;
-  const organizationLoadError = directory.status === 'error' ? directory.error ?? 'Organizations could not be loaded.' : localError;
+  const organizationLoadError = directory.status === 'error' ? directory.error ?? t('orgMode.organizationsLoadFailed') : localError;
   const surfaceOpenRecordedRef = useRef(false);
 
   const selectOrganization = useCallback((orgId: string) => {
@@ -97,7 +100,7 @@ function OrgModeHostContent({
     void window.electronAPI.team.findForWorkspace(workspacePath).then((result: { success?: boolean; complete?: boolean; team?: TeamSummary | null; orgId?: string; error?: string } | null) => {
       if (cancelled) return;
       if (result?.success === false || result?.complete === false) {
-        throw new Error(result?.error || 'Workspace organization could not be loaded.');
+        throw new Error(result?.error || translate('team:orgMode.workspaceOrgLoadFailed'));
       }
       setWorkspaceTarget({ path: workspacePath, orgId: (result?.team ?? result)?.orgId ?? null });
       setLocalError(null);
@@ -122,7 +125,7 @@ function OrgModeHostContent({
     return (
       <section className="org-mode-host team-mode team-mode-loading-arm flex h-full flex-col overflow-hidden bg-[var(--nim-bg)] text-[var(--nim-text)]" data-component="OrgModeHost">
         {chrome === 'window' && <OrgWindowTitleBar />}
-        <div className="team-mode-loading flex flex-1 items-center justify-center text-sm text-nim-muted">Loading organization…</div>
+        <div className="team-mode-loading flex flex-1 items-center justify-center text-sm text-nim-muted">{t('orgMode.loadingOrganization')}</div>
       </section>
     );
   }
@@ -145,8 +148,8 @@ function OrgModeHostContent({
     <div className="org-mode-directory-host flex h-full min-h-0 flex-col">
       {!directory.complete && (
         <div className="org-mode-directory-status px-4 py-2 text-sm text-nim-muted" role="status">
-          {directory.status === 'error' ? organizationLoadError : 'Refreshing organizations…'}
-          {directory.status === 'error' && <button type="button" onClick={reloadOrganizations}>Retry</button>}
+          {directory.status === 'error' ? organizationLoadError : t('orgMode.refreshingOrganizations')}
+          {directory.status === 'error' && <button type="button" onClick={reloadOrganizations}>{t('common:retry')}</button>}
         </div>
       )}
       <OrgModeBody
