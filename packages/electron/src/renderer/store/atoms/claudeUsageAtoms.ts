@@ -6,6 +6,7 @@
  */
 
 import { atom } from 'jotai';
+import { t } from '@nimbalyst/runtime/i18n';
 
 import type { ClaudeUsageData } from '../../../shared/claudeUsage';
 export type { ClaudeUsageData, ClaudeUsageWindow } from '../../../shared/claudeUsage';
@@ -64,13 +65,13 @@ export const claudeUsageWeeklyColorAtom = atom((get) => {
  * Helper to format reset time as human-readable string
  */
 export function formatResetTime(resetsAt: string | null): string {
-  if (!resetsAt) return 'Unknown';
+  if (!resetsAt) return t('general:usage.resetUnknown');
 
   const resetDate = new Date(resetsAt);
   const now = new Date();
   const diffMs = resetDate.getTime() - now.getTime();
 
-  if (diffMs < 0) return 'Now';
+  if (diffMs < 0) return t('general:usage.resetNow');
 
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMinutes / 60);

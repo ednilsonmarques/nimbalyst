@@ -11,6 +11,7 @@
 
 import React from 'react';
 import { atom } from 'jotai';
+import { t } from '@nimbalyst/runtime/i18n';
 import { ProviderIcon } from '@nimbalyst/runtime/ui/icons/ProviderIcons';
 import { atomFamily } from '../debug/atomFamilyRegistry';
 import type { TypeaheadOption } from '../../components/Typeahead/GenericTypeahead';
@@ -41,11 +42,11 @@ function relativeTime(timestamp: number): string {
   const diffHr = Math.floor(diffMs / 3_600_000);
   const diffDay = Math.floor(diffMs / 86_400_000);
 
-  if (diffMin < 1) return 'just now';
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHr < 24) return `${diffHr}h ago`;
-  if (diffDay < 30) return `${diffDay}d ago`;
-  return `${Math.floor(diffDay / 30)}mo ago`;
+  if (diffMin < 1) return t('tracker:time.justNow');
+  if (diffMin < 60) return t('tracker:time.minutesAgo', { count: diffMin });
+  if (diffHr < 24) return t('tracker:time.hoursAgo', { count: diffHr });
+  if (diffDay < 30) return t('tracker:time.daysAgo', { count: diffDay });
+  return t('general:relativeTime.monthsAgoShort', { count: Math.floor(diffDay / 30) });
 }
 
 /**
@@ -73,11 +74,11 @@ const WORKTREE_ICON = React.createElement(
  * consistent with the main session list.
  */
 const PHASE_STYLES: Record<string, { label: string; color: string; bg: string }> = {
-  backlog: { label: 'Backlog', color: 'var(--nim-text-faint)', bg: 'rgba(128,128,128,0.12)' },
-  planning: { label: 'Planning', color: 'var(--nim-primary)', bg: 'rgba(96,165,250,0.12)' },
-  implementing: { label: 'Implementing', color: 'var(--nim-warning)', bg: 'rgba(251,191,36,0.12)' },
-  validating: { label: 'Validating', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
-  complete: { label: 'Complete', color: 'var(--nim-success)', bg: 'rgba(74,222,128,0.12)' },
+  backlog: { get label() { return t('agent:phases.backlog'); }, color: 'var(--nim-text-faint)', bg: 'rgba(128,128,128,0.12)' },
+  planning: { get label() { return t('agent:phases.planning'); }, color: 'var(--nim-primary)', bg: 'rgba(96,165,250,0.12)' },
+  implementing: { get label() { return t('agent:phases.implementing'); }, color: 'var(--nim-warning)', bg: 'rgba(251,191,36,0.12)' },
+  validating: { get label() { return t('agent:phases.validating'); }, color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
+  complete: { get label() { return t('agent:phases.complete'); }, color: 'var(--nim-success)', bg: 'rgba(74,222,128,0.12)' },
 };
 
 function buildDescription(updatedAt: number, phase?: string): React.ReactElement {
@@ -146,7 +147,7 @@ export const searchSessionMentionAtom = atom(
 
       return {
         id: s.id,
-        label: s.title || 'Untitled',
+        label: s.title || t('agent:sessionTabs.untitled'),
         description: buildDescription(s.updatedAt, s.phase),
         icon,
         data: {

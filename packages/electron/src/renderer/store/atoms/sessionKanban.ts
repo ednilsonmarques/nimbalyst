@@ -11,6 +11,7 @@
 
 import { atom } from 'jotai';
 import { atomFamily } from '../debug/atomFamilyRegistry';
+import { t } from '@nimbalyst/runtime/i18n';
 import type { SessionMeta } from '@nimbalyst/runtime';
 import {
   sessionRegistryAtom,
@@ -42,12 +43,14 @@ export interface ChildRunStateSummary {
 // Phase Column Definitions
 // ============================================================
 
+// `label` is a getter so it always resolves in the current UI language;
+// `value` is the persisted phase id and never changes.
 export const SESSION_PHASE_COLUMNS: { value: SessionPhase; label: string; color: string }[] = [
-  { value: 'backlog', label: 'Backlog', color: '#6b7280' },
-  { value: 'planning', label: 'Planning', color: '#60a5fa' },
-  { value: 'implementing', label: 'Implementing', color: '#eab308' },
-  { value: 'validating', label: 'Validating', color: '#a78bfa' },
-  { value: 'complete', label: 'Complete', color: '#4ade80' },
+  { value: 'backlog', get label() { return t('agent:phases.backlog'); }, color: '#6b7280' },
+  { value: 'planning', get label() { return t('agent:phases.planning'); }, color: '#60a5fa' },
+  { value: 'implementing', get label() { return t('agent:phases.implementing'); }, color: '#eab308' },
+  { value: 'validating', get label() { return t('agent:phases.validating'); }, color: '#a78bfa' },
+  { value: 'complete', get label() { return t('agent:phases.complete'); }, color: '#4ade80' },
 ];
 
 const VALID_PHASES = new Set<string>(SESSION_PHASE_COLUMNS.map(c => c.value));

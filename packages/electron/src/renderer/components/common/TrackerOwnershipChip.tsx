@@ -13,6 +13,7 @@
 
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { t } from '@nimbalyst/runtime/i18n';
 import type { TrackerOwnership } from '../TrackerMode/trackerNavigationTree';
 
 /** Minimal member shape, kept local so this file pulls in no editor graph. */
@@ -33,8 +34,8 @@ export function trackerOwnershipLabel(
   ownership: TrackerOwnership,
   teamName?: string | null,
 ): string {
-  if (ownership === 'personal') return 'Personal';
-  return teamName?.trim() || 'Team';
+  if (ownership === 'personal') return t('general:trackerOwnership.personal');
+  return teamName?.trim() || t('general:trackerOwnership.team');
 }
 
 /** One-line explanation of what the ownership means for the user's edits. */
@@ -42,11 +43,10 @@ export function trackerOwnershipDescription(
   ownership: TrackerOwnership,
   memberCount?: number,
 ): string {
-  if (ownership === 'personal') return 'On this machine. Never synced.';
-  const everyone = 'Everyone sees the same fields, items, and numbers.';
+  if (ownership === 'personal') return t('general:trackerOwnership.personalDescription');
   return memberCount && memberCount > 1
-    ? `Shared with ${memberCount} people. ${everyone}`
-    : everyone;
+    ? t('general:trackerOwnership.sharedWithPeopleDescription', { count: memberCount })
+    : t('general:trackerOwnership.everyoneDescription');
 }
 
 /**
@@ -58,8 +58,10 @@ export function trackerOwnershipShortDescription(
   ownership: TrackerOwnership,
   memberCount?: number,
 ): string {
-  if (ownership === 'personal') return 'Local only';
-  return memberCount && memberCount > 1 ? `Shared · ${memberCount} people` : 'Shared with the team';
+  if (ownership === 'personal') return t('general:trackerOwnership.localOnly');
+  return memberCount && memberCount > 1
+    ? t('general:trackerOwnership.sharedPeople', { count: memberCount })
+    : t('general:trackerOwnership.sharedWithTeam');
 }
 
 export const TrackerOwnershipChip: React.FC<{
@@ -81,12 +83,12 @@ export const TrackerOwnershipChip: React.FC<{
       data-ownership={ownership}
       title={
         isTeam
-          ? `${label} owns this tracker — changing its fields changes them for everyone`
-          : 'Only on this machine'
+          ? t('general:trackerOwnership.teamOwnsTooltip', { team: label })
+          : t('general:trackerOwnership.onlyOnThisMachine')
       }
     >
       <MaterialSymbol icon={trackerOwnershipIcon(ownership)} size={11} />
-      {isTeam && draftByDefault ? `${label} · drafts` : label}
+      {isTeam && draftByDefault ? t('general:trackerOwnership.withDrafts', { label }) : label}
     </span>
   );
 };

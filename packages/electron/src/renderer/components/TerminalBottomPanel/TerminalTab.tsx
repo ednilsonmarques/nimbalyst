@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { TerminalTabContextMenu } from './TerminalTabContextMenu';
 
 interface TerminalInstance {
@@ -46,6 +47,7 @@ export const TerminalTab: React.FC<TerminalTabProps> = ({
   onCloseAll,
   onCloseToRight,
 }) => {
+  const { t } = useTranslation('general');
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [isFocusFlashing, setIsFocusFlashing] = useState(false);
 
@@ -130,13 +132,13 @@ export const TerminalTab: React.FC<TerminalTabProps> = ({
         role="tab"
         tabIndex={0}
         aria-selected={isActive}
-        title={`${terminal.title}\n${terminal.cwd}\nShell: ${terminal.shellName}${isActiveWorktree ? '\n(Current worktree)' : ''}`}
+        title={`${terminal.title}\n${terminal.cwd}\n${t('terminal.shellLabel', { shell: terminal.shellName })}${isActiveWorktree ? `\n${t('terminal.currentWorktreeSuffix')}` : ''}`}
       >
       {terminal.worktreeId ? (
         <MaterialSymbol
           icon="alt_route"
           size={14}
-          title={isActiveWorktree ? 'Current worktree terminal' : 'Worktree terminal'}
+          title={isActiveWorktree ? t('terminal.currentWorktreeTerminal') : t('terminal.worktreeTerminal')}
           className={isActiveWorktree ? 'text-[var(--nim-primary)]' : undefined}
         />
       ) : (
@@ -145,7 +147,7 @@ export const TerminalTab: React.FC<TerminalTabProps> = ({
       {isCommandRunning && (
         <div
           className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse shrink-0"
-          title="Command running"
+          title={t('terminal.commandRunning')}
         />
       )}
       <span className="terminal-tab-title overflow-hidden text-ellipsis shrink min-w-0">{getDisplayName()}</span>
@@ -155,7 +157,7 @@ export const TerminalTab: React.FC<TerminalTabProps> = ({
       <button
         className="terminal-tab-close hidden group-hover:flex items-center justify-center w-4 h-4 p-0 bg-transparent border-none text-[var(--nim-text-faint)] cursor-pointer rounded-sm shrink-0 ml-0.5 transition-colors duration-150 hover:bg-[var(--nim-bg-tertiary)] hover:text-[var(--nim-text)]"
         onClick={handleCloseClick}
-        title="Close terminal"
+        title={t('terminal.closeTerminal')}
       >
         <MaterialSymbol icon="close" size={12} />
       </button>

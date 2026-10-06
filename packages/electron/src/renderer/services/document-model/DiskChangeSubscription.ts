@@ -8,6 +8,7 @@ import {
 } from "../../store/atoms/fileWatch";
 import { errorNotificationService } from "../ErrorNotificationService";
 import type { ExternalChangeInfo } from "./types";
+import { t as translate } from "@nimbalyst/runtime/i18n";
 
 /** Coalesces disk reads and owns the sender-scoped open-file registration for one backing store. */
 export class DiskChangeSubscription {
@@ -149,10 +150,10 @@ export class DiskChangeSubscription {
     if (this.warningShown) return;
     this.warningShown = true;
     errorNotificationService.showWarning(
-      "File updates delayed",
-      `Could not refresh ${this.path
-        .split(/[\\/]/)
-        .pop()}. Your unsaved edits are preserved.`,
+      translate("general:diskChange.delayedTitle"),
+      translate("general:diskChange.delayedMessage", {
+        file: this.path.split(/[\\/]/).pop(),
+      }),
       { duration: 10_000 }
     );
   }

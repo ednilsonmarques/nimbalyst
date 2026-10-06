@@ -9,12 +9,14 @@ import {
   setSelectedWorkstreamAtom,
 } from "../store/atoms/sessions";
 import type { DeviceInfo } from "@nimbalyst/runtime/sync/types";
+import { useTranslation } from "@nimbalyst/runtime/i18n/react";
 
 export function RemoteMachineSelector({
   workspacePath,
 }: {
   workspacePath: string;
 }) {
+  const { t } = useTranslation("general");
   const [host, setHost] = useAtom(selectedMachineAtom(workspacePath));
   const [selections, setSelections] = useAtom(
     machineSessionSelectionsAtom(workspacePath)
@@ -43,7 +45,7 @@ export function RemoteMachineSelector({
   return (
     <select
       className="remote-machine-selector mt-1.5 w-full rounded border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] px-2 py-1 text-[12px] text-[var(--nim-text)]"
-      aria-label="Execution machine"
+      aria-label={t("remoteMachine.ariaLabel")}
       value={host}
       onChange={(event) => {
         const next = event.target.value;
@@ -61,16 +63,16 @@ export function RemoteMachineSelector({
         });
       }}
     >
-      <option value="">This Mac</option>
+      <option value="">{t("remoteMachine.thisMac")}</option>
       {hosts.map((device) => (
-        <option key={device.deviceId} value={device.deviceId} title={device.lastSeenAt ? `Last seen ${new Date(device.lastSeenAt).toLocaleString()}` : undefined}>
+        <option key={device.deviceId} value={device.deviceId} title={device.lastSeenAt ? t("remoteMachine.lastSeen", { time: new Date(device.lastSeenAt).toLocaleString() }) : undefined}>
           {device.name}
           {hosts.filter(other => other.name === device.name).length > 1 ? ` · ${device.deviceId.slice(-6)}` : ""}
-          {device.isOnline === false ? " · Offline" : ""}
+          {device.isOnline === false ? ` · ${t("remoteMachine.offline")}` : ""}
         </option>
       ))}
       {host && !hosts.some((device) => device.deviceId === host) && (
-        <option value={host}>Remote machine · Offline</option>
+        <option value={host}>{t("remoteMachine.remoteOffline")}</option>
       )}
     </select>
   );

@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 import { store } from "@nimbalyst/runtime/store";
+import { t as translate } from "@nimbalyst/runtime/i18n";
 import type {
   CredentialScope,
   ProviderCredentialSnapshot,
@@ -20,7 +21,7 @@ export async function refreshProviderCredentials(): Promise<void> {
   } catch {
     store.set(
       providerCredentialErrorAtom,
-      "Could not load saved API keys. Retry when secure storage is available."
+      translate("general:providerCredentials.loadFailed")
     );
   }
 }

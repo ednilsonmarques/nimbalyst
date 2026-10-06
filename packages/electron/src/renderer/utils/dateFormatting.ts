@@ -1,3 +1,5 @@
+import { t } from '@nimbalyst/runtime/i18n';
+
 export type TimeGroupKey =
   | 'Today'
   | 'Yesterday'
@@ -17,42 +19,42 @@ export function getRelativeTimeString(timestamp: number): string {
 
   // Under a minute
   if (diff < 60 * 1000) {
-    return 'Just now';
+    return t('general:relativeTime.justNow');
   }
 
   // Under an hour - show minutes
   if (diff < 60 * 60 * 1000) {
     const minutes = Math.floor(diff / (60 * 1000));
-    return `${minutes} ${minutes === 1 ? 'min' : 'mins'} ago`;
+    return t('general:relativeTime.minutesAgo', { count: minutes });
   }
 
   // Under a day - show hours
   if (diff < 24 * 60 * 60 * 1000) {
     const hours = Math.floor(diff / (60 * 60 * 1000));
-    return `${hours} ${hours === 1 ? 'hr' : 'hrs'} ago`;
+    return t('general:relativeTime.hoursAgo', { count: hours });
   }
 
   // Under a week - show days
   if (diff < 7 * 24 * 60 * 60 * 1000) {
     const days = Math.floor(diff / (24 * 60 * 60 * 1000));
-    return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+    return t('general:relativeTime.daysAgo', { count: days });
   }
 
   // Under a month - show weeks
   if (diff < 30 * 24 * 60 * 60 * 1000) {
     const weeks = Math.floor(diff / (7 * 24 * 60 * 60 * 1000));
-    return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+    return t('general:relativeTime.weeksAgo', { count: weeks });
   }
 
   // Under a year - show months
   if (diff < 365 * 24 * 60 * 60 * 1000) {
     const months = Math.floor(diff / (30 * 24 * 60 * 60 * 1000));
-    return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+    return t('general:relativeTime.monthsAgo', { count: months });
   }
 
   // Over a year - show years
   const years = Math.floor(diff / (365 * 24 * 60 * 60 * 1000));
-  return `${years} ${years === 1 ? 'year' : 'years'} ago`;
+  return t('general:relativeTime.yearsAgo', { count: years });
 }
 
 export function getTimeGroupKey(timestamp: number): TimeGroupKey {

@@ -31,6 +31,7 @@ import { activeWorkspacePathAtom } from '../atoms/openProjects';
 import { orgProjectWalkRefreshAtom } from '../atoms/orgProjectWalk';
 import { openSettingsCommandAtom } from '../atoms/settingsNavigation';
 import { errorNotificationService } from '../../services/ErrorNotificationService';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { trackTeamAnalyticsEvent } from '../../utils/teamAnalytics';
 import type { TrackerDeepLinkView } from '../../../shared/trackerDeepLinks';
 import { requestInboxRowSelection } from '../../components/TeamMode/orgWindowCommandBus';
@@ -217,8 +218,8 @@ function applyTeamInviteOutcome(outcome: TeamInviteOutcome): void {
   switch (outcome.status) {
     case 'accepted':
       errorNotificationService.showInfo(
-        `You joined ${outcome.teamName}`,
-        'Shared documents, trackers, and projects for this team are now available.',
+        translate('general:deepLinks.joinedTitle', { team: outcome.teamName }),
+        translate('general:deepLinks.joinedMessage'),
         { duration: 8000 }
       );
       // A toast is where this used to stop, and the user was then told they had
@@ -230,8 +231,8 @@ function applyTeamInviteOutcome(outcome: TeamInviteOutcome): void {
       // Also the normal handoff path: the console accepted the invitation
       // before the app was reached, so this is a confirmation, not a no-op.
       errorNotificationService.showInfo(
-        `${outcome.teamName} is ready`,
-        'Shared documents, trackers, and projects for this team are available in Nimbalyst.',
+        translate('general:deepLinks.readyTitle', { team: outcome.teamName }),
+        translate('general:deepLinks.readyMessage'),
         { duration: 6000 }
       );
       offerProjectWalk();
@@ -243,24 +244,24 @@ function applyTeamInviteOutcome(outcome: TeamInviteOutcome): void {
       // destination as a button — the navigation happens behind it, so without
       // one the warning reads as a dead end.
       errorNotificationService.showWarning(
-        'Sign in to accept this invitation',
+        translate('general:deepLinks.signInToAcceptTitle'),
         outcome.email
-          ? `Sign in to Nimbalyst as ${outcome.email} to join this team.`
-          : 'Sign in to Nimbalyst with the address the invitation was sent to.',
-        { duration: 10000, action: { label: 'Sign in', onClick: openAccountSignIn } }
+          ? translate('general:deepLinks.signInAs', { email: outcome.email })
+          : translate('general:deepLinks.signInWithInvitedAddress'),
+        { duration: 10000, action: { label: translate('general:deepLinks.signIn'), onClick: openAccountSignIn } }
       );
       openAccountSignIn();
       break;
     case 'not-found':
       errorNotificationService.showWarning(
-        'Invitation not available',
-        'This invitation is no longer pending for your account. Ask the team admin to send a new one.',
+        translate('general:deepLinks.invitationUnavailableTitle'),
+        translate('general:deepLinks.invitationUnavailableMessage'),
         { duration: 8000 }
       );
       break;
     case 'error':
       errorNotificationService.showError(
-        'Could not accept the invitation',
+        translate('general:deepLinks.acceptFailedTitle'),
         outcome.message,
         { duration: 8000 }
       );
@@ -336,14 +337,14 @@ export function initDeepLinkListeners(): () => void {
     }) => {
       if (data?.reason === 'not-authenticated') {
         errorNotificationService.showWarning(
-          'Sign in required',
-          'Sign in to your Nimbalyst team account to open this shared folder.',
+          translate('general:deepLinks.signInRequired'),
+          translate('general:deepLinks.signInToOpenFolder'),
           { duration: 6000 }
         );
       } else {
         errorNotificationService.showWarning(
-          'No matching workspace',
-          'You do not have a workspace open for the team that owns this folder.',
+          translate('general:deepLinks.noMatchingWorkspace'),
+          translate('general:deepLinks.noWorkspaceForFolder'),
           { duration: 6000 }
         );
       }
@@ -384,14 +385,14 @@ export function initDeepLinkListeners(): () => void {
     }) => {
       if (data?.reason === 'not-authenticated') {
         errorNotificationService.showWarning(
-          'Sign in required',
-          'Sign in to your Nimbalyst team account to open this shared document.',
+          translate('general:deepLinks.signInRequired'),
+          translate('general:deepLinks.signInToOpenDocument'),
           { duration: 6000 }
         );
       } else {
         errorNotificationService.showWarning(
-          'No matching workspace',
-          'You do not have a workspace open for the team that owns this document.',
+          translate('general:deepLinks.noMatchingWorkspace'),
+          translate('general:deepLinks.noWorkspaceForDocument'),
           { duration: 6000 }
         );
       }
@@ -407,14 +408,14 @@ export function initDeepLinkListeners(): () => void {
     }) => {
       if (data?.reason === 'not-authenticated') {
         errorNotificationService.showWarning(
-          'Sign in required',
-          'Sign in to your Nimbalyst team account to open this tracker.',
+          translate('general:deepLinks.signInRequired'),
+          translate('general:deepLinks.signInToOpenTracker'),
           { duration: 6000 }
         );
       } else {
         errorNotificationService.showWarning(
-          'No matching workspace',
-          'You do not have a workspace open for the team that owns this tracker.',
+          translate('general:deepLinks.noMatchingWorkspace'),
+          translate('general:deepLinks.noWorkspaceForTracker'),
           { duration: 6000 }
         );
       }

@@ -53,6 +53,7 @@ import { GlobalHistoryDialog } from './components/HistoryDialog';
 import { ErrorToastContainer } from './components/ErrorToast/ErrorToast';
 import { ExtensionPermissionPrompt } from './components/ExtensionPermissions/ExtensionPermissionPrompt';
 import { errorNotificationService } from './services/ErrorNotificationService';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 // NOTE: ProjectSelectionDialog now managed by DialogProvider
 // NOTE: Project-window UnifiedOnboarding is managed by DialogProvider.
 import { WorkspaceManagerOnboarding } from './components/WorkspaceManager/WorkspaceManagerOnboarding';
@@ -1448,7 +1449,7 @@ export default function App() {
         busyAction: null,
         feedback: {
           kind: 'error',
-          message: 'Git Log is not available. Enable the Git extension to open it.',
+          message: translate('general:app.gitLogUnavailable'),
         },
       });
       return;
@@ -2021,12 +2022,12 @@ export default function App() {
   const showFigmaMcpMigrationToast = useCallback((force = false) => {
     const show = () => {
       errorNotificationService.showWarning(
-        'Figma MCP Server Needs Reconfiguration',
-        'Your current Figma MCP configuration will not work in Nimbalyst. Figma does not allow OAuth based MCP in certain apps.\n\nTo fix it, open the MCP settings and do the following:\n\n1. Remove the existing OAuth Figma MCP configuration.\n2. Add a new Figma MCP config from the Nimbalyst MCP template.\n3. Add your Personal Access Token to the MCP config.',
+        translate('general:app.figmaMcp.title'),
+        translate('general:app.figmaMcp.message'),
         {
           duration: 0,
           action: {
-            label: 'Open MCP Settings',
+            label: translate('general:app.figmaMcp.openSettings'),
             onClick: () => {
               store.set(openSettingsCommandAtom, { category: 'mcp-servers', timestamp: Date.now() });
             },
@@ -2273,8 +2274,8 @@ export default function App() {
       const commitFiles = mapSelectedCommitFiles(files);
       if (commitFiles.length === 0) {
         errorNotificationService.showWarning(
-          'Nothing to commit',
-          'The selected files cannot be committed (conflicted files are excluded).',
+          translate('general:app.nothingToCommit.title'),
+          translate('general:app.nothingToCommit.message'),
         );
         return;
       }
@@ -2317,7 +2318,7 @@ export default function App() {
       } catch (error) {
         console.error('[App] Commit with AI failed:', error);
         errorNotificationService.showError(
-          'Commit with AI failed',
+          translate('general:app.commitWithAiFailed'),
           error instanceof Error ? error.message : String(error),
         );
       }
@@ -2602,12 +2603,12 @@ export default function App() {
 
       if (activeCollabUnsynced) {
         const confirmed = await confirmDialog.confirm({
-          title: 'Unsynced Collaborative Changes',
+          title: translate('general:app.unsyncedCollab.title'),
           message: activeCollabStatus === 'replaying'
-            ? 'This collaborative document is still replaying local changes to the server. Closing now may delay recovery until you reopen it.'
-            : 'This collaborative document has local changes that have not been confirmed by the server yet. Closing now will keep them queued locally, but they will not sync until you reopen the document and reconnect.',
-          confirmLabel: 'Close Anyway',
-          cancelLabel: 'Keep Editing',
+            ? translate('general:app.unsyncedCollab.replaying')
+            : translate('general:app.unsyncedCollab.unconfirmed'),
+          confirmLabel: translate('dialogs:editorMode.closeCollab.confirm'),
+          cancelLabel: translate('general:app.unsyncedCollab.keepEditing'),
           destructive: true
         });
 
@@ -2618,10 +2619,10 @@ export default function App() {
       }
 
       const confirmed = await confirmDialog.confirm({
-        title: 'Unsaved Changes',
-        message: 'Do you want to save the changes you made? Your changes will be lost if you don\'t save them.',
-        confirmLabel: 'Save',
-        cancelLabel: 'Don\'t Save',
+        title: translate('general:app.unsavedChanges.title'),
+        message: translate('general:app.unsavedChanges.message'),
+        confirmLabel: translate('common:save'),
+        cancelLabel: translate('general:app.unsavedChanges.dontSave'),
         destructive: false
       });
 
@@ -3018,8 +3019,8 @@ export default function App() {
               ) : (
                 <div className="flex-1 flex items-center justify-center text-nim-muted">
                   <div className="text-center">
-                    <p>Agent mode requires a workspace</p>
-                    <p className="mt-2 text-sm">Open a workspace to use agent features</p>
+                    <p>{translate('general:app.agentNeedsWorkspace')}</p>
+                    <p className="mt-2 text-sm">{translate('general:app.agentNeedsWorkspaceHint')}</p>
                   </div>
                 </div>
               )}

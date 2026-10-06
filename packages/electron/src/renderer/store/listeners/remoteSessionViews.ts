@@ -4,6 +4,7 @@ import {sessionRegistryAtom, sessionDraftInputAtom, sessionDraftAttachmentsAtom,
 import { atom } from 'jotai';
 import { atomFamily } from '../debug/atomFamilyRegistry';
 import { store } from '@nimbalyst/runtime/store';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import type { RemoteSessionSnapshot } from '../../../shared/remoteSessions';
 
 export const remoteSessionSnapshotAtom = atomFamily((_sessionId: string) => atom<RemoteSessionSnapshot | null>(null));
@@ -59,7 +60,7 @@ export function acquireRemoteSession(sessionId: string, workspacePath: string): 
   else {
     watches.set(watchId, { sessionId, refs: 1 });
     void window.electronAPI.invoke('ai:watchRemoteSession', sessionId, workspacePath, watchId).catch(error => {
-      if (watches.has(watchId)) store.set(remoteSessionErrorAtom(sessionId), error instanceof Error ? error.message : 'Could not open the remote session.');
+      if (watches.has(watchId)) store.set(remoteSessionErrorAtom(sessionId), error instanceof Error ? error.message : translate('general:remoteSession.openFailed'));
     });
   }
   let released = false;

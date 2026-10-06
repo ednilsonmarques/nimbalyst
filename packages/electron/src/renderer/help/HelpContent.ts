@@ -12,6 +12,7 @@ import { KeyboardShortcuts } from '../../shared/KeyboardShortcuts';
 import { CANVAS_HELP_CONTENT } from '@nimbalyst/runtime/canvas/canvasHelpContent';
 import { getRegisteredPanels } from '../extensions/panels/PanelRegistry';
 import { getRegisteredKeybindings } from '../extensions/commands/ExtensionCommandRegistry';
+import { t } from '@nimbalyst/runtime/i18n';
 
 /**
  * Help content for a single UI element
@@ -425,12 +426,26 @@ export const HelpContent: Record<string, HelpEntry> = {
 };
 
 /**
+ * Resolve a registry entry in the current UI language. The English text in
+ * `HelpContent` stays the source of truth: it is the fallback whenever
+ * `general:help.<testId>` has no translation (e.g. canvas entries).
+ */
+function localizeHelpEntry(testId: string, entry: HelpEntry): HelpEntry {
+  const base = `general:help.${testId}`;
+  return {
+    ...entry,
+    title: t(`${base}.title`, { defaultValue: entry.title }),
+    body: t(`${base}.body`, { defaultValue: entry.body }),
+  };
+}
+
+/**
  * Get help content for a UI element by its data-testid.
  * Checks the static registry first, then falls back to extension panel tooltips.
  */
 export function getHelpContent(testId: string): HelpEntry | undefined {
   if (testId in HelpContent) {
-    return HelpContent[testId];
+    return localizeHelpEntry(testId, HelpContent[testId]);
   }
   return getExtensionPanelHelpContent(testId);
 }

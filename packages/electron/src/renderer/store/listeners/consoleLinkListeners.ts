@@ -6,6 +6,7 @@
  * written with.
  */
 import { errorNotificationService } from '../../services/ErrorNotificationService';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { installTrackerReferenceLinks, openConsoleLinkInWindow } from '../../utils/openConsoleLink';
 
 interface ConsoleLinkOpenRequest {
@@ -26,8 +27,8 @@ export function initConsoleLinkListeners(): () => void {
     if (!handled && request.fromDeepLink) {
       // From the console, so the browser has already declined it.
       errorNotificationService.showWarning(
-        'Not in this project',
-        'Open the project this link belongs to, then try the link again.',
+        translate('general:links.notInProjectTitle'),
+        translate('general:links.notInProjectMessage'),
         { duration: 6000 },
       );
     }

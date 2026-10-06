@@ -1,6 +1,7 @@
 import { store } from '@nimbalyst/runtime/store';
 import type { SessionNotificationNavigationTarget } from '../../../shared/sessionNotificationNavigation';
 import { errorNotificationService } from '../../services/ErrorNotificationService';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
   initSessionList,
   refreshSessionListAtom,
@@ -44,7 +45,7 @@ function safeSourceLabel(target: SessionNotificationNavigationTarget): string {
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, MAX_SOURCE_LABEL_LENGTH);
-  return sanitized || `Session ${target.sessionId.slice(0, 8)}`;
+  return sanitized || translate('general:sessionNavigation.fallbackLabel', { id: target.sessionId.slice(0, 8) });
 }
 
 function failureMessage(
@@ -54,13 +55,13 @@ function failureMessage(
   const shortId = target.sessionId.slice(0, 8);
   switch (reason) {
     case 'archived':
-      return `Session ${shortId} is archived and was not opened. Restore it from archived sessions, then retry.`;
+      return translate('general:sessionNavigation.archived', { id: shortId });
     case 'missing':
-      return `Session ${shortId} could not be found in its originating project.`;
+      return translate('general:sessionNavigation.missing', { id: shortId });
     case 'project-unavailable':
-      return `Nimbalyst could not switch to the project for session ${shortId}. Close a project from the rail, then retry.`;
+      return translate('general:sessionNavigation.projectUnavailable', { id: shortId });
     default:
-      return `Nimbalyst could not verify session ${shortId} in its originating project.`;
+      return translate('general:sessionNavigation.lookupFailed', { id: shortId });
   }
 }
 
@@ -71,7 +72,7 @@ function showUnavailable(
   const label = safeSourceLabel(target);
   let notificationId = '';
   notificationId = errorNotificationService.showWarning(
-    `${label} unavailable`,
+    translate('general:sessionNavigation.unavailableTitle', { label }),
     failureMessage(target, reason),
     {
       duration: 0,
@@ -79,7 +80,7 @@ function showUnavailable(
       // so it replaces the existing warning instead of being deduplicated away.
       allowDuplicate: true,
       action: {
-        label: 'Retry',
+        label: translate('common:retry'),
         onClick: () => {
           errorNotificationService.dismiss(notificationId);
           void navigateToNotificationSession(target);

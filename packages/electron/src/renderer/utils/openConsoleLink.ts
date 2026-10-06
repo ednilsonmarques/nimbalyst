@@ -18,6 +18,7 @@ import {
 import { activeWorkspacePathAtom } from '../store/atoms/openProjects';
 import { setWindowModeAtom } from '../store/atoms/windowMode';
 import { errorNotificationService } from '../services/ErrorNotificationService';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { openSharedDocumentInTab } from './openSharedDocumentInTab';
 import { planConsoleLinkOpen, trackerReferenceLinkFor } from './consoleLinkPlan';
 
@@ -104,10 +105,10 @@ export function openConsoleLinkInWindow(href: string): boolean {
       return true;
     case 'missing':
       errorNotificationService.showWarning(
-        plan.what === 'view' ? 'View not available' : 'Page not in this project',
+        plan.what === 'view' ? translate('general:links.viewUnavailableTitle') : translate('general:links.pageNotInProjectTitle'),
         plan.what === 'view'
-          ? 'This list is not available to open on its own.'
-          : 'The page this link points at is not in this project.',
+          ? translate('general:links.viewUnavailableMessage')
+          : translate('general:links.pageNotInProjectMessage'),
         { duration: 6000 },
       );
       return true;

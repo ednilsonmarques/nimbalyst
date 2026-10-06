@@ -7,6 +7,7 @@
 
 import { atom } from 'jotai';
 import { atomFamily } from '../debug/atomFamilyRegistry';
+import { t } from '@nimbalyst/runtime/i18n';
 import type {
   SuperLoop,
   SuperLoopWithIterations,
@@ -383,17 +384,17 @@ export function getSuperStatusInfo(status: SuperLoopStatus): {
 } {
   switch (status) {
     case 'running':
-      return { label: 'Running', color: 'running' };
+      return { label: t('agent:superLoop.status.running'), color: 'running' };
     case 'paused':
-      return { label: 'Paused', color: 'paused' };
+      return { label: t('agent:superLoop.status.paused'), color: 'paused' };
     case 'completed':
-      return { label: 'Completed', color: 'completed' };
+      return { label: t('agent:superLoop.status.completed'), color: 'completed' };
     case 'failed':
-      return { label: 'Failed', color: 'failed' };
+      return { label: t('agent:superLoop.status.failed'), color: 'failed' };
     case 'blocked':
-      return { label: 'Blocked', color: 'blocked' };
+      return { label: t('agent:superLoop.status.blocked'), color: 'blocked' };
     case 'pending':
     default:
-      return { label: 'Pending', color: 'pending' };
+      return { label: t('agent:superLoop.status.pending'), color: 'pending' };
   }
 }

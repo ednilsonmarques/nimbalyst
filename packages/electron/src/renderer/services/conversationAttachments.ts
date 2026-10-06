@@ -26,6 +26,7 @@ import {
 } from '@nimbalyst/collab-protocol';
 
 import { MAX_COLLAB_ASSET_BYTES } from '@nimbalyst/runtime/sync/collabAssetFormat';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 /** Longest edge a re-encoded image keeps. Above this it is scaled down. */
 export const ATTACHMENT_MAX_IMAGE_EDGE = 1920;
@@ -235,14 +236,14 @@ function toAttachmentError(error: unknown, fileName: string): AttachmentError {
   if (message.includes('COLLAB_ASSET_STORAGE_BUDGET_EXCEEDED')) {
     return new AttachmentError(
       'storageBudget',
-      'Out of local space for pending uploads. Wait for earlier attachments to finish sending, then try again.',
+      translate('general:attachments.storageBudget'),
     );
   }
   return new AttachmentError(
     'uploadFailed',
     message.trim().length > 0
-      ? `${fileName} could not be attached: ${message}`
-      : `${fileName} could not be attached.`,
+      ? translate('general:attachments.uploadFailedWithReason', { file: fileName, message })
+      : translate('general:attachments.uploadFailed', { file: fileName }),
   );
 }
 

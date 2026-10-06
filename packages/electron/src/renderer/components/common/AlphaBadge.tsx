@@ -10,6 +10,8 @@ import {
   useRole,
 } from '@floating-ui/react';
 import { windowControlsClearance } from '@nimbalyst/runtime/ui/floating/windowControlsClearance';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { TEAM_BETA_TOOLTIP } from './TeamBetaNotice';
 
 interface AlphaBadgeProps {
   /**
@@ -32,6 +34,17 @@ const STAGE_LABELS = {
   beta: { word: 'beta', dot: 'β', title: 'Beta' },
 } as const;
 
+/**
+ * The shared English tooltip constants are passed in as props by many callers;
+ * map them to their translation here so every badge follows the UI language.
+ * Any other caller-supplied tooltip renders as given.
+ */
+const KNOWN_TOOLTIP_KEYS: Record<string, string> = {
+  [DEFAULT_TOOLTIP]: 'alphaBadge.defaultTooltip',
+  [SETTINGS_ALPHA_TOOLTIP]: 'alphaBadge.settingsTooltip',
+  [TEAM_BETA_TOOLTIP]: 'alphaBadge.teamBetaTooltip',
+};
+
 const PILL_BASE = 'inline-flex items-center font-medium lowercase bg-[var(--nim-bg-tertiary)] border border-[var(--nim-border)]';
 
 const SIZE_CLASSES: Record<NonNullable<AlphaBadgeProps['size']>, string> = {
@@ -46,7 +59,11 @@ export const AlphaBadge: React.FC<AlphaBadgeProps> = ({
   className = '',
   tooltip = DEFAULT_TOOLTIP,
 }) => {
+  const { t } = useTranslation('general');
   const label = STAGE_LABELS[stage];
+  const stageTitle = t(`alphaBadge.stage.${stage}.title`);
+  const tooltipKey = tooltip ? KNOWN_TOOLTIP_KEYS[tooltip] : undefined;
+  const tooltipText = tooltipKey ? t(tooltipKey) : tooltip;
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const { refs, floatingStyles, context } = useFloating({
     open: tooltipOpen,
@@ -64,13 +81,13 @@ export const AlphaBadge: React.FC<AlphaBadgeProps> = ({
         ref={refs.setReference}
         data-testid="alpha-badge"
         data-stage={stage}
-        aria-label={`${label.title} feature`}
+        aria-label={t(`alphaBadge.stage.${stage}.ariaLabel`)}
         className={`${SIZE_CLASSES[size]} ${className}`.trim()}
         {...getReferenceProps()}
       >
-        {size === 'dot' ? label.dot : label.word}
+        {size === 'dot' ? label.dot : t(`alphaBadge.stage.${stage}.word`)}
       </span>
-      {tooltipOpen && tooltip && (
+      {tooltipOpen && tooltipText && (
         <FloatingPortal>
           <div
             ref={refs.setFloating}
@@ -78,8 +95,8 @@ export const AlphaBadge: React.FC<AlphaBadgeProps> = ({
             style={floatingStyles}
             {...getFloatingProps()}
           >
-            <div className="mb-1 text-[13px] font-semibold text-[var(--nim-text)]">{label.title}</div>
-            {tooltip}
+            <div className="mb-1 text-[13px] font-semibold text-[var(--nim-text)]">{stageTitle}</div>
+            {tooltipText}
           </div>
         </FloatingPortal>
       )}

@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { t } from '@nimbalyst/runtime/i18n';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -52,16 +53,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           className="p-8 text-center text-nim bg-nim-secondary rounded-lg border border-nim"
         >
           <h3 className="mt-0 mb-4 text-lg">
-            Something went wrong
+            {t('general:errorBoundary.title')}
           </h3>
           <p className="mb-6 text-nim-muted">
-            {this.state.error?.message || 'An unexpected error occurred'}
+            {this.state.error?.message || t('general:errorBoundary.unexpected')}
           </p>
           <button
             onClick={this.handleReset}
             className="px-4 py-2 bg-nim-primary text-nim-on-primary border-none rounded-md cursor-pointer text-sm hover:bg-nim-primary-hover"
           >
-            Try Again
+            {t('general:errorBoundary.tryAgain')}
           </button>
         </div>
       );

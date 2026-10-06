@@ -65,6 +65,7 @@ import {
   toStableAnalyticsCategory,
 } from "../../shared/analytics/teamAnalytics";
 import { trackTeamAnalyticsEvent } from "../utils/teamAnalytics";
+import { t as translate } from "@nimbalyst/runtime/i18n";
 
 /** Everything the share dialog asks the author for. */
 export interface ShareToTeamAnswers {
@@ -337,12 +338,12 @@ export async function shareFileToTeam(params: {
     if (showNotifications) {
       if (options)
         errorNotificationService.showError(
-          "Could not share to team",
+          translate("general:share.couldNotShare"),
           message,
           options
         );
       else
-        errorNotificationService.showError("Could not share to team", message);
+        errorNotificationService.showError(translate("general:share.couldNotShare"), message);
     }
     return { status: "failed", error: message };
   };
@@ -611,7 +612,7 @@ export async function shareFileToTeam(params: {
   const teamOrgId = store.get(activeTeamOrgIdAtom);
   const copyLinkAction = teamOrgId
     ? {
-        label: "Copy Link",
+        label: translate("general:share.copyLink"),
         onClick: () => {
           const deepLink = buildSharedDocumentDeepLink(
             createdDocument.documentId,
@@ -623,8 +624,8 @@ export async function shareFileToTeam(params: {
               error
             );
             errorNotificationService.showError(
-              "Copy failed",
-              "Could not write the link to the clipboard."
+              translate("general:share.copyFailed"),
+              translate("general:share.copyFailedMessage")
             );
           });
         },
@@ -684,14 +685,12 @@ export async function shareFileToTeam(params: {
   const linkedParts: string[] = [];
   if (linkedCount > 0) {
     linkedParts.push(
-      `Shared ${linkedCount} linked document${linkedCount === 1 ? "" : "s"}.`
+      translate("general:share.linkedShared", { count: linkedCount })
     );
   }
   if (linkedFailureCount > 0) {
     linkedParts.push(
-      `${linkedFailureCount} linked document${
-        linkedFailureCount === 1 ? "" : "s"
-      } could not be shared and remain local links.`
+      translate("general:share.linkedFailed", { count: linkedFailureCount })
     );
   }
   const linkedSummary =
@@ -736,20 +735,16 @@ export async function shareFileToTeam(params: {
     default: {
       const body =
         migrationToast.kind === "ok"
-          ? `"${finalTitle}" is now a collaborative document. Migrated ${
-              migrationToast.okCount
-            } attachment${
-              migrationToast.okCount === 1 ? "" : "s"
-            }.${linkedSummary}`
-          : `"${finalTitle}" is now a collaborative document.${linkedSummary}`;
+          ? `${translate("general:share.nowCollaborativeMigrated", { title: finalTitle, count: migrationToast.okCount })}${linkedSummary}`
+          : `${translate("general:share.nowCollaborative", { title: finalTitle })}${linkedSummary}`;
       if (linkedFailureCount > 0) {
         errorNotificationService.showWarning(
-          "Shared with missing linked documents",
+          translate("general:share.missingLinkedTitle"),
           body,
           { details: linkedDetails, duration: 10000, action: copyLinkAction }
         );
       } else {
-        errorNotificationService.showInfo("Shared to team", body, {
+        errorNotificationService.showInfo(translate("general:share.sharedToTeam"), body, {
           duration: 4000,
           action: copyLinkAction,
         });
@@ -758,21 +753,17 @@ export async function shareFileToTeam(params: {
     }
     case "partial":
       errorNotificationService.showWarning(
-        "Shared with missing attachments",
-        `"${finalTitle}" was shared but ${
-          migrationToast.failedCount
-        } attachment${
-          migrationToast.failedCount === 1 ? "" : "s"
-        } failed to upload.${linkedSummary}`,
+        translate("general:share.missingAttachmentsTitle"),
+        `${translate("general:share.attachmentsFailed", { title: finalTitle, count: migrationToast.failedCount })}${linkedSummary}`,
         { details: linkedDetails, duration: 8000, action: copyLinkAction }
       );
       break;
     case "unavailable":
       errorNotificationService.showWarning(
-        "Shared to team",
-        `"${finalTitle}" is now collaborative, but image attachments could not be migrated${
-          migrationToast.message ? `: ${migrationToast.message}` : "."
-        }${linkedSummary}`,
+        translate("general:share.sharedToTeam"),
+        `${migrationToast.message
+          ? translate("general:share.imagesNotMigratedWithReason", { title: finalTitle, reason: migrationToast.message })
+          : translate("general:share.imagesNotMigrated", { title: finalTitle })}${linkedSummary}`,
         { details: linkedDetails, duration: 8000, action: copyLinkAction }
       );
       break;

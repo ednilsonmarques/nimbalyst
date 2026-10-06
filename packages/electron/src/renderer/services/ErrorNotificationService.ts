@@ -5,6 +5,7 @@
  */
 
 import posthog from 'posthog-js';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 export type ErrorSeverity = 'error' | 'warning' | 'info';
 
@@ -147,7 +148,7 @@ class ErrorNotificationService {
    */
   showFromError(
     error: Error,
-    title: string = 'An error occurred',
+    title: string = translate('general:errors.anErrorOccurred'),
     context?: Record<string, any>
   ): string {
     return this.showError(title, error.message, {
@@ -300,7 +301,7 @@ if (typeof window !== 'undefined') {
     });
 
     errorNotificationService.showError(
-      'Uncaught Error',
+      translate('general:errors.uncaughtError'),
       message,
       {
         stack: event.error?.stack,
@@ -333,7 +334,7 @@ if (typeof window !== 'undefined') {
     });
 
     errorNotificationService.showError(
-      'Unhandled Promise Rejection',
+      translate('general:errors.unhandledRejection'),
       message,
       {
         stack: reason?.stack

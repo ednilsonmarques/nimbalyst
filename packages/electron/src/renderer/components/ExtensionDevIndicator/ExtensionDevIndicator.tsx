@@ -4,6 +4,8 @@ import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { ExtensionErrorConsole } from './ExtensionErrorConsole';
 import { extensionDevToolsEnabledAtom } from '../../store/atoms/appSettings';
 import { HelpTooltip } from '../../help';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 /**
  * Format a timestamp as a relative time string (e.g., "5m ago", "2h ago")
@@ -17,13 +19,13 @@ function formatRelativeTime(startTime: number): string {
   const diffDays = Math.floor(diffHours / 24);
 
   if (diffDays > 0) {
-    return `${diffDays}d ago`;
+    return translate('tracker:time.daysAgo', { count: diffDays });
   } else if (diffHours > 0) {
-    return `${diffHours}h ago`;
+    return translate('tracker:time.hoursAgo', { count: diffHours });
   } else if (diffMinutes > 0) {
-    return `${diffMinutes}m ago`;
+    return translate('tracker:time.minutesAgo', { count: diffMinutes });
   } else {
-    return 'just now';
+    return translate('tracker:time.justNow');
   }
 }
 
@@ -42,12 +44,12 @@ interface RebuildNotice {
 }
 
 function summarizeRebuildError(error: string | undefined): string {
-  if (!error) return 'The extension build failed. Open View Logs for details.';
+  if (!error) return translate('general:extensionDev.buildFailedGeneric');
   const lines = error.split('\n').map(line => line.trim()).filter(Boolean);
   const usefulLine = lines.find(line => /error|failed|timed out/i.test(line) && line !== 'Extension build failed:')
     ?? lines[1]
     ?? lines[0]
-    ?? 'The extension build failed. Open View Logs for details.';
+    ?? translate('general:extensionDev.buildFailedGeneric');
   return usefulLine.length > 180 ? `${usefulLine.slice(0, 177)}...` : usefulLine;
 }
 
@@ -58,6 +60,7 @@ interface ExtensionDevIndicatorProps {
 export const ExtensionDevIndicator: React.FC<ExtensionDevIndicatorProps> = ({
   onOpenSettings,
 }) => {
+  const { t } = useTranslation('general');
   const isEnabled = useAtomValue(extensionDevToolsEnabledAtom);
   const [menuOpen, setMenuOpen] = useState(false);
   const [rebuildSubmenuOpen, setRebuildSubmenuOpen] = useState(false);
@@ -259,7 +262,7 @@ export const ExtensionDevIndicator: React.FC<ExtensionDevIndicatorProps> = ({
         setExtensions(current => current.map(item => (
           item.id === extension.id ? { ...item, staleBundleWarning: undefined } : item
         )));
-        setRebuildNotice({ kind: 'success', message: `${extension.name} rebuilt and reloaded.` });
+        setRebuildNotice({ kind: 'success', message: t('extensionDev.rebuiltOne', { name: extension.name }) });
       }
     } catch (error) {
       console.error(`[ExtensionDevIndicator] Failed to rebuild ${extension.name}:`, error);
@@ -291,8 +294,8 @@ export const ExtensionDevIndicator: React.FC<ExtensionDevIndicatorProps> = ({
         rebuiltIds.has(item.id) ? { ...item, staleBundleWarning: undefined } : item
       )));
       setRebuildNotice(failed.length > 0
-        ? { kind: 'error', message: `Build failed for ${failed.join(', ')}. Open View Logs for details.` }
-        : { kind: 'success', message: `Rebuilt and reloaded ${extensions.length} extension${extensions.length === 1 ? '' : 's'}.` });
+        ? { kind: 'error', message: t('extensionDev.buildFailedFor', { names: failed.join(', ') }) }
+        : { kind: 'success', message: t('extensionDev.rebuiltMany', { count: extensions.length }) });
     } catch (error) {
       console.error('[ExtensionDevIndicator] Failed to rebuild extensions:', error);
       setRebuildNotice({ kind: 'error', message: summarizeRebuildError(String(error)) });
@@ -319,7 +322,7 @@ export const ExtensionDevIndicator: React.FC<ExtensionDevIndicatorProps> = ({
           ref={buttonRef}
           className="extension-dev-indicator nav-button relative w-9 h-9 flex items-center justify-center bg-transparent border-none rounded-md cursor-pointer transition-all duration-150 p-0 hover:bg-nim-tertiary active:scale-95 focus-visible:outline-2 focus-visible:outline-[var(--nim-primary)] focus-visible:outline-offset-2 text-nim-muted hover:text-nim"
           onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Extension Development Mode"
+          aria-label={t('extensionDev.ariaLabel')}
           aria-expanded={menuOpen}
           aria-haspopup="menu"
           data-testid="gutter-extension-dev-button"
@@ -336,18 +339,18 @@ export const ExtensionDevIndicator: React.FC<ExtensionDevIndicatorProps> = ({
           role="menu"
         >
           <div className="extension-dev-menu-header flex items-center justify-between pt-3 px-3 pb-2">
-            <span className="extension-dev-menu-title text-[13px] font-semibold text-[var(--nim-text)]">Extension Dev Mode</span>
+            <span className="extension-dev-menu-title text-[13px] font-semibold text-[var(--nim-text)]">{t('extensionDev.title')}</span>
           </div>
 
           <div className="extension-dev-menu-status flex items-center gap-2 mx-3 mb-2 py-2 px-2.5 rounded-md bg-purple-500/10 border border-purple-500/30 text-xs text-[var(--nim-text-muted)] [&_.material-symbols-outlined]:text-purple-500">
             <MaterialSymbol icon="check_circle" size={16} />
-            <span>Development tools active</span>
+            <span>{t('extensionDev.toolsActive')}</span>
           </div>
 
           {relativeTime && (
             <div className="extension-dev-menu-uptime flex items-center gap-2 mx-3 mb-2 text-xs text-[var(--nim-text-faint)] [&_.material-symbols-outlined]:text-[var(--nim-text-faint)]">
               <MaterialSymbol icon="schedule" size={16} />
-              <span>Started {relativeTime}</span>
+              <span>{t('extensionDev.started', { time: relativeTime })}</span>
             </div>
           )}
 
@@ -358,7 +361,7 @@ export const ExtensionDevIndicator: React.FC<ExtensionDevIndicatorProps> = ({
             >
               <MaterialSymbol icon="warning" size={16} />
               <span>
-                {staleExtensionCount} stale extension bundle{staleExtensionCount === 1 ? '' : 's'} detected. Rebuild before testing.
+                {t('extensionDev.staleBundles', { count: staleExtensionCount })}
               </span>
             </div>
           )}
@@ -387,7 +390,7 @@ export const ExtensionDevIndicator: React.FC<ExtensionDevIndicatorProps> = ({
             >
               <MaterialSymbol icon="terminal" size={18} />
               <span>
-                View Logs
+                {t('extensionDev.viewLogs')}
                 {errorCount > 0 && (
                   <span className="extension-dev-error-badge inline-flex items-center justify-center min-w-[18px] h-[18px] px-[5px] ml-2 rounded-full bg-[var(--nim-error)] text-white text-[11px] font-semibold">{errorCount}</span>
                 )}
@@ -401,7 +404,7 @@ export const ExtensionDevIndicator: React.FC<ExtensionDevIndicatorProps> = ({
                 role="menuitem"
               >
                 <MaterialSymbol icon="settings" size={18} />
-                <span>Extension Settings</span>
+                <span>{t('extensionDev.settings')}</span>
               </button>
             )}
 
@@ -416,7 +419,7 @@ export const ExtensionDevIndicator: React.FC<ExtensionDevIndicatorProps> = ({
               >
                 <span className="flex items-center gap-2">
                   <MaterialSymbol icon="build" size={18} />
-                  <span>{rebuildingExtension ? 'Rebuilding...' : 'Rebuild Extensions'}</span>
+                  <span>{rebuildingExtension ? t('extensionDev.rebuilding') : t('extensionDev.rebuildExtensions')}</span>
                 </span>
                 <MaterialSymbol icon="chevron_right" size={18} />
               </button>
@@ -439,7 +442,7 @@ export const ExtensionDevIndicator: React.FC<ExtensionDevIndicatorProps> = ({
                       role="menuitem"
                     >
                       <MaterialSymbol icon="select_all" size={18} />
-                      <span>{rebuildingExtension === 'all' ? 'Rebuilding all...' : 'All Extensions'}</span>
+                      <span>{rebuildingExtension === 'all' ? t('extensionDev.rebuildingAll') : t('extensionDev.allExtensions')}</span>
                     </button>
 
                     {extensions.length > 0 && (
@@ -457,14 +460,14 @@ export const ExtensionDevIndicator: React.FC<ExtensionDevIndicatorProps> = ({
                       >
                         <MaterialSymbol icon={ext.staleBundleWarning ? 'warning' : 'extension'} size={18} />
                         <span className="truncate">
-                          {rebuildingExtension === ext.id ? 'Rebuilding...' : ext.name}
+                          {rebuildingExtension === ext.id ? t('extensionDev.rebuilding') : ext.name}
                         </span>
                       </button>
                     ))}
 
                     {extensions.length === 0 && (
                       <div className="px-2 py-1 text-xs text-[var(--nim-text-faint)]">
-                        No buildable extensions found
+                        {t('extensionDev.noBuildable')}
                       </div>
                     )}
                   </div>
@@ -479,7 +482,7 @@ export const ExtensionDevIndicator: React.FC<ExtensionDevIndicatorProps> = ({
               role="menuitem"
             >
               <MaterialSymbol icon="refresh" size={18} />
-              <span>{isRestarting ? 'Restarting...' : 'Restart Nimbalyst'}</span>
+              <span>{isRestarting ? t('extensionDev.restarting') : t('extensionDev.restart')}</span>
             </button>
           </div>
         </div>

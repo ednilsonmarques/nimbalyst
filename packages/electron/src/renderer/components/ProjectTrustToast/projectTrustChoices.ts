@@ -1,3 +1,5 @@
+import { t } from '@nimbalyst/runtime/i18n';
+
 export type PermissionMode = 'ask' | 'allow-all' | 'bypass-all';
 
 export type ProjectTrustChoice =
@@ -24,25 +26,23 @@ export interface ProjectTrustPresentation {
 export const DEFAULT_PROJECT_TRUST_CHOICE: ProjectTrustChoice =
   'agent-verified';
 
+// Getters so every read resolves in the current UI language; the keys stay
+// the persisted choice ids.
 export const PROJECT_TRUST_CHOICE_LABELS: Record<ProjectTrustChoice, string> = {
-  'agent-verified': 'Agent-verified',
-  'allow-everything': 'Allow everything',
-  'allow-edits-only': 'Allow edits only',
-  'ask-every-time': 'Ask every time',
+  get 'agent-verified'() { return t('dialogs:projectTrust.choiceLabels.agentVerified'); },
+  get 'allow-everything'() { return t('dialogs:projectTrust.choiceLabels.allowEverything'); },
+  get 'allow-edits-only'() { return t('dialogs:projectTrust.choiceLabels.allowEditsOnly'); },
+  get 'ask-every-time'() { return t('dialogs:projectTrust.choiceLabels.askEveryTime'); },
 };
 
 export const PROJECT_TRUST_CHOICE_DESCRIPTIONS: Record<
   ProjectTrustChoice,
   string
 > = {
-  'agent-verified':
-    'Works without interrupting you; risky actions like deploys and destructive commands pause for your OK.',
-  'allow-everything':
-    'No prompts, no checks — every action runs immediately. For projects you fully trust.',
-  'allow-edits-only':
-    'File edits run automatically; shell commands and web requests ask first.',
-  'ask-every-time':
-    'Approve each action before it runs. Your approvals are remembered.',
+  get 'agent-verified'() { return t('general:projectTrust.agentVerifiedDescription'); },
+  get 'allow-everything'() { return t('dialogs:projectTrust.choiceDescriptions.allowEverything'); },
+  get 'allow-edits-only'() { return t('dialogs:projectTrust.choiceDescriptions.allowEditsOnly'); },
+  get 'ask-every-time'() { return t('dialogs:projectTrust.choiceDescriptions.askEveryTime'); },
 };
 
 const PROJECT_TRUST_SETTINGS_BY_CHOICE: Record<
