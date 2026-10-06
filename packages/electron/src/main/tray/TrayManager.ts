@@ -1848,7 +1848,7 @@ export class TrayManager {
   private createFallbackSession(sessionId: string): TraySessionInfo {
     return {
       sessionId,
-      title: 'AI Session',
+      title: t('system:tray.fallbackSessionTitle'),
       workspacePath: '',
       status: 'running',
       isStreaming: false,

@@ -1,1 +1,91 @@
-{}
+{
+  "contextMenu": {
+    "noSuggestions": "No suggestions",
+    "addToDictionary": "Add to Dictionary"
+  },
+  "tray": {
+    "fallbackSessionTitle": "AI Session"
+  },
+  "claudeCode": {
+    "loginTerminalOpened": "Terminal window opened. Type /login and press Enter to authenticate, then click \"Refresh Status\" to verify.",
+    "logoutTerminalOpened": "Terminal window opened. Type /logout and press Enter to complete logout.",
+    "noTerminalLogin": "No terminal emulator found. Please run \"{{path}}\" manually and type /login to authenticate.",
+    "noTerminalLogout": "No terminal emulator found. Please run \"{{path}}\" manually and type /logout in your terminal."
+  },
+  "mcpTest": {
+    "startingServer": "Starting server...",
+    "testingConnection": "Testing server connection...",
+    "downloadingPackages": "Downloading packages..."
+  },
+  "extensionPermissions": {
+    "workspaceFiles": {
+      "label": "Workspace files",
+      "description": "Read and write files inside the current workspace."
+    },
+    "mcpServerRegister": {
+      "label": "Register MCP tools",
+      "description": "Expose extension-defined MCP tools to the AI agent."
+    },
+    "nimbalystDatabaseRead": {
+      "label": "Read Nimbalyst database",
+      "description": "Read Nimbalyst's local PGLite store (sessions, documents, trackers)."
+    },
+    "nimbalystDatabaseWrite": {
+      "label": "Write Nimbalyst database",
+      "description": "Modify Nimbalyst's local PGLite store. Can change sessions, documents, trackers."
+    },
+    "secretsRead": {
+      "label": "Read secrets",
+      "description": "Read stored credentials, API keys, and other secrets."
+    },
+    "aiSessions": {
+      "label": "Run AI sessions",
+      "description": "Start AI agent sessions in this project, send them prompts, and read their results and token usage. Sessions run under the project's permission mode."
+    }
+  },
+  "notifications": {
+    "responseReady": "Response Ready",
+    "responseComplete": "Response complete",
+    "claudeCliPaused": "Claude CLI paused",
+    "anthropicOverloaded": "Anthropic is overloaded. Claude will retry shortly.",
+    "rateLimited": "Rate limited by Anthropic.",
+    "rateLimitedRetry": "Rate limited by Anthropic (retry after {{seconds}}s)."
+  },
+  "teamInbox": {
+    "sources": {
+      "room": "Room",
+      "documentDiscussion": "Document discussion",
+      "documentQuestion": "Document question",
+      "tracker": "Tracker",
+      "document": "Document",
+      "feedbackRequest": "Feedback request"
+    },
+    "newActivity": "New activity",
+    "inbox": "Inbox",
+    "aTeammate": "A teammate"
+  },
+  "migrationSplash": {
+    "initializing": "Initializing",
+    "headline": "Upgrading your local database",
+    "note": "This happens once. Please leave Nimbalyst open &mdash; it will restart itself when finished.",
+    "rowsProgress": "{{copied}} of {{expected}} rows",
+    "copyingTable": "Copying {{table}}",
+    "working": "Working",
+    "phases": {
+      "preparing": "Preparing",
+      "copying": "Copying",
+      "rebuildingFts": "Rebuilding search index",
+      "verifyingCounts": "Verifying row counts",
+      "verifyingIntegrity": "Checking integrity",
+      "verifyingForeignKeys": "Checking references",
+      "verifyingSpotCheck": "Spot-checking rows",
+      "finalizing": "Finishing up"
+    },
+    "eta": {
+      "underAMinute": "under a minute",
+      "aboutAMinute": "about a minute left",
+      "aboutMinutes": "about {{minutes}} min left",
+      "overMinutes": "{{minutes}}+ min left"
+    }
+  }
+}

@@ -67,6 +67,7 @@ import { requestMobilePush } from './mobilePushRequest';
 import { AISessionsRepository } from '@nimbalyst/runtime';
 import { getClaudeCodeApiUpstreamUrl } from '../../utils/store';
 import type { AssembledAssistantMessage } from './claudeCliObservation/claudeApiMessageAssembler';
+import { t } from '@nimbalyst/runtime/i18n';
 
 /**
  * Fire the completion sound + "Response Ready" OS notification (+ mobile push when
@@ -91,7 +92,7 @@ async function notifyClaudeCliTurnComplete(
     }
 
     await notificationService.showNotification({
-      title: composeNotificationTitle(title, 'Response Ready'),
+      title: composeNotificationTitle(title, t('system:notifications.responseReady')),
       body,
       kind: 'agent-complete',
       sessionId,
@@ -275,15 +276,17 @@ export async function startClaudeCliProxyObservation(opts: {
       console.warn(`[ClaudeCliObservation] upstream rate-limit ${statusCode} for ${sessionId}`, retryAfter ?? '');
       const body =
         statusCode === 529
-          ? 'Anthropic is overloaded. Claude will retry shortly.'
-          : `Rate limited by Anthropic${retryAfter ? ` (retry after ${retryAfter}s)` : ''}.`;
+          ? t('system:notifications.anthropicOverloaded')
+          : retryAfter
+          ? t('system:notifications.rateLimitedRetry', { seconds: retryAfter })
+          : t('system:notifications.rateLimited');
       void (async () => {
         const session = await AISessionsRepository.get(sessionId).catch(() => null);
-        const sourceLabel = session?.title || session?.provider || `Session ${sessionId.slice(0, 8)}`;
+        const sourceLabel = session?.title || session?.provider || t('dialogs:notifications.sourceLabel.session', { id: sessionId.slice(0, 8) });
         await notificationService.showNotification({
           // A rate-limit pause is the agent stopping until something changes,
           // not a finished turn.
-          title: composeNotificationTitle(sourceLabel, 'Claude CLI paused'),
+          title: composeNotificationTitle(sourceLabel, t('system:notifications.claudeCliPaused')),
           body,
           kind: 'needs-input',
           sessionId,

@@ -14,6 +14,7 @@
  */
 
 import type { AssembledAssistantMessage } from './claudeCliObservation/claudeApiMessageAssembler';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 /**
  * True when this assembled assistant message ends the user-visible turn (the
@@ -36,6 +37,6 @@ export function extractAssistantText(message: AssembledAssistantMessage): string
 /** Build the OS-notification body, mirroring the SDK's 100-char truncation. */
 export function buildTurnNotificationBody(text: string): string {
   const t = text.trim();
-  if (t.length === 0) return 'Response complete';
+  if (t.length === 0) return translate('system:notifications.responseComplete');
   return t.length > 100 ? `${t.substring(0, 100)}...` : t;
 }

@@ -444,9 +444,9 @@ export async function createApplicationMenu() {
                             defaultPath: getDialogDefaultPath({ window: focusedWindow }),
                             properties: ['openFile'],
                             filters: [
-                                { name: 'Markdown Files', extensions: ['md', 'markdown'] },
-                                { name: 'Text Files', extensions: ['txt'] },
-                                { name: 'All Files', extensions: ['*'] }
+                                { name: t('dialogs:fileOpener.filters.markdown'), extensions: ['md', 'markdown'] },
+                                { name: t('dialogs:fileOpener.filters.text'), extensions: ['txt'] },
+                                { name: t('dialogs:fileOpener.filters.all'), extensions: ['*'] }
                             ]
                         };
                         const result = focusedWindow

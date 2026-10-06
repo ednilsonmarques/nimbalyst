@@ -3,6 +3,7 @@ import { join } from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { getBackgroundColor } from '../theme/ThemeManager';
 import { getTheme, getThemeIsDark } from '../utils/store';
+import { t } from '@nimbalyst/runtime/i18n';
 
 let splashWindow: BrowserWindow | null = null;
 
@@ -147,16 +148,16 @@ function buildSplashHTML(): string {
 <body>
   ${iconHtml}
   <div class="title">Nimbalyst</div>
-  <div class="status">Initializing<span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></div>
+  <div class="status">${t('system:migrationSplash.initializing')}<span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></div>
   <div id="migration">
-    <div id="migration-headline">Upgrading your local database</div>
+    <div id="migration-headline">${t('system:migrationSplash.headline')}</div>
     <div id="migration-track"><div id="migration-fill"></div></div>
     <div id="migration-meta">
-      <span id="migration-primary">Preparing&hellip;</span>
+      <span id="migration-primary">${t('system:migrationSplash.phases.preparing')}&hellip;</span>
       <span id="migration-eta"></span>
     </div>
     <div id="migration-phase"></div>
-    <div id="migration-note">This happens once. Please leave Nimbalyst open &mdash; it will restart itself when finished.</div>
+    <div id="migration-note">${t('system:migrationSplash.note')}</div>
   </div>
 </body>
 </html>`;

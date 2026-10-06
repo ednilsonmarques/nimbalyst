@@ -15,6 +15,7 @@ import type {
   ExtensionPermissionId,
   PermissionRiskTier,
 } from '@nimbalyst/extension-sdk';
+import { t } from '@nimbalyst/runtime/i18n';
 
 /**
  * Current registry schema version. Stored on every grant row so future
@@ -122,4 +123,30 @@ export function groupByRisk(
     }
   }
   return groups;
+}
+
+/**
+ * Copy of a descriptor with its label and description in the current UI
+ * language. Resolved when the descriptor is sent to the renderer, never at
+ * module load, so a language switch is picked up on the next request.
+ */
+export function localizePermissionDescriptor(
+  descriptor: PermissionDescriptor
+): PermissionDescriptor {
+  switch (descriptor.id) {
+    case 'workspace-files':
+      return { ...descriptor, label: t('system:extensionPermissions.workspaceFiles.label'), description: t('system:extensionPermissions.workspaceFiles.description') };
+    case 'mcp-server-register':
+      return { ...descriptor, label: t('system:extensionPermissions.mcpServerRegister.label'), description: t('system:extensionPermissions.mcpServerRegister.description') };
+    case 'nimbalyst-database-read':
+      return { ...descriptor, label: t('system:extensionPermissions.nimbalystDatabaseRead.label'), description: t('system:extensionPermissions.nimbalystDatabaseRead.description') };
+    case 'nimbalyst-database-write':
+      return { ...descriptor, label: t('system:extensionPermissions.nimbalystDatabaseWrite.label'), description: t('system:extensionPermissions.nimbalystDatabaseWrite.description') };
+    case 'secrets-read':
+      return { ...descriptor, label: t('system:extensionPermissions.secretsRead.label'), description: t('system:extensionPermissions.secretsRead.description') };
+    case 'ai-sessions':
+      return { ...descriptor, label: t('system:extensionPermissions.aiSessions.label'), description: t('system:extensionPermissions.aiSessions.description') };
+    default:
+      return descriptor;
+  }
 }

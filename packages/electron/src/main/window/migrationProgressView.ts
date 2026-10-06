@@ -16,6 +16,7 @@
  */
 
 import type { MigrationProgress, MigrationPhase } from '../database/sqlite/PGLiteToSQLiteMigrator';
+import { t } from '@nimbalyst/runtime/i18n';
 
 /**
  * Where each phase starts and ends on the overall bar. Copying owns the bulk
@@ -33,15 +34,16 @@ const PHASE_BANDS: Record<MigrationPhase, [number, number]> = {
   finalizing: [99, 100],
 };
 
+/** i18n keys, resolved each time a frame is built. */
 const PHASE_LABELS: Record<MigrationPhase, string> = {
-  preparing: 'Preparing',
-  copying: 'Copying',
-  'rebuilding-fts': 'Rebuilding search index',
-  'verifying-counts': 'Verifying row counts',
-  'verifying-integrity': 'Checking integrity',
-  'verifying-foreign-keys': 'Checking references',
-  'verifying-spot-check': 'Spot-checking rows',
-  finalizing: 'Finishing up',
+  preparing: 'system:migrationSplash.phases.preparing',
+  copying: 'system:migrationSplash.phases.copying',
+  'rebuilding-fts': 'system:migrationSplash.phases.rebuildingFts',
+  'verifying-counts': 'system:migrationSplash.phases.verifyingCounts',
+  'verifying-integrity': 'system:migrationSplash.phases.verifyingIntegrity',
+  'verifying-foreign-keys': 'system:migrationSplash.phases.verifyingForeignKeys',
+  'verifying-spot-check': 'system:migrationSplash.phases.verifyingSpotCheck',
+  finalizing: 'system:migrationSplash.phases.finalizing',
 };
 
 /** Below this many rows copied we have no throughput sample worth trusting. */
@@ -61,12 +63,17 @@ export interface MigrationSplashView {
 }
 
 function coarseEta(msRemaining: number): string {
-  if (msRemaining < 45_000) return 'under a minute';
+  if (msRemaining < 45_000) return t('system:migrationSplash.eta.underAMinute');
   const minutes = Math.round(msRemaining / 60_000);
-  if (minutes <= 1) return 'about a minute left';
-  if (minutes < 10) return `about ${minutes} min left`;
+  if (minutes <= 1) return t('system:migrationSplash.eta.aboutAMinute');
+  if (minutes < 10) return t('system:migrationSplash.eta.aboutMinutes', { minutes });
   // Past ten minutes the estimate is not accurate enough to imply precision.
-  return `${Math.round(minutes / 5) * 5}+ min left`;
+  return t('system:migrationSplash.eta.overMinutes', { minutes: Math.round(minutes / 5) * 5 });
+}
+
+function phaseLabel(phase: MigrationPhase): string | undefined {
+  const key = PHASE_LABELS[phase];
+  return key ? t(key) : undefined;
 }
 
 export function buildSplashView(
@@ -80,8 +87,11 @@ export function buildSplashView(
 
   const primary =
     progress.phase === 'copying' && progress.rowsExpected > 0
-      ? `${progress.rowsCopied.toLocaleString()} of ${progress.rowsExpected.toLocaleString()} rows`
-      : PHASE_LABELS[progress.phase] ?? 'Working';
+      ? t('system:migrationSplash.rowsProgress', {
+          copied: progress.rowsCopied.toLocaleString(),
+          expected: progress.rowsExpected.toLocaleString(),
+        })
+      : phaseLabel(progress.phase) ?? t('system:migrationSplash.working');
 
   let eta = '';
   if (
@@ -101,8 +111,8 @@ export function buildSplashView(
 
   const phase =
     progress.phase === 'copying' && progress.currentTable
-      ? `Copying ${progress.currentTable}`
-      : PHASE_LABELS[progress.phase] ?? '';
+      ? t('system:migrationSplash.copyingTable', { table: progress.currentTable })
+      : phaseLabel(progress.phase) ?? '';
 
   return { percent, primary, eta, phase };
 }

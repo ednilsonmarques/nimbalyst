@@ -9,6 +9,7 @@ import { AnalyticsService } from "../services/analytics/AnalyticsService.ts";
 import { shouldShowClaudeCodeWindowsWarning, dismissClaudeCodeWindowsWarning } from '../utils/store';
 import os from "os";
 import { safeHandle, safeOn } from '../utils/ipcRegistry';
+import { t } from '@nimbalyst/runtime/i18n';
 
 // Use IPC component logger for this file
 const log = logger.ipc;
@@ -219,13 +220,13 @@ end tell`;
         }
 
         if (!terminalOpened) {
-          throw new Error('No terminal emulator found. Please run "' + binaryPath + '" manually and type /login to authenticate.');
+          throw new Error(t('system:claudeCode.noTerminalLogin', { path: binaryPath }));
         }
       }
 
       return {
         success: true,
-        message: 'Terminal window opened. Type /login and press Enter to authenticate, then click "Refresh Status" to verify.'
+        message: t('system:claudeCode.loginTerminalOpened')
       };
     } catch (error) {
       log.error('[ClaudeCodeHandlers] Login error:', error);
@@ -286,13 +287,13 @@ end tell`;
         }
 
         if (!terminalOpened) {
-          throw new Error('No terminal emulator found. Please run "' + binaryPath + '" manually and type /logout in your terminal.');
+          throw new Error(t('system:claudeCode.noTerminalLogout', { path: binaryPath }));
         }
       }
 
       return {
         success: true,
-        message: 'Terminal window opened. Type /logout and press Enter to complete logout.'
+        message: t('system:claudeCode.logoutTerminalOpened')
       };
     } catch (error) {
       log.error('[ClaudeCodeHandlers] Logout error:', error);
