@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { usePostHog } from 'posthog-js/react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export interface DiscordInvitationProps {
   isOpen: boolean;
@@ -78,6 +79,7 @@ export const DiscordInvitation: React.FC<DiscordInvitationProps> = ({
   onClose,
   onDismiss
 }) => {
+  const { t } = useTranslation('onboarding');
   const posthog = usePostHog();
   const logoSrc = new URL('/nimbalyst-logo.png', import.meta.url).href;
 
@@ -129,7 +131,7 @@ export const DiscordInvitation: React.FC<DiscordInvitationProps> = ({
         <button
           className="absolute top-4 right-4 w-8 h-8 p-0 flex items-center justify-center bg-transparent border-none text-[24px] leading-none cursor-pointer rounded-md z-[1] text-[var(--nim-text-muted)] transition-[color,transform] duration-200 hover:text-[var(--nim-text)] hover:bg-[var(--nim-bg-hover)] hover:scale-110"
           onClick={handleRemindLater}
-          aria-label="Close"
+          aria-label={t('common:close')}
         >
           ×
         </button>
@@ -138,11 +140,11 @@ export const DiscordInvitation: React.FC<DiscordInvitationProps> = ({
           <img src={logoSrc} alt="Nimbalyst" className="mx-auto mb-5 h-12 w-auto object-contain" />
 
           <h2 id="discord-invitation-title" className="discord-invitation-title m-0 mb-3 text-2xl font-bold tracking-[-0.5px] text-[var(--nim-text)]">
-            Join the Community
+            {t('discord.title')}
           </h2>
 
           <p id="discord-invitation-description" className="discord-invitation-message mb-6 text-[15px] leading-[1.6] max-w-[340px] mx-auto text-[var(--nim-text-muted)]">
-            Get faster help, share feedback with the team, and stay up to date on new releases.
+            {t('discord.description')}
           </p>
 
           <div className="discord-invitation-buttons flex justify-center mb-6">
@@ -151,13 +153,13 @@ export const DiscordInvitation: React.FC<DiscordInvitationProps> = ({
               onClick={() => handleOpenLink('https://discord.gg/ubZDt4esEn', 'Discord')}
             >
               <DiscordIcon className="w-5 h-auto text-white" />
-              Join Discord
+              {t('discord.join')}
             </button>
           </div>
 
           <div className="mb-6 px-4">
             <p className="m-0 mb-4 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--nim-text-muted)]">
-              Follow Nimbalyst
+              {t('discord.follow')}
             </p>
             <div className="flex items-center justify-center gap-3">
               {socialLinks.map((link) => (
@@ -179,14 +181,14 @@ export const DiscordInvitation: React.FC<DiscordInvitationProps> = ({
               className="bg-transparent border-none text-[13px] cursor-pointer px-2 py-1 no-underline text-[var(--nim-text-muted)] transition-colors duration-200 hover:text-[var(--nim-text)] hover:underline"
               onClick={handleRemindLater}
             >
-              Remind Me Later
+              {t('prompts.remindLater')}
             </button>
             <span className="text-[13px] select-none text-[var(--nim-text-faint)]">•</span>
             <button
               className="bg-transparent border-none text-[13px] cursor-pointer px-2 py-1 no-underline text-[var(--nim-text-muted)] transition-colors duration-200 hover:text-[var(--nim-text)] hover:underline"
               onClick={handleDontRemind}
             >
-              Don't Show Again
+              {t('prompts.dontShowAgain')}
             </button>
           </div>
         </div>

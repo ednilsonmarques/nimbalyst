@@ -1,4 +1,5 @@
 import React from 'react';
+import { Trans, useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export interface WorktreeOnboardingModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ export const WorktreeOnboardingModal: React.FC<WorktreeOnboardingModalProps> = (
   onContinue,
   onCancel,
 }) => {
+  const { t } = useTranslation('onboarding');
   if (!isOpen) return null;
 
   return (
@@ -26,35 +28,34 @@ export const WorktreeOnboardingModal: React.FC<WorktreeOnboardingModalProps> = (
           <span className="material-symbols-outlined worktree-onboarding-icon text-5xl text-nim-primary mb-4">
             account_tree
           </span>
-          <h2 className="m-0 text-[22px] font-semibold text-nim">What is a Worktree?</h2>
+          <h2 className="m-0 text-[22px] font-semibold text-nim">{t('worktreeOnboarding.title')}</h2>
         </div>
 
         <div className="worktree-onboarding-content px-7 py-6">
           <p className="worktree-onboarding-description m-0 mb-6 text-[15px] leading-relaxed text-nim-muted text-center [&_strong]:text-nim">
-            Worktrees create a git branch in an <strong>isolated directory</strong>, separate from your main repository.
-            This gives you a safe place to make changes without affecting the rest of your code.
+            <Trans t={t} i18nKey="worktreeOnboarding.description" components={{ strong: <strong /> }} />
           </p>
 
           <div className="worktree-onboarding-benefits flex flex-col gap-4">
             <div className="worktree-benefit flex items-start gap-3.5 p-3.5 px-4 bg-nim-secondary rounded-[10px] border border-nim">
               <span className="material-symbols-outlined benefit-icon text-2xl text-nim-primary shrink-0">shield</span>
               <div className="benefit-text flex flex-col gap-0.5">
-                <strong className="text-sm font-semibold text-nim">Safe experimentation</strong>
-                <span className="text-[13px] text-nim-muted">AI changes stay in a separate branch</span>
+                <strong className="text-sm font-semibold text-nim">{t('worktreeOnboarding.safeTitle')}</strong>
+                <span className="text-[13px] text-nim-muted">{t('worktreeOnboarding.safeDescription')}</span>
               </div>
             </div>
             <div className="worktree-benefit flex items-start gap-3.5 p-3.5 px-4 bg-nim-secondary rounded-[10px] border border-nim">
               <span className="material-symbols-outlined benefit-icon text-2xl text-nim-primary shrink-0">rate_review</span>
               <div className="benefit-text flex flex-col gap-0.5">
-                <strong className="text-sm font-semibold text-nim">Easy review</strong>
-                <span className="text-[13px] text-nim-muted">Review and merge changes when ready</span>
+                <strong className="text-sm font-semibold text-nim">{t('worktreeOnboarding.reviewTitle')}</strong>
+                <span className="text-[13px] text-nim-muted">{t('worktreeOnboarding.reviewDescription')}</span>
               </div>
             </div>
             <div className="worktree-benefit flex items-start gap-3.5 p-3.5 px-4 bg-nim-secondary rounded-[10px] border border-nim">
               <span className="material-symbols-outlined benefit-icon text-2xl text-nim-primary shrink-0">stacks</span>
               <div className="benefit-text flex flex-col gap-0.5">
-                <strong className="text-sm font-semibold text-nim">Parallel work</strong>
-                <span className="text-[13px] text-nim-muted">Run multiple experiments simultaneously</span>
+                <strong className="text-sm font-semibold text-nim">{t('worktreeOnboarding.parallelTitle')}</strong>
+                <span className="text-[13px] text-nim-muted">{t('worktreeOnboarding.parallelDescription')}</span>
               </div>
             </div>
           </div>
@@ -65,13 +66,13 @@ export const WorktreeOnboardingModal: React.FC<WorktreeOnboardingModalProps> = (
             className="worktree-onboarding-secondary-button nim-btn-secondary px-5 py-2.5 text-sm font-medium rounded-lg"
             onClick={onCancel}
           >
-            Cancel
+            {t('common:cancel')}
           </button>
           <button
             className="worktree-onboarding-primary-button nim-btn-primary px-6 py-2.5 text-sm font-semibold rounded-lg shadow-[0_2px_8px_rgba(88,166,255,0.2)] hover:shadow-[0_4px_12px_rgba(88,166,255,0.3)] hover:-translate-y-px active:translate-y-0 transition-all duration-150"
             onClick={onContinue}
           >
-            Create Worktree
+            {t('worktreeOnboarding.create')}
           </button>
         </div>
       </div>

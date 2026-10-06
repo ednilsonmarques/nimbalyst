@@ -1,1 +1,531 @@
-{}
+{
+  "workspaceWelcome": {
+    "subtitle": "Os arquivos são salvos automaticamente enquanto você trabalha",
+    "newFile": {
+      "ariaLabel": "Criar um novo arquivo",
+      "title": "Novo arquivo",
+      "description": "Crie um documento Markdown, mockup, diagrama, planilha ou arquivo de código.",
+      "markdown": "Markdown",
+      "mockup": "Mockup",
+      "diagram": "Diagrama"
+    },
+    "agent": {
+      "ariaLabel": "Focar o chat do agente",
+      "title": "Pergunte ao agente",
+      "description": "Digite no chat à direita — ele pode ler, editar e criar arquivos para você.",
+      "summarizeProject": "Resumir este projeto",
+      "draftPlan": "Esboçar um plano para…"
+    }
+  },
+  "unifiedOnboarding": {
+    "roles": {
+      "noAnswer": "Sem resposta",
+      "developer": "Desenvolvedor de software",
+      "productManager": "Gerente de produto",
+      "designer": "Designer",
+      "writer": "Redator / Conteúdo",
+      "researcher": "Pesquisador",
+      "marketing": "Marketing",
+      "sales": "Vendas",
+      "finance": "Finanças",
+      "student": "Estudante",
+      "hobbyist": "Hobby / Uso pessoal",
+      "other": "Outro"
+    },
+    "referral": {
+      "noAnswer": "Sem resposta",
+      "search": "Pesquisa",
+      "social": "Redes sociais",
+      "friend": "Amigo",
+      "ai": "IA",
+      "ad": "Anúncio",
+      "youtube": "YouTube",
+      "github": "GitHub",
+      "courseTraining": "Curso/Treinamento",
+      "podcast": "Podcast",
+      "newsletterArticle": "Newsletter/Artigo",
+      "other": "Outro"
+    },
+    "socialOther": "Outra",
+    "emailInvalid": "Insira um endereço de e-mail válido",
+    "title": "Boas-vindas ao Nimbalyst",
+    "chooseMode": "Escolha seu modo",
+    "standardMode": "Modo padrão",
+    "standardModeDescription": "Interface simplificada com foco em escrita, edição e assistência de IA",
+    "developerMode": "Modo de desenvolvedor",
+    "developerModeDescription": "Ambiente de desenvolvimento completo com worktrees git, acesso ao terminal e recursos específicos de desenvolvimento",
+    "roleLabel": "O que melhor descreve sua função?",
+    "customRolePlaceholder": "ex.: Designer, Redator, Estudante",
+    "referralLabel": "Como você conheceu o Nimbalyst?",
+    "customReferralPlaceholder": "ex.: Podcast, Blog, Conferência",
+    "aiDetailPlaceholder": "Qual modelo e prompt você usou?",
+    "searchDetail": "O que você pesquisou?",
+    "emailLabel": "Endereço de e-mail",
+    "emailHelp": "Receba novidades do produto e dicas ocasionalmente",
+    "platformLabel": "Qual plataforma?",
+    "selectOne": "Selecione uma",
+    "disclaimer": "Coletamos dados de uso para melhorar o Nimbalyst. Nenhum prompt ou conteúdo é coletado. Você pode desativar as análises a qualquer momento nas Configurações.",
+    "getStarted": "Começar…",
+    "startTutorial": "Iniciar tutorial",
+    "legal": "Ao continuar, você concorda com nossos <terms>Termos de Serviço</terms> e com nossa <privacy>Política de Privacidade</privacy>."
+  },
+  "worktreeOnboarding": {
+    "title": "O que é um worktree?",
+    "description": "Worktrees criam um branch git em um <strong>diretório isolado</strong>, separado do seu repositório principal. Isso oferece um lugar seguro para fazer alterações sem afetar o restante do seu código.",
+    "safeTitle": "Experimentação segura",
+    "safeDescription": "As alterações da IA ficam em um branch separado",
+    "reviewTitle": "Revisão fácil",
+    "reviewDescription": "Revise e faça merge das alterações quando estiver pronto",
+    "parallelTitle": "Trabalho em paralelo",
+    "parallelDescription": "Execute vários experimentos simultaneamente",
+    "create": "Criar worktree"
+  },
+  "walkthroughs": {
+    "callout": {
+      "dismiss": "Dispensar",
+      "done": "Concluir",
+      "progress": "{{current}} de {{total}}"
+    },
+    "agentMode": {
+      "title": "Modo Agente",
+      "body": "Uma interface focada no gerenciamento de agentes de programação. Gerencie várias sessões de agentes de IA em execução, acompanhe sua execução, controle seus commits e organize-as em um quadro Kanban. Escolha seu agente, dê instruções e o agente de IA vai escrever código, executar comandos e fazer alterações em todo o seu projeto."
+    },
+    "filesMode": {
+      "title": "Modo Arquivos",
+      "body": "Navegue e edite os arquivos do seu projeto. Abra documentos markdown, arquivos de código e muito mais. A barra lateral do assistente de IA também está disponível aqui."
+    },
+    "agentWelcome": {
+      "title": "Inicie sua primeira sessão",
+      "body": "Crie uma sessão de programação com IA. Descreva o que você quer construir e o agente vai ajudar você."
+    },
+    "attachFiles": {
+      "title": "Anexar arquivos e imagens",
+      "body": "Arraste e solte arquivos ou cole imagens diretamente no chat. Você também pode usar @ para mencionar arquivos do seu projeto."
+    },
+    "contextIndicator": {
+      "title": "Janela de contexto",
+      "body": "Mostra quanto da janela de contexto da IA está em uso. Inclui arquivos, histórico da conversa e ferramentas."
+    },
+    "diffKeepAll": {
+      "title": "Manter todas as alterações",
+      "body": "Aceite todas as alterações pendentes da IA em todo o documento."
+    },
+    "diffRevertAll": {
+      "title": "Reverter todas as alterações",
+      "body": "Rejeite todas as alterações pendentes da IA e restaure o documento original."
+    },
+    "documentSessionControl": {
+      "title": "Sessões de IA deste documento",
+      "body": "Volte direto para a última sessão deste documento ou use a seta para escolher outra sessão ou iniciar uma nova."
+    },
+    "fileTreeFilter": {
+      "title": "Filtre sua árvore de arquivos",
+      "body": "Mostre apenas arquivos markdown, alterações git não commitadas ou arquivos que a IA leu ou escreveu nesta sessão."
+    },
+    "fileTreeQuickOpen": {
+      "title": "Abertura rápida de arquivos",
+      "body": "Pesquise qualquer arquivo do seu projeto pelo nome. Os arquivos abertos recentemente aparecem no topo."
+    },
+    "filesScope": {
+      "title": "Modos de escopo de arquivos",
+      "body": "Controle quais arquivos são exibidos. Veja as edições da IA desta sessão, apenas as alterações não commitadas ou todos os arquivos do espaço de trabalho. Em fluxos de trabalho, filtre por sessão individual ou veja todas as sessões combinadas."
+    },
+    "gitCommitMode": {
+      "title": "Modos de commit",
+      "body": "Escolha como fazer commit das suas alterações. O modo Manual permite escrever sua própria mensagem. O modo Inteligente usa IA para analisar as alterações e propor uma mensagem de commit."
+    },
+    "layoutControls": {
+      "title": "Modos de layout da sessão",
+      "body": "Veja sua sessão de IA e os arquivos editados juntos:\n\n**Arquivos**: mostra apenas as abas do editor de arquivos. Disponível quando você abre um arquivo editado em uma sessão de IA.\n\n**Dividido**: mostra a transcrição e o editor empilhados verticalmente. Arraste o divisor para ajustar.\n\n**Agente**: mostra apenas a transcrição da conversa."
+    },
+    "modelPicker": {
+      "title": "Selecionar modelo de IA",
+      "body": "Escolha qual modelo de IA usar. Modelos diferentes têm capacidades e velocidades diferentes."
+    },
+    "planModeToggle": {
+      "title": "Modo Plano vs. Agente",
+      "body": "Alterne entre os modos Plano e Agente. O modo Plano cria planos estruturados antes de a IA escrever código. O modo Agente executa as alterações diretamente."
+    },
+    "prReviewMode": {
+      "title": "GitHub",
+      "body": "Trabalhe com o GitHub deste projeto sem sair do app: navegue por pull requests e issues, leia diffs e conversas e entregue qualquer um deles a um agente."
+    },
+    "sessionKanban": {
+      "title": "Quadro Kanban",
+      "body": "Alterne para uma visualização em quadro kanban das suas sessões organizadas por fase: Backlog, Planejamento, Implementação, Validação e Concluído. Arraste as sessões entre as colunas para atualizar o status delas."
+    },
+    "sessionQuickSearch": {
+      "title": "Pesquisar sessões",
+      "body": "Encontre rapidamente qualquer sessão de IA pelo nome. Digite **@** para pesquisar por arquivo editado -- encontre todas as sessões que mexeram em um arquivo específico. Pressione **Tab** para alternar para a pesquisa de prompts e encontrar sessões pelo que você pediu."
+    }
+  },
+  "tips": {
+    "ui": {
+      "overline": "Dica",
+      "dismiss": "Dispensar dica",
+      "next": "Próxima",
+      "nextTip": "Próxima dica",
+      "showAllTips": "Mostrar todas as dicas",
+      "allTips": "Todas as dicas",
+      "allTipsTitle": "Todas as dicas",
+      "show": "Mostrar"
+    },
+    "content": {
+      "tip-action-prompts": {
+        "title": "Salve prompts reutilizáveis como ações",
+        "body": "Crie **nimbalyst-local/ai-actions.md** para definir prompts de um clique. Eles aparecem no menu Ações do compositor -- ótimo para fluxos recorrentes como \"revise este diff\" ou \"escreva as notas de versão\"."
+      },
+      "tip-agent-diagram": {
+        "title": "Deixe o agente desenhar o diagrama",
+        "body": "O agente nunca desenhou um diagrama para você. Peça para ele esboçar uma arquitetura ou um fluxo, e ele vai criar o diagrama Excalidraw diretamente pelas ferramentas dele.",
+        "action": "Pedir um diagrama ao agente"
+      },
+      "tip-animation-discover": {
+        "title": "Anime a parte que só faz sentido em movimento",
+        "body": "Crie um arquivo **.anim.json** para montar uma explicação animada: uma requisição passando por um cache, uma fila esvaziando, uma nova tentativa após um timeout.\n\nVocê escreve etapas, não keyframes, então o agente pode criar e editar tudo como JSON simples.",
+        "action": "Pedir uma animação ao agente"
+      },
+      "tip-auto-commit": {
+        "title": "Commit automático após cada turno da IA",
+        "body": "Ative o commit automático no painel do Claude Code e cada turno termina com um commit de checkpoint. Fácil de reverter, difícil de perder trabalho para um agente descontrolado.",
+        "action": "Abrir configurações do Claude Code"
+      },
+      "tip-canvas-discover": {
+        "title": "Organize seus arquivos reais em um quadro",
+        "body": "Um quadro **.canvas** contém cartões que carregam o editor real do arquivo para o qual apontam -- o mockup é renderizado, a planilha mostra números reais, o documento é editável ali mesmo.\n\nDescreva o quadro que você quer e o agente o organiza, conectado por arestas.",
+        "action": "Pedir um quadro ao agente"
+      },
+      "tip-claude-md": {
+        "title": "Defina instruções permanentes no CLAUDE.md",
+        "body": "Coloque um **CLAUDE.md** na raiz do espaço de trabalho com suas convenções de código, ferramentas preferidas e tom. Toda sessão o carrega automaticamente -- você só precisa escrevê-lo uma vez."
+      },
+      "tip-content-search": {
+        "title": "Cmd+Shift+F pesquisa dentro dos arquivos",
+        "body": "Pressione **Cmd+Shift+F** para uma pesquisa com regex em todos os arquivos do espaço de trabalho. Os resultados são agrupados por arquivo, com salto para a linha em um clique."
+      },
+      "tip-datamodel-discover": {
+        "title": "Projete esquemas visualmente com o DataModelLM",
+        "body": "Um arquivo **.datamodel** é um esquema no estilo Prisma com um diagrama ER ao vivo. O agente pode editá-lo como qualquer arquivo de código, e você ganha o diagrama de graça."
+      },
+      "tip-doc-history": {
+        "title": "Cmd+Y para percorrer o histórico do documento",
+        "body": "Cada salvamento cria um snapshot do arquivo. **Cmd+Y** abre o diálogo de histórico com diffs em relação a qualquer versão anterior -- clique para restaurar. Uma rede de segurança escondida para grandes edições."
+      },
+      "tip-document-shared": {
+        "title": "Compartilhe documentos com um link",
+        "body": "Clique com o botão direito em um arquivo e escolha **Compartilhar** para publicar um link com criptografia de ponta a ponta. Os destinatários o abrem no navegador -- sem precisar de conta no Nimbalyst.",
+        "action": "Gerenciar links compartilhados"
+      },
+      "tip-excalidraw-discover": {
+        "title": "Esboce arquiteturas no Excalidraw",
+        "body": "Crie um arquivo **.excalidraw** para desenhar caixas, setas e diagramas livres. O agente pode ler e modificar esses desenhos por meio de ferramentas -- ótimo para arquitetura de sistemas e esboços de fluxo."
+      },
+      "tip-files-agent-context": {
+        "title": "O agente entende o arquivo aberto",
+        "body": "Abra um arquivo e peça ao agente para **explicá-lo, revisá-lo ou ampliá-lo**. O arquivo ativo é incluído como contexto automaticamente."
+      },
+      "tip-files-visual-editors": {
+        "title": "Visualize mockups e diagramas na hora",
+        "body": "Arquivos como **.mockup.html**, **.excalidraw** e **.mindmap** abrem em editores visuais. Peça ao agente para criar um e ele será renderizado ao vivo enquanto é escrito.",
+        "action": "Experimentar"
+      },
+      "tip-keyboard-shortcuts": {
+        "title": "Aprenda os atalhos que importam",
+        "body": "Você já usa o app há algum tempo, mas ainda não acionou nenhum atalho de teclado rastreado. O diálogo de atalhos é um jeito rápido de encontrar os que você vai realmente usar.",
+        "action": "Abrir atalhos"
+      },
+      "tip-lightning-interrupt": {
+        "title": "O botão de raio interrompe um agente descontrolado",
+        "body": "Se o agente estiver indo na direção errada, clique no **raio** ao lado do compositor para interrompê-lo. Digite um redirecionamento no compositor e ele continua dali -- sem precisar esperar o turno terminar."
+      },
+      "tip-mobile-keep-awake": {
+        "title": "Mantenha o computador acordado para prompts do celular",
+        "body": "Se o computador entrar em suspensão, a sincronização com o celular será desconectada. Ative o modo sempre ativo quando estiver na tomada para evitar isso.",
+        "action": "Ativar modo sempre ativo",
+        "secondaryAction": "Configurações de sincronização"
+      },
+      "tip-mobile-paired": {
+        "title": "Conduza sessões pelo celular",
+        "body": "Pareie o app para iOS e envie prompts aos agentes do desktop de qualquer lugar. O desktop faz o trabalho pesado; você o conduz do sofá ou da estrada.",
+        "action": "Abrir configurações de sincronização"
+      },
+      "tip-mockup-discover": {
+        "title": "Planeje a interface em um arquivo .mockup.html",
+        "body": "Arquivos terminados em **.mockup.html** são renderizados como wireframes ao vivo e anotáveis junto ao código. Peça ao agente para \"criar um mockup para X\" e obtenha um ponto de partida que você pode editar visualmente."
+      },
+      "tip-nimbalyst-coach": {
+        "title": "Descubra o que você está perdendo",
+        "body": "Seu agente pode ler este projeto e suas sessões recentes e dizer o que as faria funcionar melhor -- **extensões** que combinam com seus arquivos, recursos que você ainda não usou e **instruções** que valem a pena adicionar para que cada sessão futura comece mais inteligente.",
+        "action": "Mostrar"
+      },
+      "tip-quick-open": {
+        "title": "Cmd+O abre qualquer arquivo com busca aproximada",
+        "body": "Pule a árvore de arquivos. **Cmd+O** abre uma busca aproximada sobre todos os arquivos do espaço de trabalho -- digite um trecho do caminho e pressione Enter."
+      },
+      "tip-session-cleanup": {
+        "title": "Deixe seu agente organizar o quadro de sessões",
+        "body": "Seu quadro de sessões está enchendo. Seu agente pode **organizá-lo** -- corrigindo a fase de cada sessão, marcando trabalhos finalizados como **concluídos** e sinalizando sessões antigas para arquivar.",
+        "action": "Organizar minhas sessões"
+      },
+      "tip-session-launch-shortcut": {
+        "title": "Inicie sessões sem perder o lugar",
+        "body": "Pressione **Cmd+Shift+N** em qualquer lugar do Nimbalyst para abrir o lançador de sessões. Envie seu prompt e a sessão começa em segundo plano, para que você continue exatamente onde está."
+      },
+      "tip-session-shared": {
+        "title": "Compartilhe uma sessão, não uma captura de tela",
+        "body": "As sessões podem ser publicadas como **links com criptografia de ponta a ponta** com validade de 1, 7 ou 30 dias. Use o botão de compartilhar em uma sessão para enviar a transcrição completa a um colega.",
+        "action": "Gerenciar links compartilhados"
+      },
+      "tip-spreadsheet-discover": {
+        "title": "Arquivos CSV abrem como planilhas",
+        "body": "Coloque um **.csv** no espaço de trabalho e ele abre com ordenação, fórmulas e ferramentas de IA -- sem precisar mudar para a visualização do código-fonte para editar."
+      },
+      "tip-teams-multiplayer": {
+        "title": "Torne este espaço de trabalho multijogador",
+        "body": "Com o **Teams**, seus documentos, mockups, diagramas e rastreadores podem ser compartilhados. Os colegas editam os mesmos arquivos ao vivo ou de forma assíncrona, e o agente local de cada colega trabalha nesses mesmos artefatos compartilhados. Promova qualquer arquivo local a compartilhado com um clique ou crie um novo arquivo compartilhado. Veja como o Teams funciona https://nimbalyst.com/teams",
+        "action": "Criar uma organização",
+        "secondaryAction": "Veja como o Teams funciona"
+      },
+      "tip-theme-explore": {
+        "title": "Experimente um tema diferente",
+        "body": "Você já voltou algumas vezes sem mudar a aparência do app. Os **temas** já vêm incluídos, e o painel de configurações mostra todos de uma vez.",
+        "action": "Abrir temas"
+      },
+      "tip-tracker-mode": {
+        "title": "Acompanhe o trabalho junto com suas sessões",
+        "body": "Você tem usado bastante as sessões de IA, mas o **modo Rastreador** oferece um lugar duradouro para gerenciar bugs, tarefas e decisões entre essas sessões.",
+        "action": "Abrir rastreador"
+      },
+      "tip-wakeup": {
+        "title": "Deixe o agente se chamar mais tarde",
+        "body": "Peça ao agente para **agendar um despertar** (\"verifique o build em 5 minutos\", \"consulte o PR a cada 30s\") e ele retoma sozinho -- sem precisar vigiar uma tarefa demorada."
+      },
+      "tip-worktree-session": {
+        "title": "Isole trabalhos arriscados em um worktree",
+        "body": "Você está bem envolvido em sessões de agente em um repositório git, mas ainda não criou uma **sessão em worktree**. Worktrees dão aos experimentos seu próprio branch e diretório de trabalho sem atrapalhar o checkout principal.",
+        "action": "Nova sessão em worktree"
+      }
+    }
+  },
+  "prompts": {
+    "remindLater": "Lembrar mais tarde",
+    "dontShowAgain": "Não mostrar novamente"
+  },
+  "rosetta": {
+    "title": "Executando via tradução Rosetta",
+    "description": "Você está executando a versão Intel (x64) em um Mac com Apple Silicon. Baixe a versão nativa para Apple Silicon para ter um desempenho muito melhor.",
+    "download": "Baixar versão para Apple Silicon"
+  },
+  "discord": {
+    "title": "Participe da comunidade",
+    "description": "Obtenha ajuda mais rápido, compartilhe feedback com a equipe e fique por dentro das novas versões.",
+    "join": "Entrar no Discord",
+    "follow": "Siga o Nimbalyst"
+  },
+  "extensionIntro": {
+    "title": "Crie com extensões",
+    "description": "As extensões adicionam editores personalizados, ferramentas de IA, comandos, painéis e muito mais. O Nimbalyst carrega sua extensão ao vivo enquanto você desenvolve.",
+    "capabilities": {
+      "editors": "Editores personalizados para qualquer tipo de arquivo, com aparência nativa",
+      "panels": "Painéis laterais e visualizações do espaço de trabalho para dashboards e status ao vivo",
+      "aiTools": "Ferramentas de IA que o Claude pode usar enquanto trabalha no seu projeto",
+      "devLoop": "Ciclo de desenvolvimento no app — compile, instale e recarregue sem sair do Nimbalyst"
+    },
+    "agentHint": "Descreva para o agente o que você quer, e ele vai criar a estrutura, compilar e instalar a extensão para você."
+  },
+  "themeToggle": {
+    "ariaLabel": "Alterar tema",
+    "menuLabel": "Seleção de tema"
+  },
+  "traySessions": {
+    "states": {
+      "attention": "Precisa de atenção",
+      "running": "Em execução",
+      "stalled": "Sem resposta",
+      "unread": "Não lidas"
+    },
+    "status": {
+      "error": "Erro na sessão",
+      "pendingPrompt": "Aguardando sua resposta",
+      "stalled": "Em execução, mas em silêncio",
+      "running": "Em execução",
+      "unread": "Resposta não lida"
+    },
+    "markAllRead": "Marcar todas como lidas"
+  },
+  "trayPanel": {
+    "title": "Sessões",
+    "nothingRunning": "Nada em execução",
+    "summary": {
+      "attention_zero": "{{count}} precisam de atenção",
+      "attention_one": "{{count}} precisa de atenção",
+      "attention_other": "{{count}} precisam de atenção",
+      "running_zero": "{{count}} em execução",
+      "running_one": "{{count}} em execução",
+      "running_other": "{{count}} em execução",
+      "stalled_zero": "{{count}} sem resposta",
+      "stalled_one": "{{count}} sem resposta",
+      "stalled_other": "{{count}} sem resposta",
+      "unread_zero": "{{count}} não lidas",
+      "unread_one": "{{count}} não lida",
+      "unread_other": "{{count}} não lidas"
+    },
+    "newSession": "Nova sessão",
+    "empty": "Nada em execução. Inicie uma sessão para começar.",
+    "showAll": "Mostrar todas ({{count}})",
+    "openApp": "Abrir o Nimbalyst"
+  },
+  "island": {
+    "openSession": "Abrir {{title}}",
+    "nothingRunning": "Nada em execução.",
+    "lastSession": "Última sessão {{time}}.",
+    "noSessions": "Nenhuma sessão ainda.",
+    "recent": "Recentes",
+    "backToSessions": "Voltar para as sessões",
+    "settingsButton": "Configurações da barra de menus",
+    "sessions": "Sessões",
+    "settings": {
+      "style": "Estilo da barra de menus",
+      "styleIslandHint": "A pílula flutuante. Substitui o ícone da barra de menus.",
+      "styleImageHint": "Um item de status à direita da barra de menus.",
+      "styleIsland": "Ilha",
+      "styleIcon": "Ícone",
+      "showFleetStatus": "Mostrar status da frota",
+      "showFleetStatusHint": "Desativado deixa só o ícone da barra de menus.",
+      "notifications": "Notificações do sistema",
+      "notificationsHint": "Banners quando uma sessão termina ou precisa de você.",
+      "preventSleep": "Impedir suspensão",
+      "preventSleepOff": "Desativado",
+      "preventSleepPluggedIn": "Na tomada",
+      "preventSleepAlways": "Sempre"
+    }
+  },
+  "databaseMaintenance": {
+    "ariaLabel": "Troca de banco de dados",
+    "readyTitle": "Reinicie para verificar o banco de dados",
+    "finishingTitle": "Concluindo a troca do banco de dados",
+    "readyRollback": "Reinicie o Nimbalyst para reabrir o banco de dados após a reversão. A cópia SQLite foi mantida.",
+    "readyMigration": "O Nimbalyst vai reabrir e verificar o banco de dados na próxima inicialização. A cópia anterior à migração foi mantida.",
+    "pausedRollback": "O banco de dados está pausado enquanto a cópia anterior à migração é restaurada. Mantenha o Nimbalyst aberto até esta etapa terminar.",
+    "pausedMigration": "O banco de dados está pausado enquanto as alterações finais são copiadas. Mantenha o Nimbalyst aberto até esta etapa terminar.",
+    "restart": "Reiniciar o Nimbalyst"
+  },
+  "feedback": {
+    "title": "Solicitação de feedback",
+    "lifecycle": {
+      "open": "Aberta",
+      "closed": "Encerrada",
+      "expired": "Expirada",
+      "cancelled": "Cancelada",
+      "answered": "Respondida"
+    },
+    "results": {
+      "openArtifact": "Abrir {{label}}",
+      "leading": "Na liderança",
+      "positionTitle": "{{voters}} o colocaram na posição {{position}} de {{total}}",
+      "noWrittenAnswers": "Nenhuma resposta escrita ainda.",
+      "anonymous": "Anônimo",
+      "noRatings": "Nenhuma avaliação ainda.",
+      "ratingSummary_zero": "Média {{mean}} de {{max}} · mínima {{lowest}}, máxima {{highest}} · {{count}} avaliações",
+      "ratingSummary_one": "Média {{mean}} de {{max}} · mínima {{lowest}}, máxima {{highest}} · {{count}} avaliação",
+      "ratingSummary_other": "Média {{mean}} de {{max}} · mínima {{lowest}}, máxima {{highest}} · {{count}} avaliações",
+      "rankedHint_zero": "ranqueada · consolidada a partir de {{count}} ordenações",
+      "rankedHint_one": "ranqueada · consolidada a partir de {{count}} ordenação",
+      "rankedHint_other": "ranqueada · consolidada a partir de {{count}} ordenações",
+      "answeredHint": "{{answered}} de {{assigned}} designados responderam",
+      "askTag": "P{{index}} · {{label}}",
+      "moreActions": "Mais ações da solicitação",
+      "cancelRequest": "Cancelar solicitação",
+      "cancelHint": "Cancelar descarta as respostas já recebidas. Encerrar as mantém.",
+      "actionFailed": "Não foi possível concluir a ação.",
+      "loading": "Carregando esta solicitação…",
+      "wakeEnded": {
+        "closed": "Esta solicitação está encerrada. A sessão foi retomada com o que chegou.",
+        "expired": "Esta solicitação expirou. A sessão foi retomada com o que chegou.",
+        "cancelled": "Esta solicitação foi cancelada. A sessão foi retomada com o que chegou."
+      },
+      "wakeQuorum": "O quórum foi atingido, então a sessão foi retomada com estas respostas.",
+      "wakeWaiting": "A sessão é retomada quando {{required}} de {{total}} tiverem respondido, quando você encerrar esta solicitação ou quando você lembrar alguém. Nada foi enviado a ela ainda.",
+      "sent": "Enviada {{when}}",
+      "due": "Prazo {{when}}",
+      "responded": "{{answered}} de {{total}} responderam",
+      "closing": "Encerrando…",
+      "closeRequest": "Encerrar solicitação",
+      "waitingOn": "Aguardando",
+      "people_zero": "{{count}} pessoas",
+      "people_one": "{{count}} pessoa",
+      "people_other": "{{count}} pessoas",
+      "peopleHidden_zero": "{{count}} pessoas · os nomes ficam ocultos",
+      "peopleHidden_one": "{{count}} pessoa · os nomes ficam ocultos",
+      "peopleHidden_other": "{{count}} pessoas · os nomes ficam ocultos",
+      "answersAnonymous": "as respostas ficam anônimas nesta solicitação",
+      "everyoneAnswered": "Todos responderam.",
+      "nudging": "Lembrando…",
+      "nudge": "Lembrar",
+      "anonymousOutstanding": "As respostas desta solicitação são anônimas, então quem ainda não respondeu também fica oculto aqui — nomear essas pessoas identificaria as respostas já recebidas. O lembrete vai para todos que ainda não responderam.",
+      "nudgeAll": "Lembrar todos que não responderam",
+      "nudged": "Lembrete enviado {{when}}",
+      "anonymousNote": "Você pediu que esta ficasse oculta até ser respondida, então a contagem é anônima — para você também, e continua assim depois que todos responderem.",
+      "observerNote": "Você não é o autor desta solicitação, então encerrar e enviar lembretes não cabe a você aqui.",
+      "offlineNote": "Encerrar e enviar lembretes ainda não estão disponíveis nesta sessão.",
+      "yes": "Sim",
+      "no": "Não"
+    },
+    "ranked": {
+      "noOne": "Ninguém ranqueou este item",
+      "contested": "Disputado — {{top}} de {{total}} o colocaram perto do topo, {{bottom}} perto do fim",
+      "first": "Em primeiro para {{first}} de {{total}}",
+      "last": "Em último para {{last}} de {{total}}",
+      "average": "Posição média {{mean}}"
+    },
+    "backlinks": {
+      "heading": "Feedback",
+      "buttonTitle": "Feedback sobre este documento ({{total}})",
+      "progress": "{{answered}}/{{total}} responderam",
+      "askedByYou": "Solicitado por você",
+      "askedBy": "Solicitado por {{name}}",
+      "authorSessionFallback": "a sessão que solicitou"
+    },
+    "artifacts": {
+      "noProject": {
+        "document": "Este documento está indisponível porque nenhum projeto da equipe está ativo.",
+        "tracker": "Este item do rastreador está indisponível porque nenhum projeto da equipe está ativo."
+      },
+      "otherOrg": {
+        "document": "Este documento pertence a outra organização.",
+        "tracker": "Este item do rastreador pertence a outra organização."
+      },
+      "otherProject": {
+        "document": "Abra o projeto ao qual este documento pertence para visualizá-lo.",
+        "tracker": "Abra o projeto ao qual este item do rastreador pertence para visualizá-lo."
+      },
+      "trackerNotSynced": "Este item do rastreador não está disponível no projeto sincronizado.",
+      "selectWorkstream": "Selecione um fluxo de trabalho neste projeto para abrir este item do rastreador."
+    },
+    "preview": {
+      "notOnMachine": "Este arquivo não está nesta máquina, então não há nada para visualizar."
+    },
+    "tab": {
+      "invalid": "Esta aba não aponta mais para uma solicitação de feedback."
+    },
+    "discussion": {
+      "empty": "Nenhuma discussão ainda."
+    },
+    "errors": {
+      "noTeam": "Este espaço de trabalho não tem uma equipe para receber a solicitação.",
+      "noWorkspace": "Esta sessão não tem um espaço de trabalho de onde enviar.",
+      "folderNotCreated": "Não foi possível criar a pasta {{folder}}.",
+      "questionNotSent": "Não foi possível enviar a pergunta.",
+      "answersNotSent": "Não foi possível enviar suas respostas.",
+      "nudgeNotSent": "Não foi possível enviar o lembrete.",
+      "notCancelled": "Não foi possível cancelar a solicitação.",
+      "notClosed": "Não foi possível encerrar a solicitação.",
+      "sessionNotPublishable": "Uma sessão não pode ser publicada, então não é possível pedir a um colega que revise uma.",
+      "documentNotShared": "Esse documento não está nos arquivos da sua equipe, então não pode ser compartilhado daqui.",
+      "kindNotPublishable": "O Nimbalyst ainda não consegue publicar este {{kind}} para você. Compartilhe-o com sua equipe primeiro e depois envie a solicitação.",
+      "notPublished": "Não foi possível publicar {{id}}.",
+      "trackerPersonal": "Este item do rastreador ainda é pessoal porque o tipo dele tem escopo pessoal. Altere a política de compartilhamento do tipo de rastreador e tente novamente.",
+      "sharingCancelled": "O compartilhamento de {{file}} foi cancelado, então nada foi publicado. Compartilhe o arquivo ou remova-o da solicitação e envie novamente."
+    }
+  }
+}

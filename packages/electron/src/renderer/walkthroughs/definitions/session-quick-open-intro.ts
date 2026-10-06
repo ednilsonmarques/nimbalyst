@@ -35,8 +35,8 @@ export const sessionQuickOpenIntro: WalkthroughDefinition = {
       target: {
         testId: 'session-quick-search-button',
       },
-      title: sessionSearchHelp.title,
-      body: sessionSearchHelp.body,
+      title: 'walkthroughs.sessionQuickSearch.title',
+      body: 'walkthroughs.sessionQuickSearch.body',
       shortcut: sessionSearchHelp.shortcut,
       placement: 'right',
       wide: true,

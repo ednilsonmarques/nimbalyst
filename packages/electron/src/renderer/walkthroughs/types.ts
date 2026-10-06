@@ -26,7 +26,7 @@ export interface WalkthroughTarget {
  * Optional action button for a walkthrough step
  */
 export interface WalkthroughAction {
-  /** Button label text */
+  /** Button label: i18n key in the 'onboarding' namespace, resolved at render */
   label: string;
   /** Callback when button is clicked */
   onClick: () => void;
@@ -46,10 +46,11 @@ export interface WalkthroughStep {
    * Useful for conditional UI elements like diff headers.
    */
   visibilityCondition?: () => boolean;
-  /** Step title */
+  /** Step title: i18n key in the 'onboarding' namespace, resolved at render */
   title: string;
   /**
-   * Step body text. Supports basic markdown:
+   * Step body: i18n key in the 'onboarding' namespace, resolved at render.
+   * The translated text supports basic markdown:
    * - **bold** text
    * - Line breaks (blank lines become paragraphs)
    * - Bullet lists (lines starting with - or *)

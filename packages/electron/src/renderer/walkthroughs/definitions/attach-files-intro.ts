@@ -34,8 +34,8 @@ export const attachFilesIntro: WalkthroughDefinition = {
       target: {
         selector: '.ai-chat-input',
       },
-      title: attachFilesHelp.title,
-      body: attachFilesHelp.body,
+      title: 'walkthroughs.attachFiles.title',
+      body: 'walkthroughs.attachFiles.body',
       placement: 'top',
     },
   ],

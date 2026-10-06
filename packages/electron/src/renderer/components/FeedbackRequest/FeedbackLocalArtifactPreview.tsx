@@ -31,6 +31,7 @@ import { FeedbackOptionPlaceholderPreview } from '@nimbalyst/collab-client/feedb
 
 import { customEditorRegistry } from '../CustomEditors/registry';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 /** Absolute, or workspace-relative in which case the workspace root is joined on. */
 function resolveAbsolutePath(sourceId: string, workspacePath: string | null): string | null {
@@ -54,6 +55,7 @@ export const FeedbackLocalArtifactPreview: React.FC<{
   optionLabel: string;
   onViewportRegistered?: (viewport: EditorViewport | null) => void;
 }> = ({ sourceId, workspacePath, label, optionLabel, onViewportRegistered }) => {
+  const { t } = useTranslation('onboarding');
   const { theme } = useTheme();
   const filePath = React.useMemo(
     () => resolveAbsolutePath(sourceId, workspacePath),
@@ -123,7 +125,7 @@ export const FeedbackLocalArtifactPreview: React.FC<{
       <FeedbackOptionPlaceholderPreview
         label={optionLabel}
         artifactLabel={label}
-        note="This file is not on this machine, so there is nothing to preview."
+        note={t('feedback.preview.notOnMachine')}
       />
     );
   }

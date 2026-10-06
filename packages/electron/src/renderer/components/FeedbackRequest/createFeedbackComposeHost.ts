@@ -20,6 +20,7 @@ import {
   type ResolvedFeedbackDestination,
 } from './feedbackDestinationFolder';
 import { resolveDesktopCollabScope } from '../../store/atoms/collabDocuments';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 export type { FeedbackPublishOutcome, FeedbackPublishPlan };
 
@@ -115,10 +116,10 @@ export function createFeedbackComposeHost(
   return {
     async send(payload: FeedbackComposeSendPayload): Promise<FeedbackRequestSendResult> {
       if (!payload.orgId) {
-        return { success: false, error: 'This workspace has no team to send the request to.' };
+        return { success: false, error: translate('onboarding:feedback.errors.noTeam') };
       }
       if (!config.workspacePath) {
-        return { success: false, error: 'This session has no workspace to send from.' };
+        return { success: false, error: translate('onboarding:feedback.errors.noWorkspace') };
       }
 
       const subjectKeys = new Set(payload.subjects.map((subject) => refKey(subject.ref)));
@@ -186,7 +187,7 @@ export function createFeedbackComposeHost(
             success: false,
             error: error instanceof Error
               ? error.message
-              : `The ${folderName} folder could not be created.`,
+              : translate('onboarding:feedback.errors.folderNotCreated', { folder: folderName }),
           };
         }
       }
@@ -234,7 +235,7 @@ export function createFeedbackComposeHost(
       try {
         return await sendDocument({ ...payload, subjects, asks }, destination);
       } catch (error) {
-        return { success: false, error: error instanceof Error ? error.message : 'The question could not be sent.' };
+        return { success: false, error: error instanceof Error ? error.message : translate('onboarding:feedback.errors.questionNotSent') };
       }
     },
 

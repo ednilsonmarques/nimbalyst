@@ -8,10 +8,12 @@
 
 import React from 'react';
 import { useSetAtom } from 'jotai';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { activeTipIdAtom } from './atoms';
 import { recordTipShown } from './TipService';
 import { tips } from './definitions';
 import type { TipDefinition } from './types';
+import { tipText } from './tipText';
 
 interface AllTipsDialogProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ export function AllTipsDialog({
   tipDefinitions = tips,
   onShowTip,
 }: AllTipsDialogProps): React.ReactElement | null {
+  const { t } = useTranslation('onboarding');
   const setActiveTipId = useSetAtom(activeTipIdAtom);
 
   if (!isOpen) return null;
@@ -54,11 +57,11 @@ export function AllTipsDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="all-tips-header flex items-center justify-between px-6 py-5 border-b border-[var(--nim-border)]">
-          <h2 className="m-0 text-lg font-semibold text-[var(--nim-text)]">All Tips</h2>
+          <h2 className="m-0 text-lg font-semibold text-[var(--nim-text)]">{t('tips.ui.allTipsTitle')}</h2>
           <button
             className="all-tips-close nim-btn-icon w-8 h-8 text-[28px] leading-none rounded transition-all duration-200"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('common:close')}
           >
             &times;
           </button>
@@ -77,17 +80,17 @@ export function AllTipsDialog({
               )}
               <div className="flex-1 min-w-0">
                 <div className="text-[14px] font-semibold text-[var(--nim-text)] leading-snug">
-                  {tip.content.title}
+                  {tipText(t, tip, 'title')}
                 </div>
                 <div className="text-[12.5px] text-[var(--nim-text-muted)] mt-1 leading-relaxed line-clamp-3">
-                  {tip.content.body.replace(/\*\*/g, '')}
+                  {tipText(t, tip, 'body').replace(/\*\*/g, '')}
                 </div>
               </div>
               <button
                 className="shrink-0 px-3 py-1.5 bg-[var(--nim-bg)] border border-[var(--nim-border)] text-[var(--nim-text)] rounded-md text-[12.5px] font-medium cursor-pointer hover:bg-[var(--nim-bg-hover)] transition-colors"
                 onClick={() => handleShow(tip)}
               >
-                Show
+                {t('tips.ui.show')}
               </button>
             </div>
           ))}

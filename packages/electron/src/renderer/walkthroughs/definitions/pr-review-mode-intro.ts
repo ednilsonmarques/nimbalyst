@@ -26,8 +26,8 @@ export const prReviewModeIntro: WalkthroughDefinition = {
     {
       id: 'pr-review-mode',
       target: { testId: 'pr-review-mode-button' },
-      title: prReviewHelp.title,
-      body: prReviewHelp.body,
+      title: 'walkthroughs.prReviewMode.title',
+      body: 'walkthroughs.prReviewMode.body',
       shortcut: prReviewHelp.shortcut,
       placement: 'right',
     },

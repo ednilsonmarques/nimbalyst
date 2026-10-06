@@ -7,6 +7,7 @@ import {
 } from '../../hooks/useTheme';
 import { themeListChangedVersionAtom } from '../../store/atoms/themeList';
 import { HelpTooltip } from '../../help';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 type BuiltInTheme = 'light' | 'dark';
 
@@ -15,6 +16,7 @@ interface ThemeToggleButtonProps {
 }
 
 export const ThemeToggleButton: React.FC<ThemeToggleButtonProps> = ({ className = '' }) => {
+  const { t } = useTranslation('onboarding');
   // Theme state lives in themeIdAtom; updated by store/listeners/themeListeners.ts
   const currentTheme = useAtomValue(themeIdAtom) as string;
 
@@ -119,7 +121,7 @@ export const ThemeToggleButton: React.FC<ThemeToggleButtonProps> = ({ className 
           ref={buttonRef}
           className={`theme-toggle-button nav-button relative w-9 h-9 flex items-center justify-center bg-transparent border-none rounded-md text-nim-muted cursor-pointer transition-all duration-150 p-0 hover:bg-nim-tertiary hover:text-nim active:scale-95 focus-visible:outline-2 focus-visible:outline-[var(--nim-primary)] focus-visible:outline-offset-2 ${className}`}
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          aria-label="Change theme"
+          aria-label={t('themeToggle.ariaLabel')}
           aria-expanded={isMenuOpen}
           aria-haspopup="menu"
           data-testid="gutter-theme-button"
@@ -133,7 +135,7 @@ export const ThemeToggleButton: React.FC<ThemeToggleButtonProps> = ({ className 
           ref={menuRef}
           className="theme-menu absolute bottom-0 left-full ml-2 bg-nim-secondary border border-nim rounded-md p-1 min-w-[200px] shadow-lg z-[1000]"
           role="menu"
-          aria-label="Theme selection"
+          aria-label={t('themeToggle.menuLabel')}
         >
           {availableThemes.map(theme => (
             <button

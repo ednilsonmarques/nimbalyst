@@ -37,8 +37,8 @@ export const filesScopeIntro: WalkthroughDefinition = {
       target: {
         testId: 'files-scope-dropdown',
       },
-      title: filesScopeHelp.title,
-      body: filesScopeHelp.body,
+      title: 'walkthroughs.filesScope.title',
+      body: 'walkthroughs.filesScope.body',
       placement: 'left',
     },
   ],

@@ -35,8 +35,8 @@ export const agentWelcomeIntro: WalkthroughDefinition = {
       target: {
         testId: 'new-dropdown-button',
       },
-      title: agentWelcomeHelp.title,
-      body: agentWelcomeHelp.body,
+      title: 'walkthroughs.agentWelcome.title',
+      body: 'walkthroughs.agentWelcome.body',
       placement: 'right',
     },
   ],

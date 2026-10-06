@@ -26,8 +26,8 @@ export const agentModeIntro: WalkthroughDefinition = {
       target: {
         testId: 'agent-mode-button',
       },
-      title: 'Agent Mode',
-      body: 'A focused coding agent management interface. Manage many running AI agent sessions, track their execution, control their commits and organize them with a Kanban board. Pick your agent, give instructions, and the AI agent will write code, run commands, and make changes across your project.',
+      title: 'walkthroughs.agentMode.title',
+      body: 'walkthroughs.agentMode.body',
       placement: 'right',
       shortcut: 'Cmd+2',
     },
@@ -52,8 +52,8 @@ export const filesModeIntro: WalkthroughDefinition = {
       target: {
         testId: 'files-mode-button',
       },
-      title: 'Files Mode',
-      body: 'Browse and edit your project files. Open markdown documents, code files, and more. The AI assistant sidebar is available here too.',
+      title: 'walkthroughs.filesMode.title',
+      body: 'walkthroughs.filesMode.body',
       placement: 'right',
       shortcut: 'Cmd+1',
     },

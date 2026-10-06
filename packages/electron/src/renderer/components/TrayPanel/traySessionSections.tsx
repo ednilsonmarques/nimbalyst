@@ -1,5 +1,6 @@
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type { TrayPanelSectionState, TrayPanelSession } from '../../../shared/traySessions';
 
 /**
@@ -15,18 +16,19 @@ import type { TrayPanelSectionState, TrayPanelSession } from '../../../shared/tr
  * The strip above these sections is on screen at the same time, so the two must
  * agree on what a colour means: green runs, blue is finished-and-unread. These
  * are the semantic vars for the literal hexes in `shared/fleetStripColors.ts`.
+ * `label` is an i18n key in the 'onboarding' namespace.
  */
 export const STATE_STYLES: Record<
   TrayPanelSectionState,
   { label: string; colorClass: string; dotClass: string }
 > = {
   attention: {
-    label: 'Needs attention',
+    label: 'traySessions.states.attention',
     colorClass: 'text-nim-warning',
     dotClass: 'bg-[var(--nim-warning)]',
   },
   running: {
-    label: 'Running',
+    label: 'traySessions.states.running',
     colorClass: 'text-nim-success',
     dotClass: 'bg-[var(--nim-success)]',
   },
@@ -34,12 +36,12 @@ export const STATE_STYLES: Record<
   // gone out of it, so it reads as the running state faded rather than as a
   // fourth kind of emergency competing with the warning and error colours.
   stalled: {
-    label: 'Not responding',
+    label: 'traySessions.states.stalled',
     colorClass: 'text-nim-faint',
     dotClass: 'bg-[var(--nim-text-faint)]',
   },
   unread: {
-    label: 'Unread',
+    label: 'traySessions.states.unread',
     colorClass: 'text-nim-primary',
     dotClass: 'bg-[var(--nim-primary)]',
   },
@@ -52,16 +54,17 @@ export function TrayStatusIndicator({
   session: TrayPanelSession;
   state: TrayPanelSectionState;
 }) {
+  const { t } = useTranslation('onboarding');
   if (session.hasError) {
     return (
-      <div className="flex h-5 w-5 items-center justify-center text-[var(--nim-error)]" title="Session error">
+      <div className="flex h-5 w-5 items-center justify-center text-[var(--nim-error)]" title={t('traySessions.status.error')}>
         <MaterialSymbol icon="error" size={14} />
       </div>
     );
   }
   if (session.hasPendingPrompt) {
     return (
-      <div className="flex h-5 w-5 animate-pulse items-center justify-center text-[var(--nim-warning)]" title="Waiting for your response">
+      <div className="flex h-5 w-5 animate-pulse items-center justify-center text-[var(--nim-warning)]" title={t('traySessions.status.pendingPrompt')}>
         <MaterialSymbol icon="contact_support" size={14} />
       </div>
     );
@@ -71,7 +74,7 @@ export function TrayStatusIndicator({
   // claim this state exists to doubt.
   if (state === 'stalled') {
     return (
-      <div className="flex h-5 w-5 items-center justify-center text-nim-faint" title="Running, but silent">
+      <div className="flex h-5 w-5 items-center justify-center text-nim-faint" title={t('traySessions.status.stalled')}>
         <MaterialSymbol icon="pause_circle" size={14} />
       </div>
     );
@@ -81,14 +84,14 @@ export function TrayStatusIndicator({
   // a tool call rendered as a bare row with no indicator at all.
   if (state === 'running') {
     return (
-      <div className="flex h-5 w-5 items-center justify-center text-[var(--nim-success)] opacity-80" title="Running">
+      <div className="flex h-5 w-5 items-center justify-center text-[var(--nim-success)] opacity-80" title={t('traySessions.status.running')}>
         <MaterialSymbol icon="progress_activity" size={14} className="animate-spin" />
       </div>
     );
   }
   if (state === 'unread') {
     return (
-      <div className="flex h-5 w-5 items-center justify-center text-[var(--nim-primary)]" title="Unread response">
+      <div className="flex h-5 w-5 items-center justify-center text-[var(--nim-primary)]" title={t('traySessions.status.unread')}>
         <MaterialSymbol icon="circle" size={8} fill />
       </div>
     );
@@ -114,6 +117,7 @@ export function TrayMarkAllReadButton({
   className: string;
   testId: string;
 }) {
+  const { t } = useTranslation('onboarding');
   return (
     <button
       type="button"
@@ -121,7 +125,7 @@ export function TrayMarkAllReadButton({
       onClick={onClick}
       data-testid={testId}
     >
-      Mark all as read
+      {t('traySessions.markAllRead')}
     </button>
   );
 }
@@ -136,12 +140,13 @@ export function TraySessionSectionHeader({
   count: number;
   actionSlot?: React.ReactNode;
 }) {
+  const { t } = useTranslation('onboarding');
   const style = STATE_STYLES[state];
   return (
     <div className={`flex items-center justify-between gap-2 px-3.5 pb-1 pt-2.5 text-[10.5px] font-semibold uppercase tracking-wide ${style.colorClass}`}>
       <span className="flex items-center gap-1.5">
         <span className={`h-1.5 w-1.5 rounded-full ${style.dotClass}`} />
-        <span>{style.label}</span>
+        <span>{t(style.label)}</span>
         <span aria-hidden>·</span>
         <span>{count}</span>
       </span>

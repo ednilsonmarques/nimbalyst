@@ -20,6 +20,7 @@ import {
 } from './feedbackArtifactActions';
 import { renderLazyFeedbackSubjectPreview } from './lazyFeedbackOptionPreview';
 import { parseFeedbackRequestTabUri } from './feedbackRequestTab';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export interface FeedbackRequestResultsTabProps {
   /** The tab's `virtual://feedback-request/<orgId>/<requestId>` key. */
@@ -32,6 +33,7 @@ export const FeedbackRequestResultsTab: React.FC<FeedbackRequestResultsTabProps>
   tabUri,
   workspacePath,
 }) => {
+  const { t } = useTranslation('onboarding');
   const ref = useMemo(() => parseFeedbackRequestTabUri(tabUri), [tabUri]);
   const target = useMemo<FeedbackRequestServiceTarget | null>(
     () => (ref && workspacePath
@@ -58,7 +60,7 @@ export const FeedbackRequestResultsTab: React.FC<FeedbackRequestResultsTabProps>
         data-testid="feedback-request-results-tab-invalid"
         className="feedback-request-results-tab-invalid select-text p-4 text-xs text-nim-muted"
       >
-        This tab does not point at a feedback request any more.
+        {t('feedback.tab.invalid')}
       </div>
     );
   }

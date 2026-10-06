@@ -43,8 +43,8 @@ export const aiSessionsButton: WalkthroughDefinition = {
       target: {
         testId: 'document-session-control',
       },
-      title: aiSessionsHelp.title,
-      body: aiSessionsHelp.body,
+      title: 'walkthroughs.documentSessionControl.title',
+      body: 'walkthroughs.documentSessionControl.body',
       shortcut: aiSessionsHelp.shortcut,
       placement: 'bottom',
     },

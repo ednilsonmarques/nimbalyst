@@ -35,8 +35,8 @@ export const diffModeIntro: WalkthroughDefinition = {
       target: {
         testId: 'diff-keep-all-button',
       },
-      title: keepAllHelp.title,
-      body: keepAllHelp.body,
+      title: 'walkthroughs.diffKeepAll.title',
+      body: 'walkthroughs.diffKeepAll.body',
       placement: 'bottom',
     },
     {
@@ -44,8 +44,8 @@ export const diffModeIntro: WalkthroughDefinition = {
       target: {
         testId: 'diff-revert-all-button',
       },
-      title: revertAllHelp.title,
-      body: revertAllHelp.body,
+      title: 'walkthroughs.diffRevertAll.title',
+      body: 'walkthroughs.diffRevertAll.body',
       placement: 'bottom',
     },
   ],

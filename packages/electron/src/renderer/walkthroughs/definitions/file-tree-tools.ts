@@ -34,8 +34,8 @@ export const fileTreeTools: WalkthroughDefinition = {
       target: {
         testId: 'file-tree-filter-button',
       },
-      title: filterHelp.title,
-      body: filterHelp.body,
+      title: 'walkthroughs.fileTreeFilter.title',
+      body: 'walkthroughs.fileTreeFilter.body',
       shortcut: filterHelp.shortcut,
       placement: 'right',
     },
@@ -44,8 +44,8 @@ export const fileTreeTools: WalkthroughDefinition = {
       target: {
         testId: 'file-tree-quick-open-button',
       },
-      title: quickOpenHelp.title,
-      body: quickOpenHelp.body,
+      title: 'walkthroughs.fileTreeQuickOpen.title',
+      body: 'walkthroughs.fileTreeQuickOpen.body',
       shortcut: quickOpenHelp.shortcut,
       placement: 'right',
     },

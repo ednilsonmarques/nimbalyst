@@ -35,6 +35,7 @@ import {
 } from '../../store/atoms/sessions';
 import { activeCollabScopeAtom } from '../../store/atoms/collabDocuments';
 import { openSharedDocumentInTab } from '../../utils/openSharedDocumentInTab';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 export const FEEDBACK_TRACKER_OPEN_EVENT = 'nimbalyst:workstream-open-tracker';
 
@@ -54,16 +55,16 @@ function scopeMismatchReason(
   artifact: FeedbackArtifact,
   scope: CollabScope | null,
 ): string | null {
-  const kindLabel = artifact.ref.kind === 'tracker' ? 'tracker item' : 'document';
+  const kind = artifact.ref.kind === 'tracker' ? 'tracker' : 'document';
   if (!scope) {
-    return `This ${kindLabel} is unavailable because no team project is active.`;
+    return translate(`onboarding:feedback.artifacts.noProject.${kind}`);
   }
   if (artifact.ref.orgId !== scope.orgId) {
-    return `This ${kindLabel} belongs to another organization.`;
+    return translate(`onboarding:feedback.artifacts.otherOrg.${kind}`);
   }
   const activeProjectId = scope.indexConfig.teamProjectId ?? undefined;
   if (artifact.ref.projectId && artifact.ref.projectId !== activeProjectId) {
-    return `Open the project that owns this ${kindLabel} to view it.`;
+    return translate(`onboarding:feedback.artifacts.otherProject.${kind}`);
   }
   return null;
 }
@@ -94,11 +95,11 @@ export function resolveFeedbackArtifactAction(
 
   const tracker = state.trackerItems.get(artifact.ref.sourceId);
   if (!tracker) {
-    return unavailable('This tracker item is not available in the synced project.');
+    return unavailable(translate('onboarding:feedback.artifacts.trackerNotSynced'));
   }
 
   if (!state.workstreamId) {
-    return unavailable('Select a workstream in this project to open this tracker item.');
+    return unavailable(translate('onboarding:feedback.artifacts.selectWorkstream'));
   }
 
   const workstreamId = state.workstreamId;

@@ -34,8 +34,8 @@ export const modelPickerIntro: WalkthroughDefinition = {
       target: {
         testId: 'model-picker',
       },
-      title: modelPickerHelp.title,
-      body: modelPickerHelp.body,
+      title: 'walkthroughs.modelPicker.title',
+      body: 'walkthroughs.modelPicker.body',
       placement: 'bottom',
     },
   ],
