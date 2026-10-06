@@ -1,601 +1,601 @@
 {
   "database": {
     "buttons": {
-      "quit": "Quit",
+      "quit": "Sair",
       "ok": "OK"
     },
     "startFresh": {
-      "title": "Nimbalyst - Start Fresh?",
-      "message": "This will clear your AI chat sessions.",
-      "detail": "Your files will not be affected, but all AI chat history will be permanently deleted.\n\nAre you sure you want to continue?",
-      "confirm": "Yes, Start Fresh"
+      "title": "Nimbalyst - Começar do zero?",
+      "message": "Isso vai apagar suas sessões de chat com IA.",
+      "detail": "Seus arquivos não serão afetados, mas todo o histórico de chat com IA será excluído permanentemente.\n\nTem certeza de que deseja continuar?",
+      "confirm": "Sim, começar do zero"
     },
     "recovered": {
-      "title": "Nimbalyst - Database Recovered",
-      "message": "The application database was corrupted and has been automatically repaired.",
-      "detail": "A fresh database has been created. Your old data has been backed up to:\n\n{{dataDir}}.backup-[timestamp]\n\nYour document files have not been lost - they are still on disk. Only the internal application database (AI chat sessions and document history) needs to be rebuilt."
+      "title": "Nimbalyst - Banco de dados recuperado",
+      "message": "O banco de dados do aplicativo estava corrompido e foi reparado automaticamente.",
+      "detail": "Um novo banco de dados foi criado. Seus dados antigos foram salvos em:\n\n{{dataDir}}.backup-[timestamp]\n\nSeus arquivos de documentos não foram perdidos - eles continuam no disco. Apenas o banco de dados interno do aplicativo (sessões de chat com IA e histórico de documentos) precisa ser reconstruído."
     },
     "lockAmbiguous": {
-      "title": "Nimbalyst - Database Locked (Ambiguous)",
-      "message": "Cannot tell whether another Nimbalyst is already running.",
-      "detail": "Nimbalyst found a database lock from a few seconds ago and cannot confirm whether the process holding it (PID {{lockPid}}, host {{lockHostname}}, acquired {{lockTimestamp}}) is still alive. Two scenarios are equally likely:\n\n  1. Another Nimbalyst window is open under a different user account or privilege level. Opening anyway will run two instances against the same database and may corrupt data.\n\n  2. A previous Nimbalyst crashed less than a minute ago and the OS has already reused the original PID for a system process. In this case the lock is safe to clear.\n\nIf unsure, choose Cancel and look for another Nimbalyst window before retrying.",
-      "openAnyway": "Open Anyway (clear lock)"
+      "title": "Nimbalyst - Banco de dados bloqueado (situação incerta)",
+      "message": "Não é possível saber se outro Nimbalyst já está em execução.",
+      "detail": "O Nimbalyst encontrou um bloqueio do banco de dados criado há poucos segundos e não consegue confirmar se o processo que o mantém (PID {{lockPid}}, host {{lockHostname}}, obtido em {{lockTimestamp}}) ainda está ativo. Os dois cenários são igualmente prováveis:\n\n  1. Outra janela do Nimbalyst está aberta em outra conta de usuário ou com outro nível de privilégio. Abrir mesmo assim executará duas instâncias sobre o mesmo banco de dados e pode corromper dados.\n\n  2. Um Nimbalyst anterior travou há menos de um minuto e o sistema operacional já reutilizou o PID original para um processo do sistema. Nesse caso, é seguro remover o bloqueio.\n\nSe não tiver certeza, escolha Cancelar e procure outra janela do Nimbalyst antes de tentar novamente.",
+      "openAnyway": "Abrir mesmo assim (remover bloqueio)"
     },
     "locked": {
-      "title": "Database Locked",
-      "unlockFailedMessage": "Could not clear the database lock.",
-      "unlockFailedDetail": "Removing the lock file failed: {{error}}\n\nIf another Nimbalyst window is open, close it manually before retrying.",
-      "uncertainMessage": "Nimbalyst cannot start while the database lock state is uncertain.",
-      "uncertainDetail": "Close any other Nimbalyst windows you have open and try again. If you are sure no other Nimbalyst is running, restart this machine to clear any stale system locks.",
-      "otherInstanceMessage": "Another instance of Nimbalyst is already running.",
-      "otherInstanceDetail": "The database is locked by another process. Please close the other instance before starting a new one.\n\nRunning multiple instances simultaneously can cause data corruption."
+      "title": "Banco de dados bloqueado",
+      "unlockFailedMessage": "Não foi possível remover o bloqueio do banco de dados.",
+      "unlockFailedDetail": "Falha ao remover o arquivo de bloqueio: {{error}}\n\nSe outra janela do Nimbalyst estiver aberta, feche-a manualmente antes de tentar novamente.",
+      "uncertainMessage": "O Nimbalyst não pode iniciar enquanto o estado do bloqueio do banco de dados for incerto.",
+      "uncertainDetail": "Feche as outras janelas do Nimbalyst que estiverem abertas e tente novamente. Se tiver certeza de que nenhum outro Nimbalyst está em execução, reinicie este computador para limpar bloqueios antigos do sistema.",
+      "otherInstanceMessage": "Outra instância do Nimbalyst já está em execução.",
+      "otherInstanceDetail": "O banco de dados está bloqueado por outro processo. Feche a outra instância antes de iniciar uma nova.\n\nExecutar várias instâncias ao mesmo tempo pode corromper os dados."
     },
     "restored": {
-      "title": "Database Restored",
-      "successMessage": "Your database has been successfully restored from the {{source}} backup.",
-      "message": "Your database has been restored from the {{source}} backup."
+      "title": "Banco de dados restaurado",
+      "successMessage": "Seu banco de dados foi restaurado com sucesso a partir do backup {{source}}.",
+      "message": "Seu banco de dados foi restaurado a partir do backup {{source}}."
     },
     "restoreFailed": {
-      "title": "Restore Failed",
-      "startingFreshMessage": "Failed to restore from backup. Starting with a fresh database.",
-      "message": "Failed to restore from backup."
+      "title": "Falha na restauração",
+      "startingFreshMessage": "Não foi possível restaurar a partir do backup. Iniciando com um banco de dados novo.",
+      "message": "Não foi possível restaurar a partir do backup."
     },
     "initFailed": {
-      "title": "Initialization Failed",
-      "afterRestoreMessage": "Database was restored but failed to initialize.",
-      "freshMessage": "Failed to initialize fresh database."
+      "title": "Falha na inicialização",
+      "afterRestoreMessage": "O banco de dados foi restaurado, mas não pôde ser inicializado.",
+      "freshMessage": "Não foi possível inicializar o novo banco de dados."
     },
     "reset": {
-      "title": "Database Reset",
-      "message": "A fresh database has been created.",
-      "detail": "Your previous AI chat sessions could not be recovered, but your document files are safe."
+      "title": "Banco de dados redefinido",
+      "message": "Um novo banco de dados foi criado.",
+      "detail": "Não foi possível recuperar suas sessões de chat com IA anteriores, mas seus arquivos de documentos estão seguros."
     },
     "deleteFailed": {
-      "title": "Delete Failed",
-      "message": "Failed to delete corrupted database."
+      "title": "Falha ao excluir",
+      "message": "Não foi possível excluir o banco de dados corrompido."
     },
     "noBackups": {
-      "title": "No Backups Available",
-      "message": "No backups are available to test the recovery dialog."
+      "title": "Nenhum backup disponível",
+      "message": "Não há backups disponíveis para testar a caixa de diálogo de recuperação."
     },
     "restoreData": {
-      "title": "Nimbalyst - Restore Your Data",
-      "message": "No file data has been lost.",
-      "detailWithDate": "Your files are safe, but your chat history will need to be restored from a backup dated {{date}}.",
-      "detail": "Your files are safe and your AI chat sessions can be restored from a recent backup.",
-      "restore": "Restore (Recommended)",
-      "startFresh": "Start Fresh"
+      "title": "Nimbalyst - Restaurar seus dados",
+      "message": "Nenhum dado de arquivo foi perdido.",
+      "detailWithDate": "Seus arquivos estão seguros, mas seu histórico de chat precisará ser restaurado a partir de um backup de {{date}}.",
+      "detail": "Seus arquivos estão seguros e suas sessões de chat com IA podem ser restauradas a partir de um backup recente.",
+      "restore": "Restaurar (recomendado)",
+      "startFresh": "Começar do zero"
     }
   },
   "databaseFailure": {
-    "title": "Nimbalyst - Database Initialization Failed",
-    "message": "The database could not be started.",
-    "fatalMessage": "Failed to initialize the database system.\n\nError: {{error}}\n\nNimbalyst cannot continue without the database.",
-    "restoreFailedTitle": "Nimbalyst - Restore Failed",
-    "recoveryWithBackups": "Backup copies were found on this computer:\n\n{{backups}}\n\nDo not remove the database folder -- these backups are what it would be restored from.\n\nRestore Backup starts with the copy holding the most, and tries the next one if that copy does not check out. It keeps the current database alongside, so nothing on this computer is removed either way.",
-    "recoveryNoBackups": "Do not remove the database folder. Support can often recover a database that will not start.",
-    "stepsWithBackups": "If you would rather not restore yet:\n1. Close any other Nimbalyst windows and open it again\n2. Restart your computer, which clears stale database locks\n3. Show Backups reveals the copies above without changing anything",
-    "stepsNoBackups": "Things to try, in order:\n1. Close any other Nimbalyst windows and open it again\n2. Restart your computer, which clears stale database locks\n3. If it still will not start, contact support before changing anything on disk",
-    "rollbackDetail": "The database as it was before the switch to the new engine is also still here ({{name}}). Restore pre-migration database goes back to it: anything saved since the switch will not be in it, and the newer database is kept on disk.",
-    "quitNotice": "Nimbalyst will close if you quit.",
-    "rollbackIncomplete": "Pre-migration recovery did not complete. All copies have been retained.",
-    "restoreIncomplete": "the restore did not complete",
-    "restoreFailedSummary": "{{failures}}\n\nNothing was removed. Every copy of your database is still on this computer.",
+    "title": "Nimbalyst - Falha ao inicializar o banco de dados",
+    "message": "Não foi possível iniciar o banco de dados.",
+    "fatalMessage": "Não foi possível inicializar o sistema de banco de dados.\n\nErro: {{error}}\n\nO Nimbalyst não pode continuar sem o banco de dados.",
+    "restoreFailedTitle": "Nimbalyst - Falha na restauração",
+    "recoveryWithBackups": "Foram encontradas cópias de backup neste computador:\n\n{{backups}}\n\nNão remova a pasta do banco de dados -- é a partir desses backups que ele seria restaurado.\n\nRestaurar backup começa pela cópia com mais dados e tenta a próxima se essa cópia não passar na verificação. O banco de dados atual é mantido ao lado, então nada neste computador é removido em nenhum caso.",
+    "recoveryNoBackups": "Não remova a pasta do banco de dados. O suporte muitas vezes consegue recuperar um banco de dados que não inicia.",
+    "stepsWithBackups": "Se preferir não restaurar agora:\n1. Feche as outras janelas do Nimbalyst e abra-o novamente\n2. Reinicie o computador, o que limpa bloqueios antigos do banco de dados\n3. Mostrar backups exibe as cópias acima sem alterar nada",
+    "stepsNoBackups": "O que tentar, nesta ordem:\n1. Feche as outras janelas do Nimbalyst e abra-o novamente\n2. Reinicie o computador, o que limpa bloqueios antigos do banco de dados\n3. Se ainda assim não iniciar, entre em contato com o suporte antes de alterar qualquer coisa no disco",
+    "rollbackDetail": "O banco de dados como estava antes da mudança para o novo mecanismo também continua aqui ({{name}}). Restaurar banco de dados pré-migração volta para ele: nada do que foi salvo desde a mudança estará nele, e o banco de dados mais recente é mantido no disco.",
+    "quitNotice": "O Nimbalyst será fechado se você sair.",
+    "rollbackIncomplete": "A recuperação pré-migração não foi concluída. Todas as cópias foram mantidas.",
+    "restoreIncomplete": "a restauração não foi concluída",
+    "restoreFailedSummary": "{{failures}}\n\nNada foi removido. Todas as cópias do seu banco de dados continuam neste computador.",
     "buttons": {
-      "retryStartup": "Retry startup",
-      "restoreBackup": "Restore Backup",
-      "showBackups": "Show Backups",
-      "restorePreMigration": "Restore pre-migration database",
-      "copyDiagnostics": "Copy diagnostics",
-      "quit": "Quit"
+      "retryStartup": "Tentar iniciar novamente",
+      "restoreBackup": "Restaurar backup",
+      "showBackups": "Mostrar backups",
+      "restorePreMigration": "Restaurar banco de dados pré-migração",
+      "copyDiagnostics": "Copiar diagnóstico",
+      "quit": "Sair"
     }
   },
   "uncaughtException": {
-    "title": "Nimbalyst - Uncaught Exception"
+    "title": "Nimbalyst - Exceção não tratada"
   },
   "unresponsive": {
-    "reload": "Reload",
-    "keepWaiting": "Keep Waiting",
-    "detail": "Would you like to reload the window?",
-    "windowMessage": "The window is not responding",
-    "projectManagerMessage": "Project Manager is not responding"
+    "reload": "Recarregar",
+    "keepWaiting": "Continuar aguardando",
+    "detail": "Deseja recarregar a janela?",
+    "windowMessage": "A janela não está respondendo",
+    "projectManagerMessage": "O Gerenciador de projetos não está respondendo"
   },
   "appQuit": {
     "activeSession": {
-      "title": "AI Session in Progress",
-      "message": "An AI session is currently running.",
-      "detail": "If you quit now, the current AI response will be lost. Are you sure you want to quit?",
-      "quitAnyway": "Quit Anyway"
+      "title": "Sessão de IA em andamento",
+      "message": "Uma sessão de IA está em execução.",
+      "detail": "Se você sair agora, a resposta atual da IA será perdida. Tem certeza de que deseja sair?",
+      "quitAnyway": "Sair mesmo assim"
     }
   },
   "appRestart": {
-    "failedTitle": "Unable to restart Nimbalyst",
-    "failedMessage": "Restart stopped before closing your project windows. Please try restarting again.\n\n{{error}}"
+    "failedTitle": "Não foi possível reiniciar o Nimbalyst",
+    "failedMessage": "A reinicialização foi interrompida antes de fechar as janelas dos seus projetos. Tente reiniciar novamente.\n\n{{error}}"
   },
   "extensionScaffold": {
     "intro": {
-      "title": "Build With Extensions",
-      "message": "Extensions can add custom editors, AI tools, panels, commands, and other workspace features.",
-      "detail": "Nimbalyst can load your extension project while you build it, so you can test changes inside the app without leaving your development flow.\n\nDescribe what you want to the agent, and watch it build, install, and test the extension right before your eyes.",
-      "dontShowAgain": "Don't Show Again"
+      "title": "Crie com extensões",
+      "message": "Extensões podem adicionar editores personalizados, ferramentas de IA, painéis, comandos e outros recursos ao espaço de trabalho.",
+      "detail": "O Nimbalyst pode carregar seu projeto de extensão enquanto você o desenvolve, para que você teste as alterações dentro do app sem sair do seu fluxo de desenvolvimento.\n\nDescreva para o agente o que você quer e veja-o criar, instalar e testar a extensão diante dos seus olhos.",
+      "dontShowAgain": "Não mostrar novamente"
     },
     "createProject": {
-      "title": "Create New Extension Project",
-      "buttonLabel": "Create Project"
+      "title": "Criar novo projeto de extensão",
+      "buttonLabel": "Criar projeto"
     },
     "folderNotEmpty": {
-      "title": "Folder Not Empty",
-      "message": "Choose an empty folder for the new extension project.",
-      "detail": "The selected folder already contains files:\n{{path}}",
+      "title": "A pasta não está vazia",
+      "message": "Escolha uma pasta vazia para o novo projeto de extensão.",
+      "detail": "A pasta selecionada já contém arquivos:\n{{path}}",
       "ok": "OK"
     }
   },
   "notifications": {
     "testNotification": {
-      "title": "Notifications Enabled",
-      "body": "Nimbalyst will notify you when AI responses are ready."
+      "title": "Notificações ativadas",
+      "body": "O Nimbalyst avisará você quando as respostas da IA estiverem prontas."
     },
     "navigationFailure": {
-      "title": "{{source}} -- could not be opened",
-      "body": "Nimbalyst could not open the project for this session. Open the project, then retry."
+      "title": "{{source}} -- não foi possível abrir",
+      "body": "O Nimbalyst não conseguiu abrir o projeto desta sessão. Abra o projeto e tente novamente."
     },
     "sourceLabel": {
-      "session": "Session {{id}}",
-      "aiSession": "AI session"
+      "session": "Sessão {{id}}",
+      "aiSession": "Sessão de IA"
     },
     "blocked": {
       "title": {
-        "permission": "Permission Required",
-        "question": "Question Waiting",
-        "planApproval": "Plan Ready for Review",
-        "gitCommit": "Commit Ready",
-        "default": "Session Needs Attention"
+        "permission": "Permissão necessária",
+        "question": "Pergunta aguardando resposta",
+        "planApproval": "Plano pronto para revisão",
+        "gitCommit": "Commit pronto",
+        "default": "A sessão precisa de atenção"
       },
       "body": {
-        "permission": "\"{{sessionName}}\" needs approval",
-        "question": "\"{{sessionName}}\" has a question",
-        "planApproval": "\"{{sessionName}}\" plan is ready",
-        "gitCommit": "\"{{sessionName}}\" has a commit proposal",
-        "default": "\"{{sessionName}}\" needs your input"
+        "permission": "\"{{sessionName}}\" precisa de aprovação",
+        "question": "\"{{sessionName}}\" tem uma pergunta",
+        "planApproval": "O plano de \"{{sessionName}}\" está pronto",
+        "gitCommit": "\"{{sessionName}}\" tem uma proposta de commit",
+        "default": "\"{{sessionName}}\" precisa da sua resposta"
       }
     }
   },
   "sessionWakeup": {
     "resumed": {
-      "title": "Session resumed",
-      "defaultBody": "A scheduled wakeup has fired."
+      "title": "Sessão retomada",
+      "defaultBody": "Um despertar agendado foi acionado."
     }
   },
   "teamInbox": {
-    "directMessage": "Direct message"
+    "directMessage": "Mensagem direta"
   },
   "recovery": {
     "deleteCopy": {
-      "title": "Delete a preserved database copy?",
-      "message": "Permanently delete {{name}}?",
-      "detailRollbackSource": "{{name}} ({{size}}) is the copy Nimbalyst would restore from if you rolled back to PGLite. Deleting it removes that option permanently. Your current database is not affected.",
-      "detailPreserved": "{{name}} ({{size}}) is a preserved copy of your database from before the switch to SQLite. Deleting it frees the space permanently. Your current database is not affected.",
-      "confirm": "Delete Permanently"
+      "title": "Excluir uma cópia preservada do banco de dados?",
+      "message": "Excluir permanentemente {{name}}?",
+      "detailRollbackSource": "{{name}} ({{size}}) é a cópia que o Nimbalyst usaria para restaurar caso você voltasse para o PGLite. Excluí-la remove essa opção permanentemente. Seu banco de dados atual não é afetado.",
+      "detailPreserved": "{{name}} ({{size}}) é uma cópia preservada do seu banco de dados de antes da mudança para o SQLite. Excluí-la libera o espaço permanentemente. Seu banco de dados atual não é afetado.",
+      "confirm": "Excluir permanentemente"
     }
   },
   "projectRail": {
     "attachFolder": {
-      "title": "Attach Folder to Workspace",
-      "message": "Attach \"{{folder}}\" to \"{{workspace}}\"?",
-      "detail": "The attached folder becomes part of this project and inherits its agent trust level. Agents in this project will be able to read and write it.",
-      "confirm": "Attach Folder"
+      "title": "Anexar pasta ao espaço de trabalho",
+      "message": "Anexar \"{{folder}}\" a \"{{workspace}}\"?",
+      "detail": "A pasta anexada passa a fazer parte deste projeto e herda o nível de confiança dos agentes dele. Os agentes deste projeto poderão ler e gravar nela.",
+      "confirm": "Anexar pasta"
     },
     "attachError": {
-      "capReached": "A workspace can hold at most {{max}} attached folders",
-      "alreadyAttached": "Folder is already attached",
-      "isWorkspace": "Folder is already this workspace"
+      "capReached": "Um espaço de trabalho pode ter no máximo {{max}} pastas anexadas",
+      "alreadyAttached": "A pasta já está anexada",
+      "isWorkspace": "A pasta já é este espaço de trabalho"
     },
-    "openProjectDialogTitle": "Open Project",
+    "openProjectDialogTitle": "Abrir projeto",
     "limitReached": {
-      "title": "Project limit reached",
-      "message": "The project limit is eight per window. Close a project or enable Allow unlimited projects in Settings > Advanced."
+      "title": "Limite de projetos atingido",
+      "message": "O limite é de oito projetos por janela. Feche um projeto ou ative Permitir projetos ilimitados em Configurações > Avançado."
     },
     "closeProject": {
-      "title": "Close project",
-      "message_one": "{{name}} has {{count}} streaming session. Close anyway? Sessions will be paused.",
-      "message_other": "{{name}} has {{count}} streaming sessions. Close anyway? Sessions will be paused.",
-      "confirm": "Close project"
+      "title": "Fechar projeto",
+      "message_one": "{{name}} tem {{count}} sessão em andamento. Fechar mesmo assim? As sessões serão pausadas.",
+      "message_other": "{{name}} tem {{count}} sessões em andamento. Fechar mesmo assim? As sessões serão pausadas.",
+      "confirm": "Fechar projeto"
     }
   },
   "fileDialogs": {
-    "selectFile": "Select File",
-    "open": "Open",
+    "selectFile": "Selecionar arquivo",
+    "open": "Abrir",
     "filters": {
-      "markdown": "Markdown Files",
-      "text": "Text Files",
-      "all": "All Files"
+      "markdown": "Arquivos Markdown",
+      "text": "Arquivos de texto",
+      "all": "Todos os arquivos"
     }
   },
   "fileOpener": {
     "filters": {
-      "markdown": "Markdown Files",
-      "text": "Text Files",
-      "all": "All Files"
+      "markdown": "Arquivos Markdown",
+      "text": "Arquivos de texto",
+      "all": "Todos os arquivos"
     }
   },
   "trackerSync": {
     "prefixUnavailable": {
-      "title": "Issue Key Prefix Unavailable",
-      "message": "That issue-key prefix could not be assigned.",
-      "detailWithSuggestion": "{{error}} Suggested prefix: {{prefix}}.",
-      "defaultError": "That prefix is unavailable",
-      "serverRejected": "The server rejected that prefix."
+      "title": "Prefixo de chave indisponível",
+      "message": "Não foi possível atribuir esse prefixo de chave de item.",
+      "detailWithSuggestion": "{{error}} Prefixo sugerido: {{prefix}}.",
+      "defaultError": "Esse prefixo não está disponível",
+      "serverRejected": "O servidor rejeitou esse prefixo."
     }
   },
   "export": {
-    "exportButton": "Export",
+    "exportButton": "Exportar",
     "pdf": {
-      "title": "Export to PDF",
-      "filterName": "PDF Files"
+      "title": "Exportar para PDF",
+      "filterName": "Arquivos PDF"
     },
     "sessionHtml": {
-      "title": "Export Session as HTML",
-      "filterName": "HTML Files"
+      "title": "Exportar sessão como HTML",
+      "filterName": "Arquivos HTML"
     }
   },
   "completionSound": {
     "chooseCustom": {
-      "title": "Choose Completion Sound",
-      "buttonLabel": "Use Sound",
-      "filterName": "Audio"
+      "title": "Escolher som de conclusão",
+      "buttonLabel": "Usar som",
+      "filterName": "Áudio"
     }
   },
   "documentSync": {
     "saveCopy": {
-      "title": "Save a copy"
+      "title": "Salvar uma cópia"
     }
   },
   "permissions": {
     "selectDirectory": {
-      "title": "Select Directory",
-      "buttonLabel": "Select"
+      "title": "Selecionar pasta",
+      "buttonLabel": "Selecionar"
     }
   },
   "confirm": {
     "ok": "OK"
   },
   "account": {
-    "closeSignIn": "Close sign-in"
+    "closeSignIn": "Fechar tela de login"
   },
   "input": {
-    "create": "Create"
+    "create": "Criar"
   },
   "newFile": {
-    "title": "New File",
-    "typeLabel": "Type",
-    "locationLabel": "Location",
-    "nameLabel": "Name",
+    "title": "Novo arquivo",
+    "typeLabel": "Tipo",
+    "locationLabel": "Local",
+    "nameLabel": "Nome",
     "types": {
-      "other": "Other"
+      "other": "Outro"
     },
     "errors": {
-      "nameRequired": "Please enter a file name",
-      "invalidCharacters": "File name cannot contain / or \\"
+      "nameRequired": "Informe um nome de arquivo",
+      "invalidCharacters": "O nome do arquivo não pode conter / ou \\"
     },
-    "defaultWorkspaceName": "workspace",
-    "rootFolder": "{{name}} (root)",
-    "placeholder": "document",
-    "placeholderWithExtension": "document.txt",
-    "create": "Create"
+    "defaultWorkspaceName": "espaço de trabalho",
+    "rootFolder": "{{name}} (raiz)",
+    "placeholder": "documento",
+    "placeholderWithExtension": "documento.txt",
+    "create": "Criar"
   },
   "error": {
-    "copiedFeedback": "✓ Copied!",
-    "copyDebugInfo": "Copy Debug Info",
+    "copiedFeedback": "✓ Copiado!",
+    "copyDebugInfo": "Copiar informações de depuração",
     "sections": {
-      "errorDetails": "Error Details",
+      "errorDetails": "Detalhes do erro",
       "prompt": "Prompt",
-      "aiResponse": "AI Response",
-      "attemptedReplacements": "Attempted Replacements ({{total}})",
-      "documentContent": "Document Content"
+      "aiResponse": "Resposta da IA",
+      "attemptedReplacements": "Substituições tentadas ({{total}})",
+      "documentContent": "Conteúdo do documento"
     },
     "fields": {
-      "message": "Message:",
-      "time": "Time:",
-      "file": "File:"
+      "message": "Mensagem:",
+      "time": "Horário:",
+      "file": "Arquivo:"
     },
-    "replacementNumber": "Replacement {{number}}",
-    "oldText": "Old Text:",
-    "newText": "New Text:",
+    "replacementNumber": "Substituição {{number}}",
+    "oldText": "Texto antigo:",
+    "newText": "Texto novo:",
     "help": {
-      "title": "What to do next:",
-      "checkModified": "Check if the document was modified after the AI started processing",
-      "verifyText": "Verify that the text the AI is trying to replace exists exactly as shown",
-      "retryRequest": "Try making the request again with the current document state",
-      "reportIssue": "If the problem persists, copy the debug info and report the issue"
+      "title": "O que fazer agora:",
+      "checkModified": "Verifique se o documento foi modificado depois que a IA começou a processar",
+      "verifyText": "Confirme se o texto que a IA está tentando substituir existe exatamente como mostrado",
+      "retryRequest": "Tente fazer a solicitação novamente com o estado atual do documento",
+      "reportIssue": "Se o problema persistir, copie as informações de depuração e relate o problema"
     },
     "ok": "OK"
   },
   "errorToast": {
-    "dismiss": "Dismiss",
-    "copyDetails": "Copy Details"
+    "dismiss": "Dispensar",
+    "copyDetails": "Copiar detalhes"
   },
   "updateToast": {
-    "dismiss": "Dismiss",
-    "checking": "Checking for updates...",
-    "upToDateTitle": "You're up to date!",
-    "upToDateMessage": "Nimbalyst {{version}} is the latest version.",
-    "errorTitle": "Update Error",
-    "manualDownload": "You can <link>download the latest version manually</link>.",
+    "dismiss": "Dispensar",
+    "checking": "Verificando atualizações...",
+    "upToDateTitle": "Você está com a versão mais recente!",
+    "upToDateMessage": "O Nimbalyst {{version}} é a versão mais recente.",
+    "errorTitle": "Erro na atualização",
+    "manualDownload": "Você pode <link>baixar a versão mais recente manualmente</link>.",
     "available": {
-      "title": "New Version: Nimbalyst {{version}}",
-      "subtitle": "There's a new app update available to download",
-      "updateNow": "Update Now",
-      "releaseNotes": "Release Notes",
-      "remindLater": "Remind me later"
+      "title": "Nova versão: Nimbalyst {{version}}",
+      "subtitle": "Há uma nova atualização do app disponível para download",
+      "updateNow": "Atualizar agora",
+      "releaseNotes": "Notas da versão",
+      "remindLater": "Lembrar mais tarde"
     },
     "download": {
-      "title": "Downloading Nimbalyst {{version}}...",
-      "calculating": "Calculating...",
-      "lessThanMinute": "Less than 1 minute remaining",
-      "minutesRemaining_one": "About {{count}} minute remaining",
-      "minutesRemaining_other": "About {{count}} minutes remaining",
-      "hoursRemaining": "About {{hours}}h {{minutes}}m remaining",
-      "starting": "Starting download...",
-      "progress": "{{transferred}} of {{total}}",
-      "preparing": "Preparing..."
+      "title": "Baixando o Nimbalyst {{version}}...",
+      "calculating": "Calculando...",
+      "lessThanMinute": "Menos de 1 minuto restante",
+      "minutesRemaining_one": "Cerca de {{count}} minuto restante",
+      "minutesRemaining_other": "Cerca de {{count}} minutos restantes",
+      "hoursRemaining": "Cerca de {{hours}} h {{minutes}} min restantes",
+      "starting": "Iniciando o download...",
+      "progress": "{{transferred}} de {{total}}",
+      "preparing": "Preparando..."
     },
     "ready": {
-      "waitingTitle": "Update ready",
-      "waitingMessage": "Update will apply when all AI sessions are finished",
-      "restartNow": "Restart Now",
-      "later": "Later",
-      "title": "Nimbalyst update is ready",
-      "message": "The app needs to be restarted to apply the update",
-      "relaunch": "Relaunch"
+      "waitingTitle": "Atualização pronta",
+      "waitingMessage": "A atualização será aplicada quando todas as sessões de IA terminarem",
+      "restartNow": "Reiniciar agora",
+      "later": "Mais tarde",
+      "title": "A atualização do Nimbalyst está pronta",
+      "message": "É preciso reiniciar o app para aplicar a atualização",
+      "relaunch": "Reiniciar e atualizar"
     },
     "releaseNotes": {
-      "noNotes": "No release notes available.",
-      "title": "A new version of Nimbalyst is available!",
-      "currentVersionLabel": "You are currently on:",
-      "latestVersionLabel": "The latest version is:",
-      "notesTitle": "{{version}} - Release Notes",
-      "later": "Later",
-      "updateTo": "Update to Nimbalyst {{version}}"
+      "noNotes": "Nenhuma nota da versão disponível.",
+      "title": "Uma nova versão do Nimbalyst está disponível!",
+      "currentVersionLabel": "Sua versão atual:",
+      "latestVersionLabel": "A versão mais recente é:",
+      "notesTitle": "{{version}} - Notas da versão",
+      "later": "Mais tarde",
+      "updateTo": "Atualizar para o Nimbalyst {{version}}"
     }
   },
   "projectTrust": {
-    "thisProject": "this project",
+    "thisProject": "este projeto",
     "stopTrusting": {
-      "title": "Stop trusting project",
-      "message": "Stop trusting \"{{projectName}}\"?\n\nThe AI agent won't run any tools in this workspace until you trust it again.",
-      "confirm": "Stop trusting"
+      "title": "Deixar de confiar no projeto",
+      "message": "Deixar de confiar em \"{{projectName}}\"?\n\nO agente de IA não executará nenhuma ferramenta neste espaço de trabalho até que você confie nele novamente.",
+      "confirm": "Deixar de confiar"
     },
-    "title": "Set up agents for \"{{projectName}}\"",
-    "subtitle": "Choose how much your coding agents can do on their own. You can change this anytime.",
+    "title": "Configurar agentes para \"{{projectName}}\"",
+    "subtitle": "Escolha o quanto seus agentes de código podem fazer por conta própria. Você pode mudar isso a qualquer momento.",
     "choiceLabels": {
-      "agentVerified": "Agent-verified",
-      "allowEverything": "Allow everything",
-      "allowEditsOnly": "Allow edits only",
-      "askEveryTime": "Ask every time"
+      "agentVerified": "Verificado pelo agente",
+      "allowEverything": "Permitir tudo",
+      "allowEditsOnly": "Permitir só edições",
+      "askEveryTime": "Perguntar sempre"
     },
     "choiceDescriptions": {
-      "agentVerified": "Works without interrupting you; <bold>risky actions</bold> like deploys and destructive commands <bold>pause for your OK</bold>.",
-      "allowEverything": "No prompts, no checks — every action runs immediately. For projects you fully trust.",
-      "allowEditsOnly": "File edits run automatically; shell commands and web requests ask first.",
-      "askEveryTime": "Approve each action before it runs. Your approvals are remembered."
+      "agentVerified": "Trabalha sem interromper você; <bold>ações arriscadas</bold>, como deploys e comandos destrutivos, <bold>aguardam sua aprovação</bold>.",
+      "allowEverything": "Sem confirmações nem verificações — toda ação é executada imediatamente. Para projetos em que você confia totalmente.",
+      "allowEditsOnly": "Edições de arquivos são executadas automaticamente; comandos de shell e requisições web pedem permissão antes.",
+      "askEveryTime": "Aprove cada ação antes que ela seja executada. Suas aprovações ficam salvas."
     },
-    "recommended": "Recommended",
-    "footnote": "Agents can run this project's code. If you don't recognize where this project came from, <revokeLink>don't trust it</revokeLink>.",
-    "advancedSettings": "Advanced settings",
-    "notNow": "Not now",
-    "startWorking": "Start working"
+    "recommended": "Recomendado",
+    "footnote": "Os agentes podem executar o código deste projeto. Se você não reconhece a origem deste projeto, <revokeLink>não confie nele</revokeLink>.",
+    "advancedSettings": "Configurações avançadas",
+    "notNow": "Agora não",
+    "startWorking": "Começar a trabalhar"
   },
   "fileOps": {
     "deleteItems": {
-      "title": "Delete items?",
-      "message": "Are you sure you want to delete {{itemCount}} items?"
+      "title": "Excluir itens?",
+      "message": "Tem certeza de que deseja excluir {{itemCount}} itens?"
     },
     "deleteItem": {
-      "title": "Delete item?",
-      "message": "Are you sure you want to delete \"{{name}}\"?"
+      "title": "Excluir item?",
+      "message": "Tem certeza de que deseja excluir \"{{name}}\"?"
     },
     "deleteFile": {
-      "title": "Delete file?",
-      "message": "Are you sure you want to delete \"{{name}}\"?"
+      "title": "Excluir arquivo?",
+      "message": "Tem certeza de que deseja excluir \"{{name}}\"?"
     },
     "deleteFolder": {
-      "title": "Delete folder?",
-      "message": "Are you sure you want to delete the folder \"{{name}}\" and all its contents?"
+      "title": "Excluir pasta?",
+      "message": "Tem certeza de que deseja excluir a pasta \"{{name}}\" e todo o seu conteúdo?"
     },
     "deleteFailed": {
-      "title": "Delete failed",
-      "message": "Could not delete {{name}}.",
-      "someTitle": "Some files could not be deleted",
-      "countMessage_one": "{{failed}} of {{count}} file could not be deleted.",
-      "countMessage_other": "{{failed}} of {{count}} files could not be deleted."
+      "title": "Falha ao excluir",
+      "message": "Não foi possível excluir {{name}}.",
+      "someTitle": "Não foi possível excluir alguns arquivos",
+      "countMessage_one": "Não foi possível excluir {{failed}} de {{count}} arquivo.",
+      "countMessage_other": "Não foi possível excluir {{failed}} de {{count}} arquivos."
     },
     "copyFailed": {
-      "title": "Copy failed",
-      "someTitle": "Some files could not be copied",
-      "countMessage_one": "{{failed}} of {{count}} item could not be copied into {{folder}}.",
-      "countMessage_other": "{{failed}} of {{count}} items could not be copied into {{folder}}."
+      "title": "Falha ao copiar",
+      "someTitle": "Não foi possível copiar alguns arquivos",
+      "countMessage_one": "Não foi possível copiar {{failed}} de {{count}} item para {{folder}}.",
+      "countMessage_other": "Não foi possível copiar {{failed}} de {{count}} itens para {{folder}}."
     },
     "moveFailed": {
-      "title": "Move failed",
-      "someTitle": "Some files could not be moved",
-      "countMessage_one": "{{failed}} of {{count}} item could not be moved into {{folder}}.",
-      "countMessage_other": "{{failed}} of {{count}} items could not be moved into {{folder}}."
+      "title": "Falha ao mover",
+      "someTitle": "Não foi possível mover alguns arquivos",
+      "countMessage_one": "Não foi possível mover {{failed}} de {{count}} item para {{folder}}.",
+      "countMessage_other": "Não foi possível mover {{failed}} de {{count}} itens para {{folder}}."
     }
   },
   "tabEditor": {
     "overwriteExternal": {
-      "title": "Overwrite external changes?",
-      "message": "The file has been modified externally since you opened it.\n\nDo you want to overwrite the external changes with your edits?\n\nClick OK to overwrite, or Cancel to reload the file from disk.",
-      "confirm": "Overwrite"
+      "title": "Sobrescrever alterações externas?",
+      "message": "O arquivo foi modificado externamente desde que você o abriu.\n\nDeseja sobrescrever as alterações externas com suas edições?\n\nClique em Sobrescrever para substituir ou em Cancelar para recarregar o arquivo do disco.",
+      "confirm": "Sobrescrever"
     },
     "discardUnsaved": {
-      "title": "Discard unsaved edits?",
-      "message": "An AI edit is still pending review, so these edits cannot be saved yet.\n\nSwitching editors reloads the file from disk and discards them.\n\nClick OK to discard your edits, or Cancel to stay here and resolve the review first.",
-      "confirm": "Discard"
+      "title": "Descartar edições não salvas?",
+      "message": "Uma edição da IA ainda está aguardando revisão, então estas edições ainda não podem ser salvas.\n\nTrocar de editor recarrega o arquivo do disco e as descarta.\n\nClique em Descartar para descartar suas edições ou em Cancelar para continuar aqui e resolver a revisão primeiro.",
+      "confirm": "Descartar"
     },
     "autosaveConflict": {
-      "message": "File changed on disk. Your unsaved edits are kept until you reload.",
-      "reload": "Reload",
-      "dismiss": "Dismiss"
+      "message": "O arquivo foi alterado no disco. Suas edições não salvas são mantidas até você recarregar.",
+      "reload": "Recarregar",
+      "dismiss": "Dispensar"
     },
     "fileChanged": {
-      "title": "File Changed on Disk",
-      "message": "The file \"{{fileName}}\" has been changed on disk but you have unsaved changes.",
-      "question": "Do you want to reload the file from disk and lose your changes?",
-      "keepMine": "Keep My Changes",
-      "reloadFromDisk": "Reload from Disk"
+      "title": "Arquivo alterado no disco",
+      "message": "O arquivo \"{{fileName}}\" foi alterado no disco, mas você tem alterações não salvas.",
+      "question": "Deseja recarregar o arquivo do disco e perder suas alterações?",
+      "keepMine": "Manter minhas alterações",
+      "reloadFromDisk": "Recarregar do disco"
     },
     "exportPdfFailed": {
-      "title": "Export Failed",
-      "message": "Failed to export PDF: {{error}}"
+      "title": "Falha ao exportar",
+      "message": "Falha ao exportar o PDF: {{error}}"
     }
   },
   "editorMode": {
     "closeCollab": {
-      "title": "Close document?",
-      "replayingMessage": "This collaborative document is still replaying local changes to the server. Close it anyway?",
-      "unconfirmedMessage": "This collaborative document still has local changes that have not been confirmed by the server. Close it anyway?",
-      "confirm": "Close Anyway"
+      "title": "Fechar documento?",
+      "replayingMessage": "Este documento colaborativo ainda está reenviando alterações locais ao servidor. Fechar mesmo assim?",
+      "unconfirmedMessage": "Este documento colaborativo ainda tem alterações locais que não foram confirmadas pelo servidor. Fechar mesmo assim?",
+      "confirm": "Fechar mesmo assim"
     }
   },
   "history": {
     "deleteSnapshot": {
-      "title": "Delete snapshot?",
-      "message": "Are you sure you want to delete this snapshot?"
+      "title": "Excluir snapshot?",
+      "message": "Tem certeza de que deseja excluir este snapshot?"
     }
   },
   "workspaceHistory": {
     "restoreDeleted": {
-      "title": "Restore deleted file?",
-      "message": "This file has been deleted. Restoring will recreate the file on disk. Continue?",
-      "confirm": "Restore"
+      "title": "Restaurar arquivo excluído?",
+      "message": "Este arquivo foi excluído. A restauração vai recriar o arquivo no disco. Continuar?",
+      "confirm": "Restaurar"
     },
     "batchRestore": {
-      "title_one": "Restore deleted file?",
-      "title_other": "Restore deleted files?",
-      "message_one": "Restore {{count}} deleted file to their most recent versions?",
-      "message_other": "Restore {{count}} deleted files to their most recent versions?"
+      "title_one": "Restaurar arquivo excluído?",
+      "title_other": "Restaurar arquivos excluídos?",
+      "message_one": "Restaurar {{count}} arquivo excluído para a versão mais recente?",
+      "message_other": "Restaurar {{count}} arquivos excluídos para as versões mais recentes?"
     },
     "restoreFailed": {
-      "title": "Restore failed",
-      "fileMessage": "Failed to restore file: {{error}}",
-      "filesMessage": "Failed to restore files: {{error}}"
+      "title": "Falha ao restaurar",
+      "fileMessage": "Falha ao restaurar o arquivo: {{error}}",
+      "filesMessage": "Falha ao restaurar os arquivos: {{error}}"
     },
     "partialRestore": {
-      "title": "Some files were not restored",
-      "message_one": "Restored {{count}} file. Failed: {{failedNames}}",
-      "message_other": "Restored {{count}} files. Failed: {{failedNames}}"
+      "title": "Alguns arquivos não foram restaurados",
+      "message_one": "{{count}} arquivo restaurado. Falharam: {{failedNames}}",
+      "message_other": "{{count}} arquivos restaurados. Falharam: {{failedNames}}"
     }
   },
   "collabOrigin": {
     "relativeTime": {
-      "justNow": "just now",
-      "minutesAgo": "{{minutes}}m ago",
-      "hoursAgo": "{{hours}}h ago",
-      "daysAgo": "{{days}}d ago"
+      "justNow": "agora mesmo",
+      "minutesAgo": "há {{minutes}} min",
+      "hoursAgo": "há {{hours}} h",
+      "daysAgo": "há {{days}} d"
     },
     "sharedChange": {
-      "whoAndWhen": "{{who}} last edited this shared document {{when}}.",
-      "who": "{{who}} last edited this shared document.",
-      "when": "This shared document was last edited {{when}}."
+      "whoAndWhen": "{{who}} editou este documento compartilhado pela última vez {{when}}.",
+      "who": "{{who}} editou este documento compartilhado pela última vez.",
+      "when": "Este documento compartilhado foi editado pela última vez {{when}}."
     },
     "conflict": {
-      "missingBaselineSource": "No sync baseline exists for this local source yet.",
-      "sharedAhead": "The shared document changed since this local source was last linked.",
-      "diverged": "Both the local file and the shared document changed.",
-      "pushAction": "Your push will overwrite the shared document with the current local file. Continue?",
-      "missingBaselineFile": "No sync baseline exists for this local file yet.",
-      "localAhead": "The local file changed since it was last synced.",
-      "pullAction": "Pulling will replace the whole local file with the shared document. Continue?"
+      "missingBaselineSource": "Ainda não existe uma base de sincronização para esta fonte local.",
+      "sharedAhead": "O documento compartilhado mudou desde a última vez que esta fonte local foi vinculada.",
+      "diverged": "Tanto o arquivo local quanto o documento compartilhado mudaram.",
+      "pushAction": "O envio vai sobrescrever o documento compartilhado com o arquivo local atual. Continuar?",
+      "missingBaselineFile": "Ainda não existe uma base de sincronização para este arquivo local.",
+      "localAhead": "O arquivo local mudou desde a última sincronização.",
+      "pullAction": "Puxar vai substituir todo o arquivo local pelo documento compartilhado. Continuar?"
     },
     "overwriteShared": {
-      "title": "Overwrite shared document?",
-      "confirm": "Overwrite"
+      "title": "Sobrescrever documento compartilhado?",
+      "confirm": "Sobrescrever"
     },
     "overwriteLocal": {
-      "title": "Overwrite local file?",
-      "confirm": "Overwrite"
+      "title": "Sobrescrever arquivo local?",
+      "confirm": "Sobrescrever"
     },
     "errors": {
-      "sourceUnavailable": "The linked local source is not available.",
-      "readSourceFailed": "Could not read the linked local source.",
-      "sourceNotText": "The linked local source is not text-readable.",
-      "readSharedFailed": "Could not read the current shared document state.",
-      "writeSharedFailed": "Could not write the local file into the shared document."
+      "sourceUnavailable": "A fonte local vinculada não está disponível.",
+      "readSourceFailed": "Não foi possível ler a fonte local vinculada.",
+      "sourceNotText": "A fonte local vinculada não pode ser lida como texto.",
+      "readSharedFailed": "Não foi possível ler o estado atual do documento compartilhado.",
+      "writeSharedFailed": "Não foi possível gravar o arquivo local no documento compartilhado."
     },
     "relinkDialog": {
-      "title": "Relink Local Source",
-      "button": "Relink"
+      "title": "Revincular fonte local",
+      "button": "Revincular"
     },
     "relinkFailed": {
-      "title": "Relink failed",
-      "message": "Could not relink the local source."
+      "title": "Falha ao revincular",
+      "message": "Não foi possível revincular a fonte local."
     },
     "linked": {
-      "title": "Local source linked",
-      "message": "The shared document is now linked to a local file."
+      "title": "Fonte local vinculada",
+      "message": "O documento compartilhado agora está vinculado a um arquivo local."
     },
     "clear": {
-      "title": "Clear local source?",
-      "message": "Clear the local source link for this shared document?",
-      "confirm": "Clear"
+      "title": "Remover fonte local?",
+      "message": "Remover o vínculo da fonte local deste documento compartilhado?",
+      "confirm": "Remover"
     },
     "clearFailed": {
-      "title": "Clear failed",
-      "message": "Could not clear the local source link."
+      "title": "Falha ao remover",
+      "message": "Não foi possível remover o vínculo da fonte local."
     },
     "cleared": {
-      "title": "Local source cleared",
-      "message": "This shared document no longer has a linked local file."
+      "title": "Fonte local removida",
+      "message": "Este documento compartilhado não tem mais um arquivo local vinculado."
     },
     "sharedUpdated": {
-      "title": "Shared document updated",
-      "pushedMessage": "Pushed the current local file into the shared document.",
-      "uploadedMessage": "Uploaded the current local file to the shared document.",
-      "attachmentsUploaded_one": "Uploaded {{count}} attachment.",
-      "attachmentsUploaded_other": "Uploaded {{count}} attachments.",
-      "attachmentsUploadedWithFailures_one": "Uploaded {{count}} attachment; {{failed}} failed.",
-      "attachmentsUploadedWithFailures_other": "Uploaded {{count}} attachments; {{failed}} failed."
+      "title": "Documento compartilhado atualizado",
+      "pushedMessage": "O arquivo local atual foi enviado para o documento compartilhado.",
+      "uploadedMessage": "O arquivo local atual foi enviado para o documento compartilhado.",
+      "attachmentsUploaded_one": "{{count}} anexo enviado.",
+      "attachmentsUploaded_other": "{{count}} anexos enviados.",
+      "attachmentsUploadedWithFailures_one": "{{count}} anexo enviado; {{failed}} com falha.",
+      "attachmentsUploadedWithFailures_other": "{{count}} anexos enviados; {{failed}} com falha."
     },
     "nothingToUpload": {
-      "title": "Nothing to upload",
-      "baselineMatchMessage": "The local source and shared document already match the last synced baseline.",
-      "fileMatchMessage": "The local file already matches the shared document baseline."
+      "title": "Nada para enviar",
+      "baselineMatchMessage": "A fonte local e o documento compartilhado já correspondem à última base sincronizada.",
+      "fileMatchMessage": "O arquivo local já corresponde à base do documento compartilhado."
     },
     "reuploadFailed": {
-      "title": "Re-upload failed",
-      "message": "Could not re-upload from the local source."
+      "title": "Falha ao reenviar",
+      "message": "Não foi possível reenviar a partir da fonte local."
     },
     "pullFailed": {
-      "title": "Pull failed",
-      "saveFirstMessage": "Save the local file before pulling from the shared document.",
-      "changedBeforeConfirmMessage": "The shared document changed before the overwrite could be confirmed. Try again.",
-      "message": "Could not pull the shared document into the local file."
+      "title": "Falha ao puxar",
+      "saveFirstMessage": "Salve o arquivo local antes de puxar do documento compartilhado.",
+      "changedBeforeConfirmMessage": "O documento compartilhado mudou antes que a substituição pudesse ser confirmada. Tente novamente.",
+      "message": "Não foi possível puxar o documento compartilhado para o arquivo local."
     },
     "localUpdated": {
-      "title": "Local file updated",
-      "message": "Pulled the latest shared document into {{name}}."
+      "title": "Arquivo local atualizado",
+      "message": "A versão mais recente do documento compartilhado foi puxada para {{name}}."
     },
     "upToDate": {
-      "title": "Already up to date",
-      "message": "The local file already matches the shared document."
+      "title": "Já está atualizado",
+      "message": "O arquivo local já corresponde ao documento compartilhado."
     },
     "service": {
-      "noLinkedSource": "No local source is linked to this shared document.",
-      "noCodec": "No collab codec is available for document type '{{documentType}}'.",
-      "sourceFileUnavailable": "The linked local source file is not available in this workspace.",
-      "readSharedFailed": "Could not read the current shared document state.",
-      "localAlreadyMatches": "The local file already matches the shared document.",
-      "localUpdated": "Updated the local file from the shared document.",
-      "alreadyMatchBaseline": "The local source and shared document already match the last synced baseline.",
-      "writeSharedFailed": "Failed to write the local file back into the shared document.",
-      "uploaded": "Uploaded the current local file into the shared document."
+      "noLinkedSource": "Nenhuma fonte local está vinculada a este documento compartilhado.",
+      "noCodec": "Não há codec de colaboração disponível para o tipo de documento '{{documentType}}'.",
+      "sourceFileUnavailable": "O arquivo de fonte local vinculado não está disponível neste espaço de trabalho.",
+      "readSharedFailed": "Não foi possível ler o estado atual do documento compartilhado.",
+      "localAlreadyMatches": "O arquivo local já corresponde ao documento compartilhado.",
+      "localUpdated": "O arquivo local foi atualizado a partir do documento compartilhado.",
+      "alreadyMatchBaseline": "A fonte local e o documento compartilhado já correspondem à última versão sincronizada.",
+      "writeSharedFailed": "Não foi possível gravar o arquivo local de volta no documento compartilhado.",
+      "uploaded": "O arquivo local atual foi enviado para o documento compartilhado."
     }
   },
   "workspaceManager": {
     "createWorkspace": {
-      "title": "Create New Workspace",
-      "button": "Create"
+      "title": "Criar novo espaço de trabalho",
+      "button": "Criar"
     }
   }
 }

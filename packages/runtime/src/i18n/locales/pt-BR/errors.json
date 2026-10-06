@@ -1,39 +1,39 @@
 {
   "database": {
-    "unknownError": "Unknown error"
+    "unknownError": "Erro desconhecido"
   },
   "update": {
-    "releasePending": "A new release is being published. Check back in a few minutes.",
-    "unknownError": "Unknown error",
-    "devModeUnavailable": "Update checking is not available in development mode",
-    "checkFailed": "Failed to check for updates",
-    "downloadFailed": "Failed to download the update"
+    "releasePending": "Uma nova versão está sendo publicada. Verifique novamente em alguns minutos.",
+    "unknownError": "Erro desconhecido",
+    "devModeUnavailable": "A verificação de atualizações não está disponível no modo de desenvolvimento",
+    "checkFailed": "Falha ao verificar atualizações",
+    "downloadFailed": "Falha ao baixar a atualização"
   },
   "fileOps": {
-    "unknownError": "unknown error",
-    "noFilesystemPath": "No filesystem path",
-    "deleteNoReason": "The OS did not provide a reason. Check that the file still exists and that the trash folder is writable."
+    "unknownError": "erro desconhecido",
+    "noFilesystemPath": "Sem caminho no sistema de arquivos",
+    "deleteNoReason": "O sistema operacional não informou o motivo. Verifique se o arquivo ainda existe e se a pasta da lixeira permite gravação."
   },
   "save": {
     "auto": {
-      "permission": "Autosave is blocked because Nimbalyst does not have permission to write this file. Your edits remain unsaved.",
-      "diskFull": "Autosave is blocked because the disk is full. Your edits remain unsaved.",
-      "notFound": "Autosave is blocked because the file is no longer available. Your edits remain unsaved.",
-      "notWritable": "Autosave is blocked because the file location is not writable. Your edits remain unsaved.",
-      "osWrite": "Autosave is blocked because the operating system could not write the file. Your edits remain unsaved.",
-      "conflict": "Autosave is blocked because the file changed on disk. Your edits remain unsaved.",
-      "emptyWrite": "Autosave is blocked because it would have emptied a file that still has content. Your edits remain unsaved — save manually if you meant to clear the file.",
-      "generic": "Autosave is blocked. Your edits remain unsaved."
+      "permission": "O salvamento automático está bloqueado porque o Nimbalyst não tem permissão para gravar este arquivo. Suas edições continuam sem salvar.",
+      "diskFull": "O salvamento automático está bloqueado porque o disco está cheio. Suas edições continuam sem salvar.",
+      "notFound": "O salvamento automático está bloqueado porque o arquivo não está mais disponível. Suas edições continuam sem salvar.",
+      "notWritable": "O salvamento automático está bloqueado porque o local do arquivo não permite gravação. Suas edições continuam sem salvar.",
+      "osWrite": "O salvamento automático está bloqueado porque o sistema operacional não conseguiu gravar o arquivo. Suas edições continuam sem salvar.",
+      "conflict": "O salvamento automático está bloqueado porque o arquivo foi alterado no disco. Suas edições continuam sem salvar.",
+      "emptyWrite": "O salvamento automático está bloqueado porque esvaziaria um arquivo que ainda tem conteúdo. Suas edições continuam sem salvar — salve manualmente se você pretendia limpar o arquivo.",
+      "generic": "O salvamento automático está bloqueado. Suas edições continuam sem salvar."
     },
     "manual": {
-      "permission": "Save failed because Nimbalyst does not have permission to write this file. Your edits remain unsaved.",
-      "diskFull": "Save failed because the disk is full. Your edits remain unsaved.",
-      "notFound": "Save failed because the file is no longer available. Your edits remain unsaved.",
-      "notWritable": "Save failed because the file location is not writable. Your edits remain unsaved.",
-      "osWrite": "Save failed because the operating system could not write the file. Your edits remain unsaved.",
-      "conflict": "Save failed because the file changed on disk. Your edits remain unsaved.",
-      "emptyWrite": "Save failed because it would have emptied a file that still has content. Your edits remain unsaved — save manually if you meant to clear the file.",
-      "generic": "Save failed. Your edits remain unsaved."
+      "permission": "Falha ao salvar porque o Nimbalyst não tem permissão para gravar este arquivo. Suas edições continuam sem salvar.",
+      "diskFull": "Falha ao salvar porque o disco está cheio. Suas edições continuam sem salvar.",
+      "notFound": "Falha ao salvar porque o arquivo não está mais disponível. Suas edições continuam sem salvar.",
+      "notWritable": "Falha ao salvar porque o local do arquivo não permite gravação. Suas edições continuam sem salvar.",
+      "osWrite": "Falha ao salvar porque o sistema operacional não conseguiu gravar o arquivo. Suas edições continuam sem salvar.",
+      "conflict": "Falha ao salvar porque o arquivo foi alterado no disco. Suas edições continuam sem salvar.",
+      "emptyWrite": "Falha ao salvar porque esvaziaria um arquivo que ainda tem conteúdo. Suas edições continuam sem salvar — salve manualmente se você pretendia limpar o arquivo.",
+      "generic": "Falha ao salvar. Suas edições continuam sem salvar."
     }
   }
 }
