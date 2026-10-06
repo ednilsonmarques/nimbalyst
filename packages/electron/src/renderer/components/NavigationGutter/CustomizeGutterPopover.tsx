@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { useFloatingMenu, FloatingPortal, virtualElement } from '../../hooks/useFloatingMenu';
 import {
   type GutterItemMeta,
@@ -36,6 +37,7 @@ export function CustomizeGutterPopover({
   onReset,
   onClose,
 }: CustomizeGutterPopoverProps) {
+  const { t } = useTranslation('menu');
   const vRef = useMemo(() => virtualElement(x, y), [x, y]);
   const menu = useFloatingMenu({
     placement: 'right-start',
@@ -84,7 +86,7 @@ export function CustomizeGutterPopover({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2.5 border-b border-nim">
-          <span className="font-semibold text-nim">Customize Gutter</span>
+          <span className="font-semibold text-nim">{t('contextMenu.gutter.customizeTitle')}</span>
           <MaterialSymbol icon="tune" size={18} className="text-nim-faint" />
         </div>
 
@@ -95,7 +97,7 @@ export function CustomizeGutterPopover({
             return (
               <div key={section}>
                 <div className="px-3 pt-2 pb-1 text-[10.5px] font-semibold uppercase tracking-wide text-nim-faint">
-                  {GUTTER_SECTION_LABELS[section]}
+                  {t(`gutterSections.${section}`, { defaultValue: GUTTER_SECTION_LABELS[section] })}
                 </div>
                 {secItems.map((it) => {
                   const isHidden = hiddenIds.includes(it.id);
@@ -124,8 +126,8 @@ export function CustomizeGutterPopover({
                       <button
                         className={`w-7 h-6 flex items-center justify-center rounded text-nim-muted ${lockedVisible ? 'opacity-40 cursor-not-allowed' : 'hover:bg-nim-tertiary hover:text-nim cursor-pointer'}`}
                         disabled={lockedVisible}
-                        title={lockedVisible ? 'At least one mode must stay visible' : isHidden ? 'Show' : 'Hide'}
-                        aria-label={isHidden ? `Show ${it.label}` : `Hide ${it.label}`}
+                        title={lockedVisible ? t('contextMenu.gutter.mustStayVisible') : isHidden ? t('contextMenu.gutter.show') : t('contextMenu.gutter.hide')}
+                        aria-label={isHidden ? t('contextMenu.gutter.showItem', { label: it.label }) : t('contextMenu.gutter.hideItem', { label: it.label })}
                         aria-pressed={!isHidden}
                         data-testid={`customize-gutter-toggle-${it.id}`}
                         onClick={() => { if (!lockedVisible) onToggleHidden(it.id); }}
@@ -142,7 +144,7 @@ export function CustomizeGutterPopover({
           {/* Always-visible note */}
           <div className="flex items-center gap-1.5 px-3 pt-2 pb-1 text-[11px] text-nim-faint">
             <MaterialSymbol icon="lock" size={14} />
-            <span>Account &amp; Settings is always visible</span>
+            <span>{t('contextMenu.gutter.accountAlwaysVisible')}</span>
           </div>
         </div>
 
@@ -154,14 +156,14 @@ export function CustomizeGutterPopover({
             data-testid="customize-gutter-reset"
           >
             <MaterialSymbol icon="restart_alt" size={15} />
-            <span>Reset to defaults</span>
+            <span>{t('contextMenu.gutter.resetToDefaults')}</span>
           </button>
           <button
             className="px-3.5 py-1 rounded-md text-[12px] font-semibold bg-nim-selected text-nim-primary hover:bg-nim-active"
             onClick={onClose}
             data-testid="customize-gutter-done"
           >
-            Done
+            {t('common:done')}
           </button>
         </div>
       </div>

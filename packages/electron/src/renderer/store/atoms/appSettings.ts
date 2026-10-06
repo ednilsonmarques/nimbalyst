@@ -21,6 +21,7 @@ import { atom, type Atom } from 'jotai';
 import posthog from 'posthog-js';
 import { copyToClipboard } from '@nimbalyst/runtime';
 import { store } from '@nimbalyst/runtime/store';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { type EffortLevel, type ThinkingMode, DEFAULT_EFFORT_LEVEL, DEFAULT_THINKING_MODE, parseEffortLevel, parseThinkingMode } from '@nimbalyst/runtime/ai/server/effortLevels';
 import { AlphaFeatureTag, getDefaultAlphaFeatures } from '../../../shared/alphaFeatures';
 import { BetaFeatureTag } from '../../../shared/betaFeatures';
@@ -1953,7 +1954,7 @@ export async function loadWorkspacePermissions(workspacePath: string): Promise<W
     return {
       ...defaultWorkspacePermissionsState,
       loading: false,
-      error: error instanceof Error ? error.message : 'Failed to load workspace permissions',
+      error: error instanceof Error ? error.message : translate('settings:projectPermissions.errors.load'),
     };
   }
 }

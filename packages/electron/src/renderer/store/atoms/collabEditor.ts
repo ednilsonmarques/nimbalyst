@@ -1,5 +1,6 @@
 import { atom } from 'jotai';
 import { atomFamily } from '../debug/atomFamilyRegistry';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import type {
   DocumentSyncStatus,
   LocalDocumentReplicaOutboxState,
@@ -155,6 +156,43 @@ export function deriveCollabProductStatus(
     severity: 'warning',
     showPresence: false,
     showRejectedActions: false,
+  };
+}
+
+/**
+ * Display-only translation of a product status. `label`/`detail` stay in
+ * English on the status object (tests and logic read them); views call this
+ * right before rendering so the text follows the UI language.
+ */
+const COLLAB_STATUS_TEXT_KEYS: Record<string, string> = {
+  'Local copy damaged — downloading a clean copy': 'team:collabStatus.localCopyDamaged.label',
+  'The damaged local replica was quarantined. A complete copy will be downloaded when the server is reachable.': 'team:collabStatus.localCopyDamaged.detail',
+  'Changes are not saved locally': 'team:collabStatus.localSavingUnavailable.label',
+  'Local persistence is unavailable. Keep this document open and reconnect before closing it.': 'team:collabStatus.localSavingUnavailable.detail',
+  'Opening local copy…': 'team:collabStatus.openingLocalCopy',
+  'Access changed — local edits have not been uploaded': 'team:collabStatus.accessChanged.label',
+  'Copy the current document before discarding this local copy.': 'team:collabStatus.accessChanged.detail',
+  'Not showing other people’s changes': 'team:collabStatus.notReceivingChanges.label',
+  'Edits from collaborators are arriving but cannot be displayed. Reopen this document; if it persists, avoid editing to prevent conflicting with changes you cannot see.': 'team:collabStatus.notReceivingChanges.detail',
+  'Synced': 'team:collabStatus.synced',
+  'Syncing offline changes…': 'team:collabStatus.replaying',
+  'Connecting…': 'team:collabStatus.connecting',
+  'Offline': 'team:collabStatus.offline.label',
+  'Reconnect to continue syncing this tracker body.': 'team:collabStatus.offline.detail',
+  'Offline — changes saved on this device': 'team:collabStatus.offlineSafe.label',
+  'Offline changes are saved locally and shared with other open windows on this device.': 'team:collabStatus.offlineSafe.detail',
+};
+
+function localizeCollabStatusText(text: string): string {
+  const key = COLLAB_STATUS_TEXT_KEYS[text];
+  return key ? translate(key) : text;
+}
+
+export function localizeCollabProductStatus(status: CollabProductStatus): CollabProductStatus {
+  return {
+    ...status,
+    label: localizeCollabStatusText(status.label),
+    detail: status.detail === null ? null : localizeCollabStatusText(status.detail),
   };
 }
 

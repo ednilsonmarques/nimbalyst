@@ -4,6 +4,8 @@
 
 import type { JSX } from 'react';
 import React from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { getLanguage, t as translate } from '@nimbalyst/runtime/i18n';
 
 export interface PlanData {
   id: string;
@@ -67,15 +69,17 @@ function formatDate(date: Date): string {
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor(diff / (1000 * 60 * 60));
 
-  if (hours < 1) return 'now';
-  if (hours < 24) return `${hours}h ago`;
-  if (days === 1) return 'yesterday';
-  if (days < 7) return `${days}d ago`;
-  if (days < 30) return `${Math.floor(days / 7)}w ago`;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (hours < 1) return translate('tracker:plans.now');
+  if (hours < 24) return translate('tracker:time.hoursAgo', { count: hours });
+  if (days === 1) return translate('tracker:time.yesterday');
+  if (days < 7) return translate('tracker:time.daysAgo', { count: days });
+  if (days < 30) return translate('tracker:time.weeksAgo', { count: Math.floor(days / 7) });
+  const language = getLanguage();
+  return date.toLocaleDateString(language === 'en' ? 'en-US' : language, { month: 'short', day: 'numeric' });
 }
 
 export function PlanListItem({ plan, isActive, onClick }: PlanListItemProps): JSX.Element {
+  const { t } = useTranslation('tracker');
   const statusColor = getStatusColor(plan.status);
   const priorityColor = getPriorityColor(plan.priority);
   const planTypeIcon = getPlanTypeIcon(plan.planType);
@@ -89,13 +93,13 @@ export function PlanListItem({ plan, isActive, onClick }: PlanListItemProps): JS
         <span
           className="plan-priority-indicator text-[11px] font-bold tracking-tighter shrink-0 min-w-4"
           style={{ color: priorityColor }}
-          title={`Priority: ${plan.priority}`}
+          title={t('plans.priorityTitle', { priority: plan.priority })}
         >
           {plan.priority === 'critical' && '!!!'}
           {plan.priority === 'high' && '!!'}
           {plan.priority === 'medium' && '!'}
         </span>
-        <span className="material-symbols-outlined plan-type-icon text-base text-nim-faint shrink-0 mt-px" title={plan.planType || 'plan'}>
+        <span className="material-symbols-outlined plan-type-icon text-base text-nim-faint shrink-0 mt-px" title={plan.planType || t('plans.planFallback')}>
           {planTypeIcon}
         </span>
         <div className="plan-list-item-title flex-1 text-[13px] font-medium text-nim-primary leading-snug overflow-hidden text-ellipsis line-clamp-2">{plan.title}</div>

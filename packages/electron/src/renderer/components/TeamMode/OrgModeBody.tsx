@@ -3,6 +3,7 @@ import type { TrackerItem } from '@nimbalyst/runtime/core/DocumentService';
 import { trackerItemToRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import { replaceOrgTrackerItemsAtom } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerDataAtoms';
 import { useAtomValue, useStore } from 'jotai';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import {
   conversationDirectoryAtomFamily,
@@ -79,6 +80,7 @@ export function OrgModeBody({
   sidebarCollapsed?: boolean;
   onSelectOrganization: (orgId: string) => void;
 }) {
+  const { t } = useTranslation('team');
   const orgId = team.orgId;
   const trackerStore = useStore();
   const conversations = useAtomValue(conversationDirectoryAtomFamily(orgId));
@@ -318,7 +320,7 @@ export function OrgModeBody({
             model={sidebar}
             directoryLoading={directoryLoadState.status === 'loading'}
             directoryError={directoryLoadState.status === 'error'
-              ? directoryLoadState.error ?? 'Directory unavailable'
+              ? directoryLoadState.error ?? t('orgMode.directoryUnavailable')
               : undefined}
             onRetryDirectory={retryDirectory}
             onNavigate={onRoute}
@@ -358,7 +360,7 @@ export function OrgModeBody({
                       onNewMessage={gating.roomsVisible || gating.dmsVisible
                         ? openCompose
                         : undefined}
-                      composeUnavailableLabel="Rooms and direct messages are turned off for this organization"
+                      composeUnavailableLabel={t('orgMode.messagingOff')}
                     />
                   </InboxProviderContext.Provider>
                 </div>
@@ -423,8 +425,8 @@ export function OrgModeBody({
                       data-testid="org-conversation-missing"
                     >
                       {routedConversation.resolving
-                        ? 'Loading conversation…'
-                        : 'That conversation is no longer available.'}
+                        ? t('comments.thread.loading')
+                        : t('orgMode.conversationMissing')}
                     </div>
                   )
               )}

@@ -12,6 +12,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   MAX_FOLDER_SHARE_DOCUMENTS,
   type FolderShareSkippedFile,
@@ -49,6 +50,7 @@ export function ShareFolderToTeamDialog({
   truncated,
   onConfirm,
 }: ShareFolderToTeamDialogProps) {
+  const { t } = useTranslation('team');
   const folderTree = useSharedFolderTree(isOpen);
   const {
     isRefreshing: isRefreshingFolders,
@@ -137,7 +139,7 @@ export function ShareFolderToTeamDialog({
     : '';
   const destinationFullPath = selectedFolderPath
     ? `${selectedFolderPath.split('/').join(' / ')} /`
-    : 'Team root /';
+    : `${t('shareToTeam.teamRoot')} /`;
 
   return (
     <div
@@ -148,7 +150,7 @@ export function ShareFolderToTeamDialog({
         className="share-folder-to-team-dialog flex max-h-[90vh] w-[460px] max-w-[92%] flex-col overflow-hidden rounded-xl border border-[var(--nim-border)] bg-[var(--nim-bg)] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label="Share Folder to Team"
+        aria-label={t('shareFolder.title')}
       >
         <div className="flex items-start gap-3 px-5 pt-4 pb-3 border-b border-[var(--nim-border)]">
           <div className="w-7 h-7 rounded-md bg-[var(--nim-primary)]/15 text-[var(--nim-primary)] flex items-center justify-center shrink-0 mt-0.5">
@@ -156,17 +158,17 @@ export function ShareFolderToTeamDialog({
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-[14px] font-semibold text-[var(--nim-text)] m-0 leading-tight">
-              Share Folder to Team
+              {t('shareFolder.title')}
             </h2>
             <p className="text-[12px] text-[var(--nim-text-faint)] m-0 mt-0.5 leading-snug">
-              Publishes a copy of the shareable files in this folder. Files added later stay local.
+              {t('shareFolder.subtitle')}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="text-[var(--nim-text-faint)] hover:text-[var(--nim-text)] hover:bg-[var(--nim-bg-tertiary)] w-6 h-6 rounded inline-flex items-center justify-center"
-            aria-label="Close"
+            aria-label={t('common:close')}
           >
             <MaterialSymbol icon="close" size={16} />
           </button>
@@ -174,7 +176,7 @@ export function ShareFolderToTeamDialog({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-3 pb-2">
           <div className="text-[11px] uppercase tracking-wider font-semibold text-[var(--nim-text-faint)] mb-1.5">
-            Source folder
+            {t('shareFolder.sourceFolder')}
           </div>
           <div className="flex items-center gap-2.5 px-3 py-2 bg-[var(--nim-bg-secondary)] border border-[var(--nim-border-subtle,var(--nim-border))] rounded-md mb-4">
             <MaterialSymbol icon="folder" size={20} className="text-[var(--nim-primary)] shrink-0" />
@@ -185,7 +187,7 @@ export function ShareFolderToTeamDialog({
           </div>
 
           <div className="text-[11px] uppercase tracking-wider font-semibold text-[var(--nim-text-faint)] mb-1.5">
-            Shared folder name
+            {t('shareFolder.sharedFolderName')}
           </div>
           <div className="flex items-center gap-1.5 px-2 bg-[var(--nim-bg-secondary)] border border-[var(--nim-border-subtle,var(--nim-border))] rounded-md mb-4 focus-within:border-[var(--nim-primary)]">
             <MaterialSymbol icon="edit" size={14} className="text-[var(--nim-text-faint)]" />
@@ -200,8 +202,8 @@ export function ShareFolderToTeamDialog({
                 }
               }}
               className="flex-1 bg-transparent border-none text-[var(--nim-text)] text-[13px] py-2 outline-none font-inherit"
-              placeholder="Folder name"
-              aria-label="Shared folder name"
+              placeholder={t('shareToTeam.folderNamePlaceholder')}
+              aria-label={t('shareFolder.sharedFolderName')}
             />
           </div>
 
@@ -215,7 +217,7 @@ export function ShareFolderToTeamDialog({
 
           <div className="flex items-center gap-2 px-3 py-2 bg-[var(--nim-bg-secondary)] border border-[var(--nim-border-subtle,var(--nim-border))] rounded-md mb-3 text-[12px] text-[var(--nim-text-muted)]">
             <MaterialSymbol icon="place" size={14} className="text-[var(--nim-text-faint)]" />
-            <span>Will be created as</span>
+            <span>{t('shareFolder.willBeCreatedAs')}</span>
             <span className="text-[var(--nim-text)] font-medium truncate">{destinationFullPath}</span>
             <span className="text-[var(--nim-primary)] truncate">{sharedFolderName.trim() || folderName}</span>
           </div>
@@ -223,22 +225,20 @@ export function ShareFolderToTeamDialog({
           <div className="share-folder-to-team-contents rounded-md border border-[var(--nim-border-subtle,var(--nim-border))] bg-[var(--nim-bg-secondary)] mb-3">
             <div className="px-3 py-2 text-[12px] leading-snug text-[var(--nim-text)] border-b border-[var(--nim-border-subtle,var(--nim-border))]">
               <span className="font-medium">
-                {candidateCount} document{candidateCount === 1 ? '' : 's'}
+                {t('shareFolder.documentCount', { count: candidateCount })}
               </span>
               {subfolderCount > 0 && (
                 <span className="text-[var(--nim-text-muted)]">
-                  {' '}across {subfolderCount} subfolder{subfolderCount === 1 ? '' : 's'}
+                  {' '}{t('shareFolder.acrossSubfolders', { count: subfolderCount })}
                 </span>
               )}
               <span className="text-[var(--nim-text-muted)]">
-                {isOverDocumentLimit ? ' were found.' : ' will be shared.'}
+                {' '}{isOverDocumentLimit ? t('shareFolder.wereFound', { count: candidateCount }) : t('shareFolder.willBeShared', { count: candidateCount })}
               </span>
             </div>
             {isOverDocumentLimit && (
               <div className="share-folder-to-team-over-limit px-3 py-2 text-[12px] leading-snug text-[var(--nim-warning)] border-b border-[var(--nim-border-subtle,var(--nim-border))]">
-                That is more than the {MAX_FOLDER_SHARE_DOCUMENTS} one promote can publish.
-                Share this folder&apos;s subfolders separately so nothing lands in the team
-                space half-finished.
+                {t('shareFolder.overLimit', { max: MAX_FOLDER_SHARE_DOCUMENTS })}
               </div>
             )}
             {skipped.length > 0 && (
@@ -249,7 +249,7 @@ export function ShareFolderToTeamDialog({
                   className="inline-flex items-center gap-1 text-[12px] text-[var(--nim-warning)] hover:underline"
                 >
                   <MaterialSymbol icon={showSkipped ? 'expand_less' : 'expand_more'} size={15} />
-                  {skipped.length} file{skipped.length === 1 ? '' : 's'} will not be shared
+                  {t('shareFolder.skippedFiles', { count: skipped.length })}
                 </button>
                 {showSkipped && (
                   <ul className="mt-1.5 max-h-[160px] overflow-y-auto list-none p-0 m-0">
@@ -265,14 +265,13 @@ export function ShareFolderToTeamDialog({
                   </ul>
                 )}
                 <div className="mt-1 text-[11px] leading-snug text-[var(--nim-text-faint)]">
-                  These have no collaborative document type and stay on your machine.
+                  {t('shareFolder.skippedHint')}
                 </div>
               </div>
             )}
             {truncated && (
               <div className="px-3 py-2 text-[11px] leading-snug text-[var(--nim-warning)] border-t border-[var(--nim-border-subtle,var(--nim-border))]">
-                This folder holds more files than one promote can scan, so some were not considered.
-                Share its subfolders separately to cover the rest.
+                {t('shareFolder.truncated')}
               </div>
             )}
           </div>
@@ -284,7 +283,7 @@ export function ShareFolderToTeamDialog({
             onClick={onClose}
             className="px-3 py-1.5 bg-transparent rounded-md text-[var(--nim-text-muted)] text-[13px] hover:bg-[var(--nim-bg-tertiary)] hover:text-[var(--nim-text)]"
           >
-            Cancel
+            {t('common:cancel')}
           </button>
           <button
             type="button"
@@ -298,8 +297,8 @@ export function ShareFolderToTeamDialog({
           >
             <MaterialSymbol icon="group_add" size={16} />
             {isOverDocumentLimit
-              ? 'Too many documents'
-              : `Share ${candidateCount} document${candidateCount === 1 ? '' : 's'}`}
+              ? t('shareFolder.tooManyDocuments')
+              : t('shareToTeam.shareDocuments', { count: candidateCount })}
           </button>
         </div>
       </div>

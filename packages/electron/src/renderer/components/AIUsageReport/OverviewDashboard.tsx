@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface OverviewDashboardProps {
   workspaceId?: string;
@@ -22,6 +23,7 @@ interface ProviderUsageStats {
 }
 
 export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ workspaceId }) => {
+  const { t } = useTranslation('ai');
   const [overallStats, setOverallStats] = useState<TokenUsageStats | null>(null);
   const [providerStats, setProviderStats] = useState<ProviderUsageStats[]>([]);
   const [allSessionCount, setAllSessionCount] = useState<number>(0);
@@ -51,7 +53,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ workspaceI
   if (loading) {
     return (
       <div className="overview-loading flex items-center justify-center min-h-[300px] text-[var(--nim-text-muted)] text-base">
-        Loading...
+        {t('usageReport.loading')}
       </div>
     );
   }
@@ -59,7 +61,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ workspaceI
   if (!overallStats) {
     return (
       <div className="overview-empty flex items-center justify-center min-h-[300px] text-[var(--nim-text-muted)] text-base">
-        No usage data available
+        {t('usageReport.noUsageData')}
       </div>
     );
   }
@@ -72,40 +74,40 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ workspaceI
       <div className="stats-grid grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4">
         <div className="stat-card bg-[var(--nim-bg-secondary)] border border-[var(--nim-border)] rounded-md px-4 py-3">
           <div className="stat-label text-[11px] text-[var(--nim-text-faint)] uppercase tracking-[0.5px] mb-1 font-medium">
-            Total Sessions
+            {t('usageReport.totalSessions')}
           </div>
           <div className="stat-value text-2xl font-semibold text-[var(--nim-text)] mb-0.5">
             {allSessionCount.toLocaleString()}
           </div>
           {overallStats.sessionCount < allSessionCount && (
             <div className="stat-detail text-[11px] text-[var(--nim-text-muted)]">
-              {overallStats.sessionCount.toLocaleString()} with token data
+              {t('usageReport.withTokenData', { sessions: overallStats.sessionCount.toLocaleString() })}
             </div>
           )}
         </div>
 
         <div className="stat-card bg-[var(--nim-bg-secondary)] border border-[var(--nim-border)] rounded-md px-4 py-3">
           <div className="stat-label text-[11px] text-[var(--nim-text-faint)] uppercase tracking-[0.5px] mb-1 font-medium">
-            Total Tokens
+            {t('usageReport.totalTokens')}
           </div>
           <div className="stat-value text-2xl font-semibold text-[var(--nim-text)] mb-0.5">
             {overallStats.totalTokens.toLocaleString()}
           </div>
           <div className="stat-detail text-[11px] text-[var(--nim-text-muted)]">
-            {overallStats.totalInputTokens.toLocaleString()} in / {overallStats.totalOutputTokens.toLocaleString()} out
+            {t('usageReport.inOut', { input: overallStats.totalInputTokens.toLocaleString(), output: overallStats.totalOutputTokens.toLocaleString() })}
           </div>
         </div>
 
         {mostUsedProvider && (
           <div className="stat-card bg-[var(--nim-bg-secondary)] border border-[var(--nim-border)] rounded-md px-4 py-3">
             <div className="stat-label text-[11px] text-[var(--nim-text-faint)] uppercase tracking-[0.5px] mb-1 font-medium">
-              Most Used
+              {t('usageReport.mostUsed')}
             </div>
             <div className="stat-value text-2xl font-semibold text-[var(--nim-text)] mb-0.5">
               {mostUsedProvider.provider}
             </div>
             <div className="stat-detail text-[11px] text-[var(--nim-text-muted)]">
-              {mostUsedProvider.model || 'Default model'} - {mostUsedProvider.sessionCount} sessions
+              {mostUsedProvider.model || t('usageReport.defaultModel')} - {t('usageReport.sessionsCount', { count: mostUsedProvider.sessionCount })}
             </div>
           </div>
         )}
@@ -114,7 +116,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ workspaceI
       {providerStats.length > 0 && (
         <div className="provider-breakdown mt-2">
           <h3 className="m-0 mb-3 text-sm font-semibold text-[var(--nim-text)]">
-            Usage by Provider
+            {t('usageReport.usageByProvider')}
           </h3>
           <div className="provider-bars flex flex-col gap-2">
             {providerStats.map((provider, index) => {

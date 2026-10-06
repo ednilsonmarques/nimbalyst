@@ -6,6 +6,8 @@ import { CommonFileActions } from './CommonFileActions';
 import { useFloatingMenu, FloatingPortal, virtualElement } from '../hooks/useFloatingMenu';
 import { historyDialogFileAtom } from '../store';
 import { requestConfirmation } from '../dialogs/requestConfirmation';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface FileContextMenuProps {
   x: number;
@@ -54,6 +56,7 @@ export function FileContextMenu({
   isPrimaryRoot = false,
   onDetachFolder,
 }: FileContextMenuProps) {
+  const { t } = useTranslation('menu');
   const openHistoryDialog = useSetAtom(historyDialogFileAtom);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState(fileName);
@@ -114,12 +117,12 @@ export function FileContextMenu({
 
     if (hasMultipleSelected && onDeleteMultiple) {
       const selectedArray = Array.from(selectedPaths);
-      const confirmMessage = `Are you sure you want to delete ${selectedArray.length} items?`;
+      const confirmMessage = translate('dialogs:fileOps.deleteItems.message', { itemCount: selectedArray.length });
 
       const confirmed = await requestConfirmation({
-        title: 'Delete items?',
+        title: translate('dialogs:fileOps.deleteItems.title'),
         message: confirmMessage,
-        confirmLabel: 'Delete',
+        confirmLabel: translate('common:delete'),
         destructive: true,
       });
       if (confirmed) {
@@ -128,13 +131,13 @@ export function FileContextMenu({
       }
     } else {
       const confirmMessage = fileType === 'directory'
-        ? `Are you sure you want to delete the folder "${fileName}" and all its contents?`
-        : `Are you sure you want to delete "${fileName}"?`;
+        ? translate('dialogs:fileOps.deleteFolder.message', { name: fileName })
+        : translate('dialogs:fileOps.deleteFile.message', { name: fileName });
 
       const confirmed = await requestConfirmation({
-        title: fileType === 'directory' ? 'Delete folder?' : 'Delete file?',
+        title: fileType === 'directory' ? translate('dialogs:fileOps.deleteFolder.title') : translate('dialogs:fileOps.deleteFile.title'),
         message: confirmMessage,
-        confirmLabel: 'Delete',
+        confirmLabel: translate('common:delete'),
         destructive: true,
       });
       if (confirmed) {
@@ -199,7 +202,7 @@ export function FileContextMenu({
             onClick={handleDelete}
           >
             <MaterialSymbol icon="delete" size={18} />
-            <span>Delete {selectedPaths.size} Items</span>
+            <span>{t('contextMenu.file.deleteItems', { count: selectedPaths.size })}</span>
           </div>
         </div>
       </FloatingPortal>
@@ -229,7 +232,7 @@ export function FileContextMenu({
               <>
                 <div className={menuItemClasses} onClick={() => { onNewFile(filePath, 'markdown'); onClose(); }}>
                   <MaterialSymbol icon="description" size={18} />
-                  <span>New Markdown File</span>
+                  <span>{t('contextMenu.file.newMarkdownFile')}</span>
                 </div>
                 {/* Mockup is contributed by the mockuplm extension (.mockup.html);
                     a hardcoded built-in entry here would duplicate it. */}
@@ -240,26 +243,26 @@ export function FileContextMenu({
                     onClick={() => { onNewFile(filePath, `ext:${extType.extension}`); onClose(); }}
                   >
                     <MaterialSymbol icon={extType.icon} size={18} />
-                    <span>New {extType.displayName}</span>
+                    <span>{t('contextMenu.file.newOfType', { type: extType.displayName })}</span>
                   </div>
                 ))}
                 <div className={menuItemClasses} onClick={() => { onNewFile(filePath, 'any'); onClose(); }}>
                   <MaterialSymbol icon="note_add" size={18} />
-                  <span>New File...</span>
+                  <span>{t('contextMenu.file.newFile')}</span>
                 </div>
               </>
             )}
             {onNewFolder && (
               <div className={menuItemClasses} onClick={() => { onNewFolder(filePath); onClose(); }}>
                 <MaterialSymbol icon="create_new_folder" size={18} />
-                <span>New Folder</span>
+                <span>{t('contextMenu.file.newFolder')}</span>
               </div>
             )}
             {(onNewFile || onNewFolder) && <div className={separatorClasses} />}
             {onViewWorkspaceHistory && (
               <div className={menuItemClasses} onClick={() => { onViewWorkspaceHistory(filePath); onClose(); }}>
                 <MaterialSymbol icon="history" size={18} />
-                <span>View Folder History...</span>
+                <span>{t('contextMenu.file.viewFolderHistory')}</span>
               </div>
             )}
           </>
@@ -268,7 +271,7 @@ export function FileContextMenu({
         {fileType === 'file' && (
           <div className={menuItemClasses} onClick={() => { openHistoryDialog(filePath); onClose(); }}>
             <MaterialSymbol icon="history" size={18} />
-            <span>View History...</span>
+            <span>{t('contextMenu.file.viewHistory')}</span>
           </div>
         )}
 
@@ -292,7 +295,7 @@ export function FileContextMenu({
                 onClick={() => { onDetachFolder(filePath); onClose(); }}
               >
                 <MaterialSymbol icon="link_off" size={18} />
-                <span>Detach Folder from Workspace</span>
+                <span>{t('contextMenu.file.detachFolder')}</span>
               </div>
             </>
           )
@@ -302,7 +305,7 @@ export function FileContextMenu({
 
             <div className={menuItemClasses} onClick={handleRenameClick}>
               <MaterialSymbol icon="edit" size={18} />
-              <span>Rename</span>
+              <span>{t('contextMenu.file.rename')}</span>
             </div>
 
             <div className={separatorClasses} />
@@ -313,7 +316,7 @@ export function FileContextMenu({
               onClick={handleDelete}
             >
               <MaterialSymbol icon="delete" size={18} />
-              <span>Delete</span>
+              <span>{t('contextMenu.file.delete')}</span>
             </div>
           </>
         )}

@@ -15,6 +15,7 @@
 
 import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
 import { useAtomValue } from 'jotai';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   FloatingFocusManager,
   FloatingList,
@@ -310,6 +311,7 @@ function TopLevelMenu({
 }
 
 export function WindowMenuBar() {
+  const { t } = useTranslation('workspace');
   const menuBar = useAtomValue(windowMenuBarAtom);
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -323,7 +325,7 @@ export function WindowMenuBar() {
         className="window-menu-bar"
         data-component="WindowMenuBar"
         data-testid="window-menu-bar"
-        aria-label="Application menu"
+        aria-label={t('topBar.applicationMenu')}
       >
         <FloatingTree>
           {menuBar.items.map((item) => (

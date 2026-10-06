@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export interface ExtensionProjectIntroModalProps {
   isOpen: boolean;
@@ -7,11 +8,12 @@ export interface ExtensionProjectIntroModalProps {
   onCancel: () => void;
 }
 
+// `text` is an i18n key in the 'onboarding' namespace.
 const capabilities = [
-  { icon: 'edit_note', text: 'Custom editors for any file type, with native look and feel' },
-  { icon: 'view_sidebar', text: 'Side panels and workspace views for dashboards and live status' },
-  { icon: 'psychology', text: 'AI tools that Claude can use while working in your project' },
-  { icon: 'deployed_code', text: 'In-app dev loop — build, install, and reload without leaving Nimbalyst' },
+  { icon: 'edit_note', text: 'extensionIntro.capabilities.editors' },
+  { icon: 'view_sidebar', text: 'extensionIntro.capabilities.panels' },
+  { icon: 'psychology', text: 'extensionIntro.capabilities.aiTools' },
+  { icon: 'deployed_code', text: 'extensionIntro.capabilities.devLoop' },
 ];
 
 export const ExtensionProjectIntroModal: React.FC<ExtensionProjectIntroModalProps> = ({
@@ -20,6 +22,7 @@ export const ExtensionProjectIntroModal: React.FC<ExtensionProjectIntroModalProp
   onDontShowAgain,
   onCancel,
 }) => {
+  const { t } = useTranslation('onboarding');
   if (!isOpen) return null;
 
   return (
@@ -36,11 +39,10 @@ export const ExtensionProjectIntroModal: React.FC<ExtensionProjectIntroModalProp
             <span className="material-symbols-outlined text-[26px]">extension</span>
           </div>
           <h2 className="m-0 text-xl font-semibold tracking-[-0.02em] text-nim">
-            Build with Extensions
+            {t('extensionIntro.title')}
           </h2>
           <p className="mt-2 text-[14px] leading-6 text-nim-muted">
-            Extensions add custom editors, AI tools, commands, panels, and more.
-            Nimbalyst loads your extension live while you develop.
+            {t('extensionIntro.description')}
           </p>
         </div>
 
@@ -50,14 +52,14 @@ export const ExtensionProjectIntroModal: React.FC<ExtensionProjectIntroModalProp
               <span className="material-symbols-outlined mt-0.5 text-[18px] text-[var(--nim-primary)]">
                 {cap.icon}
               </span>
-              <span className="text-[13px] leading-5 text-nim-muted">{cap.text}</span>
+              <span className="text-[13px] leading-5 text-nim-muted">{t(cap.text)}</span>
             </div>
           ))}
         </div>
 
         <div className="mx-7 mb-5 rounded-lg bg-nim-secondary px-4 py-3">
           <span className="text-[13px] leading-5 text-nim-muted">
-            Describe what you want to the agent, and it will scaffold, build, and install the extension for you.
+            {t('extensionIntro.agentHint')}
           </span>
         </div>
 
@@ -66,19 +68,19 @@ export const ExtensionProjectIntroModal: React.FC<ExtensionProjectIntroModalProp
             className="nim-btn-secondary rounded-lg px-4 py-2 text-sm font-medium"
             onClick={onCancel}
           >
-            Cancel
+            {t('common:cancel')}
           </button>
           <button
             className="rounded-lg border border-nim bg-transparent px-4 py-2 text-sm font-medium text-nim-muted transition-colors hover:bg-nim-secondary hover:text-nim"
             onClick={onDontShowAgain}
           >
-            Don&apos;t Show Again
+            {t('prompts.dontShowAgain')}
           </button>
           <button
             className="nim-btn-primary rounded-lg px-5 py-2 text-sm font-semibold"
             onClick={onContinue}
           >
-            Continue
+            {t('common:continue')}
           </button>
         </div>
       </div>

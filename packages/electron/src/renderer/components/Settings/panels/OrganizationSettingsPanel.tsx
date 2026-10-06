@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAtomValue } from 'jotai';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import type { OrgSettings, OrgSettingsPatch } from '../../../../shared/orgSettings';
 import { applyOrgSettingsPatch } from '../../../../shared/orgSettings';
@@ -46,6 +47,7 @@ export function OrganizationSettingsPanel({
   callerRole?: string | null;
   onRenamed?: (name: string) => void;
 }) {
+  const { t } = useTranslation('settings');
   const canAdminister = callerRole === 'owner' || callerRole === 'admin';
 
   if (!orgId) {
@@ -56,7 +58,7 @@ export function OrganizationSettingsPanel({
         data-component="OrganizationSettingsPanel"
       >
         <PanelHeader />
-        <p className="m-0 text-sm text-[var(--nim-text-muted)]">Choose an organization.</p>
+        <p className="m-0 text-sm text-[var(--nim-text-muted)]">{t('organization.chooseOrganization')}</p>
       </section>
     );
   }
@@ -84,11 +86,12 @@ export function OrganizationSettingsPanel({
 }
 
 function PanelHeader() {
+  const { t } = useTranslation('settings');
   return (
     <header className="mb-5 border-b border-[var(--nim-border)] pb-4">
-      <h2 className="m-0 text-xl font-semibold">Settings</h2>
+      <h2 className="m-0 text-xl font-semibold">{t('organization.title')}</h2>
       <p className="m-0 mt-1 text-sm text-[var(--nim-text-muted)]">
-        Organization-wide configuration and security status.
+        {t('organization.description')}
       </p>
     </header>
   );
@@ -107,6 +110,7 @@ function OrganizationIdentitySection({
   canAdminister: boolean;
   onRenamed?: (name: string) => void;
 }) {
+  const { t } = useTranslation('settings');
   const [name, setName] = useState(orgName?.trim() || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -134,7 +138,7 @@ function OrganizationIdentitySection({
 
   return (
     <section className="organization-settings-identity mb-6" data-testid="organization-settings-identity">
-      <h3 className="m-0 mb-1 text-sm font-semibold text-[var(--nim-text)]">Organization</h3>
+      <h3 className="m-0 mb-1 text-sm font-semibold text-[var(--nim-text)]">{t('organization.identity.title')}</h3>
       {canAdminister ? (
         <div className="flex max-w-[520px] gap-2">
           <input
@@ -152,12 +156,12 @@ function OrganizationIdentitySection({
             disabled={!normalizedName || unchanged || saving}
             onClick={() => { void save(); }}
           >
-            {saving ? 'Saving…' : 'Rename'}
+            {saving ? t('organization.identity.saving') : t('organization.identity.rename')}
           </button>
         </div>
       ) : (
         <p className="m-0 select-text text-sm text-[var(--nim-text)]" data-testid="organization-settings-name">
-          {orgName?.trim() || 'Unnamed organization'}
+          {orgName?.trim() || t('organization.identity.unnamed')}
         </p>
       )}
       {error && (
@@ -170,7 +174,7 @@ function OrganizationIdentitySection({
           className="organization-settings-owner m-0 mt-1.5 select-text text-xs text-[var(--nim-text-muted)]"
           data-testid="organization-settings-owner"
         >
-          Owned by {ownerEmail}
+          {t('organization.identity.ownedBy', { email: ownerEmail })}
         </p>
       )}
     </section>
@@ -184,6 +188,7 @@ function MessagingSettingsSection({
   orgId: string;
   canAdminister: boolean;
 }) {
+  const { t } = useTranslation('settings');
   const settings = useAtomValue(orgSettingsAtomFamily(orgId));
   const loadState = useAtomValue(orgSettingsLoadStateAtomFamily(orgId));
   const [saving, setSaving] = useState(false);
@@ -217,22 +222,21 @@ function MessagingSettingsSection({
 
   return (
     <section className="organization-settings-messaging" data-testid="organization-settings-messaging">
-      <h3 className="m-0 text-sm font-semibold text-[var(--nim-text)]">Messaging</h3>
+      <h3 className="m-0 text-sm font-semibold text-[var(--nim-text)]">{t('organization.messaging.title')}</h3>
       <p className="m-0 mt-1 text-xs text-[var(--nim-text-muted)]">
-        Rooms and direct messages can be turned off for organizations that chat elsewhere.
-        The Inbox, document comments and tracker comments are unaffected.
+        {t('organization.messaging.description')}
       </p>
       {!canAdminister && (
         <p
           className="organization-settings-readonly m-0 mt-2 text-xs text-[var(--nim-text-faint)]"
           data-testid="organization-settings-readonly"
         >
-          Only organization owners and admins can change these settings.
+          {t('organization.messaging.readOnly')}
         </p>
       )}
       {loadState.status === 'error' && (
         <p className="m-0 mt-2 text-xs text-[var(--nim-error)]" data-testid="organization-settings-load-error">
-          Could not load settings: {loadState.error}
+          {t('organization.messaging.loadError', { error: loadState.error })}
         </p>
       )}
       {error && (
@@ -248,8 +252,8 @@ function MessagingSettingsSection({
         <HelpTooltip testId="organization-settings-rooms-toggle">
           <div>
             <SettingsToggle
-              name="Rooms"
-              description="Organization rooms, including #general, and the rooms directory."
+              name={t('organization.messaging.roomsName')}
+              description={t('organization.messaging.roomsDescription')}
               checked={settings.messaging.roomsEnabled}
               disabled={disabled}
               testId="organization-settings-rooms-toggle"
@@ -260,8 +264,8 @@ function MessagingSettingsSection({
         <HelpTooltip testId="organization-settings-dms-toggle">
           <div>
             <SettingsToggle
-              name="Direct messages"
-              description="One-to-one and small-group messages between members."
+              name={t('organization.messaging.dmsName')}
+              description={t('organization.messaging.dmsDescription')}
               checked={settings.messaging.dmsEnabled}
               disabled={disabled}
               testId="organization-settings-dms-toggle"
@@ -276,7 +280,7 @@ function MessagingSettingsSection({
           className="mb-1 block text-sm font-medium text-[var(--nim-text)]"
           htmlFor="organization-settings-room-creation"
         >
-          Who can create rooms
+          {t('organization.messaging.roomCreationLabel')}
         </label>
         <HelpTooltip testId="organization-settings-room-creation">
           <select
@@ -290,8 +294,8 @@ function MessagingSettingsSection({
               void save({ messaging: { roomCreation } });
             }}
           >
-            <option value="members">Any member</option>
-            <option value="admins">Organization admins only</option>
+            <option value="members">{t('organization.messaging.roomCreationMembers')}</option>
+            <option value="admins">{t('organization.messaging.roomCreationAdmins')}</option>
           </select>
         </HelpTooltip>
       </div>

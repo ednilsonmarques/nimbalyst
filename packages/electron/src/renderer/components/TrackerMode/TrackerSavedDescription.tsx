@@ -10,6 +10,7 @@ import {
 } from 'lexical';
 import { $convertFromEnhancedMarkdownString } from '@nimbalyst/runtime/editor/markdown/EnhancedMarkdownImport';
 import { getEditorTransformers } from '@nimbalyst/runtime/editor/markdown';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export function insertSavedDescription(
   editor: LexicalEditor,
@@ -57,17 +58,17 @@ export function TrackerSavedDescription({
   editor: LexicalEditor | null;
   canInsert: boolean;
 }) {
+  const { t } = useTranslation('tracker');
   const [error, setError] = useState<string | null>(null);
   const saved = description.trim();
   if (!saved || (typeof currentBody === 'string' && currentBody.trim() === saved)) return null;
   return (
     <details className="tracker-saved-description rounded border border-nim px-3 py-2 text-xs">
       <summary className="cursor-pointer text-nim-muted">
-        Saved description
+        {t('savedDescription.title')}
       </summary>
       <p className="mt-2 text-nim-muted">
-        This may contain text entered when the item was created. Copy it or
-        insert it at your cursor without replacing the current body.
+        {t('savedDescription.body')}
       </p>
       <pre className="select-text my-2 max-h-48 overflow-auto whitespace-pre-wrap font-sans">
         {description}
@@ -85,7 +86,7 @@ export function TrackerSavedDescription({
             }
           }}
         >
-          Copy
+          {t('common:copy')}
         </button>
         <button
           type="button"
@@ -99,7 +100,7 @@ export function TrackerSavedDescription({
             }
           }}
         >
-          Insert into body
+          {t('savedDescription.insert')}
         </button>
       </div>
       {error && (

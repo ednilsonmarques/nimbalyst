@@ -37,6 +37,8 @@ import {
   useRole,
 } from '@floating-ui/react';
 import { windowControlsClearance } from '@nimbalyst/runtime/ui/floating/windowControlsClearance';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type {
   FeedbackAskArtifact,
   FeedbackRequestLifecycleStatus,
@@ -114,14 +116,15 @@ export interface FeedbackRequestResultsProps {
   now?: number;
 }
 
+/** `label` is an i18n key in the 'onboarding' namespace. */
 const LIFECYCLE_PILL: Record<
   FeedbackRequestLifecycleStatus,
   { tone: 'primary' | 'success' | 'muted' | 'warning'; label: string }
 > = {
-  open: { tone: 'primary', label: 'Open' },
-  closed: { tone: 'success', label: 'Closed' },
-  expired: { tone: 'warning', label: 'Expired' },
-  cancelled: { tone: 'muted', label: 'Cancelled' },
+  open: { tone: 'primary', label: 'feedback.lifecycle.open' },
+  closed: { tone: 'success', label: 'feedback.lifecycle.closed' },
+  expired: { tone: 'warning', label: 'feedback.lifecycle.expired' },
+  cancelled: { tone: 'muted', label: 'feedback.lifecycle.cancelled' },
 };
 
 const FeedbackIcon: React.FC = () => (
@@ -208,7 +211,7 @@ const ArtifactLink: React.FC<{
     <button
       type="button"
       data-testid="feedback-results-open-artifact"
-      aria-label={`Open ${artifact.label}`}
+      aria-label={translate('onboarding:feedback.results.openArtifact', { label: artifact.label })}
       onClick={action.open}
       className="feedback-results-artifact-link mt-0.5 block max-w-full truncate text-left text-[0.6875rem] font-normal text-nim-muted underline decoration-dotted cursor-pointer hover:text-nim"
     >
@@ -256,7 +259,7 @@ const ChoiceTally: React.FC<{
         </div>
         <div className="flex w-24 shrink-0 items-center justify-end gap-2">
           {option.isLeader && (
-            <span className="flex text-nim-success" aria-label="Leading">
+            <span className="flex text-nim-success" aria-label={translate('onboarding:feedback.results.leading')}>
               <LeaderIcon />
             </span>
           )}
@@ -323,7 +326,7 @@ const RankedConsolidation: React.FC<{
               {entry.positionCounts.map((count, position) => (
                 <i
                   key={position}
-                  title={`${count} put it ${position + 1} of ${detail.positionCount}`}
+                  title={translate('onboarding:feedback.results.positionTitle', { voters: count, position: position + 1, total: detail.positionCount })}
                   className={
                     count > 0
                       ? 'block min-h-[2px] flex-1 rounded-t-sm bg-nim-primary'
@@ -349,7 +352,7 @@ const RankedConsolidation: React.FC<{
 
 const TextAnswers: React.FC<{ detail: FeedbackTextResult }> = ({ detail }) => {
   if (detail.answers.length === 0) {
-    return <div className="text-xs text-nim-faint">No written answers yet.</div>;
+    return <div className="text-xs text-nim-faint">{translate('onboarding:feedback.results.noWrittenAnswers')}</div>;
   }
   return (
     <div className="feedback-results-text-answers flex flex-col">
@@ -364,7 +367,7 @@ const TextAnswers: React.FC<{ detail: FeedbackTextResult }> = ({ detail }) => {
           </span>
           <div className="min-w-0">
             <div className="text-xs font-semibold text-nim">
-              {answer.author ? answer.author.name : 'Anonymous'}
+              {answer.author ? answer.author.name : translate('onboarding:feedback.results.anonymous')}
               <span className="ml-1.5 font-normal text-nim-faint">
                 {formatWhen(answer.answeredAt)}
               </span>
@@ -382,10 +385,14 @@ const TextAnswers: React.FC<{ detail: FeedbackTextResult }> = ({ detail }) => {
 const RatingSummary: React.FC<{ detail: FeedbackRatingResult }> = ({ detail }) => (
   <div className="feedback-results-rating select-text text-xs text-nim-muted">
     {detail.count === 0
-      ? 'No ratings yet.'
-      : `Average ${detail.mean.toFixed(1)} of ${detail.scaleMax}`
-        + ` · lowest ${detail.lowest}, highest ${detail.highest}`
-        + ` · ${detail.count} ${detail.count === 1 ? 'rating' : 'ratings'}`}
+      ? translate('onboarding:feedback.results.noRatings')
+      : translate('onboarding:feedback.results.ratingSummary', {
+        mean: detail.mean.toFixed(1),
+        max: detail.scaleMax,
+        lowest: detail.lowest,
+        highest: detail.highest,
+        count: detail.count,
+      })}
   </div>
 );
 
@@ -396,14 +403,14 @@ const AskResultBlock: React.FC<{
 }> = ({ result, onOpenArtifact, resolveArtifactAction }) => {
   const { detail } = result;
   const hint = detail.kind === 'ranked'
-    ? `ranked · consolidated from ${detail.orderingCount} ${detail.orderingCount === 1 ? 'ordering' : 'orderings'}`
-    : `${result.answeredCount} of ${result.assignedCount} assigned answered`;
+    ? translate('onboarding:feedback.results.rankedHint', { count: detail.orderingCount })
+    : translate('onboarding:feedback.results.answeredHint', { answered: result.answeredCount, assigned: result.assignedCount });
 
   return (
     <WidgetBlock
       testId="feedback-results-ask"
       rootClassName="feedback-results-ask"
-      tag={`Q${result.index} · ${result.ask.label}`}
+      tag={translate('onboarding:feedback.results.askTag', { index: result.index, label: result.ask.label })}
       hint={hint}
       question={result.ask.description || result.ask.label}
       selectableQuestion
@@ -456,7 +463,7 @@ const LifecycleMenu: React.FC<{
         {...getReferenceProps({ onClick: () => setOpen((current) => !current) })}
         disabled={disabled}
         data-testid="feedback-results-lifecycle-menu"
-        aria-label="More request actions"
+        aria-label={translate('onboarding:feedback.results.moreActions')}
         className="feedback-results-lifecycle-menu rounded-md border border-nim bg-nim-tertiary px-2 py-1.5 text-[13px] leading-none text-nim-muted transition-colors duration-150 hover:bg-nim-hover disabled:cursor-not-allowed disabled:opacity-50"
       >
         &#8943;
@@ -479,10 +486,10 @@ const LifecycleMenu: React.FC<{
               }}
               className="block w-full cursor-pointer border-none bg-transparent px-3 py-1.5 text-left text-xs text-nim-muted hover:bg-nim-hover hover:text-nim"
             >
-              Cancel request
+              {translate('onboarding:feedback.results.cancelRequest')}
             </button>
             <div className="px-3 pb-1 pt-0.5 text-[0.6875rem] leading-snug text-nim-faint">
-              Cancelling drops the answers already in. Closing keeps them.
+              {translate('onboarding:feedback.results.cancelHint')}
             </div>
           </div>
         </FloatingPortal>
@@ -504,6 +511,8 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
   renderSubjectPreview,
   now,
 }) => {
+  // Re-renders the surface (and its sub-components) on a language switch.
+  const { t, i18n } = useTranslation('onboarding');
   const atomKey = useMemo(() => feedbackRequestTargetKey(target), [target]);
   // The state atom rather than the request/responses selectors that derive from
   // it: this surface needs the viewer id and the connection status too, and one
@@ -530,7 +539,8 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
   // The whole model, once per snapshot. Every row below reads from this.
   const results = useMemo(
     () => (request ? buildFeedbackResults(request, progress) : null),
-    [request, progress],
+    // The model carries display strings, so a language switch rebuilds it.
+    [request, progress, i18n.language],
   );
 
   const runAction = useCallback(async (
@@ -542,18 +552,18 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
     try {
       const result = await action();
       if (!result.success) {
-        setActionError(result.error ?? 'That did not go through.');
+        setActionError(result.error ?? t('feedback.results.actionFailed'));
         return false;
       }
       return true;
     } catch (error) {
       console.error('[FeedbackRequestResults] Action failed:', error);
-      setActionError(error instanceof Error ? error.message : 'That did not go through.');
+      setActionError(error instanceof Error ? error.message : t('feedback.results.actionFailed'));
       return false;
     } finally {
       setPendingAction(null);
     }
-  }, []);
+  }, [t]);
 
   const handleNudge = useCallback(async (recipientUserIds?: string[]) => {
     if (!host) return;
@@ -577,7 +587,7 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
       >
         <InteractiveWidgetHeader
           icon={<FeedbackIcon />}
-          title="Feedback request"
+          title={t('feedback.title')}
           // The tab opens the moment the request is sent, which is precisely
           // when the author wants the link — before the snapshot arrives.
           trailing={(
@@ -590,7 +600,7 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
         />
         <InteractiveWidgetBody>
           <div className="select-text text-xs text-nim-muted">
-            {state.error?.message ?? 'Loading this request…'}
+            {state.error?.message ?? t('feedback.results.loading')}
           </div>
         </InteractiveWidgetBody>
       </InteractiveWidgetCard>
@@ -606,12 +616,13 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
   const quorumReached = progress?.quorumReached ?? false;
 
   const wakeCopy = !isOpen
-    ? `This request is ${lifecyclePill.label.toLowerCase()}. The session has been woken with what came in.`
+    ? t(`feedback.results.wakeEnded.${request.lifecycle.status}`)
     : quorumReached
-      ? 'Quorum is in, so the session has been woken with these answers.'
-      : `The session wakes when ${request.quorum.requiredRecipientCount} of `
-        + `${results.totalRecipientCount} have answered, when you close this request, `
-        + 'or when you nudge someone. Nothing has been sent to it yet.';
+      ? t('feedback.results.wakeQuorum')
+      : t('feedback.results.wakeWaiting', {
+        required: request.quorum.requiredRecipientCount,
+        total: results.totalRecipientCount,
+      });
 
   return (
     <InteractiveWidgetCard
@@ -624,10 +635,10 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
         icon={<FeedbackIcon />}
         title={
           <span className="flex flex-col">
-            <span className="select-text">Feedback request</span>
+            <span className="select-text">{t('feedback.title')}</span>
             <span className="text-[0.6875rem] font-normal text-nim-faint">
-              Sent {formatWhen(request.createdAt)}
-              {request.deadline !== undefined && ` · Due ${formatWhen(request.deadline)}`}
+              {t('feedback.results.sent', { when: formatWhen(request.createdAt) })}
+              {request.deadline !== undefined && ` · ${t('feedback.results.due', { when: formatWhen(request.deadline) })}`}
               {/* The turn that composed this. An author comes back to a request
                   long after the conversation that produced it, and the question
                   they arrive with is usually "what was I doing?" rather than
@@ -652,9 +663,9 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
         trailing={
           <span className="flex flex-wrap items-center justify-end gap-2">
             <WidgetStatusPill tone="primary" testId="feedback-results-progress">
-              {`${results.answeredRecipientCount} of ${results.totalRecipientCount} responded`}
+              {t('feedback.results.responded', { answered: results.answeredRecipientCount, total: results.totalRecipientCount })}
             </WidgetStatusPill>
-            <WidgetStatusPill tone={lifecyclePill.tone}>{lifecyclePill.label}</WidgetStatusPill>
+            <WidgetStatusPill tone={lifecyclePill.tone}>{t(lifecyclePill.label)}</WidgetStatusPill>
             {/* Not behind the lifecycle menu, and not gated on authorship: a
                 recipient without the desktop app is reached by this link or by
                 nothing at all. */}
@@ -671,7 +682,7 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
                   onClick={() => void handleLifecycle('closed')}
                   disabled={!canAct}
                 >
-                  {pendingAction === 'closed' ? 'Closing…' : 'Close request'}
+                  {pendingAction === 'closed' ? t('feedback.results.closing') : t('feedback.results.closeRequest')}
                 </WidgetActionButton>
                 <LifecycleMenu
                   disabled={!canAct}
@@ -706,19 +717,19 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
         <WidgetBlock
           testId="feedback-results-outstanding"
           rootClassName="feedback-results-outstanding"
-          tag="Waiting on"
+          tag={t('feedback.results.waitingOn')}
           tagTone="neutral"
           hint={
             outstanding.kind === 'named'
-              ? `${outstanding.count} ${outstanding.count === 1 ? 'person' : 'people'}`
+              ? t('feedback.results.people', { count: outstanding.count })
               : outstanding.count === null
-                ? 'answers stay anonymous on this request'
-                : `${outstanding.count} ${outstanding.count === 1 ? 'person' : 'people'} · names stay hidden`
+                ? t('feedback.results.answersAnonymous')
+                : t('feedback.results.peopleHidden', { count: outstanding.count })
           }
         >
           {outstanding.kind === 'named' ? (
             outstanding.people.length === 0 ? (
-              <div className="text-xs text-nim-faint">Everyone has answered.</div>
+              <div className="text-xs text-nim-faint">{t('feedback.results.everyoneAnswered')}</div>
             ) : (
               <div className="flex flex-col">
                 {outstanding.people.map((person) => (
@@ -743,7 +754,7 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
                         onClick={() => void handleNudge([person.userId])}
                         disabled={!canAct}
                       >
-                        {pendingAction === `nudge:${person.userId}` ? 'Nudging…' : 'Nudge'}
+                        {pendingAction === `nudge:${person.userId}` ? t('feedback.results.nudging') : t('feedback.results.nudge')}
                       </WidgetActionButton>
                     </span>
                   </div>
@@ -753,10 +764,8 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
           ) : (
             <div className="select-text text-xs text-nim-muted">
               {outstanding.count === 0
-                ? 'Everyone has answered.'
-                : 'Answers on this request are anonymous, so who is still outstanding stays'
-                  + ' hidden here too — naming them would identify the answers already in.'
-                  + ' Nudging goes to everyone who has not answered.'}
+                ? t('feedback.results.everyoneAnswered')
+                : t('feedback.results.anonymousOutstanding')}
             </div>
           )}
           {(outstanding.kind === 'anonymous' || outstanding.people.length > 0) && (
@@ -767,11 +776,11 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
                 onClick={() => void handleNudge()}
                 disabled={!canAct}
               >
-                {pendingAction === 'nudge:all' ? 'Nudging…' : 'Nudge everyone outstanding'}
+                {pendingAction === 'nudge:all' ? t('feedback.results.nudging') : t('feedback.results.nudgeAll')}
               </WidgetActionButton>
               {nudgedAt !== null && (
                 <span className="text-[0.6875rem] text-nim-faint">
-                  Nudged {formatWhen(nudgedAt)}
+                  {t('feedback.results.nudged', { when: formatWhen(nudgedAt) })}
                 </span>
               )}
             </div>
@@ -791,8 +800,7 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
             rootClassName="feedback-results-anonymous-note"
             testId="feedback-results-anonymous-note"
           >
-            You asked for this one hidden until answered, so the tally is anonymous —
-            for you as well, and it stays that way after everyone has answered.
+            {t('feedback.results.anonymousNote')}
           </WidgetNoteRow>
         )}
 
@@ -801,14 +809,13 @@ export const FeedbackRequestResults: React.FC<FeedbackRequestResultsProps> = ({
             rootClassName="feedback-results-observer-note"
             testId="feedback-results-observer-note"
           >
-            You are not the author of this request, so closing and nudging are not yours
-            to do here.
+            {t('feedback.results.observerNote')}
           </WidgetNoteRow>
         )}
 
         {!host && isAuthor && (
           <WidgetNoteRow rootClassName="feedback-results-offline-note">
-            Closing and nudging are not available in this session yet.
+            {t('feedback.results.offlineNote')}
           </WidgetNoteRow>
         )}
 

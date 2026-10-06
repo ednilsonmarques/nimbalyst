@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { store } from '@nimbalyst/runtime/store';
 import { globalRegistry } from '@nimbalyst/tracker-schema';
 import {
@@ -243,9 +244,9 @@ export function useSetPageType(workspacePath: string, teamScope: CollabScope | n
         buildSetPageTypeDependencies({ lane, workspacePath, session, teamScope, tabsActions }, title),
       );
       if (outcome.status === 'refused') {
-        errorNotificationService.showWarning('Cannot set the type', outcome.message, { allowDuplicate: true });
+        errorNotificationService.showWarning(translate('team:pages.setType.refused'), outcome.message, { allowDuplicate: true });
       } else if (outcome.status === 'failed') {
-        errorNotificationService.showError('Set type did not finish', outcome.message);
+        errorNotificationService.showError(translate('team:pages.setType.failed'), outcome.message);
       }
       return outcome.status === 'done';
     } finally {

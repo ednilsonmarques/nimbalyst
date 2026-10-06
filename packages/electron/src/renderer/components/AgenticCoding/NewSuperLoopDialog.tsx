@@ -8,6 +8,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
   newSuperLoopDialogOpenAtom,
   upsertSuperLoopAtom,
@@ -32,6 +34,7 @@ export const NewSuperLoopDialog: React.FC<NewSuperLoopDialogProps> = ({
   workspacePath,
   onSuperLoopCreated,
 }) => {
+  const { t } = useTranslation('agent');
   const [isOpen, setIsOpen] = useAtom(newSuperLoopDialogOpenAtom);
   const upsertSuperLoop = useSetAtom(upsertSuperLoopAtom);
 
@@ -96,7 +99,7 @@ export const NewSuperLoopDialog: React.FC<NewSuperLoopDialogProps> = ({
 
   const handleCreate = useCallback(async () => {
     if (!taskDescription.trim()) {
-      setError('Task description is required');
+      setError(translate('agent:newSuperLoop.errors.taskRequired'));
       return;
     }
 
@@ -115,11 +118,11 @@ export const NewSuperLoopDialog: React.FC<NewSuperLoopDialogProps> = ({
         setIsOpen(false);
         onSuperLoopCreated?.(result.loop.id, result.worktree?.id);
       } else {
-        setError(result.error || 'Failed to create Super Loop');
+        setError(result.error || translate('agent:newSuperLoop.errors.createFailed'));
       }
     } catch (err) {
       console.error('[NewSuperLoopDialog] Failed to create super loop:', err);
-      setError('Failed to create Super Loop');
+      setError(translate('agent:newSuperLoop.errors.createFailed'));
     } finally {
       setIsCreating(false);
     }
@@ -168,12 +171,13 @@ export const NewSuperLoopDialog: React.FC<NewSuperLoopDialogProps> = ({
         <div className="flex items-center justify-between px-4 py-3 border-b border-nim">
           <div className="flex items-center gap-2">
             <MaterialSymbol icon="sync" size={20} className="text-nim-primary" />
-            <h2 className="text-lg font-semibold text-nim">New Super Loop</h2>
+            <h2 className="text-lg font-semibold text-nim">{t('newSuperLoop.title')}</h2>
           </div>
           <button
             onClick={handleClose}
             className="p-1 rounded hover:bg-nim-hover text-nim-muted hover:text-nim transition-colors"
             disabled={isCreating}
+            aria-label={t('newSuperLoop.close')}
           >
             <MaterialSymbol icon="close" size={20} />
           </button>
@@ -183,27 +187,25 @@ export const NewSuperLoopDialog: React.FC<NewSuperLoopDialogProps> = ({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Description */}
           <div className="text-sm text-nim-muted">
-            Super Loops run an autonomous AI agent iteratively until a task is complete.
-            Each iteration starts with fresh context while progress persists via files.
-            A dedicated worktree will be automatically created for this loop.
-            <span className="italic">Heavily inspired by Ralph Loops.</span>
+            {t('newSuperLoop.intro')}
+            <span className="italic">{t('newSuperLoop.inspired')}</span>
           </div>
 
           {/* Task Description */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-nim">
-              Task Description
+              {t('newSuperLoop.taskLabel')}
             </label>
             <textarea
               value={taskDescription}
               onChange={(e) => setTaskDescription(e.target.value)}
-              placeholder="Describe the task you want the AI to complete..."
+              placeholder={t('newSuperLoop.taskPlaceholder')}
               className="w-full h-40 px-3 py-2 text-sm bg-nim-secondary border border-nim rounded-md text-nim placeholder:text-nim-muted focus:outline-none focus:ring-2 focus:ring-nim-primary resize-none"
               disabled={isCreating}
               autoFocus
             />
             <p className="text-xs text-nim-muted">
-              This will be saved to .superloop/task.md in a new worktree.
+              {t('newSuperLoop.taskHint')}
             </p>
           </div>
 
@@ -212,7 +214,7 @@ export const NewSuperLoopDialog: React.FC<NewSuperLoopDialogProps> = ({
             {/* Model Selector */}
             <div className="space-y-2 flex-1">
               <label className="block text-sm font-medium text-nim">
-                Model
+                {t('newSuperLoop.modelLabel')}
               </label>
               <div className="relative">
                 <select
@@ -222,7 +224,7 @@ export const NewSuperLoopDialog: React.FC<NewSuperLoopDialogProps> = ({
                   disabled={isCreating || loadingModels}
                 >
                   {loadingModels ? (
-                    <option value={selectedModel}>Loading models...</option>
+                    <option value={selectedModel}>{t('modelPicker.loading')}</option>
                   ) : agentModels.length === 0 ? (
                     <option value={DEFAULT_MODEL}>{getModelDisplayName(DEFAULT_MODEL)}</option>
                   ) : (
@@ -240,14 +242,14 @@ export const NewSuperLoopDialog: React.FC<NewSuperLoopDialogProps> = ({
                 />
               </div>
               <p className="text-xs text-nim-muted">
-                The AI model used for each iteration.
+                {t('newSuperLoop.modelHint')}
               </p>
             </div>
 
             {/* Max Iterations */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-nim">
-                Max Iterations
+                {t('newSuperLoop.maxIterations')}
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -264,7 +266,7 @@ export const NewSuperLoopDialog: React.FC<NewSuperLoopDialogProps> = ({
                 </span>
               </div>
               <p className="text-xs text-nim-muted">
-                Stops after this many iterations.
+                {t('newSuperLoop.maxIterationsHint')}
               </p>
             </div>
           </div>
@@ -284,7 +286,7 @@ export const NewSuperLoopDialog: React.FC<NewSuperLoopDialogProps> = ({
             className="px-4 py-2 text-sm font-medium text-nim bg-nim-secondary hover:bg-nim-hover border border-nim rounded-md transition-colors"
             disabled={isCreating}
           >
-            Cancel
+            {t('newSuperLoop.cancel')}
           </button>
           <button
             onClick={handleCreate}
@@ -294,12 +296,12 @@ export const NewSuperLoopDialog: React.FC<NewSuperLoopDialogProps> = ({
             {isCreating ? (
               <>
                 <MaterialSymbol icon="progress_activity" size={16} className="animate-spin" />
-                Creating...
+                {t('newSuperLoop.creating')}
               </>
             ) : (
               <>
                 <MaterialSymbol icon="play_arrow" size={16} />
-                Create & Start
+                {t('newSuperLoop.createAndStart')}
               </>
             )}
           </button>

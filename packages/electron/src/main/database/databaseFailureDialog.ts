@@ -17,13 +17,28 @@
  */
 
 import * as os from 'os';
+import { t } from '@nimbalyst/runtime/i18n';
 import { buildDatabaseInitializationErrorProperties } from './DatabaseErrorTelemetry';
 import type { CutoverJournal } from './sqlite/cutoverJournal';
 import type { RestorableBackup } from './sqlite/recoveryArtifacts';
 import { formatBytes } from './sqlite/recoveryArtifacts';
 
-/** The one destructive choice here: it discards everything saved since the switch. */
-const ROLLBACK_BUTTON = 'Restore pre-migration database';
+/**
+ * Button labels in the current UI language. Resolved when the dialog is built
+ * and again in `actionForChoice`, which dispatches on the label the user read.
+ * `rollback` is the one destructive choice here: it discards everything saved
+ * since the switch.
+ */
+function buttonLabels() {
+  return {
+    retry: t('dialogs:databaseFailure.buttons.retryStartup'),
+    restore: t('dialogs:databaseFailure.buttons.restoreBackup'),
+    reveal: t('dialogs:databaseFailure.buttons.showBackups'),
+    rollback: t('dialogs:databaseFailure.buttons.restorePreMigration'),
+    diagnostics: t('dialogs:databaseFailure.buttons.copyDiagnostics'),
+    quit: t('dialogs:databaseFailure.buttons.quit'),
+  };
+}
 
 /**
  * Replace the two paths that carry the account name with placeholders.
@@ -91,62 +106,52 @@ export function buildDatabaseFailureDialog(
   } = {},
 ): DatabaseFailureDialogContent {
   const hasBackups = backups.length > 0;
+  const labels = buttonLabels();
 
   const recovery = hasBackups
-    ? `Backup copies were found on this computer:\n\n` +
-      backups.map((b) => `   - ${b.name} (${formatBytes(b.bytes)})`).join('\n') +
-      `\n\nDo not remove the database folder -- these backups are what it would be restored from.\n\n` +
-      `Restore Backup starts with the copy holding the most, and tries the next one if that copy ` +
-      `does not check out. It keeps the current database alongside, so nothing on this computer ` +
-      `is removed either way.\n\n`
-    : `Do not remove the database folder. Support can often recover a database that will not start.\n\n`;
+    ? t('dialogs:databaseFailure.recoveryWithBackups', {
+        backups: backups.map((b) => `   - ${b.name} (${formatBytes(b.bytes)})`).join('\n'),
+      }) + '\n\n'
+    : t('dialogs:databaseFailure.recoveryNoBackups') + '\n\n';
 
   const steps = hasBackups
-    ? `If you would rather not restore yet:\n` +
-      `1. Close any other Nimbalyst windows and open it again\n` +
-      `2. Restart your computer, which clears stale database locks\n` +
-      `3. Show Backups reveals the copies above without changing anything\n\n`
-    : `Things to try, in order:\n` +
-      `1. Close any other Nimbalyst windows and open it again\n` +
-      `2. Restart your computer, which clears stale database locks\n` +
-      `3. If it still will not start, contact support before changing anything on disk\n\n`;
+    ? t('dialogs:databaseFailure.stepsWithBackups') + '\n\n'
+    : t('dialogs:databaseFailure.stepsNoBackups') + '\n\n';
 
   // Cheapest and least destructive first. Rolling back to the pre-migration
   // store comes after both, because it is the only choice here that leaves
   // the user without work they have already done.
   const actions = [
-    ...(options.retryStartup ? ['Retry startup'] : []),
-    ...(hasBackups ? ['Restore Backup', 'Show Backups'] : []),
-    ...(options.rollbackSource ? [ROLLBACK_BUTTON] : []),
-    ...(options.diagnostics ? ['Copy diagnostics'] : []),
+    ...(options.retryStartup ? [labels.retry] : []),
+    ...(hasBackups ? [labels.restore, labels.reveal] : []),
+    ...(options.rollbackSource ? [labels.rollback] : []),
+    ...(options.diagnostics ? [labels.diagnostics] : []),
   ];
   // Index 0 is the slot the platform paints as primary, so the rollback may
   // not hold it even when it is the only action on offer -- Quit takes the
   // first slot in that case rather than the last.
-  const buttons = actions[0] === ROLLBACK_BUTTON ? ['Quit', ...actions] : [...actions, 'Quit'];
+  const buttons = actions[0] === labels.rollback ? [labels.quit, ...actions] : [...actions, labels.quit];
 
   return {
-    title: 'Nimbalyst - Database Initialization Failed',
-    message: 'The database could not be started.',
+    title: t('dialogs:databaseFailure.title'),
+    message: t('dialogs:databaseFailure.message'),
     detail: (options.reason ? `${redactAccountPaths(options.reason, options.userDataPath)}\n\n` : '') + recovery +
       (options.rollbackSource
-        ? `The database as it was before the switch to the new engine is also still here (${options.rollbackSource.name}). ` +
-          `Restore pre-migration database goes back to it: anything saved since the switch will not be in it, ` +
-          `and the newer database is kept on disk.\n\n`
+        ? t('dialogs:databaseFailure.rollbackDetail', { name: options.rollbackSource.name }) + '\n\n'
         : '') +
-      steps + `Nimbalyst will close if you quit.`,
+      steps + t('dialogs:databaseFailure.quitNotice'),
     buttons,
     // Retry first -- a transient failure costs nothing to re-run. Then the
     // rolling backup, which the recovery transaction verifies and which keeps
     // the displaced database. Never the rollback, and never a bare Quit while
     // something recoverable is on offer (#1347).
     defaultId: options.retryStartup
-      ? buttons.indexOf('Retry startup')
+      ? buttons.indexOf(labels.retry)
       : hasBackups
-        ? buttons.indexOf('Restore Backup')
-        : buttons.findIndex((button) => button !== ROLLBACK_BUTTON),
+        ? buttons.indexOf(labels.restore)
+        : buttons.findIndex((button) => button !== labels.rollback),
     // Escape lands on Quit, never on an action that touches the database.
-    cancelId: buttons.indexOf('Quit'),
+    cancelId: buttons.indexOf(labels.quit),
     // `findRestorableBackups` returns richest-first, so this is the copy the
     // Restore button starts with and the one Show Backups reveals.
     revealPath: hasBackups ? backups[0].path : null,
@@ -169,16 +174,17 @@ export function actionForChoice(
   content: DatabaseFailureDialogContent,
   choice: number,
 ): DatabaseFailureDialogAction {
+  const labels = buttonLabels();
   switch (content.buttons[choice]) {
-    case ROLLBACK_BUTTON:
+    case labels.rollback:
       return 'rollback';
-    case 'Retry startup':
+    case labels.retry:
       return 'retry';
-    case 'Copy diagnostics':
+    case labels.diagnostics:
       return 'diagnostics';
-    case 'Restore Backup':
+    case labels.restore:
       return 'restore';
-    case 'Show Backups':
+    case labels.reveal:
       return 'reveal';
     default:
       return 'quit';
@@ -246,7 +252,7 @@ export async function applyDatabaseFailureChoice(
     try { result = await handlers.rollback(content.rollbackSource); } catch (error) {
       result = { ok: false, message: error instanceof Error ? error.message : String(error) };
     }
-    if (!result.ok) handlers.onRestoreFailed?.(result.message ?? 'Pre-migration recovery did not complete. All copies have been retained.');
+    if (!result.ok) handlers.onRestoreFailed?.(result.message ?? t('dialogs:databaseFailure.rollbackIncomplete'));
     return { action, reportedAction: result.ok ? 'restore_succeeded' : 'restore_failed', restored: result.ok };
   }
   if (action === 'diagnostics' && content.diagnostics) {
@@ -264,14 +270,13 @@ export async function applyDatabaseFailureChoice(
         result = { ok: false, message: err instanceof Error ? err.message : String(err) };
       }
       if (result.ok) return { action, reportedAction: 'restore_succeeded', restored: true };
-      failures.push(`${candidate.name}: ${result.message ?? 'the restore did not complete'}`);
+      failures.push(`${candidate.name}: ${result.message ?? t('dialogs:databaseFailure.restoreIncomplete')}`);
       // Same rule as the backup sweeps: once an attempt has moved something,
       // trying the next copy would write over the record of where it went.
       if (result.canTryAnother === false) break;
     }
     handlers.onRestoreFailed?.(
-      `${failures.join('\n')}\n\nNothing was removed. Every copy of your database is still on `
-      + 'this computer.',
+      t('dialogs:databaseFailure.restoreFailedSummary', { failures: failures.join('\n') }),
     );
     return { action, reportedAction: 'restore_failed', restored: false };
   }

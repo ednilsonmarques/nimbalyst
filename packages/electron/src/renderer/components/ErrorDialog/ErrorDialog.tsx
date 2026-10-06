@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { copyToClipboard } from '@nimbalyst/runtime';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface DiffErrorDetails {
   originalMarkdown: string;
@@ -23,6 +24,7 @@ interface ErrorDialogProps {
 }
 
 export function ErrorDialog({ isOpen, onClose, title, message, details }: ErrorDialogProps) {
+  const { t } = useTranslation('dialogs');
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['error']));
 
@@ -145,7 +147,7 @@ ${r.newText}
                   className="error-dialog-copy-btn nim-btn-primary text-[13px] px-4 py-2"
                   onClick={handleCopyDetails}
                 >
-                  {copyFeedback ? '✓ Copied!' : 'Copy Debug Info'}
+                  {copyFeedback ? t('error.copiedFeedback') : t('error.copyDebugInfo')}
                 </button>
               </div>
 
@@ -156,19 +158,19 @@ ${r.newText}
                     onClick={() => toggleSection('error')}
                   >
                     <span className={`section-arrow text-xs transition-transform duration-200 ${expandedSections.has('error') ? 'rotate-90' : ''}`}>▶</span>
-                    Error Details
+                    {t('error.sections.errorDetails')}
                   </button>
                   {expandedSections.has('error') && (
                     <div className="section-content p-4 bg-[var(--nim-bg-secondary)]">
                       <div className="error-field mb-2 text-[13px] text-[var(--nim-text)]">
-                        <strong className="font-semibold mr-2">Message:</strong> {details.errorMessage}
+                        <strong className="font-semibold mr-2">{t('error.fields.message')}</strong> {details.errorMessage}
                       </div>
                       <div className="error-field mb-2 text-[13px] text-[var(--nim-text)]">
-                        <strong className="font-semibold mr-2">Time:</strong> {details.timestamp}
+                        <strong className="font-semibold mr-2">{t('error.fields.time')}</strong> {details.timestamp}
                       </div>
                       {details.filePath && (
                         <div className="error-field mb-2 text-[13px] text-[var(--nim-text)]">
-                          <strong className="font-semibold mr-2">File:</strong> {details.filePath}
+                          <strong className="font-semibold mr-2">{t('error.fields.file')}</strong> {details.filePath}
                         </div>
                       )}
                     </div>
@@ -181,7 +183,7 @@ ${r.newText}
                     onClick={() => toggleSection('prompt')}
                   >
                     <span className={`section-arrow text-xs transition-transform duration-200 ${expandedSections.has('prompt') ? 'rotate-90' : ''}`}>▶</span>
-                    Prompt
+                    {t('error.sections.prompt')}
                   </button>
                   {expandedSections.has('prompt') && (
                     <div className="section-content p-4 bg-[var(--nim-bg-secondary)]">
@@ -196,7 +198,7 @@ ${r.newText}
                     onClick={() => toggleSection('response')}
                   >
                     <span className={`section-arrow text-xs transition-transform duration-200 ${expandedSections.has('response') ? 'rotate-90' : ''}`}>▶</span>
-                    AI Response
+                    {t('error.sections.aiResponse')}
                   </button>
                   {expandedSections.has('response') && (
                     <div className="section-content p-4 bg-[var(--nim-bg-secondary)]">
@@ -211,20 +213,20 @@ ${r.newText}
                     onClick={() => toggleSection('replacements')}
                   >
                     <span className={`section-arrow text-xs transition-transform duration-200 ${expandedSections.has('replacements') ? 'rotate-90' : ''}`}>▶</span>
-                    Attempted Replacements ({details.replacements.length})
+                    {t('error.sections.attemptedReplacements', { total: details.replacements.length })}
                   </button>
                   {expandedSections.has('replacements') && (
                     <div className="section-content p-4 bg-[var(--nim-bg-secondary)]">
                       {details.replacements.map((r, i) => (
                         <div key={i} className="replacement-item mb-4 pb-4 border-b border-[var(--nim-border)] last:border-b-0 last:mb-0 last:pb-0">
-                          <h4 className="m-0 mb-3 text-[13px] font-semibold text-[var(--nim-text-muted)]">Replacement {i + 1}</h4>
+                          <h4 className="m-0 mb-3 text-[13px] font-semibold text-[var(--nim-text-muted)]">{t('error.replacementNumber', { number: i + 1 })}</h4>
                           <div className="replacement-diff grid grid-cols-2 gap-3">
                             <div className="diff-old text-xs">
-                              <strong className="block mb-1 font-semibold text-[var(--nim-text-muted)]">Old Text:</strong>
+                              <strong className="block mb-1 font-semibold text-[var(--nim-text-muted)]">{t('error.oldText')}</strong>
                               <pre className="m-0 p-2 rounded font-mono text-[11px] leading-snug overflow-x-auto whitespace-pre-wrap break-all border border-[var(--nim-diff-removed-border)] bg-[var(--nim-diff-removed-bg)] text-[var(--nim-diff-removed)]">{r.oldText}</pre>
                             </div>
                             <div className="diff-new text-xs">
-                              <strong className="block mb-1 font-semibold text-[var(--nim-text-muted)]">New Text:</strong>
+                              <strong className="block mb-1 font-semibold text-[var(--nim-text-muted)]">{t('error.newText')}</strong>
                               <pre className="m-0 p-2 rounded font-mono text-[11px] leading-snug overflow-x-auto whitespace-pre-wrap break-all border border-[var(--nim-diff-added-border)] bg-[var(--nim-diff-added-bg)] text-[var(--nim-diff-added)]">{r.newText}</pre>
                             </div>
                           </div>
@@ -240,7 +242,7 @@ ${r.newText}
                     onClick={() => toggleSection('document')}
                   >
                     <span className={`section-arrow text-xs transition-transform duration-200 ${expandedSections.has('document') ? 'rotate-90' : ''}`}>▶</span>
-                    Document Content
+                    {t('error.sections.documentContent')}
                   </button>
                   {expandedSections.has('document') && (
                     <div className="section-content p-4 bg-[var(--nim-bg-secondary)]">
@@ -253,12 +255,12 @@ ${r.newText}
               </div>
 
               <div className="error-dialog-help mt-5 p-4 rounded-md border border-[var(--nim-info-border)] bg-[var(--nim-info-light)]">
-                <p className="m-0 mb-2 text-[13px] font-semibold text-[var(--nim-text)]"><strong>What to do next:</strong></p>
+                <p className="m-0 mb-2 text-[13px] font-semibold text-[var(--nim-text)]"><strong>{t('error.help.title')}</strong></p>
                 <ul className="m-0 pl-5">
-                  <li className="text-[13px] leading-relaxed text-[var(--nim-text-muted)]">Check if the document was modified after the AI started processing</li>
-                  <li className="text-[13px] leading-relaxed text-[var(--nim-text-muted)]">Verify that the text the AI is trying to replace exists exactly as shown</li>
-                  <li className="text-[13px] leading-relaxed text-[var(--nim-text-muted)]">Try making the request again with the current document state</li>
-                  <li className="text-[13px] leading-relaxed text-[var(--nim-text-muted)]">If the problem persists, copy the debug info and report the issue</li>
+                  <li className="text-[13px] leading-relaxed text-[var(--nim-text-muted)]">{t('error.help.checkModified')}</li>
+                  <li className="text-[13px] leading-relaxed text-[var(--nim-text-muted)]">{t('error.help.verifyText')}</li>
+                  <li className="text-[13px] leading-relaxed text-[var(--nim-text-muted)]">{t('error.help.retryRequest')}</li>
+                  <li className="text-[13px] leading-relaxed text-[var(--nim-text-muted)]">{t('error.help.reportIssue')}</li>
                 </ul>
               </div>
             </div>
@@ -267,7 +269,7 @@ ${r.newText}
 
         <div className="error-dialog-footer nim-modal-footer">
           <button className="error-dialog-ok-btn nim-btn-secondary" onClick={onClose}>
-            OK
+            {t('error.ok')}
           </button>
         </div>
       </div>

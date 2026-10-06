@@ -16,6 +16,7 @@ import type { JSX, RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { trackerItemsMapAtom } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerDataAtoms';
 import { githubIssueListAtom } from '../../../store/atoms/githubIssues';
 import type { GithubIssueRow } from '../../../services/RendererGithubIssueService';
@@ -240,15 +241,16 @@ export function useIssuePanel({
 }
 
 function IssueEmptyState(): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   return (
     <div className="issue-empty-state flex h-full items-center justify-center px-8 text-center">
       <div className="max-w-md space-y-3">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-nim bg-nim-secondary text-nim-faint">
           <MaterialSymbol icon="adjust" size={24} />
         </div>
-        <div className="text-sm font-medium text-nim">Select an issue</div>
+        <div className="text-sm font-medium text-nim">{t('issues.empty.title')}</div>
         <div className="text-sm text-nim-muted">
-          Pick an issue from the left to read its conversation and activity, or hand it to an agent.
+          {t('issues.empty.body')}
         </div>
       </div>
     </div>

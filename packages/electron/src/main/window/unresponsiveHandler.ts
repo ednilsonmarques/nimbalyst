@@ -1,8 +1,10 @@
 import { dialog, type BrowserWindow } from 'electron';
+import { t } from '@nimbalyst/runtime/i18n';
 
 export interface UnresponsiveHandlerOptions {
     /** `message` line for the dialog (differs per window). */
-    message: string;
+    /** Main line of the dialog; a function is resolved when the dialog is shown (current UI language). */
+    message: string | (() => string);
     /** Log prefix, e.g. '[MAIN]' or '[WorkspaceManager]'. */
     logLabel: string;
     /** Resolve the current window; may return null once it has been torn down. */
@@ -38,11 +40,11 @@ export function createUnresponsiveHandler(
         try {
             const { response } = await dialog.showMessageBox(window, {
                 type: 'warning',
-                buttons: ['Reload', 'Keep Waiting'],
+                buttons: [t('dialogs:unresponsive.reload'), t('dialogs:unresponsive.keepWaiting')],
                 defaultId: 0,
                 cancelId: 1,
-                message,
-                detail: 'Would you like to reload the window?'
+                message: typeof message === 'function' ? message() : message,
+                detail: t('dialogs:unresponsive.detail')
             });
 
             const current = getWindow();

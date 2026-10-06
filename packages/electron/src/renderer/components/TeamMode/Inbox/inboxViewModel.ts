@@ -10,6 +10,7 @@ import type { DocumentFeedbackInboxDelivery } from '../../../store/atoms/documen
  */
 
 import { getFileIconName } from '@nimbalyst/runtime/ui/icons/fileIcons';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
   defaultTrackerTypeColor,
   defaultTrackerTypeIcon,
@@ -50,16 +51,17 @@ export const INBOX_FILTERS: ReadonlyArray<{ id: InboxFilterId; label: string }> 
 ];
 
 export function inboxFilterLabel(filter: InboxFilterId): string {
-  return INBOX_FILTERS.find((entry) => entry.id === filter)?.label ?? 'All';
+  const id = INBOX_FILTERS.find((entry) => entry.id === filter)?.id ?? 'all';
+  return translate(`team:inbox.filters.${id}`);
 }
 
 const REASON_LABELS: Record<string, string> = {
-  mention: 'Mentioned you',
-  agentMention: 'Mentioned your agent',
-  assignment: 'Assigned to you',
-  reply: 'Replied to you',
-  dm: 'Direct message',
-  follow: 'In a conversation you follow',
+  mention: 'team:inbox.reason.mention',
+  agentMention: 'team:inbox.reason.agentMention',
+  assignment: 'team:inbox.reason.assignment',
+  reply: 'team:inbox.reason.reply',
+  dm: 'team:inbox.reason.dm',
+  follow: 'team:inbox.reason.follow',
 };
 
 /**
@@ -68,20 +70,20 @@ const REASON_LABELS: Record<string, string> = {
  * first thing a reader needs.
  */
 const SOURCE_TYPES: Record<InboxSourceKind, InboxTypeIdentity> = {
-  roomMessage: { icon: 'forum', accent: 'var(--nim-primary)', label: 'Room' },
-  dmMessage: { icon: 'mail', accent: 'var(--nim-purple)', label: 'Direct' },
-  trackerComment: { icon: 'checklist', accent: 'var(--nim-warning)', label: 'Tracker' },
+  roomMessage: { icon: 'forum', accent: 'var(--nim-primary)', label: 'team:inbox.types.room' },
+  dmMessage: { icon: 'mail', accent: 'var(--nim-purple)', label: 'team:inbox.types.direct' },
+  trackerComment: { icon: 'checklist', accent: 'var(--nim-warning)', label: 'team:inbox.types.tracker' },
   // Both document kinds are *documents*. A speech bubble here was the exact
   // failure this redesign exists to fix: it described the delivery's shape
   // (someone commented) instead of the thing you are about to open.
-  documentDecision: { icon: 'ballot', accent: 'var(--nim-purple)', label: 'Question' },
-  documentDiscussion: { icon: 'description', accent: 'var(--nim-success)', label: 'Doc' },
-  documentInlineComment: { icon: 'description', accent: 'var(--nim-success)', label: 'Doc' },
+  documentDecision: { icon: 'ballot', accent: 'var(--nim-purple)', label: 'team:inbox.types.question' },
+  documentDiscussion: { icon: 'description', accent: 'var(--nim-success)', label: 'team:inbox.types.doc' },
+  documentInlineComment: { icon: 'description', accent: 'var(--nim-success)', label: 'team:inbox.types.doc' },
   // Shares the direct-message hue deliberately: both are addressed to you
   // personally rather than to a room, and the palette has no sixth hue that
   // is not a status color. The ballot glyph and the label carry the
   // distinction — this row wants an answer, a DM wants a reply.
-  feedbackRequest: { icon: 'ballot', accent: 'var(--nim-purple)', label: 'Feedback' },
+  feedbackRequest: { icon: 'ballot', accent: 'var(--nim-purple)', label: 'team:inbox.types.feedback' },
 };
 
 /**
@@ -100,7 +102,7 @@ function documentIcon(sourceTitle?: string): string {
 const REDACTED_TYPE: InboxTypeIdentity = {
   icon: 'block',
   accent: 'var(--nim-text-faint)',
-  label: 'Unavailable',
+  label: 'team:inbox.types.unavailable',
 };
 
 export const SOURCE_KIND_LABELS: Record<InboxSourceKind, string> = {
@@ -142,7 +144,7 @@ export function typeIdentity(
   sourceKind: InboxSourceKind | undefined,
   details: { itemType?: string; sourceTitle?: string } = {},
 ): InboxTypeIdentity {
-  if (!sourceKind) return REDACTED_TYPE;
+  if (!sourceKind) return localizedIdentity(REDACTED_TYPE);
 
   if (sourceKind === 'trackerComment' && details.itemType) {
     return {
@@ -153,14 +155,20 @@ export function typeIdentity(
   }
 
   if (sourceKind === 'documentDiscussion' || sourceKind === 'documentInlineComment') {
-    return { ...SOURCE_TYPES[sourceKind], icon: documentIcon(details.sourceTitle) };
+    return { ...localizedIdentity(SOURCE_TYPES[sourceKind]), icon: documentIcon(details.sourceTitle) };
   }
 
-  return SOURCE_TYPES[sourceKind];
+  return localizedIdentity(SOURCE_TYPES[sourceKind]);
+}
+
+/** Identity labels above are i18n keys; translate them when the row is built. */
+function localizedIdentity(identity: InboxTypeIdentity): InboxTypeIdentity {
+  return { ...identity, label: translate(identity.label) };
 }
 
 export function reasonLabel(reason: string): string {
-  return REASON_LABELS[reason] ?? 'New activity';
+  const key = REASON_LABELS[reason];
+  return key ? translate(key) : translate('team:inbox.reason.newActivity');
 }
 
 /**
@@ -169,14 +177,15 @@ export function reasonLabel(reason: string): string {
  * rows that actually wanted attention.
  */
 const CHIPPED_REASONS: Record<string, string> = {
-  mention: 'Mention',
-  agentMention: 'Agent mention',
-  assignment: 'Assigned',
-  reply: 'Reply',
+  mention: 'team:inbox.chip.mention',
+  agentMention: 'team:inbox.chip.agentMention',
+  assignment: 'team:inbox.chip.assignment',
+  reply: 'team:inbox.chip.reply',
 };
 
 export function reasonChipLabel(reason: string): string | undefined {
-  return CHIPPED_REASONS[reason];
+  const key = CHIPPED_REASONS[reason];
+  return key ? translate(key) : undefined;
 }
 
 /**
@@ -187,23 +196,23 @@ export function reasonChipLabel(reason: string): string | undefined {
 export function openActionLabel(row: Pick<InboxRowView, 'sourceKind' | 'itemType'>): string {
   switch (row.sourceKind) {
     case 'trackerComment':
-      return row.itemType ? `Open ${row.itemType}` : 'Open tracker item';
+      return row.itemType ? translate('team:inbox.open.itemType', { type: row.itemType }) : translate('team:inbox.open.trackerItem');
     case 'documentDecision':
     case 'documentDiscussion':
     case 'documentInlineComment':
-      return 'Open document';
+      return translate('team:inbox.open.document');
     case 'roomMessage':
-      return 'Open room';
+      return translate('team:inbox.open.room');
     case 'dmMessage':
-      return 'Open conversation';
+      return translate('team:inbox.open.conversation');
     case 'feedbackRequest':
-      return 'Open feedback request';
+      return translate('team:inbox.open.feedbackRequest');
     case undefined:
-      return 'Open';
+      return translate('team:inbox.open.generic');
     default: {
       const unhandled: never = row.sourceKind;
       void unhandled;
-      return 'Open';
+      return translate('team:inbox.open.generic');
     }
   }
 }
@@ -216,16 +225,16 @@ function truncatePreview(snippet: string): string {
 
 export function formatRelativeTimestamp(createdAt: number, now: number): string {
   const seconds = Math.max(0, Math.round((now - createdAt) / 1000));
-  if (seconds < 45) return 'now';
+  if (seconds < 45) return translate('team:comments.time.now');
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${Math.max(1, minutes)}m`;
+  if (minutes < 60) return translate('team:comments.time.minutes', { value: Math.max(1, minutes) });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h`;
+  if (hours < 24) return translate('team:comments.time.hours', { value: hours });
   const days = Math.round(hours / 24);
-  if (days < 7) return `${days}d`;
+  if (days < 7) return translate('team:comments.time.days', { value: days });
   const weeks = Math.round(days / 7);
-  if (days < 365) return `${weeks}w`;
-  return `${Math.round(days / 365)}y`;
+  if (days < 365) return translate('team:comments.time.weeks', { value: weeks });
+  return translate('team:comments.time.years', { value: Math.round(days / 365) });
 }
 
 /**
@@ -297,7 +306,7 @@ export function toRowView(delivery: HydratedInboxDelivery, options: { now: numbe
     reason: delivery.reason,
     reasonLabel: reasonLabel(delivery.reason),
     availability: delivery.availability,
-    unavailableLabel: revoked ? 'No longer available' : deleted ? 'Deleted or unavailable' : undefined,
+    unavailableLabel: revoked ? translate('team:inbox.unavailable.revoked') : deleted ? translate('team:inbox.unavailable.deleted') : undefined,
     orgId: delivery.orgId,
     orgName: delivery.orgName,
     projectId: revoked ? undefined : delivery.projectId,
@@ -589,10 +598,10 @@ export function groupRows(rows: InboxRowView[], now: number): InboxRowGroup[] {
   const todayMs = startOfToday.getTime();
 
   const buckets: InboxRowGroup[] = [
-    { id: 'today', label: 'Today', rows: [] },
-    { id: 'yesterday', label: 'Yesterday', rows: [] },
-    { id: 'this-week', label: 'Earlier this week', rows: [] },
-    { id: 'older', label: 'Older', rows: [] },
+    { id: 'today', label: translate('team:inbox.groups.today'), rows: [] },
+    { id: 'yesterday', label: translate('team:inbox.groups.yesterday'), rows: [] },
+    { id: 'this-week', label: translate('team:inbox.groups.thisWeek'), rows: [] },
+    { id: 'older', label: translate('team:inbox.groups.older'), rows: [] },
   ];
 
   for (const row of rows) {

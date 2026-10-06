@@ -15,6 +15,8 @@ import { MAX_COLLAB_ASSET_BYTES } from '@nimbalyst/runtime/sync/collabAssetForma
 import type { TrackerQuickCreateDraft } from '../../store/atoms/trackerQuickCreate';
 import { nimAssetUrl } from '../../utils/assetUrl';
 import './TrackerQuickCreateEditor.css';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 /**
  * A stage request with no reply would otherwise hold `pendingImages` above zero
@@ -30,7 +32,7 @@ function withStageTimeout<T>(request: Promise<T>): Promise<T> {
     request.finally(() => clearTimeout(timer)),
     new Promise<never>((_, reject) => {
       timer = setTimeout(
-        () => reject(new Error('Screenshot staging timed out. Retry the image.')),
+        () => reject(new Error(translate('tracker:quickCreate.imageStageTimeout'))),
         IMAGE_STAGE_TIMEOUT_MS,
       );
     }),
@@ -50,6 +52,7 @@ export const TrackerQuickCreateEditor = React.memo(
     /** Cmd/Ctrl+Enter inside the body; the popup decides what submitting means. */
     onSubmit?: () => void;
   }) {
+    const { t } = useTranslation('tracker');
     const store = useStore();
     const draft = useAtomValue(draftAtom);
     const initialContent = useRef(store.get(draftAtom).description);
@@ -101,9 +104,9 @@ export const TrackerQuickCreateEditor = React.memo(
                 file.type,
               )
             )
-              throw new Error('Use a PNG, JPEG, GIF, or WebP screenshot');
+              throw new Error(translate('tracker:quickCreate.imageWrongType'));
             if (!file.size || file.size > MAX_COLLAB_ASSET_BYTES)
-              throw new Error('Screenshot must be between 1 byte and 25 MB');
+              throw new Error(translate('tracker:quickCreate.imageWrongSize'));
             const result = await withStageTimeout(
               window.electronAPI.documentService.stageTrackerImage({
                 workspacePath,
@@ -112,7 +115,7 @@ export const TrackerQuickCreateEditor = React.memo(
               }),
             );
             if (!result.relativePath)
-              throw new Error('Screenshot could not be saved');
+              throw new Error(translate('tracker:quickCreate.imageSaveFailed'));
             if (!mounted.current) {
               store.set(draftAtom, (current) =>
                 current.id === draftId
@@ -259,12 +262,12 @@ export const TrackerQuickCreateEditor = React.memo(
         </div>
         <div className="tracker-quick-create-image-actions flex items-center justify-between px-3 py-1 text-xs text-nim-muted">
           <button type="button" onClick={() => imageInput.current?.click()}>
-            Add screenshot
+            {t('quickCreate.addScreenshot')}
           </button>
           <span>
             {draft.pendingImages
-              ? 'Adding screenshot…'
-              : 'Paste or drop screenshots into Content'}
+              ? t('quickCreate.addingScreenshot')
+              : t('quickCreate.pasteScreenshotsHint')}
           </span>
           <input
             data-testid="tracker-quick-create-image-input"
@@ -301,7 +304,7 @@ export const TrackerQuickCreateEditor = React.memo(
                 void insertFile(failure.file);
               }}
             >
-              Retry image
+              {t('quickCreate.retryImage')}
             </button>
             <button
               type="button"
@@ -314,7 +317,7 @@ export const TrackerQuickCreateEditor = React.memo(
                 }))
               }
             >
-              Remove
+              {t('common:remove')}
             </button>
           </div>
         ))}

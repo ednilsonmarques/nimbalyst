@@ -9,6 +9,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   superProgressAtom,
   setSuperProgressAtom,
@@ -22,10 +23,10 @@ interface SuperFilesPanelProps {
 }
 
 const SUPER_LOOP_FILES = [
-  { name: 'IMPLEMENTATION_PLAN.md', icon: 'description' as const, label: 'Plan' },
-  { name: 'task.md', icon: 'task' as const, label: 'Task' },
-  { name: 'progress.json', icon: 'monitoring' as const, label: 'Progress' },
-  { name: 'config.json', icon: 'settings' as const, label: 'Config' },
+  { name: 'IMPLEMENTATION_PLAN.md', icon: 'description' as const, labelKey: 'superLoop.files.plan' },
+  { name: 'task.md', icon: 'task' as const, labelKey: 'superLoop.files.task' },
+  { name: 'progress.json', icon: 'monitoring' as const, labelKey: 'superLoop.files.progress' },
+  { name: 'config.json', icon: 'settings' as const, labelKey: 'superLoop.files.config' },
 ];
 
 export const SuperFilesPanel: React.FC<SuperFilesPanelProps> = React.memo(({
@@ -33,6 +34,7 @@ export const SuperFilesPanel: React.FC<SuperFilesPanelProps> = React.memo(({
   worktreePath,
   onFileClick,
 }) => {
+  const { t } = useTranslation('agent');
   const [loop, setLoop] = useState<SuperLoop | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -124,7 +126,7 @@ export const SuperFilesPanel: React.FC<SuperFilesPanelProps> = React.memo(({
           className="text-[var(--nim-text-muted)] shrink-0"
         />
         <span className="text-[11px] font-semibold text-[var(--nim-text)]">
-          Loop Progress
+          {t('superLoop.loopProgress')}
         </span>
         <PhaseBadge phase={phase} />
         <span className="ml-auto text-[10px] text-[var(--nim-text-muted)] font-mono">
@@ -153,7 +155,7 @@ export const SuperFilesPanel: React.FC<SuperFilesPanelProps> = React.memo(({
           {/* Recent learnings */}
           {recentLearnings.length > 0 && (
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-medium text-[var(--nim-text-muted)]">Recent</span>
+              <span className="text-[10px] font-medium text-[var(--nim-text-muted)]">{t('superLoop.recent')}</span>
               {recentLearnings.map((learning, i) => (
                 <div
                   key={i}
@@ -178,7 +180,7 @@ export const SuperFilesPanel: React.FC<SuperFilesPanelProps> = React.memo(({
                 title={`.superloop/${file.name}`}
               >
                 <MaterialSymbol icon={file.icon} size={12} />
-                <span>{file.label}</span>
+                <span>{t(file.labelKey)}</span>
               </button>
             ))}
           </div>
@@ -188,7 +190,7 @@ export const SuperFilesPanel: React.FC<SuperFilesPanelProps> = React.memo(({
             <details className="text-[10px] pt-1">
               <summary className="text-[var(--nim-text-muted)] cursor-pointer py-1 hover:text-[var(--nim-text)] list-none flex items-center gap-1">
                 <MaterialSymbol icon="data_object" size={12} className="shrink-0" />
-                <span>Raw JSON</span>
+                <span>{t('superLoop.rawJson')}</span>
               </summary>
               <pre className="mt-1 p-2 bg-[var(--nim-bg-tertiary)] border border-[var(--nim-border)] rounded text-[10px] leading-relaxed text-[var(--nim-text-muted)] overflow-auto max-h-[200px] whitespace-pre-wrap break-words m-0">
                 {JSON.stringify(progress, null, 2)}
@@ -204,6 +206,7 @@ export const SuperFilesPanel: React.FC<SuperFilesPanelProps> = React.memo(({
 SuperFilesPanel.displayName = 'SuperFilesPanel';
 
 const PhaseBadge: React.FC<{ phase: string }> = React.memo(({ phase }) => {
+  const { t } = useTranslation('agent');
   const colorMap: Record<string, string> = {
     planning: 'bg-[rgba(168,85,247,0.15)] text-purple-400',
     building: 'bg-[rgba(59,130,246,0.15)] text-[var(--nim-primary)]',
@@ -217,7 +220,7 @@ const PhaseBadge: React.FC<{ phase: string }> = React.memo(({ phase }) => {
 
   return (
     <span className={`text-[9px] px-1.5 py-[0.0625rem] rounded-[0.625rem] font-medium ${classes}`}>
-      {phase}
+      {t(`superLoop.phase.${phase}`, { defaultValue: phase })}
     </span>
   );
 });

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import type { ConversationDirectoryEntry } from '../../../shared/conversationDirectory';
 import {
@@ -38,6 +39,7 @@ export function NewDirectMessageDialog({
   onClose: () => void;
   onOpened: (conversationId: string) => void;
 }) {
+  const { t } = useTranslation('team');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,22 +70,22 @@ export function NewDirectMessageDialog({
 
   return (
     <OrgDialog
-      title="New direct message"
-      description={`Pick up to ${MAX_DM_PARTICIPANTS - 1} people. Direct messages are private to their participants and cannot be renamed or joined later.`}
+      title={t('sidebar.newDirectMessage')}
+      description={t('newDm.description', { count: MAX_DM_PARTICIPANTS - 1 })}
       testId="new-dm-dialog"
       error={error}
       onClose={onClose}
       footer={(
         <>
           <OrgDialogSecondaryButton testId="new-dm-cancel" onClick={onClose}>
-            Cancel
+            {t('common:cancel')}
           </OrgDialogSecondaryButton>
           <OrgDialogPrimaryButton
             testId="new-dm-submit"
             disabled={!validation.request || submitting}
             onClick={() => { void submit(); }}
           >
-            {submitting ? 'Opening…' : 'Start conversation'}
+            {submitting ? t('compose.opening') : t('newDm.submit')}
           </OrgDialogPrimaryButton>
         </>
       )}
@@ -105,7 +107,7 @@ export function NewDirectMessageDialog({
         data-testid="new-dm-summary"
       >
         {validation.error
-          ?? `${validation.participants.length} participants, including you.`}
+          ?? t('newDm.participants', { count: validation.participants.length })}
       </p>
     </OrgDialog>
   );

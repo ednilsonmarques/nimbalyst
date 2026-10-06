@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import { HelpTooltip } from '../../help';
 import type { ConversationDirectoryEntry } from '../../../shared/conversationDirectory';
@@ -29,6 +30,7 @@ export function RoomsDirectory({
   onOpenConversation: (conversationId: string) => void;
   onCreateRoom?: () => void;
 }) {
+  const { t } = useTranslation('team');
   const [rooms, setRooms] = useState<ConversationDirectoryEntry[]>([]);
   const [includeArchived, setIncludeArchived] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -85,7 +87,7 @@ export function RoomsDirectory({
         data-window-drag-region="true"
       >
         <div className="flex items-center gap-2">
-          <h2 className="m-0 text-[15px] font-semibold text-[var(--nim-text)]">Browse rooms</h2>
+          <h2 className="m-0 text-[15px] font-semibold text-[var(--nim-text)]">{t('inbox.empty.browseRooms')}</h2>
           <div className="ml-auto flex items-center gap-2">
             <label className="org-rooms-archived-filter org-window-no-drag flex items-center gap-1.5 text-[12px] text-[var(--nim-text-muted)]">
               <input
@@ -95,7 +97,7 @@ export function RoomsDirectory({
                 checked={includeArchived}
                 onChange={(event) => setIncludeArchived(event.target.checked)}
               />
-              Show archived
+              {t('roomsDirectory.showArchived')}
             </label>
             <HelpTooltip testId="org-rooms-create" disabled={!onCreateRoom}>
               <button
@@ -104,17 +106,17 @@ export function RoomsDirectory({
                 data-testid="org-rooms-create"
                 disabled={!onCreateRoom}
                 title={onCreateRoom
-                  ? 'New room'
-                  : 'Only organization admins can create rooms'}
+                  ? t('sidebar.newRoom')
+                  : t('sidebar.onlyAdminsCreateRooms')}
                 onClick={onCreateRoom}
               >
-                New room
+                {t('sidebar.newRoom')}
               </button>
             </HelpTooltip>
           </div>
         </div>
         <p className="m-0 mt-1 text-[12px] text-[var(--nim-text-muted)]">
-          Public rooms are open to everyone in this organization. Private rooms appear only when you belong to them.
+          {t('roomsDirectory.description')}
         </p>
       </header>
 
@@ -130,7 +132,7 @@ export function RoomsDirectory({
 
       <div className="org-rooms-directory-list min-h-0 flex-1 overflow-y-auto p-3">
         {loading && (
-          <p className="m-0 px-2 py-1 text-[12px] text-[var(--nim-text-muted)]">Loading rooms…</p>
+          <p className="m-0 px-2 py-1 text-[12px] text-[var(--nim-text-muted)]">{t('sidebar.rooms.loading')}</p>
         )}
         {!loading && rooms.length === 0 && (
           <RoomsDirectoryEmpty
@@ -156,7 +158,7 @@ export function RoomsDirectory({
                   {roomLabel(entry)}
                   {archived && (
                     <span className="ml-1.5 rounded bg-[var(--nim-bg-tertiary)] px-1.5 text-[10px] uppercase tracking-wide text-[var(--nim-text-faint)]">
-                      Archived
+                      {t('roomsDirectory.archived')}
                     </span>
                   )}
                 </p>
@@ -170,10 +172,10 @@ export function RoomsDirectory({
                   className="org-rooms-directory-join shrink-0 rounded-md border border-[var(--nim-border)] px-2.5 py-1 text-[12px] text-[var(--nim-text)] hover:bg-[var(--nim-bg-hover)] disabled:cursor-not-allowed disabled:text-[var(--nim-text-disabled)]"
                   data-testid={`org-rooms-directory-join-${entry.id}`}
                   disabled={!viewerUserId || joined[entry.id] || joining === entry.id}
-                  title={viewerUserId ? 'Join this room' : 'Resolving your membership…'}
+                  title={viewerUserId ? t('roomsDirectory.joinTitle') : t('roomsDirectory.resolvingMembership')}
                   onClick={() => { void join(entry.id); }}
                 >
-                  {joined[entry.id] ? 'Joined' : joining === entry.id ? 'Joining…' : 'Join'}
+                  {joined[entry.id] ? t('roomsDirectory.joined') : joining === entry.id ? t('roomsDirectory.joining') : t('roomsDirectory.join')}
                 </button>
               )}
               <button
@@ -182,7 +184,7 @@ export function RoomsDirectory({
                 data-testid={`org-rooms-directory-open-${entry.id}`}
                 onClick={() => onOpenConversation(entry.id)}
               >
-                Open
+                {t('inbox.open.generic')}
               </button>
             </div>
           );
@@ -207,6 +209,7 @@ function RoomsDirectoryEmpty({
   includeArchived: boolean;
   onCreateRoom?: () => void;
 }) {
+  const { t } = useTranslation('team');
   return (
     <div
       className="org-rooms-directory-empty flex flex-col items-center gap-2 px-8 py-14 text-center"
@@ -215,11 +218,11 @@ function RoomsDirectoryEmpty({
       <span className="flex size-11 items-center justify-center rounded-full bg-[var(--nim-bg-tertiary)] text-[var(--nim-text-faint)]">
         <MaterialSymbol icon="forum" size={22} />
       </span>
-      <h3 className="m-0 text-[14px] font-semibold text-[var(--nim-text)]">No rooms to show</h3>
+      <h3 className="m-0 text-[14px] font-semibold text-[var(--nim-text)]">{t('roomsDirectory.empty.title')}</h3>
       <p className="m-0 max-w-[420px] text-[12px] leading-relaxed text-[var(--nim-text-muted)]">
         {includeArchived
-          ? 'This organization has no rooms you can see, archived ones included.'
-          : 'This organization has no rooms you can see yet. Private rooms appear here once you are added to them.'}
+          ? t('roomsDirectory.empty.withArchived')
+          : t('roomsDirectory.empty.body')}
       </p>
       {onCreateRoom && (
         <button
@@ -228,7 +231,7 @@ function RoomsDirectoryEmpty({
           data-testid="org-rooms-directory-empty-create"
           onClick={onCreateRoom}
         >
-          Create the first room
+          {t('roomsDirectory.empty.createFirst')}
         </button>
       )}
     </div>

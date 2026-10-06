@@ -24,6 +24,8 @@ import { CollaborativeCommentsPanel } from '@nimbalyst/runtime/editor/commenting
 import { useCollaborativeComments } from '@nimbalyst/runtime/editor/commenting/ui/useCollaborativeComments';
 
 import { errorNotificationService } from '../../services/ErrorNotificationService';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   subscribeCommentPanelRequests,
   type CommentPanelRequest,
@@ -42,14 +44,11 @@ export interface CollabCommentsPanelState {
   close(): void;
 }
 
-const NO_TARGET_NOTICE =
-  'That comment is no longer in this document. It may have been deleted.';
-const ORPHANED_NOTICE =
-  'What this comment pointed at is no longer in the document, so there is nothing to jump to. The conversation is kept.';
-const UNSUPPORTED_NOTICE =
-  'This comment points at something this editor does not understand, so it cannot be shown in place. The conversation is kept.';
-const UNAVAILABLE_NOTICE =
-  'This editor could not bring that comment into view.';
+// i18n keys; resolved with translate() when the notice is raised.
+const NO_TARGET_NOTICE = 'editor:comments.notices.noTarget';
+const ORPHANED_NOTICE = 'editor:comments.notices.orphaned';
+const UNSUPPORTED_NOTICE = 'editor:comments.notices.unsupported';
+const UNAVAILABLE_NOTICE = 'editor:comments.notices.unavailable';
 
 /**
  * Why focus failed, read from the same source the panel renders from — so the
@@ -110,12 +109,12 @@ export function useCollabCommentsPanel(input: {
           // The thread stays selected and readable either way; only the
           // in-place jump is what may be unavailable.
           if (!focused) {
-            setFocusNotice(explainFocusFailure(panelSource, threadId));
+            setFocusNotice(translate(explainFocusFailure(panelSource, threadId)));
           }
         })
         .catch(() => {
           if (disposed || requestGeneration.current !== generation) return;
-          setFocusNotice(UNAVAILABLE_NOTICE);
+          setFocusNotice(translate(UNAVAILABLE_NOTICE));
         });
     };
 
@@ -157,12 +156,18 @@ function newCommentMutationId(): string {
   return uuid ?? `collab-comment-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function reportRefusal(action: string, error: unknown): void {
+const REFUSAL_TITLE_KEYS = {
+  resolve: 'editor:comments.refusal.resolve',
+  'reply to': 'editor:comments.refusal.replyTo',
+  delete: 'editor:comments.refusal.delete',
+} as const;
+
+function reportRefusal(action: keyof typeof REFUSAL_TITLE_KEYS, error: unknown): void {
   // A refused write must not vanish. The panel has no error surface of its
   // own, so it goes to the app's notification lane rather than a console line
   // nobody reads.
   errorNotificationService.showError(
-    `Could not ${action} this comment`,
+    translate(REFUSAL_TITLE_KEYS[action]),
     error instanceof Error ? error.message : String(error),
   );
 }
@@ -171,6 +176,7 @@ export function CollabCommentsPanelDock({
   hosted,
   panel,
 }: CollabCommentsPanelDockProps): JSX.Element | null {
+  const { t } = useTranslation('editor');
   const { panelSource, service } = hosted;
   const view = useCollaborativeComments(panelSource);
 
@@ -184,7 +190,7 @@ export function CollabCommentsPanelDock({
   return (
     <aside
       className="collab-comments-dock flex w-80 shrink-0 flex-col overflow-hidden border-l border-nim bg-nim"
-      aria-label="Document comments"
+      aria-label={t('comments.panelLabel')}
     >
       {panel.focusNotice && (
         <div
@@ -203,8 +209,8 @@ export function CollabCommentsPanelDock({
         getMembers={getMembers}
         emptyMessage={
           view.canComment
-            ? 'No comments yet. Add one from the editor to start a thread.'
-            : 'No comments yet.'
+            ? t('comments.emptyCanComment')
+            : t('comments.empty')
         }
         onClose={panel.close}
         onSelectThread={panel.selectThread}

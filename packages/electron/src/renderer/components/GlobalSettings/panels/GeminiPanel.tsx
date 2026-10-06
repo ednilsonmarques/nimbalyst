@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ProviderConfig } from '../../Settings/SettingsView';
 import { SettingsToggle } from '../SettingsToggle';
 import { AlphaBadge, SETTINGS_ALPHA_TOOLTIP } from '../../common/AlphaBadge';
+import { useTranslation, Trans } from '@nimbalyst/runtime/i18n/react';
 
 /**
  * Settings panel for the Gemini agent.
@@ -35,6 +36,7 @@ interface GeminiPanelProps {
 const ANTIGRAVITY_URL = 'https://antigravity.google';
 
 export function GeminiPanel({ config, onToggle }: GeminiPanelProps) {
+  const { t } = useTranslation('settings');
   const [status, setStatus] = useState<InstallStatus>('checking');
   const [installPath, setInstallPath] = useState<string | null>(null);
 
@@ -62,8 +64,7 @@ export function GeminiPanel({ config, onToggle }: GeminiPanelProps) {
           <AlphaBadge size="sm" tooltip={SETTINGS_ALPHA_TOOLTIP} />
         </h3>
         <p className="provider-panel-description text-sm leading-relaxed text-[var(--nim-text-muted)]">
-          Google&apos;s Gemini models, run through the language server that ships inside
-          Antigravity. Uses the account you are already signed into there.
+          {t('providers.gemini.description')}
         </p>
       </div>
 
@@ -73,14 +74,14 @@ export function GeminiPanel({ config, onToggle }: GeminiPanelProps) {
         </h4>
 
         {status === 'checking' && (
-          <p className="text-[13px] text-[var(--nim-text-muted)]">Looking for Antigravity...</p>
+          <p className="text-[13px] text-[var(--nim-text-muted)]">{t('providers.gemini.lookingFor')}</p>
         )}
 
         {status === 'installed' && (
           <div>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[var(--nim-success)] shrink-0" />
-              <span className="text-[13px] text-[var(--nim-text)]">Installed</span>
+              <span className="text-[13px] text-[var(--nim-text)]">{t('providers.shared.installed')}</span>
             </div>
             {installPath && (
               <code className="block text-[12px] text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-3 py-2 rounded mt-2 select-text break-all">
@@ -94,78 +95,75 @@ export function GeminiPanel({ config, onToggle }: GeminiPanelProps) {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="w-2 h-2 rounded-full bg-[var(--nim-warning)] shrink-0" />
-              <span className="text-[13px] text-[var(--nim-text)]">Not found</span>
+              <span className="text-[13px] text-[var(--nim-text)]">{t('providers.gemini.notFound')}</span>
             </div>
             <p className="text-[13px] text-[var(--nim-text-muted)] mb-3 leading-relaxed">
-              Install Antigravity and sign in once. Nimbalyst does not install it for you,
-              and it does not need to stay open — only the language server inside it is used.
+              {t('providers.gemini.installHint')}
             </p>
             <button
               className="inline-flex items-center justify-center py-2 px-4 rounded-md text-sm font-medium cursor-pointer transition-all bg-[var(--nim-surface)] text-[var(--nim-text)] border border-[var(--nim-border)] hover:bg-[var(--nim-surface-hover)]"
               onClick={() => void check()}
             >
-              Check again
+              {t('providers.shared.checkAgain')}
             </button>
           </div>
         )}
 
         <p className="text-[13px] text-[var(--nim-text-muted)] mt-3 leading-relaxed">
-          See{' '}
-          <a
-            href={ANTIGRAVITY_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[var(--nim-primary)] hover:underline"
-          >
-            antigravity.google
-          </a>
-          {' '}for downloads and sign-in.
+          <Trans
+            t={t}
+            i18nKey="providers.gemini.seeForDownloads"
+            values={{ site: 'antigravity.google' }}
+            components={{
+              link: (
+                <a
+                  href={ANTIGRAVITY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--nim-primary)] hover:underline"
+                />
+              ),
+            }}
+          />
         </p>
       </div>
 
       <SettingsToggle
         variant="enable"
-        name="Enable Gemini"
+        name={t('providers.shared.enableProvider', { name: 'Gemini' })}
         checked={config.enabled || false}
         onChange={onToggle}
       />
 
       {status === 'installed' && (
         <p className="text-[13px] text-[var(--nim-text-muted)] mt-2 leading-relaxed">
-          On by default because Antigravity is installed. Turning it off here is remembered.
+          {t('providers.gemini.onByDefault')}
         </p>
       )}
 
       {config.enabled && (
         <>
           <div className="provider-panel-section py-4 mb-4 border-b border-[var(--nim-border)]">
-            <h4 className="provider-panel-section-title text-base font-semibold mb-3 text-[var(--nim-text)]">Authentication</h4>
+            <h4 className="provider-panel-section-title text-base font-semibold mb-3 text-[var(--nim-text)]">{t('providers.shared.authentication')}</h4>
             <p className="text-[13px] text-[var(--nim-text-muted)] mb-3 leading-relaxed">
-              Sign in inside Antigravity. The language server uses that login, so there is
-              nothing to enter here.
+              {t('providers.gemini.authSignInInside')}
             </p>
             <p className="text-[13px] text-[var(--nim-text-muted)]">
-              No API key is required, and Nimbalyst never reads one from your environment.
+              {t('providers.shared.noApiKeyRequired')}
             </p>
           </div>
 
           <div className="provider-panel-section py-4 mb-4 border-b border-[var(--nim-border)]">
-            <h4 className="provider-panel-section-title text-base font-semibold mb-3 text-[var(--nim-text)]">File tracking</h4>
+            <h4 className="provider-panel-section-title text-base font-semibold mb-3 text-[var(--nim-text)]">{t('providers.shared.fileTracking')}</h4>
             <p className="text-[13px] text-[var(--nim-text-muted)] leading-relaxed">
-              Nimbalyst performs this agent&apos;s writes itself, so every edit records the
-              file&apos;s exact contents from before it changed and diff review is precise.
-              Deletes and renames go through shell commands instead; Nimbalyst watches the
-              project folder to catch those, so one can occasionally be attributed to the
-              wrong turn.
+              {t('providers.gemini.fileTrackingBody')}
             </p>
           </div>
 
           <div className="provider-panel-section py-4 mb-4 border-b border-[var(--nim-border)] last:border-b-0 last:mb-0 last:pb-0">
-            <h4 className="provider-panel-section-title text-base font-semibold mb-3 text-[var(--nim-text)]">Context usage</h4>
+            <h4 className="provider-panel-section-title text-base font-semibold mb-3 text-[var(--nim-text)]">{t('providers.gemini.contextUsage')}</h4>
             <p className="text-[13px] text-[var(--nim-text-muted)] leading-relaxed">
-              Antigravity reports no token counts, so Nimbalyst shows no context meter for
-              Gemini rather than a made-up one. Remaining quota is shown in the usage
-              indicator instead.
+              {t('providers.gemini.contextUsageBody')}
             </p>
           </div>
         </>

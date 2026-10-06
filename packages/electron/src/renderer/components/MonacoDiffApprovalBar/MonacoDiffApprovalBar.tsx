@@ -10,6 +10,8 @@
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { HelpTooltip } from '../../help';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 export interface SessionInfo {
   sessionId: string;
@@ -38,15 +40,15 @@ function formatRelativeTime(timestamp: number): string {
   const days = Math.floor(hours / 24);
 
   if (days > 0) {
-    return days === 1 ? '1 day ago' : `${days} days ago`;
+    return translate('editor:diff.relativeTime.daysAgo', { count: days });
   }
   if (hours > 0) {
-    return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+    return translate('editor:diff.relativeTime.hoursAgo', { count: hours });
   }
   if (minutes > 0) {
-    return minutes === 1 ? '1 minute ago' : `${minutes} minutes ago`;
+    return translate('editor:diff.relativeTime.minutesAgo', { count: minutes });
   }
-  return 'just now';
+  return translate('editor:diff.relativeTime.justNow');
 }
 
 export const MonacoDiffApprovalBar: React.FC<MonacoDiffApprovalBarProps> = ({
@@ -56,6 +58,7 @@ export const MonacoDiffApprovalBar: React.FC<MonacoDiffApprovalBarProps> = ({
   sessionInfo,
   onGoToSession,
 }) => {
+  const { t } = useTranslation('editor');
   const handleAcceptClick = () => {
     try {
       onAcceptAll();
@@ -83,7 +86,7 @@ export const MonacoDiffApprovalBar: React.FC<MonacoDiffApprovalBarProps> = ({
           <div className="monaco-diff-approval-bar-session-details flex flex-col gap-0.5">
             <span className="monaco-diff-approval-bar-label text-[13px] font-medium text-[var(--nim-text)]">
               <span className="monaco-diff-approval-bar-session-name font-semibold text-[var(--nim-primary)]">{sessionInfo.sessionTitle}</span>
-              {' '}edited {fileName || 'file'}
+              {' '}{t('diff.sessionEdited', { fileName: fileName || t('diff.fileFallback') })}
             </span>
             {sessionInfo.editedAt && (
               <span className="monaco-diff-approval-bar-timestamp text-[11px] text-[var(--nim-text-faint)]">
@@ -98,7 +101,7 @@ export const MonacoDiffApprovalBar: React.FC<MonacoDiffApprovalBarProps> = ({
     // Fallback to original simple label
     return (
       <span className="monaco-diff-approval-bar-label text-[13px] font-medium text-[var(--nim-text)]">
-        AI changes to {fileName || 'file'}
+        {t('diff.aiChangesTo', { fileName: fileName || t('diff.fileFallback') })}
       </span>
     );
   };
@@ -113,10 +116,10 @@ export const MonacoDiffApprovalBar: React.FC<MonacoDiffApprovalBarProps> = ({
               className="monaco-diff-approval-bar-goto flex items-center gap-1 px-2.5 py-1 bg-transparent border border-[var(--nim-border)] rounded text-[var(--nim-text-muted)] text-xs font-medium cursor-pointer transition-all duration-150 font-inherit whitespace-nowrap hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)] hover:border-[var(--nim-primary)]"
               onClick={handleGoToSession}
               type="button"
-              title="Open the AI session that made these changes"
+              title={t('diff.goToSessionTooltip')}
             >
               <MaterialSymbol icon="open_in_new" size={14} />
-              Go to Session
+              {t('diff.goToSession')}
             </button>
           )}
         </div>
@@ -128,7 +131,7 @@ export const MonacoDiffApprovalBar: React.FC<MonacoDiffApprovalBarProps> = ({
               type="button"
               data-testid="diff-revert-all-button"
             >
-              Reject All
+              {t('diff.rejectAll')}
             </button>
           </HelpTooltip>
           <HelpTooltip testId="diff-keep-all-button">
@@ -138,7 +141,7 @@ export const MonacoDiffApprovalBar: React.FC<MonacoDiffApprovalBarProps> = ({
               type="button"
               data-testid="diff-keep-all-button"
             >
-              Accept All
+              {t('diff.acceptAll')}
             </button>
           </HelpTooltip>
         </div>

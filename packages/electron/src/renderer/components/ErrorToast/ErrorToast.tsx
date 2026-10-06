@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { copyToClipboard } from '@nimbalyst/runtime';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { errorNotificationService, type ErrorNotification } from '../../services/ErrorNotificationService';
 
 const severityStyles = {
@@ -9,6 +10,7 @@ const severityStyles = {
 };
 
 export function ErrorToastContainer() {
+  const { t } = useTranslation('dialogs');
   const [notifications, setNotifications] = useState<ErrorNotification[]>([]);
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
@@ -131,7 +133,7 @@ ${JSON.stringify(notification.context, null, 2)}
                   e.stopPropagation();
                   handleDismiss(notification.id);
                 }}
-                aria-label="Dismiss"
+                aria-label={t('errorToast.dismiss')}
                 type="button"
               >
                 x
@@ -156,7 +158,7 @@ ${JSON.stringify(notification.context, null, 2)}
                   className="error-toast-copy-btn bg-[var(--nim-primary)] text-white border-none px-3 py-1.5 rounded text-xs cursor-pointer transition-colors duration-200 hover:bg-[var(--nim-primary-hover)]"
                   onClick={() => handleCopyDetails(notification)}
                 >
-                  Copy Details
+                  {t('errorToast.copyDetails')}
                 </button>
               )}
             </div>

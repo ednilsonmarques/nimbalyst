@@ -17,6 +17,7 @@ import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { SessionReferenceChip } from '@nimbalyst/runtime/ui/AgentTranscript/session/SessionReferenceChip';
 import type { LinkedIssue, TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import { globalRegistry } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
@@ -74,6 +75,7 @@ function StatusLadder({
   locked: boolean;
   onSelect: (status: string) => void;
 }): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const options = getStatusOptions(ISSUE_OVERLAY_TYPE);
   const current = overlay ? getRecordStatus(overlay) : '';
 
@@ -100,10 +102,10 @@ function StatusLadder({
             }
             title={
               locked
-                ? 'Adopted — the adopted tracker item carries the status from here'
+                ? t('issues.local.adoptedLocked')
                 : isCurrent
-                  ? `Currently ${option.label}`
-                  : `Set ${option.label}`
+                  ? t('issues.local.currently', { label: option.label })
+                  : t('issues.local.set', { label: option.label })
             }
           >
             <span
@@ -127,6 +129,7 @@ function PriorityPicker({
   busy: boolean;
   onSelect: (priority: string) => void;
 }): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const menu = useFloatingMenu({ placement: 'bottom-start' });
   const options = getPriorityOptions(ISSUE_OVERLAY_TYPE);
   const current = overlay ? getRecordPriority(overlay) : '';
@@ -144,7 +147,7 @@ function PriorityPicker({
         className="w-full flex items-center justify-between gap-2 rounded-md border border-nim bg-nim px-2.5 py-1.5 text-xs text-nim-muted hover:text-nim transition-colors disabled:opacity-60"
       >
         <span style={option?.color ? { color: option.color } : undefined}>
-          {option?.label ?? 'Not set'}
+          {option?.label ?? t('issues.local.notSet')}
         </span>
         <MaterialSymbol icon="arrow_drop_down" size={14} />
       </button>
@@ -193,6 +196,7 @@ function NotesEditor({
   busy: boolean;
   onSave: (notes: string) => void;
 }): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const stored = overlay ? getRecordFieldStr(overlay, 'notes') : '';
   const [draft, setDraft] = useState(stored);
 
@@ -210,7 +214,7 @@ function NotesEditor({
         if (draft !== stored) onSave(draft);
       }}
       rows={3}
-      placeholder="What did we find? Kept local, never written to GitHub."
+      placeholder={t('issues.local.notesPlaceholder')}
       className="nim-input w-full text-[11.5px] leading-relaxed resize-y select-text"
     />
   );
@@ -226,6 +230,7 @@ function LinkTrackerItemButton({
   issueNumber: number;
   alreadyLinkedIds: Set<string>;
 }): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const menu = useFloatingMenu({ placement: 'bottom-end' });
   const [query, setQuery] = useState('');
   const [linkingId, setLinkingId] = useState<string | null>(null);
@@ -269,7 +274,7 @@ function LinkTrackerItemButton({
         draftByDefault: tracker?.draftByDefault ?? false,
       });
       if (!result.success) {
-        setError(result.error || 'Could not link this item.');
+        setError(result.error || t('issues.local.couldNotLink'));
         return;
       }
       menu.setIsOpen(false);
@@ -293,10 +298,10 @@ function LinkTrackerItemButton({
           setError(null);
           menu.setIsOpen(!menu.isOpen);
         }}
-        title="Link an existing tracker item to this issue"
+        title={t('issues.local.linkTitle')}
       >
         <MaterialSymbol icon="add_link" size={13} />
-        Link tracker item
+        {t('common.linkTrackerItem')}
       </button>
       {menu.isOpen && (
         <FloatingPortal>
@@ -311,12 +316,12 @@ function LinkTrackerItemButton({
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search items by title or key"
+              placeholder={t('common.searchItemsPlaceholder')}
               className="nim-input w-full h-7 text-xs mb-1"
               data-testid="issue-link-tracker-search"
             />
             {candidates.length === 0 ? (
-              <div className="px-2 py-2 text-xs text-nim-faint">No matching items</div>
+              <div className="px-2 py-2 text-xs text-nim-faint">{t('common.noMatchingItems')}</div>
             ) : (
               candidates.map((item) => (
                 <button
@@ -358,6 +363,7 @@ export function IssueLocalTab({
   onWrite,
   onOpenSession,
 }: IssueLocalTabProps): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const { items, overlay, sessions } = context;
   const setWindowMode = useSetAtom(setWindowModeAtom);
   const [busy, setBusy] = useState(false);
@@ -398,8 +404,8 @@ export function IssueLocalTab({
       data-testid="issue-local-tab"
     >
       <Panel
-        heading="Investigation status"
-        note="local only · never written to GitHub"
+        heading={t('issues.local.investigationStatus')}
+        note={t('issues.local.localOnlyNote')}
         testId="issue-local-status"
       >
         <StatusLadder
@@ -410,32 +416,31 @@ export function IssueLocalTab({
         />
         {!overlay && (
           <div className="mt-2 text-[11px] text-nim-faint">
-            No local state for this issue. Picking a status creates one — nothing is copied from
-            GitHub, so there is nothing that can fall out of sync.
+            {t('issues.local.noLocalState')}
           </div>
         )}
         {adopted && (
           <div className="mt-2 text-[11px] text-nim-faint" data-testid="issue-status-adopted-note">
-            Adopted, and escalation is one-way — the ladder is settled here. The adopted tracker
-            item below carries the status from now on.
+            {t('issues.local.adoptedNote')}
           </div>
         )}
       </Panel>
 
       <Panel
-        heading="Triage notes"
+        heading={t('issues.local.triageNotes')}
         note={
           overlay
-            ? `${overlay.issueKey ?? ISSUE_OVERLAY_TYPE} · updated ${formatRelative(
-                Date.parse(overlay.system.updatedAt) || Date.now(),
-              )}`
+            ? t('issues.local.updatedNote', {
+                key: overlay.issueKey ?? ISSUE_OVERLAY_TYPE,
+                time: formatRelative(Date.parse(overlay.system.updatedAt) || Date.now()),
+              })
             : undefined
         }
         testId="issue-local-notes"
       >
         <div className="flex gap-3 mb-2">
           <div className="flex-1 min-w-0">
-            <div className="text-[10.5px] text-nim-faint mb-1">Priority</div>
+            <div className="text-[10.5px] text-nim-faint mb-1">{t('issues.local.priority')}</div>
             <PriorityPicker
               overlay={overlay}
               busy={busy}
@@ -443,7 +448,7 @@ export function IssueLocalTab({
             />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[10.5px] text-nim-faint mb-1">Repository</div>
+            <div className="text-[10.5px] text-nim-faint mb-1">{t('issues.local.repository')}</div>
             <div className="rounded-md border border-nim bg-nim px-2.5 py-1.5 text-xs text-nim-muted truncate">
               {remote}
             </div>
@@ -472,10 +477,10 @@ export function IssueLocalTab({
 
       <div className="flex gap-2.5">
         <div className="flex-1 min-w-0">
-          <Panel heading="Linked sessions" note={sessions.length ? String(sessions.length) : undefined}>
+          <Panel heading={t('issues.local.linkedSessions')} note={sessions.length ? String(sessions.length) : undefined}>
             {sessions.length === 0 ? (
               <div className="text-[11px] text-nim-faint">
-                None yet. Investigate starts one and links it here.
+                {t('issues.local.noSessions')}
               </div>
             ) : (
               <div className="flex flex-wrap gap-1.5" data-testid="issue-linked-sessions">
@@ -493,11 +498,11 @@ export function IssueLocalTab({
         </div>
         <div className="flex-1 min-w-0">
           <Panel
-            heading="Linked pull requests"
+            heading={t('issues.local.linkedPrs')}
             note={linkedPrNumbers.length ? String(linkedPrNumbers.length) : undefined}
           >
             {linkedPrNumbers.length === 0 ? (
-              <div className="text-[11px] text-nim-faint">No pull request references this issue.</div>
+              <div className="text-[11px] text-nim-faint">{t('issues.local.noPrs')}</div>
             ) : (
               <div className="flex flex-wrap gap-1.5" data-testid="issue-linked-prs">
                 {linkedPrNumbers.map((prNumber) => (
@@ -506,7 +511,7 @@ export function IssueLocalTab({
                     type="button"
                     className="inline-flex items-center gap-1 rounded border border-nim px-1.5 py-0.5 font-mono text-[11px] text-nim-muted hover:text-nim transition-colors"
                     onClick={() => navigateToPullRequest(remote, prNumber)}
-                    title={`Open pull request #${prNumber}`}
+                    title={t('issues.local.openPr', { number: prNumber })}
                   >
                     <MaterialSymbol icon="merge" size={12} />#{prNumber}
                   </button>
@@ -517,7 +522,7 @@ export function IssueLocalTab({
         </div>
       </div>
 
-      <Panel heading="Linked tracker items" testId="issue-linked-items">
+      <Panel heading={t('issues.local.linkedItems')} testId="issue-linked-items">
         <div className="flex flex-wrap items-center gap-2">
           {otherItems.map((item) => (
             <span key={item.id} className="inline-flex items-center gap-1 min-w-0">
@@ -526,7 +531,7 @@ export function IssueLocalTab({
                 data-testid="issue-tracker-chip"
                 className="font-mono text-[11px] text-nim-muted hover:text-nim hover:underline transition-colors"
                 onClick={() => navigateToTrackerItem(item.id)}
-                title={`Open ${item.issueKey ?? getRecordTitle(item)} in the tracker`}
+                title={t('issues.local.openInTracker', { key: item.issueKey ?? getRecordTitle(item) })}
               >
                 {item.issueKey ?? getRecordTitle(item)}
               </button>
@@ -535,9 +540,7 @@ export function IssueLocalTab({
           ))}
           {otherItems.length === 0 && (
             <span className="text-[11px] text-nim-faint">
-              Only the local overlay so far. Linking an existing item lists it here; an adopted
-              item is shown above instead, since it points at the issue through its import
-              provenance rather than a link.
+              {t('issues.local.onlyOverlay')}
             </span>
           )}
           <span className="ml-auto">

@@ -25,6 +25,7 @@ import {
 
 import type { FileWatchHealth } from '../../../shared/fileWatchHealth';
 import { errorNotificationService } from '../../services/ErrorNotificationService';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 let initialized = false;
 
@@ -42,14 +43,14 @@ export function initFileChangeListeners(): () => void {
     const existing = warnings.get(data.root);
     if (data.state === 'watching' || data.state === 'stopped') {
       if (existing?.timer) clearTimeout(existing.timer);
-      if (existing?.shown && data.state === 'watching') errorNotificationService.showInfo('File updates resumed', 'Open files are being checked for changes.');
+      if (existing?.shown && data.state === 'watching') errorNotificationService.showInfo(translate('general:fileWatch.resumedTitle'), translate('general:fileWatch.resumedMessage'));
       warnings.delete(data.root);
     } else if (data.state === 'recovering' && !existing) {
       const warning = { shown: false, timer: undefined as ReturnType<typeof setTimeout> | undefined };
       warning.timer = setTimeout(() => {
         warning.timer = undefined;
         warning.shown = true;
-        errorNotificationService.showWarning('File updates delayed', 'Automatic file updates are recovering. Open files will continue to be checked for changes.', { duration: 10_000 });
+        errorNotificationService.showWarning(translate('general:diskChange.delayedTitle'), translate('general:fileWatch.delayedMessage'), { duration: 10_000 });
       }, 10_000);
       warnings.set(data.root, warning);
     }

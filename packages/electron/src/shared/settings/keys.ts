@@ -253,6 +253,16 @@ export const SETTINGS_REGISTRY = {
     { store: 'ai-settings', path: 'showGeminiUsageIndicator' },
     true,
   ),
+  /**
+   * Interface language. 'system' follows the OS locale; unsupported locales
+   * fall back to English. Mirrors UI_LANGUAGE_PREFERENCES in
+   * @nimbalyst/runtime/i18n.
+   */
+  'app.uiLanguage': setting(
+    z.enum(['system', 'en', 'pt-BR']),
+    { store: 'app-settings', path: 'uiLanguage' },
+    'system',
+  ),
   // Explicit opt-in, independent of developer mode and feature enable-all.
   'app.externalSessionFollowEnabled': setting(
     z.boolean(),

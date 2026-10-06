@@ -5,12 +5,14 @@ import { ModelComparison } from './ModelComparison';
 import { ProjectInsights } from './ProjectInsights';
 import { ActivityHeatmap } from './ActivityHeatmap';
 import { ToolUsage } from './ToolUsage';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface AIUsageReportProps {
   onClose?: () => void;
 }
 
 export const AIUsageReport: React.FC<AIUsageReportProps> = ({ onClose }) => {
+  const { t } = useTranslation('ai');
   const [workspaceFilter, setWorkspaceFilter] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<'overview' | 'tools'>('overview');
 
@@ -19,7 +21,7 @@ export const AIUsageReport: React.FC<AIUsageReportProps> = ({ onClose }) => {
       <div
         className="ai-usage-report-tabs flex gap-1 px-4 pt-4 border-b border-nim"
         role="tablist"
-        aria-label="AI usage report sections"
+        aria-label={t('usageReport.sectionsAriaLabel')}
       >
         {(['overview', 'tools'] as const).map((tab) => (
           <button
@@ -34,7 +36,7 @@ export const AIUsageReport: React.FC<AIUsageReportProps> = ({ onClose }) => {
                 : 'border-transparent text-[var(--nim-text-muted)] hover:text-[var(--nim-text)]'
             }`}
           >
-            {tab === 'overview' ? 'Overview' : 'Tools'}
+            {tab === 'overview' ? t('usageReport.tabs.overview') : t('usageReport.tabs.tools')}
           </button>
         ))}
       </div>

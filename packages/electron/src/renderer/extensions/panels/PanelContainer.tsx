@@ -8,6 +8,7 @@
 import type { JSX } from 'react';
 import React, { useMemo, useEffect, useState, useCallback, useRef } from 'react';
 import { useSetAtom } from 'jotai';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { useTheme } from '../../hooks/useTheme';
 import { createExtensionStorage } from '@nimbalyst/runtime';
 import { createPanelHost, type PanelHostOptions } from './PanelHostImpl';
@@ -58,15 +59,15 @@ class PanelErrorBoundary extends React.Component<
       return (
         <div className="panel-error flex flex-col items-center justify-center h-full p-8 text-center gap-3">
           <span className="material-symbols-outlined panel-error-icon text-5xl text-[var(--nim-error)]">error</span>
-          <div className="panel-error-title text-base font-semibold text-[var(--nim-text)]">Panel Error</div>
+          <div className="panel-error-title text-base font-semibold text-[var(--nim-text)]">{translate('general:panelError.title')}</div>
           <div className="panel-error-message text-[13px] text-[var(--nim-text-muted)] max-w-[300px] break-words">
-            {this.state.error?.message || 'An unknown error occurred'}
+            {this.state.error?.message || translate('general:panelError.unknown')}
           </div>
           <button
             className="panel-error-retry mt-2 px-4 py-2 border border-[var(--nim-border)] rounded bg-transparent text-[var(--nim-text)] text-[13px] cursor-pointer hover:bg-[var(--nim-bg-hover)]"
             onClick={() => this.setState({ hasError: false, error: undefined })}
           >
-            Retry
+            {translate('common:retry')}
           </button>
         </div>
       );

@@ -7,6 +7,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useAtomValue } from 'jotai';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { Terminal, FitAddon, OSC8LinkProvider, UrlRegexProvider, type ITheme, type ILinkProvider, type ILink } from 'ghostty-web';
 import { themeIdAtom } from '@nimbalyst/runtime/store';
 import { TerminalContextMenu } from './TerminalContextMenu';
@@ -118,6 +119,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
   focusNonce,
   autoFocus = true,
 }) => {
+  const { t } = useTranslation('general');
   // Support legacy sessionId prop name
   const sessionId = terminalId;
 
@@ -227,7 +229,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
       await initBackend();
     } catch (error) {
       console.error('[TerminalPanel] Failed to restart terminal:', error);
-      setInitError(error instanceof Error ? error.message : 'Failed to restart terminal');
+      setInitError(error instanceof Error ? error.message : t('terminal.restartFailed'));
     }
   };
 
@@ -363,7 +365,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
                   handleRestart();
                 }
               } else {
-                setInitError(late.error || 'Failed to initialize PTY');
+                setInitError(late.error || t('terminal.ptyInitFailed'));
               }
             }).catch((err) => {
               if (!disposedRef.current) {
@@ -376,7 +378,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
           }
 
           if (!result.success && !('alreadyActive' in result && result.alreadyActive)) {
-            const errorMessage = result.error || 'Failed to initialize PTY';
+            const errorMessage = result.error || t('terminal.ptyInitFailed');
             console.error('[TerminalPanel] Failed to initialize PTY:', errorMessage);
             setInitError(errorMessage);
             return false;
@@ -539,7 +541,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
 
             if (sanitized === null) {
               console.warn('[TerminalPanel] Scrollback is corrupted, skipping restore');
-              setRestoreWarning('Saved terminal history could not be restored cleanly. Live terminal output continues.');
+              setRestoreWarning(t('terminal.restoreFailed'));
             } else {
               // Strip escape sequences that can corrupt terminal state when replayed
               const stripped = stripProblematicEscapeSequences(sanitized);
@@ -589,9 +591,9 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
 
               if (writeError) {
                 console.warn('[TerminalPanel] Failed to restore scrollback, keeping persisted history:', writeError);
-                setRestoreWarning('Saved terminal history restored partially. Live terminal output continues.');
+                setRestoreWarning(t('terminal.restorePartial'));
               } else if (timedOut) {
-                setRestoreWarning('Saved terminal history restored partially because replay took too long.');
+                setRestoreWarning(t('terminal.restorePartialTimeout'));
               } else if (terminal && !disposed) {
                 // Reset scroll margins to full screen to clear any stale scroll region
                 // from the scrollback content.
@@ -752,7 +754,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
           }
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage = error instanceof Error ? error.message : t('terminal.unknownError');
         console.error('[TerminalPanel] Error initializing terminal:', error);
         setInitError(errorMessage);
       }
@@ -917,7 +919,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
           <button
             type="button"
             onClick={() => setRestoreWarning(null)}
-            aria-label="Dismiss"
+            aria-label={t('terminal.dismiss')}
             style={{
               flexShrink: 0,
               background: 'none',
@@ -948,7 +950,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
             zIndex: 1,
           }}
         >
-          Initializing terminal...
+          {t('terminal.initializing')}
         </div>
       )}
 
@@ -957,7 +959,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
           className="absolute inset-0 flex flex-col items-center justify-center text-nim-error text-sm p-5 text-center"
         >
           <div style={{ marginBottom: '12px' }}>
-            Failed to initialize terminal: {initError}
+            {t('terminal.initFailed', { error: initError })}
           </div>
           <button
             onClick={handleRestart}
@@ -971,7 +973,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
               cursor: 'pointer',
             }}
           >
-            Retry
+            {t('common:retry')}
           </button>
         </div>
       )}
@@ -994,7 +996,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
           }}
         >
           <span>
-            Process exited with code {exitCode ?? 0}.
+            {t('terminal.processExited', { code: exitCode ?? 0 })}
           </span>
           <button
             onClick={handleRestart}
@@ -1008,7 +1010,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
               cursor: 'pointer',
             }}
           >
-            Restart
+            {t('terminal.restart')}
           </button>
         </div>
       )}

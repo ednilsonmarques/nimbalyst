@@ -10,6 +10,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { extensionPermissionHostStateVersionAtom } from '../../store/atoms/extensionPermissions';
 
 type RiskTier = 'low' | 'elevated' | 'high';
@@ -52,6 +54,7 @@ export const ExtensionBackendModulesSection: React.FC<ExtensionBackendModulesSec
   modules,
   workspacePath,
 }) => {
+  const { t } = useTranslation('general');
   const [descriptors, setDescriptors] = useState<PermissionDescriptor[]>([]);
   const [snapshots, setSnapshots] = useState<Record<string, ModuleSnapshot>>({});
   const [busyModuleId, setBusyModuleId] = useState<string | null>(null);
@@ -129,7 +132,7 @@ export const ExtensionBackendModulesSection: React.FC<ExtensionBackendModulesSec
   if (!api) {
     return (
       <div className="ext-backend-modules-section mb-5 text-xs text-[var(--nim-text-faint)] italic">
-        Privileged capabilities API not loaded yet. Restart Nimbalyst to manage backend module permissions.
+        {t('extensionPermissions.backend.apiNotLoaded')}
       </div>
     );
   }
@@ -137,7 +140,7 @@ export const ExtensionBackendModulesSection: React.FC<ExtensionBackendModulesSec
   return (
     <div className="ext-backend-modules-section mb-5">
       <div className="text-xs font-semibold text-[var(--nim-text-muted)] uppercase tracking-wide mb-2.5">
-        Privileged Capabilities
+        {t('extensionPermissions.backend.title')}
       </div>
 
       <div className="flex flex-col gap-3">
@@ -187,7 +190,7 @@ export const ExtensionBackendModulesSection: React.FC<ExtensionBackendModulesSec
                         key={permId}
                         className="text-xs text-[var(--nim-text-faint)] italic"
                       >
-                        Unknown permission: {permId}
+                        {t('extensionPermissions.backend.unknownPermission', { id: permId })}
                       </div>
                     );
                   }
@@ -209,14 +212,14 @@ export const ExtensionBackendModulesSection: React.FC<ExtensionBackendModulesSec
 
               <div className="ext-backend-module-grants flex flex-wrap items-center gap-2">
                 <ScopePill
-                  label="This workspace"
+                  label={t('extensionPermissions.backend.thisWorkspace')}
                   enabled={wsEnabled}
-                  disabledReason={workspacePath ? undefined : 'No workspace open'}
+                  disabledReason={workspacePath ? undefined : t('extensionPermissions.backend.noWorkspaceOpen')}
                   busy={busyModuleId === mod.id}
                   onRevoke={() => handleRevoke(mod.id, 'workspace')}
                 />
                 <ScopePill
-                  label="All workspaces"
+                  label={t('extensionPermissions.backend.allWorkspaces')}
                   enabled={globalEnabled}
                   busy={busyModuleId === mod.id}
                   onRevoke={() => handleRevoke(mod.id, 'global')}
@@ -237,34 +240,35 @@ const ScopePill: React.FC<{
   busy: boolean;
   onRevoke: () => void;
 }> = ({ label, enabled, disabledReason, busy, onRevoke }) => {
+  const { t } = useTranslation('general');
   if (disabledReason) {
     return (
       <span
         className="ext-backend-module-scope-pill px-2 py-1 text-xs rounded border border-[var(--nim-border)] text-[var(--nim-text-faint)] italic"
         title={disabledReason}
       >
-        {label}: n/a
+        {t('extensionPermissions.backend.scopeNotApplicable', { scope: label })}
       </span>
     );
   }
   if (!enabled) {
     return (
       <span className="ext-backend-module-scope-pill px-2 py-1 text-xs rounded border border-[var(--nim-border)] text-[var(--nim-text-muted)]">
-        {label}: not enabled
+        {t('extensionPermissions.backend.scopeNotEnabled', { scope: label })}
       </span>
     );
   }
   return (
     <span className="ext-backend-module-scope-pill inline-flex items-center gap-1 px-2 py-1 text-xs rounded border border-[var(--nim-success)] text-[var(--nim-success)]">
       <MaterialSymbol icon="check_circle" size={12} />
-      {label}: enabled
+      {t('extensionPermissions.backend.scopeEnabled', { scope: label })}
       <button
         type="button"
         className="ml-1 text-[var(--nim-error)] hover:underline disabled:opacity-50"
         onClick={onRevoke}
         disabled={busy}
       >
-        revoke
+        {t('extensionPermissions.backend.revoke')}
       </button>
     </span>
   );
@@ -278,19 +282,19 @@ function describeHostState(
   if (!status) return null;
   switch (status) {
     case 'running':
-      return { label: 'Running', classes: 'bg-[var(--nim-success)] text-[var(--nim-bg)]' };
+      return { label: translate('general:extensionPermissions.hostState.running'), classes: 'bg-[var(--nim-success)] text-[var(--nim-bg)]' };
     case 'starting':
-      return { label: 'Starting', classes: 'bg-[var(--nim-warning)] text-[var(--nim-bg)]' };
+      return { label: translate('general:extensionPermissions.hostState.starting'), classes: 'bg-[var(--nim-warning)] text-[var(--nim-bg)]' };
     case 'awaiting-consent':
-      return { label: 'Awaiting consent', classes: 'bg-[var(--nim-warning)] text-[var(--nim-bg)]' };
+      return { label: translate('general:extensionPermissions.hostState.awaitingConsent'), classes: 'bg-[var(--nim-warning)] text-[var(--nim-bg)]' };
     case 'awaiting-trust':
-      return { label: 'Workspace not trusted', classes: 'bg-[var(--nim-warning)] text-[var(--nim-bg)]' };
+      return { label: translate('general:extensionPermissions.hostState.awaitingTrust'), classes: 'bg-[var(--nim-warning)] text-[var(--nim-bg)]' };
     case 'crashed':
-      return { label: 'Crashed', classes: 'bg-[var(--nim-error)] text-[var(--nim-bg)]' };
+      return { label: translate('general:extensionPermissions.hostState.crashed'), classes: 'bg-[var(--nim-error)] text-[var(--nim-bg)]' };
     case 'denied':
-      return { label: 'Denied', classes: 'bg-[var(--nim-error)] text-[var(--nim-bg)]' };
+      return { label: translate('general:extensionPermissions.hostState.denied'), classes: 'bg-[var(--nim-error)] text-[var(--nim-bg)]' };
     case 'stopped':
-      return { label: 'Stopped', classes: 'bg-[var(--nim-bg-tertiary)] text-[var(--nim-text-muted)]' };
+      return { label: translate('general:extensionPermissions.hostState.stopped'), classes: 'bg-[var(--nim-bg-tertiary)] text-[var(--nim-text-muted)]' };
     default:
       return null;
   }

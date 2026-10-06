@@ -30,6 +30,7 @@
  */
 
 import { Doc } from 'yjs';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
   CollabHistoryClient,
   createRevisionAdapterFromCollabContent,
@@ -95,7 +96,7 @@ export async function loadCanvasRevisionSnapshot(
   );
   if (!config) {
     throw new CanvasRevisionSnapshotError(
-      'This project is not connected to a team, so past revisions cannot be loaded.'
+      translate('team:embed.revision.noTeam')
     );
   }
 
@@ -109,7 +110,7 @@ export async function loadCanvasRevisionSnapshot(
   if (!adapter) {
     doc.destroy();
     throw new CanvasRevisionSnapshotError(
-      `Past revisions of ${request.documentType} documents cannot be shown yet.`
+      translate('team:embed.revision.unsupportedType', { documentType: request.documentType })
     );
   }
 

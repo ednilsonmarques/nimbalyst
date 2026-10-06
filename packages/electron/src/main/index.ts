@@ -1,5 +1,6 @@
 import { parseDocumentDeepLinkAnchor, type SharedDocumentAnchor } from '../shared/documentDeepLinks';
 import { app, BrowserWindow, dialog, nativeImage, nativeTheme, session, shell } from 'electron';
+import { t } from '@nimbalyst/runtime/i18n';
 import {
     parseTrackerDeepLink,
     type TrackerDeepLinkTarget,
@@ -12,6 +13,7 @@ import { installMicrophoneGate } from './mediaPermissionGate';
 import { markBootComplete } from './utils/bootState';
 import { markStart, markEnd, checkpoint, logSummary } from './utils/startupTiming';
 import { resolveSpellCheckerLanguages } from './utils/spellcheckLanguages';
+import { initUiLanguage } from './services/uiLanguage';
 import type { SessionStore } from '@nimbalyst/runtime';
 import * as os from 'os';
 import * as path from 'path';
@@ -1791,6 +1793,10 @@ app.whenReady().then(async () => {
         }
     }
 
+    // Interface language: resolve the saved preference before any menu or
+    // window is built, so main-process strings can use t().
+    initUiLanguage();
+
     // Issue #146: wire up the `nim-asset://` request handler. Workspaces are
     // added to its allowlist below, as windows register their workspace path.
     registerNimAssetProtocolHandler();
@@ -3540,9 +3546,8 @@ app.on('before-quit', async (event) => {
             await shutdownForRestart(event);
         } catch (error) {
             console.error('[QUIT] Error saving session state for restart:', error);
-            dialog.showErrorBox('Unable to restart Nimbalyst',
-                'Restart stopped before closing your project windows. Please try restarting again.\n\n' +
-                (error instanceof Error ? error.message : String(error)));
+            dialog.showErrorBox(t('dialogs:appRestart.failedTitle'),
+                t('dialogs:appRestart.failedMessage', { error: error instanceof Error ? error.message : String(error) }));
         }
         // Don't delete the file here - dev-loop.sh needs it to know to restart
         return;
@@ -3564,10 +3569,10 @@ app.on('before-quit', async (event) => {
 
         const response = await dialog.showMessageBox({
             type: 'warning',
-            title: 'AI Session in Progress',
-            message: 'An AI session is currently running.',
-            detail: 'If you quit now, the current AI response will be lost. Are you sure you want to quit?',
-            buttons: ['Quit Anyway', 'Cancel'],
+            title: t('dialogs:appQuit.activeSession.title'),
+            message: t('dialogs:appQuit.activeSession.message'),
+            detail: t('dialogs:appQuit.activeSession.detail'),
+            buttons: [t('dialogs:appQuit.activeSession.quitAnyway'), t('common:cancel')],
             defaultId: 1,
             cancelId: 1
         });

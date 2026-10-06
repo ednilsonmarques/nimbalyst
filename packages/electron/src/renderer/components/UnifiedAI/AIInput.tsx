@@ -37,6 +37,7 @@ import { parseMentionTokens } from './commandPills/parseMentionTokens';
 import { HighlightOverlay, type OverlayToken } from './commandPills/HighlightOverlay';
 import { CommandPillPopover } from './commandPills/CommandPillPopover';
 import { canPersistWorkspaceHydratedState } from '../../utils/workspaceHydration';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export interface AIInputRef {
   focus: () => void;
@@ -165,7 +166,7 @@ export const AIInput = forwardRef<AIInputRef, AIInputProps>(
     onCancel,
     disabled,
     isLoading,
-    placeholder = "Type your message... (Enter to send, Shift+Enter for new line, @ for files, @@ for sessions, / for commands)",
+    placeholder,
     workspacePath,
     remoteSession = false,
     remoteFiles,
@@ -202,6 +203,7 @@ export const AIInput = forwardRef<AIInputRef, AIInputProps>(
     testId,
     onLaunchActionInNewSession,
   }, ref) => {
+    const { t } = useTranslation('ai');
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [typeaheadMatch, setTypeaheadMatch] = useState<TriggerMatch | null>(null);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -1053,7 +1055,7 @@ export const AIInput = forwardRef<AIInputRef, AIInputProps>(
         if (!validation.valid) {
           pasteUndoCountRef.current.delete(processingId);
           console.error('[AIInput] File validation failed:', validation.error);
-          errorNotificationService.showError('Attachment Rejected', validation.error || 'Invalid file');
+          errorNotificationService.showError(t('attachments.rejectedTitle'), validation.error || t('attachments.invalidFile'));
           return;
         }
 
@@ -1088,16 +1090,16 @@ export const AIInput = forwardRef<AIInputRef, AIInputProps>(
           onChange(value + (value ? ' ' : '') + reference);
         } else {
           console.error('[AIInput] Failed to save attachment:', result.error);
-          errorNotificationService.showError('Attachment Failed', result.error || 'Failed to save attachment');
+          errorNotificationService.showError(t('attachments.failedTitle'), result.error || t('attachments.saveFailed'));
         }
       } catch (error) {
         // Remove from processing state on error
         setProcessingAttachments(prev => prev.filter(p => p.id !== processingId));
         pasteUndoCountRef.current.delete(processingId);
         console.error('[AIInput] Error handling file attachment:', error);
-        errorNotificationService.showError('Attachment Failed', 'Failed to attach file');
+        errorNotificationService.showError(t('attachments.failedTitle'), t('attachments.attachFailed'));
       }
-    }, [onAttachmentAdd, sessionId, value, onChange, getUndoCount]);
+    }, [onAttachmentAdd, sessionId, value, onChange, getUndoCount, t]);
 
     // Drag and drop handlers
     const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -1361,7 +1363,7 @@ export const AIInput = forwardRef<AIInputRef, AIInputProps>(
         <div
           className={`ai-chat-input-resize-handle absolute -top-[3px] left-0 right-0 h-1.5 cursor-row-resize z-10 before:content-[''] before:absolute before:top-0.5 before:left-0 before:right-0 before:h-0.5 before:transition-colors before:duration-150 ${isResizing ? 'before:bg-[var(--nim-primary)]' : ''} hover:before:bg-[var(--nim-primary)]`}
           onMouseDown={handleResizeMouseDown}
-          title="Drag to resize prompt box"
+          title={t('composer.resizeHandle')}
         />
 
         {/* Pending voice command with countdown */}
@@ -1478,7 +1480,7 @@ export const AIInput = forwardRef<AIInputRef, AIInputProps>(
             onPaste={handlePaste}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            placeholder={placeholder}
+            placeholder={placeholder ?? t('composer.placeholder')}
             disabled={disabled}
             rows={1}
             style={{
@@ -1510,8 +1512,8 @@ export const AIInput = forwardRef<AIInputRef, AIInputProps>(
                   console.log('[AIInput] Cancel button clicked, onCancel:', !!onCancel);
                   onCancel();
                 }}
-                title="Cancel request (Esc)"
-                aria-label="Cancel request"
+                title={t('composer.cancelRequestTitle')}
+                aria-label={t('composer.cancelRequest')}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1523,8 +1525,8 @@ export const AIInput = forwardRef<AIInputRef, AIInputProps>(
               className="ai-chat-send-button w-9 h-9 flex items-center justify-center bg-[var(--nim-primary)] border-none rounded-md text-white cursor-pointer transition-all duration-200 shrink-0 hover:enabled:bg-[var(--nim-primary-hover)] hover:enabled:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
               onClick={handleSend}
               disabled={disabled || !value.trim() || processingAttachments.length > 0}
-              title={processingAttachments.length > 0 ? "Processing attachments..." : "Send message (Enter)"}
-              aria-label="Send message"
+              title={processingAttachments.length > 0 ? t('composer.processingAttachments') : t('composer.sendMessageTitle')}
+              aria-label={t('composer.sendMessage')}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M2 8L14 2L11 14L8 9L2 8Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

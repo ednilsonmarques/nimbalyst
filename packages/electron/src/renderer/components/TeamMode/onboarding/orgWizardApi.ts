@@ -4,6 +4,7 @@
  * server-side.
  */
 
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import type { OrgWizardApi } from './orgWizardRunner';
 
 export function createOrgWizardApi(): OrgWizardApi {
@@ -17,7 +18,7 @@ export function createOrgWizardApi(): OrgWizardApi {
       if (!invitation?.orgId) return null;
       return {
         orgId: invitation.orgId as string,
-        name: typeof invitation.name === 'string' ? invitation.name : 'Organization',
+        name: typeof invitation.name === 'string' ? invitation.name : translate('team:sidebar.organization'),
         email,
       };
     },

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { setTitleBarCreateMenuAtom } from '../store/atoms/titleBarCreate';
 import { FlatFileTree } from './FlatFileTree';
 import type { RendererFileTreeItem } from '../store';
@@ -105,6 +106,7 @@ export function WorkspaceSidebar({
   onSelectedFolderChange,
   currentAISessionId
 }: WorkspaceSidebarProps) {
+  const { t } = useTranslation('workspace');
   // Names the organization in the empty-folder state, so a project opened from
   // one explains where its shared work actually is.
   const { org: projectOrg } = useProjectOrg(workspacePath);
@@ -358,13 +360,13 @@ export function WorkspaceSidebar({
         ...typeItems,
         {
           id: 'any',
-          label: 'New File…',
+          label: t('sidebar.newFileMenuItem'),
           icon: 'note_add',
           onSelect: () => createHandlersRef.current.handleNewFileTypeSelect('any'),
         },
         {
           id: 'folder',
-          label: 'New folder',
+          label: t('sidebar.newFolderMenuItem'),
           icon: 'create_new_folder',
           separatorBefore: true,
           onSelect: () => createHandlersRef.current.handleNewFolder(),
@@ -375,7 +377,7 @@ export function WorkspaceSidebar({
     // extensionFileTypes is read through its signature; adding the array itself
     // would republish on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentView, extensionTypeSignature, selectedFolder, setTitleBarCreateMenu]);
+  }, [currentView, extensionTypeSignature, selectedFolder, setTitleBarCreateMenu, t]);
 
   const [targetFolder, setTargetFolder] = useState<string | null>(null);
 
@@ -424,11 +426,11 @@ export function WorkspaceSidebar({
         handleRefreshFileTree();
         onFileSelect(filePath);
       } else {
-        errorNotificationService.showError('Create file failed', 'Failed to create file: ' + (result?.error || 'Unknown error'));
+        errorNotificationService.showError(t('sidebar.createFileFailed.title'), t('sidebar.createFileFailed.message', { error: result?.error || t('sidebar.unknownError') }));
       }
     } catch (error) {
       console.error('Failed to create file:', error);
-      errorNotificationService.showError('Create file failed', 'Failed to create file: ' + error);
+      errorNotificationService.showError(t('sidebar.createFileFailed.title'), t('sidebar.createFileFailed.message', { error: String(error) }));
     } finally {
       setTargetFolder(null);
     }
@@ -446,11 +448,11 @@ export function WorkspaceSidebar({
         // Refresh file tree
         handleRefreshFileTree();
       } else {
-        errorNotificationService.showError('Create folder failed', 'Failed to create folder: ' + (result?.error || 'Unknown error'));
+        errorNotificationService.showError(t('sidebar.createFolderFailed.title'), t('sidebar.createFolderFailed.message', { error: result?.error || t('sidebar.unknownError') }));
       }
     } catch (error) {
       console.error('Failed to create folder:', error);
-      errorNotificationService.showError('Create folder failed', 'Failed to create folder: ' + error);
+      errorNotificationService.showError(t('sidebar.createFolderFailed.title'), t('sidebar.createFolderFailed.message', { error: String(error) }));
     } finally {
       setTargetFolder(null);
     }
@@ -506,11 +508,11 @@ export function WorkspaceSidebar({
         handleRefreshFileTree();
         onFileSelect(filePath);
       } else {
-        errorNotificationService.showError('Create file failed', 'Failed to create file: ' + (result?.error || 'Unknown error'));
+        errorNotificationService.showError(t('sidebar.createFileFailed.title'), t('sidebar.createFileFailed.message', { error: result?.error || t('sidebar.unknownError') }));
       }
     } catch (error) {
       console.error('Failed to create file:', error);
-      errorNotificationService.showError('Create file failed', 'Failed to create file: ' + error);
+      errorNotificationService.showError(t('sidebar.createFileFailed.title'), t('sidebar.createFileFailed.message', { error: String(error) }));
     } finally {
       setIsNewFileDialogOpen(false);
       setNewFileDialogDirectory(null);
@@ -964,10 +966,10 @@ export function WorkspaceSidebar({
       : 0;
   const shouldShowFilterHint = isAISessionFilter && (!hasActiveClaudeSession || activeClaudeFilterCount === 0);
   const aiFilterHintText = !hasActiveClaudeSession
-    ? 'Open a Claude Agent session to see which files the agent reads or writes.'
+    ? t('sidebar.aiFilterHint.noSession')
     : fileTreeFilter === 'ai-read'
-      ? 'No files have been read by this Claude Agent session yet.'
-      : 'No files have been written by this Claude Agent session yet.';
+      ? t('sidebar.empty.aiRead.withSession')
+      : t('sidebar.empty.aiWritten.withSession');
 
   // Check if filtered tree is empty
   const isFilteredTreeEmpty = filteredFileTree.length === 0;
@@ -977,46 +979,46 @@ export function WorkspaceSidebar({
     switch (fileTreeFilter) {
       case 'markdown':
         return {
-          title: 'No Markdown Files',
-          description: 'No .md or .markdown files found in this workspace.'
+          title: t('sidebar.empty.markdown.title'),
+          description: t('sidebar.empty.markdown.description')
         };
       case 'known':
         return {
-          title: 'No Known File Types',
-          description: 'No files with recognized extensions found. Showing files with extensions like .md, .txt, .json, .js, .ts, etc.'
+          title: t('sidebar.empty.known.title'),
+          description: t('sidebar.empty.known.description')
         };
       case 'git-uncommitted':
         return {
-          title: 'No Uncommitted Changes',
+          title: t('sidebar.empty.gitUncommitted.title'),
           description: isGitRepo
-            ? 'No uncommitted files found in this git repository.'
-            : 'This workspace is not a git repository.'
+            ? t('sidebar.empty.gitUncommitted.description')
+            : t('sidebar.empty.gitUncommitted.notRepo')
         };
       case 'git-worktree':
         return {
-          title: 'No Worktree Changes',
+          title: t('sidebar.empty.gitWorktree.title'),
           description: isGitWorktree
-            ? 'No files modified in this git worktree.'
-            : 'This workspace is not a git worktree.'
+            ? t('sidebar.empty.gitWorktree.description')
+            : t('sidebar.empty.gitWorktree.notWorktree')
         };
       case 'ai-read':
         return {
-          title: 'No Files Read',
+          title: t('sidebar.empty.aiRead.title'),
           description: hasActiveClaudeSession
-            ? 'No files have been read by this Claude Agent session yet.'
-            : 'Open a Claude Agent session to see which files the agent reads.'
+            ? t('sidebar.empty.aiRead.withSession')
+            : t('sidebar.empty.aiRead.noSession')
         };
       case 'ai-written':
         return {
-          title: 'No Files Written',
+          title: t('sidebar.empty.aiWritten.title'),
           description: hasActiveClaudeSession
-            ? 'No files have been written by this Claude Agent session yet.'
-            : 'Open a Claude Agent session to see which files the agent writes.'
+            ? t('sidebar.empty.aiWritten.withSession')
+            : t('sidebar.empty.aiWritten.noSession')
         };
       default:
         return {
-          title: 'No Files',
-          description: 'No files match the current filter.'
+          title: t('sidebar.empty.default.title'),
+          description: t('sidebar.empty.default.description')
         };
     }
   };
@@ -1150,8 +1152,8 @@ export function WorkspaceSidebar({
                     data-testid="file-tree-refresh-button"
                     className="workspace-action-button bg-transparent border-none p-1.5 cursor-pointer rounded text-[var(--nim-text-faint)] flex items-center justify-center transition-all duration-200 relative hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
                     onClick={handleRefreshFileTree}
-                    title="Refresh file tree"
-                    aria-label="Refresh file tree"
+                    title={t('sidebar.refreshFileTree')}
+                    aria-label={t('sidebar.refreshFileTree')}
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
                       refresh
@@ -1164,7 +1166,7 @@ export function WorkspaceSidebar({
                       data-testid="file-tree-quick-open-button"
                       className="workspace-action-button bg-transparent border-none p-1.5 cursor-pointer rounded text-[var(--nim-text-faint)] flex items-center justify-center transition-all duration-200 relative hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
                       onClick={onOpenQuickSearch}
-                      aria-label="Search files"
+                      aria-label={t('sidebar.searchFiles')}
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
                         search
@@ -1178,13 +1180,13 @@ export function WorkspaceSidebar({
                     data-testid="file-tree-filter-button"
                     className="workspace-action-button bg-transparent border-none p-1.5 cursor-pointer rounded text-[var(--nim-text-faint)] flex items-center justify-center transition-all duration-200 relative hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
                     onClick={handleFilterButtonClick}
-                    aria-label="Filter files"
+                    aria-label={t('sidebar.filterFiles')}
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
                       filter_alt
                     </span>
                     {fileTreeFilter !== 'all' && (
-                      <span className="filter-active-indicator text-[var(--nim-primary)] font-bold text-base leading-none absolute top-0.5 right-0.5" title="Filter active">•</span>
+                      <span className="filter-active-indicator text-[var(--nim-primary)] font-bold text-base leading-none absolute top-0.5 right-0.5" title={t('sidebar.filterActive')}>•</span>
                     )}
                   </button>
                 </HelpTooltip>
@@ -1196,7 +1198,7 @@ export function WorkspaceSidebar({
 
       {currentView === 'files' ? (
         <>
-          <div className="workspace-section-label nim-section-label py-1.5 px-3 border-b border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] shrink-0">Files</div>
+          <div className="workspace-section-label nim-section-label py-1.5 px-3 border-b border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] shrink-0">{t('sidebar.filesSection')}</div>
           <div className={`workspace-file-tree nim-scrollbar flex-1 overflow-y-auto overflow-x-hidden py-2 relative transition-colors duration-200 ${isDragOverRoot ? 'drag-over-root bg-[var(--nim-accent-subtle)] border-2 border-dashed border-[var(--nim-primary)] !py-1.5' : ''}`}>
             {shouldShowFilterHint && (
               <div className="file-tree-filter-hint py-2 px-3 text-xs text-[var(--nim-text-faint)] leading-relaxed border-b border-[var(--nim-border)] mb-1">
@@ -1206,7 +1208,7 @@ export function WorkspaceSidebar({
             {isFilteredTreeEmpty && fileTreeFilter === 'all' && !fileTreeLoaded ? (
               <div className="flex items-center gap-2 px-4 py-3 text-[13px] text-[var(--nim-text-muted)]">
                 <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>
-                Loading files...
+                {t('sidebar.loadingFiles')}
               </div>
             ) : isFilteredTreeEmpty && fileTreeFilter === 'all' ? (
               // A project opened from an organization starts as an empty
@@ -1220,11 +1222,11 @@ export function WorkspaceSidebar({
                 <span className="material-symbols-outlined file-tree-empty-icon text-5xl text-[var(--nim-text-faint)] opacity-50 mb-4">
                   folder_open
                 </span>
-                <h3 className="file-tree-empty-title m-0 mb-2 text-base font-semibold text-[var(--nim-text)]">This folder is empty</h3>
+                <h3 className="file-tree-empty-title m-0 mb-2 text-base font-semibold text-[var(--nim-text)]">{t('sidebar.emptyFolder.title')}</h3>
                 <p className="file-tree-empty-description m-0 text-[13px] text-[var(--nim-text-muted)] leading-normal max-w-[280px]">
                   {projectOrg
-                    ? `Shared documents and tracker items for ${projectOrg.name} open from the sidebar, not from this folder. Files you add here stay on this computer.`
-                    : 'Files you add to this folder will show up here.'}
+                    ? t('sidebar.emptyFolder.orgDescription', { name: projectOrg.name })
+                    : t('sidebar.emptyFolder.description')}
                 </p>
               </div>
             ) : isFilteredTreeEmpty && fileTreeFilter !== 'all' ? (
@@ -1238,7 +1240,7 @@ export function WorkspaceSidebar({
                   className="file-tree-clear-filter-btn nim-btn-primary px-4 py-2 rounded-md text-[13px] font-medium hover:opacity-90 hover:-translate-y-px active:translate-y-0 transition-all duration-200"
                   onClick={() => handleFilterChange('all')}
                 >
-                  Clear Filter
+                  {t('sidebar.clearFilter')}
                 </button>
               </div>
             ) : (
@@ -1259,7 +1261,7 @@ export function WorkspaceSidebar({
             )}
             {isDragOverRoot && (
               <div className="root-drop-indicator sticky top-0 bg-gradient-to-b from-[var(--nim-accent-subtle)] to-transparent text-center text-[13px] font-medium text-[var(--nim-primary)] z-10 mb-2 rounded">
-                Drop here to move to workspace root
+                {t('sidebar.dropToRoot')}
               </div>
             )}
           </div>
@@ -1308,23 +1310,23 @@ export function WorkspaceSidebar({
         isOpen={isFileModalOpen}
         title={(() => {
           if (pendingFileType === 'markdown') {
-            return targetFolder ? `New Markdown File in ${getFileName(targetFolder)}` : "New Markdown File";
+            return targetFolder ? t('sidebar.newMarkdownFileIn', { folder: getFileName(targetFolder) }) : t('sidebar.newMarkdownFile');
           }
           if (pendingFileType === 'mockup') {
-            return targetFolder ? `New Mockup in ${getFileName(targetFolder)}` : "New Mockup";
+            return targetFolder ? t('sidebar.newMockupIn', { folder: getFileName(targetFolder) }) : t('sidebar.newMockup');
           }
           if (pendingFileType?.startsWith('ext:')) {
             const extName = pendingFileType.slice(4);
             const extType = extensionFileTypes.find(e => e.extension === extName);
-            const displayName = extType?.displayName || 'File';
-            return targetFolder ? `New ${displayName} in ${getFileName(targetFolder)}` : `New ${displayName}`;
+            const displayName = extType?.displayName || t('sidebar.fileFallback');
+            return targetFolder ? t('sidebar.newTypeIn', { type: displayName, folder: getFileName(targetFolder) }) : t('sidebar.newType', { type: displayName });
           }
-          return targetFolder ? `New File in ${getFileName(targetFolder)}` : "New File";
+          return targetFolder ? t('sidebar.newFileIn', { folder: getFileName(targetFolder) }) : t('sidebar.newFile');
         })()}
         placeholder={
           pendingFileType === 'markdown' || pendingFileType === 'mockup' || pendingFileType?.startsWith('ext:')
-            ? "Enter name"
-            : "Enter file name with extension"
+            ? t('sidebar.enterName')
+            : t('sidebar.enterFileNameWithExtension')
         }
         suffix={(() => {
           if (pendingFileType === 'markdown') return ".md";
@@ -1346,8 +1348,8 @@ export function WorkspaceSidebar({
 
       <InputModal
         isOpen={isFolderModalOpen}
-        title={targetFolder ? `New Folder in ${getFileName(targetFolder)}` : "New Folder"}
-        placeholder="Enter folder name"
+        title={targetFolder ? t('sidebar.newFolderIn', { folder: getFileName(targetFolder) }) : t('sidebar.newFolder')}
+        placeholder={t('sidebar.enterFolderName')}
         defaultValue=""
         onConfirm={handleCreateFolder}
         onCancel={() => {

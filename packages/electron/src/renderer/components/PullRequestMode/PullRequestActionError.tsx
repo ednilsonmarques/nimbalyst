@@ -1,5 +1,6 @@
 import type { JSX } from 'react';
 import { useState } from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export const GH_WORKFLOW_SCOPE_REFRESH_COMMAND = 'gh auth refresh -h github.com -s workflow';
 
@@ -8,6 +9,7 @@ interface PullRequestActionErrorProps {
 }
 
 export function PullRequestActionError({ error }: PullRequestActionErrorProps): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const [copied, setCopied] = useState(false);
   const hasWorkflowScopeRecovery = error.includes(GH_WORKFLOW_SCOPE_REFRESH_COMMAND);
 
@@ -32,7 +34,7 @@ export function PullRequestActionError({ error }: PullRequestActionErrorProps): 
           onClick={copyRecoveryCommand}
           data-testid="pr-copy-workflow-scope-command"
         >
-          {copied ? 'Copied' : 'Copy command'}
+          {copied ? t('common.copied') : t('common.copyCommand')}
         </button>
       )}
     </span>

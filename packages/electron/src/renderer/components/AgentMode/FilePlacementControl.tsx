@@ -5,6 +5,7 @@ import {
   agentFilePlacementNoticeAtom,
 } from "../../store/atoms/agentFilePlacement";
 import { moveWorkstreamEditorAtom } from "../../store/atoms/agentFileViewer";
+import { useTranslation } from "@nimbalyst/runtime/i18n/react";
 
 export function FilePlacementControl({
   workstreamId,
@@ -13,12 +14,13 @@ export function FilePlacementControl({
   workstreamId: string;
   onBeforeMove?: () => void;
 }) {
+  const { t } = useTranslation("agent");
   const placement = useAtomValue(agentFilePlacementAtom);
   const move = useSetAtom(moveWorkstreamEditorAtom);
   const title =
     placement === "above"
-      ? "Move files to the right"
-      : "Move files above transcript";
+      ? t("fileViewer.moveRight")
+      : t("fileViewer.moveAbove");
   return (
     <button
       type="button"

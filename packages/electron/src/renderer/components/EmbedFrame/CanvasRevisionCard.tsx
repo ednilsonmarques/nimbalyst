@@ -42,6 +42,7 @@ import { buildCollabUri } from '@nimbalyst/collab-protocol';
 
 import type { CustomEditorRegistration } from '../CustomEditors/types';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { createCollabExtensionHost } from '../TabEditor/collabExtensionHost';
 import {
   loadCanvasRevisionSnapshot,
@@ -63,6 +64,7 @@ export const CanvasRevisionCard: React.FC<CanvasRevisionCardProps> = ({
   title,
   renderNotice,
 }) => {
+  const { t } = useTranslation('team');
   const { theme } = useTheme();
   const themeRef = useRef(theme);
   themeRef.current = theme;
@@ -143,7 +145,7 @@ export const CanvasRevisionCard: React.FC<CanvasRevisionCardProps> = ({
         className="canvas-card-host__notice select-text"
         data-canvas-card-state="revision-loading"
       >
-        <div className="canvas-card-host__notice-note">Loading revision...</div>
+        <div className="canvas-card-host__notice-note">{t('embed.loadingRevision')}</div>
       </div>
     );
   }

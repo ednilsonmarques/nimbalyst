@@ -5,6 +5,7 @@ import type {
   CreateConversationInput,
 } from '../../../shared/conversationDirectory';
 import { roomLabel } from './orgSidebarViewModel';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import type { OrgRosterMember } from './useOrgRoster';
 
 /**
@@ -47,12 +48,12 @@ export function validateRoomId(
   id: string,
   existingIds: readonly string[] = [],
 ): string | null {
-  if (!id) return 'Enter a room name to generate an id.';
+  if (!id) return translate('team:room.errors.idEmpty');
   if (!ROOM_ID_PATTERN.test(id)) {
-    return 'Room ids may only contain letters, numbers, dots, dashes and underscores.';
+    return translate('team:room.errors.idInvalid');
   }
   if (existingIds.some((existing) => existing.toLowerCase() === id.toLowerCase())) {
-    return 'A room with this id already exists.';
+    return translate('team:room.errors.idTaken');
   }
   return null;
 }
@@ -101,7 +102,7 @@ export function buildCreateRoomRequest(
 ): CreateRoomFormResult {
   const name = form.name.trim();
   const resolvedId = form.id.trim() || deriveRoomId(form.name);
-  const nameError = name ? null : 'Room name is required.';
+  const nameError = name ? null : translate('team:room.errors.nameRequired');
   const idError = name ? validateRoomId(resolvedId, options.existingIds ?? []) : null;
   const canSubmit = !nameError && !idError;
 
@@ -154,7 +155,7 @@ export function buildDirectMessageRequest(
   if (!viewerUserId) {
     return {
       participants: [],
-      error: 'Your membership in this organization is still resolving.',
+      error: translate('team:room.errors.membershipResolving'),
       request: null,
     };
   }
@@ -165,12 +166,12 @@ export function buildDirectMessageRequest(
     ),
   ];
   if (participants.length < MIN_DM_PARTICIPANTS) {
-    return { participants, error: 'Pick at least one person.', request: null };
+    return { participants, error: translate('team:room.errors.pickOne'), request: null };
   }
   if (participants.length > MAX_DM_PARTICIPANTS) {
     return {
       participants,
-      error: `A direct message holds at most ${MAX_DM_PARTICIPANTS} people, including you.`,
+      error: translate('team:room.errors.dmTooMany', { max: MAX_DM_PARTICIPANTS }),
       request: null,
     };
   }
@@ -355,7 +356,7 @@ export function buildRoomSettingsUpdate(
   entry: ConversationDirectoryEntry,
 ): RoomSettingsSaveResult {
   const name = form.name.trim();
-  if (!name) return { error: 'Room name is required.', input: null };
+  if (!name) return { error: translate('team:room.errors.nameRequired'), input: null };
 
   const currentName = entry.title?.trim() ?? '';
   const currentTopic = entry.topic?.trim() ?? '';

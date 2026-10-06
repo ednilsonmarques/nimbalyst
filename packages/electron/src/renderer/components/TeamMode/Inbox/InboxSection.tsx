@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { useAtom, useStore } from 'jotai';
 
 import { InboxContextPane } from './InboxContextPane';
@@ -60,7 +62,7 @@ export function InboxSection({
   now: nowProp,
   onBrowseRooms,
   onNewMessage,
-  composeUnavailableLabel = 'Compose is available in the organization window',
+  composeUnavailableLabel,
 }: {
   /** Mounted surface whose imperative command latches this Inbox consumes. */
   surfaceId?: string;
@@ -98,6 +100,7 @@ export function InboxSection({
    */
   composeUnavailableLabel?: string;
 } = {}) {
+  const { t } = useTranslation('team');
   const provider = useInboxProvider(providerProp);
 
   const snapshot = useSyncExternalStore(provider.subscribe, provider.getSnapshot, provider.getSnapshot);
@@ -240,7 +243,7 @@ export function InboxSection({
     if (result.outcome === 'navigationFailed') {
       // Read state is the user's record of what they have actually seen. A
       // failed open must not consume it.
-      setActivationNotice('Could not open that conversation. It stays unread.');
+      setActivationNotice(translate('team:inbox.openFailed'));
     }
   }, [provider]);
 
@@ -313,7 +316,7 @@ export function InboxSection({
         data-window-drag-region="true"
       >
         <div className="inbox-header-title flex items-center gap-2">
-          <h2 className="m-0 text-[15px] font-semibold text-[var(--nim-text)]">Inbox</h2>
+          <h2 className="m-0 text-[15px] font-semibold text-[var(--nim-text)]">{t('inbox.title')}</h2>
           {unreadInScope > 0 && (
             <span
               className="inbox-header-unread rounded-full bg-[var(--nim-primary)] px-1.5 text-[10px] font-semibold leading-4 text-[var(--nim-on-primary)]"
@@ -328,10 +331,10 @@ export function InboxSection({
               className="inbox-mark-all-read org-window-no-drag rounded-md border border-[var(--nim-border)] px-2.5 py-1 text-[12px] text-[var(--nim-text)] hover:bg-[var(--nim-bg-hover)] disabled:cursor-not-allowed disabled:text-[var(--nim-text-disabled)]"
               data-testid="inbox-mark-all-read"
               disabled={loading || unreadInScope === 0}
-              title={`Mark everything in ${filterLabel} as read`}
+              title={t('inbox.markAllReadTitle', { filter: filterLabel })}
               onClick={handleMarkAllRead}
             >
-              Mark {filterLabel.toLowerCase()} read
+              {t('inbox.markRead', { filter: filterLabel.toLowerCase() })}
             </button>
             <button
               type="button"
@@ -339,11 +342,11 @@ export function InboxSection({
               data-testid="inbox-new-message"
               disabled={!onNewMessage}
               title={onNewMessage
-                ? 'Write to a room or a person'
-                : composeUnavailableLabel}
+                ? t('inbox.newMessageTitle')
+                : (composeUnavailableLabel ?? t('inbox.composeUnavailable'))}
               onClick={onNewMessage}
             >
-              <MaterialSymbol icon="edit_square" size={14} /> New message
+              <MaterialSymbol icon="edit_square" size={14} /> {t('inbox.newMessage')}
             </button>
           </div>
         </div>
@@ -377,7 +380,7 @@ export function InboxSection({
         >
           <MaterialSymbol icon="encrypted_off" size={15} />
           <span className="min-w-0 flex-1">
-            Messaging is not available for {organization.orgName}. Migrate this organization to server-managed encryption to enable it.
+            {t('inbox.messagingUnavailable', { org: organization.orgName })}
           </span>
           <button
             type="button"
@@ -386,7 +389,7 @@ export function InboxSection({
               void provider.migrateOrganization(organization.orgId);
             }}
           >
-            Migrate organization
+            {t('inbox.migrateOrganization')}
           </button>
         </div>
       ))}

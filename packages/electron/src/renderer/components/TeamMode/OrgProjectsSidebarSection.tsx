@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { useAtomValue, useSetAtom } from 'jotai';
 
 import { HelpTooltip } from '../../help';
@@ -38,7 +40,7 @@ export function useOrgProjectLocalStates(orgId: string): {
     void window.electronAPI.team.resolveOrgProjectsLocalState(orgId)
       .then((result) => {
         if (cancelled) return;
-        if (!result?.success) throw new Error(result?.error ?? 'Could not load projects');
+        if (!result?.success) throw new Error(result?.error ?? translate('team:projects.loadFailedShort'));
         setProjects(result.projects ?? []);
       })
       .catch((reason) => {
@@ -91,6 +93,7 @@ export function OrgProjectsSidebarSection({
   error: string | null;
   onReload: () => void;
 }) {
+  const { t } = useTranslation('team');
   const [openError, setOpenError] = useState<string | null>(null);
   const collapsed = useAtomValue(orgSidebarCollapsedSectionsAtom);
   const toggleSection = useSetAtom(toggleOrgSidebarSectionAtom);
@@ -110,8 +113,8 @@ export function OrgProjectsSidebarSection({
   const openSharedProject = useCallback(async (project: OrgProjectLocalState) => {
     setOpenError(null);
     const selection = await window.electronAPI.invoke('dialog:openDirectory', {
-      title: `Choose a folder for ${project.name || project.slug || 'this project'}`,
-      buttonLabel: 'Open Project',
+      title: translate('team:projects.chooseFolderFor', { name: project.name || project.slug || translate('team:projects.thisProject') }),
+      buttonLabel: translate('team:projects.openProjectButton'),
     });
     const directoryPath = selection?.filePaths?.[0];
     if (!directoryPath) return;
@@ -122,7 +125,7 @@ export function OrgProjectsSidebarSection({
       directoryPath,
     });
     if (!result?.success) {
-      setOpenError(result?.error ?? 'Could not open that project');
+      setOpenError(result?.error ?? translate('team:projects.openFailed'));
       return;
     }
     onReload();
@@ -134,7 +137,7 @@ export function OrgProjectsSidebarSection({
     // permanently taking the bottom of the window.
     <SidebarSection
       sectionId="projects"
-      title="Projects"
+      title={t('adminTabs.projects')}
       testId="org-projects-sidebar-section"
       className="org-projects-sidebar-section"
       collapsed={collapsed.includes('projects')}
@@ -146,24 +149,24 @@ export function OrgProjectsSidebarSection({
           data-testid="org-projects-sidebar-retry"
           onClick={onReload}
         >
-          Retry
+          {t('common:retry')}
         </button>
       )}
     >
       <div className="org-projects-sidebar-list flex flex-col" data-testid="org-projects-sidebar-list" data-org-id={orgId}>
         {loading && (
           <div className="org-projects-sidebar-loading px-3 py-1 text-[11px] text-nim-muted">
-            Loading projects…
+            {t('projects.loading')}
           </div>
         )}
         {!loading && !error && projects.length === 0 && (
           <div className="org-projects-sidebar-empty px-3 py-1 text-[11px] text-nim-muted">
-            No projects yet.
+            {t('projects.empty')}
           </div>
         )}
         {!loading && error && (
           <div className="org-projects-sidebar-error px-3 py-1 text-[11px] text-nim-error">
-            Couldn't load projects.
+            {t('projects.loadFailed')}
           </div>
         )}
         {!loading && !error && projects.map((project) => (
@@ -196,7 +199,8 @@ function ProjectRow({
   onOpen: (workspacePath: string | null) => void;
   onOpenShared: (project: OrgProjectLocalState) => void;
 }) {
-  const name = project.name || project.slug || 'Untitled project';
+  const { t } = useTranslation('team');
+  const name = project.name || project.slug || t('projects.untitled');
   const isLocal = project.localStatus !== 'notLocal' && !!project.workspacePath;
   // A project with no git remote can be attached to any folder on this machine.
   // One backed by a remote cannot: cloning the repository is what connects it,
@@ -204,12 +208,12 @@ function ProjectRow({
   const canAttachFolder = !isLocal && !project.gitRemoteHash;
   const disabled = !isLocal && !canAttachFolder;
   const label = project.localStatus === 'open'
-    ? 'Open locally'
+    ? t('projects.status.open')
     : project.localStatus === 'closed'
-      ? 'Cloned locally'
+      ? t('projects.status.cloned')
       : canAttachFolder
-        ? 'Choose a folder for this project'
-        : 'Not local';
+        ? t('projects.status.chooseFolder')
+        : t('projects.status.notLocal');
   const dotClass = project.localStatus === 'open'
     ? 'bg-nim-success border-nim-success'
     : project.localStatus === 'closed'
@@ -229,7 +233,7 @@ function ProjectRow({
       data-local-status={project.localStatus}
       disabled={disabled}
       title={disabled
-        ? 'Clone this project’s repository, then open it to work in it here.'
+        ? t('projects.cloneHint')
         : label}
       onClick={() => (canAttachFolder ? onOpenShared(project) : onOpen(project.workspacePath))}
     >
@@ -238,7 +242,7 @@ function ProjectRow({
         <span className="block truncate text-[12.5px]">{name}</span>
         {project.localStatus === 'notLocal' && (
           <span className="block truncate text-[10px] text-nim-faint">
-            {canAttachFolder ? 'open locally…' : 'not local'}
+            {canAttachFolder ? t('projects.openLocallyShort') : t('projects.notLocalShort')}
           </span>
         )}
       </span>

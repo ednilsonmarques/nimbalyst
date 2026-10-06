@@ -1,0 +1,967 @@
+{
+  "relativeTime": {
+    "justNow": "Just now",
+    "minutesAgo_zero": "{{count}} mins ago",
+    "minutesAgo_one": "{{count}} min ago",
+    "minutesAgo_other": "{{count}} mins ago",
+    "hoursAgo_zero": "{{count}} hrs ago",
+    "hoursAgo_one": "{{count}} hr ago",
+    "hoursAgo_other": "{{count}} hrs ago",
+    "daysAgo_zero": "{{count}} days ago",
+    "daysAgo_one": "{{count}} day ago",
+    "daysAgo_other": "{{count}} days ago",
+    "weeksAgo_zero": "{{count}} weeks ago",
+    "weeksAgo_one": "{{count}} week ago",
+    "weeksAgo_other": "{{count}} weeks ago",
+    "monthsAgo_zero": "{{count}} months ago",
+    "monthsAgo_one": "{{count}} month ago",
+    "monthsAgo_other": "{{count}} months ago",
+    "yearsAgo_zero": "{{count}} years ago",
+    "yearsAgo_one": "{{count}} year ago",
+    "yearsAgo_other": "{{count}} years ago",
+    "monthsAgoShort_zero": "{{count}}mo ago",
+    "monthsAgoShort_one": "{{count}}mo ago",
+    "monthsAgoShort_other": "{{count}}mo ago"
+  },
+  "usage": {
+    "resetUnknown": "Unknown",
+    "resetNow": "Now"
+  },
+  "codexWindow": {
+    "session": "Session",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "secondaryUsage": "Secondary usage",
+    "usage": "Usage",
+    "usageWindow": "Usage window",
+    "hourWindow": "{{hours}}-hour window",
+    "dayWindow": "{{days}}-day window",
+    "minuteWindow": "{{minutes}}-minute window"
+  },
+  "backgroundWait": {
+    "taskLabel": "{{description}} ({{elapsed}})",
+    "defaultDescription": "background task",
+    "single": "Waiting on background task: {{task}}",
+    "multiple": "Waiting on {{total}} background tasks: {{tasks}}"
+  },
+  "filePlacement": {
+    "right": "Files open on the right in Agent mode",
+    "above": "Files open above the transcript in Agent mode",
+    "saveFailed": "Could not save file placement. Your layout may reset when you reopen the app."
+  },
+  "help": {
+    "h2-security-encryption-section": {
+      "title": "Security & encryption",
+      "body": "Controls how your team's shared data is encrypted. End-to-end encrypted teams (desktop & mobile only) can be migrated to server-managed keys to unlock web, CLI, and AI-agent access — encrypted, isolated per team, and audit-logged, but no longer zero-knowledge. Your personal sync always stays end-to-end encrypted. Only owners and admins can migrate."
+    },
+    "team-tab-inbox": {
+      "title": "Inbox",
+      "body": "Mentions, assignments, replies, and activity in conversations you follow across this organization. Tracker and document activity land here too, so the Inbox stays useful even when rooms are turned off."
+    },
+    "org-rooms-section-add": {
+      "title": "Rooms",
+      "body": "Create a room or browse the directory.\n\nRooms are organization-wide conversations. **Public** rooms are open to everyone in the organization; **private** rooms are limited to the people you add. An organization can restrict room creation to admins in its settings — browsing stays open to everyone."
+    },
+    "org-dms-section-add": {
+      "title": "Start a direct message",
+      "body": "A private conversation with up to seven other people. Direct messages cannot be renamed or joined later — pick the participants up front."
+    },
+    "org-browse-rooms": {
+      "title": "Browse rooms",
+      "body": "Every room you can see: public rooms across the organization plus the private ones you belong to. Joining a public room makes its activity follow you into your Inbox."
+    },
+    "org-rooms-create": {
+      "title": "Create a room",
+      "body": "Add a new organization room. Public rooms are open to everyone; private rooms are limited to the members you add."
+    },
+    "org-room-notifications": {
+      "title": "Notifications for this conversation",
+      "body": "Choose what reaches your Inbox from here:\n\n- **All messages** — every message\n- **Mentions only** — messages that @mention you\n- **Nothing** — nothing at all\n\nThe setting is per conversation and follows you across devices."
+    },
+    "org-room-actions": {
+      "title": "Room actions",
+      "body": "Invite members and open room settings — rename, edit the topic, manage membership and room admins, allow or block agent posting, or archive the room. Available to room admins and organization admins."
+    },
+    "org-window-status-bar": {
+      "title": "Nimbalyst Teams is in beta",
+      "body": "Expect bugs.\n\nOrganizations are free during beta and will require a paid Nimbalyst Teams subscription after launch; existing organizations get advance notice before any pricing change."
+    },
+    "organization-settings-rooms-toggle": {
+      "title": "Rooms",
+      "body": "Turn organization rooms off for an organization that chats elsewhere. The rooms section, the directory and room creation disappear for everyone; existing rooms are kept and come back if you turn this on again. The Inbox, document comments and tracker comments are unaffected."
+    },
+    "organization-settings-dms-toggle": {
+      "title": "Direct messages",
+      "body": "Turn direct messages off for this organization. The direct-messages section and every compose path to a person disappear; existing conversations are kept and come back if you turn this on again."
+    },
+    "organization-settings-room-creation": {
+      "title": "Who can create rooms",
+      "body": "Any member can create rooms by default. Restricting creation to organization admins leaves everyone else able to read, post in, and join the rooms that exist."
+    },
+    "file-tree-filter-button": {
+      "title": "Filter Your File Tree",
+      "body": "Show only markdown files, uncommitted git changes, or files the AI has read or written in this session."
+    },
+    "file-tree-quick-open-button": {
+      "title": "Quick Open Files",
+      "body": "Search for any file in your project by name. Recently opened files appear at the top."
+    },
+    "file-tree-new-file-button": {
+      "title": "New File",
+      "body": "Create a new file in the selected folder."
+    },
+    "file-tree-new-folder-button": {
+      "title": "New Folder",
+      "body": "Create a new folder in the selected folder."
+    },
+    "file-tree-refresh-button": {
+      "title": "Refresh File Tree",
+      "body": "Reload the file list from disk to pick up files added or removed outside Nimbalyst."
+    },
+    "document-session-control": {
+      "title": "AI Sessions for This Document",
+      "body": "Jump straight back into the last session on this document, or use the arrow to pick another session or start a new one."
+    },
+    "file-history-button": {
+      "title": "Document History",
+      "body": "View previous versions of this document. Restore or compare any saved state."
+    },
+    "toc-toggle-button": {
+      "title": "Table of Contents",
+      "body": "Toggle the table of contents panel. Navigate quickly to any heading in the document."
+    },
+    "diff-keep-button": {
+      "title": "Keep Changes",
+      "body": "Accept the AI changes for this section and update the document."
+    },
+    "diff-revert-button": {
+      "title": "Revert Changes",
+      "body": "Reject the AI changes and restore the original content."
+    },
+    "diff-keep-all-button": {
+      "title": "Keep All Changes",
+      "body": "Accept all pending AI changes throughout the document."
+    },
+    "diff-revert-all-button": {
+      "title": "Revert All Changes",
+      "body": "Reject all pending AI changes and restore the original document."
+    },
+    "nav-back-button": {
+      "title": "Navigate Back",
+      "body": "Go back to the previous file or location."
+    },
+    "nav-forward-button": {
+      "title": "Navigate Forward",
+      "body": "Go forward in your navigation history."
+    },
+    "files-mode-button": {
+      "title": "Files Mode",
+      "body": "Browse and edit your project files with AI assistance on any document."
+    },
+    "agent-mode-button": {
+      "title": "Agent Mode",
+      "body": "Full AI coding agent with project-wide context, tool use, and multi-step tasks."
+    },
+    "agent-sessions-bubble": {
+      "title": "Sessions Needing Attention",
+      "body": "Open sessions that are awaiting your input, currently running, or have unread output."
+    },
+    "session-kanban-button": {
+      "title": "Kanban Board",
+      "body": "Switch to a kanban board view of your sessions organized by phase: Backlog, Planning, Implementing, Validating, and Complete. Drag sessions between columns to update their status."
+    },
+    "layout-controls": {
+      "title": "Session Layout Modes",
+      "body": "View your AI session and files edited together:\n\n**Files**: Show only the file editor tabs. Available when you open an edited file in an AI Session.\n\n**Split**: Show both transcript and editor stacked vertically. Drag the divider to adjust.\n\n**Agent**: Show only the conversation transcript."
+    },
+    "session-history-button": {
+      "title": "Session History",
+      "body": "Browse past AI sessions. Search, filter, and resume previous conversations."
+    },
+    "session-quick-open-button": {
+      "title": "Quick Open Session",
+      "body": "Search and jump to any AI session by content or title. Much faster than scrolling through history."
+    },
+    "session-quick-search-button": {
+      "title": "Search Sessions",
+      "body": "Quickly find any AI session by name. Type **@** to search by file edited -- find every session that touched a specific file. Press **Tab** to switch to prompt search and find sessions by what you asked."
+    },
+    "session-archive-button": {
+      "title": "Archive Session",
+      "body": "Archive this session to keep your session list organized. Archived sessions can be restored anytime."
+    },
+    "tracker-automation-section": {
+      "title": "Tracker Automation",
+      "body": "Automatically connect git commits to your tracker items. When enabled, Nimbalyst links commits via the session's tracker items and by parsing issue keys (e.g. **NIM-123**) from commit messages — including commits made in your terminal.\n\nFor project-specific behavior, add instructions to your project's **CLAUDE.md** (e.g. \"always reference tracker issue keys in commits\" or \"don't auto-close critical bugs without review\")."
+    },
+    "agent-input": {
+      "title": "AI Input",
+      "body": "Type your message or paste images and files. The AI has full context of your project."
+    },
+    "plan-mode-toggle": {
+      "title": "Plan vs Agent Mode",
+      "body": "Toggle between Plan and Agent modes. Plan mode creates structured plans before the AI writes code. Agent mode executes changes directly."
+    },
+    "attach-files-input": {
+      "title": "Attach Files & Images",
+      "body": "Drag and drop files or paste images directly into the chat. You can also use @ to mention files from your project."
+    },
+    "agent-welcome": {
+      "title": "Start Your First Session",
+      "body": "Create an AI coding session. Describe what you want to build, and the agent will help you."
+    },
+    "files-scope-dropdown": {
+      "title": "File Scope Modes",
+      "body": "Control which files are shown. View AI edits from this session, only uncommitted changes, or all files in the workspace. In workstreams, filter by individual session or see all sessions combined."
+    },
+    "git-commit-mode-toggle": {
+      "title": "Commit Modes",
+      "body": "Choose how to commit your changes. Manual lets you write your own message. Smart uses AI to analyze changes and propose a commit message."
+    },
+    "git-operations-commit-with-ai-button": {
+      "title": "AI-Assisted Commit",
+      "body": "Have the AI analyze your changes and propose a set of files and a commit message for you to edit and approve."
+    },
+    "model-picker": {
+      "title": "Select AI Model",
+      "body": "Choose which AI model to use. Different models have different capabilities and speeds."
+    },
+    "model-picker-provider-claude-code": {
+      "title": "Claude Agent (Recommended)",
+      "body": "The in-app agent built on Claude Code with full Nimbalyst integration: it sees your active document and selection, renders the rich inline transcript, and tracks every file it edits. Runs on your Claude subscription when you sign in with your Claude plan, or on your Anthropic API key."
+    },
+    "model-picker-provider-claude-code-cli": {
+      "title": "Claude Code CLI (Terminal Mode)",
+      "body": "For people who prefer the command-line tool itself: runs the genuine claude binary in an embedded terminal, so you get its slash commands and TUI in the Raw terminal drawer while Nimbalyst mirrors the conversation into the rich transcript. You do not need this to use your Claude subscription."
+    },
+    "action-prompts-dropdown": {
+      "title": "Action Prompts",
+      "body": "Reusable prompts you define in nimbalyst-local/ai-actions.md. Picking one inserts its body into the draft so you can tweak it before sending."
+    },
+    "context-indicator": {
+      "title": "Context Window",
+      "body": "Shows how much of the AI context window is used. Includes files, conversation history, and tools."
+    },
+    "transcript-archive-button": {
+      "title": "Archive Session",
+      "body": "Archive this session to keep your session list tidy."
+    },
+    "transcript-search-button": {
+      "title": "Search Transcript",
+      "body": "Search within this conversation for specific messages or content."
+    },
+    "voice-mode-toggle": {
+      "title": "Voice Mode",
+      "body": "Speak to the AI instead of typing. The AI will respond with voice."
+    },
+    "gutter-permissions-button": {
+      "title": "Agent Permissions",
+      "body": "Configure which tools the AI agent can use. Control file access, command execution, and more."
+    },
+    "gutter-extension-dev-button": {
+      "title": "Extension Dev Mode",
+      "body": "Open extension development tools, logs, and rebuild options."
+    },
+    "gutter-theme-button": {
+      "title": "Theme",
+      "body": "Switch between light and dark themes."
+    },
+    "gutter-feedback-button": {
+      "title": "Send Feedback",
+      "body": "Share feedback or report issues with the team."
+    },
+    "gutter-user-button": {
+      "title": "User Menu",
+      "body": "Open user menu to access User Settings, Project Settings, Team Settings, and account info."
+    },
+    "terminal-panel-button": {
+      "title": "Terminal",
+      "body": "Toggle the terminal panel for running commands."
+    },
+    "tracker-mode-button": {
+      "title": "Trackers",
+      "body": "Switch to Tracker mode for a full project management view with table and kanban layouts."
+    },
+    "collab-mode-button": {
+      "title": "Pages",
+      "body": "Browse and edit pages shared with your team in real-time. Collaborate on markdown, spreadsheets, diagrams, and placed tracker types."
+    },
+    "org-mode-button": {
+      "title": "Organization",
+      "body": "Your organization's inbox, rooms and direct messages, for the organization this project belongs to."
+    },
+    "pr-review-mode-button": {
+      "title": "GitHub",
+      "body": "Work this project's GitHub without leaving the app: browse pull requests and issues, read diffs and conversation, and hand either to an agent."
+    },
+    "settings-project-tab": {
+      "title": "Project Settings",
+      "body": "Settings specific to this project. Stored in the project folder."
+    },
+    "settings-global-tab": {
+      "title": "Global Settings",
+      "body": "Settings that apply to all projects."
+    },
+    "settings-walkthroughs-toggle": {
+      "title": "Feature Guides",
+      "body": "Show helpful guides for new features. Guides appear automatically as you use the app."
+    },
+    "settings-walkthroughs-reset": {
+      "title": "Reset Guides",
+      "body": "Show all feature guides again, even ones you have already seen."
+    },
+    "project-manager-open": {
+      "title": "Open Project",
+      "body": "Open a project folder from your computer."
+    },
+    "project-manager-recent": {
+      "title": "Recent Projects",
+      "body": "Your recently opened projects for quick access."
+    }
+  },
+  "tips": {
+    "unknownTitle": "Unknown Tip",
+    "unknownMessage": "Tip \"{{tipId}}\" not found.",
+    "resetTitle": "Tips Reset",
+    "resetMessage": "All tips will show again."
+  },
+  "walkthroughs": {
+    "notFoundTitle": "Walkthrough Not Found",
+    "notFoundMessage": "Unknown walkthrough: {{walkthroughId}}",
+    "cannotShowTitle": "Cannot Show Walkthrough",
+    "targetMissing": "\"{{name}}\" requires UI elements that aren't visible on this screen. Try switching to {{mode}} first.",
+    "conditionsNotMet": "\"{{name}}\" conditions aren't met. Try switching to {{mode}} first.",
+    "agentMode": "Agent Mode",
+    "filesMode": "Files Mode",
+    "resetTitle": "Walkthroughs Reset",
+    "resetMessage": "All walkthrough guides will show again."
+  },
+  "terminal": {
+    "restartFailed": "Failed to restart terminal",
+    "ptyInitFailed": "Failed to initialize PTY",
+    "restoreFailed": "Saved terminal history could not be restored cleanly. Live terminal output continues.",
+    "restorePartial": "Saved terminal history restored partially. Live terminal output continues.",
+    "restorePartialTimeout": "Saved terminal history restored partially because replay took too long.",
+    "unknownError": "Unknown error",
+    "dismiss": "Dismiss",
+    "initializing": "Initializing terminal...",
+    "initFailed": "Failed to initialize terminal: {{error}}",
+    "processExited": "Process exited with code {{code}}.",
+    "restart": "Restart",
+    "newTerminal": "New Terminal",
+    "closePanel": "Close panel",
+    "noTerminals": "No terminals open",
+    "shellLabel": "Shell: {{shell}}",
+    "currentWorktreeSuffix": "(Current worktree)",
+    "currentWorktreeTerminal": "Current worktree terminal",
+    "worktreeTerminal": "Worktree terminal",
+    "commandRunning": "Command running",
+    "closeTerminal": "Close terminal"
+  },
+  "feedbackIntake": {
+    "title": "Send better feedback with your Agent",
+    "intro": "Use your Agent to improve your bug reports and feature requests. Your agent will help draft it, and you approve everything before GitHub opens.",
+    "bugTitle": "Bug report",
+    "bugDescription": "Broken behavior, crashes, sync issues, or regressions.",
+    "featureTitle": "Feature request",
+    "featureDescription": "Missing capabilities, workflow improvements, or UX changes.",
+    "includeLogs": "Include logs and environment details",
+    "includeLogsDescription": "Logs may include file paths, workspace names, and error details. The assistant anonymizes them first, and you review the final report before it is posted.",
+    "mockupFirst": "Explore the idea with a UX mockup first",
+    "mockupFirstDescription": "Best for interface or workflow changes. The assistant can sketch a mockup, refine it with you, and include that visual direction in the request.",
+    "startBug": "Start bug report",
+    "startFeature": "Start feature request",
+    "chooseType": "Choose a type to continue",
+    "otherWays": "Other ways to reach us",
+    "browseIssues": "Browse existing issues on GitHub",
+    "discussIdea": "Discuss an idea on GitHub Discussions",
+    "emailSupport": "Email private feedback to {{email}}"
+  },
+  "alphaBadge": {
+    "stage": {
+      "alpha": {
+        "title": "Alpha",
+        "word": "alpha",
+        "ariaLabel": "Alpha feature"
+      },
+      "beta": {
+        "title": "Beta",
+        "word": "beta",
+        "ariaLabel": "Beta feature"
+      }
+    },
+    "defaultTooltip": "Alpha feature — may change or be removed.",
+    "settingsTooltip": "Alpha features may be incomplete, and shared data may be lost.\n\nTeam features are free during beta and will be part of a Nimbalyst Teams subscription in the future.",
+    "teamBetaTooltip": "Nimbalyst Teams is in beta. Expect bugs.\n\nOrganizations are free during beta and will require a paid Nimbalyst Teams subscription after launch."
+  },
+  "teamBetaNotice": {
+    "text": "<highlight>Nimbalyst Teams is in beta</highlight> — expect bugs. Organizations are free during beta and will require a paid Nimbalyst Teams subscription after launch; existing organizations get advance notice before any pricing change."
+  },
+  "trackerOwnership": {
+    "personal": "Personal",
+    "team": "Team",
+    "personalDescription": "On this machine. Never synced.",
+    "everyoneDescription": "Everyone sees the same fields, items, and numbers.",
+    "sharedWithPeopleDescription_zero": "Shared with {{count}} people. Everyone sees the same fields, items, and numbers.",
+    "sharedWithPeopleDescription_one": "Shared with {{count}} people. Everyone sees the same fields, items, and numbers.",
+    "sharedWithPeopleDescription_other": "Shared with {{count}} people. Everyone sees the same fields, items, and numbers.",
+    "localOnly": "Local only",
+    "sharedPeople_zero": "Shared · {{count}} people",
+    "sharedPeople_one": "Shared · {{count}} people",
+    "sharedPeople_other": "Shared · {{count}} people",
+    "sharedWithTeam": "Shared with the team",
+    "teamOwnsTooltip": "{{team}} owns this tracker — changing its fields changes them for everyone",
+    "onlyOnThisMachine": "Only on this machine",
+    "withDrafts": "{{label}} · drafts"
+  },
+  "keyboardShortcuts": {
+    "groups": {
+      "file": "File",
+      "edit": "Edit",
+      "view": "View",
+      "window": "Window",
+      "organizationWindowMessages": "Organization Window — Messages",
+      "trackerGrid": "Tracker Grid",
+      "textFormatting": "Text Formatting",
+      "paragraphFormatting": "Paragraph Formatting",
+      "textAlignment": "Text Alignment",
+      "textCaseAndSize": "Text Case & Size",
+      "projectCanvas": "Project Canvas"
+    },
+    "items": {
+      "newFileNewSession": "New File / New Session",
+      "launchSessionPopup": "Launch Session Popup",
+      "newTrackerItem": "New Tracker Item",
+      "newBrowserTab": "New Browser Tab",
+      "openFile": "Open File",
+      "save": "Save",
+      "closeTab": "Close Tab",
+      "reopenClosedTab": "Reopen Closed Tab",
+      "closeProject": "Close Project",
+      "quit": "Quit",
+      "undo": "Undo",
+      "redo": "Redo",
+      "cut": "Cut",
+      "copy": "Copy",
+      "paste": "Paste",
+      "pasteAsText": "Paste as Text",
+      "selectAll": "Select All",
+      "find": "Find",
+      "findNext": "Find Next",
+      "findPrevious": "Find Previous",
+      "viewLocalHistory": "View Local History",
+      "approveCurrentAction": "Approve Current Action",
+      "rejectCurrentAction": "Reject Current Action",
+      "togglePlanModeClaudeCode": "Toggle Plan Mode (Claude Code)",
+      "chooseAIModelAIInputFocused": "Choose AI Model (AI input focused)",
+      "nextPreviousAIMenuModelEffortActions": "Next / Previous AI menu (model, effort, actions)",
+      "filesMode": "Files Mode",
+      "agentMode": "Agent Mode",
+      "sessionKanbanView": "Session Kanban View",
+      "toggleAIChatPanel": "Toggle AI Chat Panel",
+      "toggleBottomPanel": "Toggle Bottom Panel",
+      "toggleTerminalPanel": "Toggle Terminal Panel",
+      "toggleClaudeCLITerminalDrawer": "Toggle Claude CLI Terminal Drawer",
+      "trackerMode": "Tracker Mode",
+      "pages": "Pages",
+      "organization": "Organization",
+      "toggleSidebar": "Toggle Sidebar",
+      "toggleExpandedTab": "Toggle Expanded Tab",
+      "navigateBack": "Navigate Back",
+      "navigateForward": "Navigate Forward",
+      "nextTab": "Next Tab",
+      "previousTab": "Previous Tab",
+      "actualSize": "Actual Size",
+      "zoomIn": "Zoom In",
+      "zoomOut": "Zoom Out",
+      "toggleFullScreen": "Toggle Full Screen",
+      "projectManager": "Project Manager",
+      "switchProject": "Switch Project",
+      "sessionQuickOpen": "Session Quick Open",
+      "promptQuickOpen": "Prompt Quick Open",
+      "contentSearch": "Content Search",
+      "memorySearch": "Memory Search",
+      "teamQuickOpen": "Team Quick Open",
+      "organizationMessages": "Organization Messages",
+      "newWorktree": "New Worktree",
+      "settings": "Settings",
+      "minimize": "Minimize",
+      "newMessage": "New Message",
+      "goToInbox": "Go to Inbox",
+      "searchMessages": "Search Messages",
+      "nextConversation": "Next Conversation",
+      "previousConversation": "Previous Conversation",
+      "markAllAsRead": "Mark All as Read",
+      "moveBetweenCells": "Move between cells",
+      "editFocusedCell": "Edit focused cell",
+      "openFocusedItemDetails": "Open focused item details",
+      "commitEditNextRow": "Commit edit / next row",
+      "cancelEditCloseDetails": "Cancel edit / close details",
+      "undoLastGridEdit": "Undo last grid edit",
+      "redoGridEdit": "Redo grid edit",
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "strikethrough": "Strikethrough",
+      "insertLink": "Insert Link",
+      "clearFormatting": "Clear Formatting",
+      "normalText": "Normal Text",
+      "heading1": "Heading 1",
+      "heading2": "Heading 2",
+      "heading3": "Heading 3",
+      "numberedList": "Numbered List",
+      "bulletList": "Bullet List",
+      "checkList": "Check List",
+      "codeBlock": "Code Block",
+      "quote": "Quote",
+      "leftAlign": "Left Align",
+      "centerAlign": "Center Align",
+      "rightAlign": "Right Align",
+      "justify": "Justify",
+      "indent": "Indent",
+      "outdent": "Outdent",
+      "lowercase": "Lowercase",
+      "uppercase": "Uppercase",
+      "capitalize": "Capitalize",
+      "increaseFontSize": "Increase Font Size",
+      "decreaseFontSize": "Decrease Font Size",
+      "subscript": "Subscript",
+      "superscript": "Superscript"
+    },
+    "keys": {
+      "arrowKeysOrTab": "Arrow keys / Tab",
+      "f2OrType": "F2 or start typing",
+      "enterWhileEditing": "Enter (while editing)"
+    },
+    "title": "Keyboard Shortcuts",
+    "tabs": {
+      "general": "General",
+      "editor": "Editor Formatting",
+      "extensions": "Extensions"
+    },
+    "noExtensionKeybindings": "No extension keybindings registered. Extensions can contribute keybindings via their manifest.json.",
+    "pressEscToClose": "Press <kbd>Esc</kbd> to close"
+  },
+  "quickOpen": {
+    "tabs": {
+      "memory": "Memory",
+      "team": "Team",
+      "files": "Files",
+      "inFiles": "In Files",
+      "sessions": "Sessions",
+      "prompts": "Prompts",
+      "projects": "Projects",
+      "trackers": "Trackers"
+    },
+    "fileMasks": {
+      "styles": "Styles",
+      "config": "Config"
+    },
+    "trackerTypes": {
+      "bug": "Bug",
+      "task": "Task",
+      "plan": "Plan",
+      "idea": "Idea",
+      "decision": "Decision",
+      "feature": "Feature"
+    },
+    "scopes": {
+      "all": "All",
+      "docs": "Docs",
+      "local": "Local",
+      "shared": "Shared",
+      "me": "Me",
+      "agents": "Agents"
+    },
+    "placeholders": {
+      "memoryTrackers": "Search trackers by title, key, or meaning...",
+      "memoryDocs": "Search indexed docs by meaning...",
+      "memorySessions": "Search indexed sessions by meaning...",
+      "memoryAll": "Search project memory — docs, trackers, sessions...",
+      "team": "Search shared team documents...",
+      "projects": "Search projects...",
+      "inFiles": "Search in file contents...",
+      "sessions": "Search sessions... (@ to filter by file edited)",
+      "prompts": "Search prompts...",
+      "files": "Search files..."
+    },
+    "comingSoon": "Coming soon",
+    "soon": "soon",
+    "searchingMessages": "Searching messages...",
+    "backToTitleSearch": "Back to title search",
+    "messageMatches": "Message matches",
+    "searchContentsHint": "Press Shift+Tab to search message contents",
+    "searchContents": "Search contents",
+    "filters": {
+      "mask": "Mask",
+      "type": "Type",
+      "show": "Show"
+    },
+    "footer": {
+      "navigate": "Navigate",
+      "openAtPrompt": "Open at this prompt",
+      "open": "Open",
+      "nextTab": "Next tab"
+    },
+    "empty": {
+      "noMatchingTeamDocs": "No matching team documents",
+      "noTeamDocs": "No shared team documents yet",
+      "noSharedDocsFound": "No shared documents found",
+      "noSharedDocs": "No shared documents",
+      "noFilesFound": "No files found",
+      "noRecentFiles": "No recent files",
+      "noMatchesWithMask": "No matches with {{mask}}",
+      "noMatches": "No matches",
+      "typeToSearchContents": "Type to search file contents",
+      "typeToSearchFiles": "Type to search files...",
+      "noSessionsEdited": "No sessions edited {{file}}",
+      "noSessionsFound": "No sessions found",
+      "noRecentSessions": "No recent sessions",
+      "noPromptsFound": "No prompts found",
+      "noRecentPrompts": "No recent prompts",
+      "noProjectsFound": "No projects found",
+      "noRecentProjects": "No recent projects",
+      "noMatchingTrackers": "No matching trackers",
+      "noTrackers": "No trackers yet"
+    },
+    "newOrChanged": "New or changed",
+    "favorite": "Favorite",
+    "searching": "Searching...",
+    "showFileSessions": "Show sessions that edited this file",
+    "badges": {
+      "shared": "Shared",
+      "recent": "Recent",
+      "inWorkstream": "In Workstream",
+      "worktree": "Worktree",
+      "current": "Current",
+      "open": "Open"
+    },
+    "searchingFileContents": "Searching file contents...",
+    "matchCount_zero": "{{count}} matches",
+    "matchCount_one": "{{count}} match",
+    "matchCount_other": "{{count}} matches",
+    "lineNumber": "Line {{line}}:",
+    "andMore": "...and {{count}} more",
+    "status": {
+      "processing": "Processing...",
+      "waitingForResponse": "Waiting for your response",
+      "unreadResponse": "Unread response"
+    },
+    "newConversation": "New conversation",
+    "filteredToSessionsThatEdited": "Filtered to sessions that edited:",
+    "clearFileFilter": "Clear file filter",
+    "messageCount_zero": "{{count}} msgs",
+    "messageCount_one": "{{count}} msg",
+    "messageCount_other": "{{count}} msgs",
+    "uncommittedChanges_zero": "{{count}} uncommitted changes",
+    "uncommittedChanges_one": "{{count}} uncommitted change",
+    "uncommittedChanges_other": "{{count}} uncommitted changes",
+    "promptsFrom": "Prompts from",
+    "copiedToClipboard": "Copied to clipboard",
+    "attachFolder": "Attach Folder to Workspace...",
+    "attachFolderDescription": "Browse it here and let agents read it, without leaving this project",
+    "searchIn": "Search in",
+    "refTypes": {
+      "tracker": "Tracker",
+      "session": "Session",
+      "document": "Document"
+    },
+    "semantic": {
+      "scopeAll": "trackers, documents, and sessions",
+      "scopeDocs": "indexed documents",
+      "scopeTrackers": "trackers",
+      "scopeSessions": "sessions",
+      "searchByMeaning": "Search {{scope}} by meaning",
+      "noMatches": "No semantic matches in {{scope}}",
+      "match": "Semantic match"
+    },
+    "loadingTrackers": "Loading trackers...",
+    "searchingTrackers": "Searching trackers...",
+    "filterChip": {
+      "any": "Any",
+      "clear": "Clear filter",
+      "options": "Options",
+      "recent": "Recent",
+      "removeFromHistory": "Remove from history",
+      "custom": "Custom",
+      "placeholder": "Filter..."
+    }
+  },
+  "projectTrust": {
+    "agentVerifiedDescription": "Works without interrupting you; risky actions like deploys and destructive commands pause for your OK."
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "unexpected": "An unexpected error occurred",
+    "tryAgain": "Try Again"
+  },
+  "remoteMachine": {
+    "ariaLabel": "Execution machine",
+    "thisMac": "This Mac",
+    "lastSeen": "Last seen {{time}}",
+    "offline": "Offline",
+    "remoteOffline": "Remote machine · Offline"
+  },
+  "extensionPermissions": {
+    "risk": {
+      "high": "High risk",
+      "elevated": "Elevated",
+      "low": "Low risk"
+    },
+    "enableTitle": "Enable {{name}}?",
+    "needsNewPermissions": "{{name}} needs new permissions",
+    "updatedBanner_zero": "This extension updated and now requires {{count}} additional permissions, marked NEW below.",
+    "updatedBanner_one": "This extension updated and now requires {{count}} additional permission, marked NEW below.",
+    "updatedBanner_other": "This extension updated and now requires {{count}} additional permissions, marked NEW below.",
+    "nativeCodeTitle": "This extension will run native code on your computer.",
+    "nativeCodeBody": "Enabling this module lets it spawn processes, open network connections, and read or write files with the same access your user account has. Only enable extensions from sources you trust.",
+    "newBadge": "New",
+    "revokeHint": "You can revoke this at any time from Settings → Extensions.",
+    "notNow": "Not now",
+    "enable": "Enable",
+    "backend": {
+      "apiNotLoaded": "Privileged capabilities API not loaded yet. Restart Nimbalyst to manage backend module permissions.",
+      "title": "Privileged Capabilities",
+      "unknownPermission": "Unknown permission: {{id}}",
+      "thisWorkspace": "This workspace",
+      "noWorkspaceOpen": "No workspace open",
+      "allWorkspaces": "All workspaces",
+      "scopeNotApplicable": "{{scope}}: n/a",
+      "scopeNotEnabled": "{{scope}}: not enabled",
+      "scopeEnabled": "{{scope}}: enabled",
+      "revoke": "revoke"
+    },
+    "hostState": {
+      "running": "Running",
+      "starting": "Starting",
+      "awaitingConsent": "Awaiting consent",
+      "awaitingTrust": "Workspace not trusted",
+      "crashed": "Crashed",
+      "denied": "Denied",
+      "stopped": "Stopped"
+    }
+  },
+  "extensionDev": {
+    "buildFailedGeneric": "The extension build failed. Open View Logs for details.",
+    "rebuiltOne": "{{name}} rebuilt and reloaded.",
+    "buildFailedFor": "Build failed for {{names}}. Open View Logs for details.",
+    "rebuiltMany_zero": "Rebuilt and reloaded {{count}} extensions.",
+    "rebuiltMany_one": "Rebuilt and reloaded {{count}} extension.",
+    "rebuiltMany_other": "Rebuilt and reloaded {{count}} extensions.",
+    "ariaLabel": "Extension Development Mode",
+    "title": "Extension Dev Mode",
+    "toolsActive": "Development tools active",
+    "started": "Started {{time}}",
+    "staleBundles_zero": "{{count}} stale extension bundles detected. Rebuild before testing.",
+    "staleBundles_one": "{{count}} stale extension bundle detected. Rebuild before testing.",
+    "staleBundles_other": "{{count}} stale extension bundles detected. Rebuild before testing.",
+    "viewLogs": "View Logs",
+    "settings": "Extension Settings",
+    "rebuilding": "Rebuilding...",
+    "rebuildExtensions": "Rebuild Extensions",
+    "rebuildingAll": "Rebuilding all...",
+    "allExtensions": "All Extensions",
+    "noBuildable": "No buildable extensions found",
+    "restarting": "Restarting...",
+    "restart": "Restart Nimbalyst"
+  },
+  "extensionLogs": {
+    "title": "Extension Logs",
+    "filterByLevel": "Filter by level",
+    "allLevels": "All Levels",
+    "levels": {
+      "error": "Errors",
+      "warn": "Warnings",
+      "info": "Info",
+      "debug": "Debug"
+    },
+    "filterBySource": "Filter by source",
+    "allSources": "All Sources",
+    "sources": {
+      "renderer": "Renderer",
+      "main": "Main",
+      "build": "Build"
+    },
+    "filterByExtension": "Filter by extension",
+    "autoRefresh": "Auto-refresh",
+    "clearLogs": "Clear logs",
+    "empty": "No logs to display",
+    "emptyHint": "Extension logs will appear here when extensions emit console messages or errors.",
+    "filterByExtensionId": "Filter by {{id}}"
+  },
+  "app": {
+    "gitLogUnavailable": "Git Log is not available. Enable the Git extension to open it.",
+    "figmaMcp": {
+      "title": "Figma MCP Server Needs Reconfiguration",
+      "message": "Your current Figma MCP configuration will not work in Nimbalyst. Figma does not allow OAuth based MCP in certain apps.\n\nTo fix it, open the MCP settings and do the following:\n\n1. Remove the existing OAuth Figma MCP configuration.\n2. Add a new Figma MCP config from the Nimbalyst MCP template.\n3. Add your Personal Access Token to the MCP config.",
+      "openSettings": "Open MCP Settings"
+    },
+    "nothingToCommit": {
+      "title": "Nothing to commit",
+      "message": "The selected files cannot be committed (conflicted files are excluded)."
+    },
+    "commitWithAiFailed": "Commit with AI failed",
+    "unsyncedCollab": {
+      "title": "Unsynced Collaborative Changes",
+      "replaying": "This collaborative document is still replaying local changes to the server. Closing now may delay recovery until you reopen it.",
+      "unconfirmed": "This collaborative document has local changes that have not been confirmed by the server yet. Closing now will keep them queued locally, but they will not sync until you reopen the document and reconnect.",
+      "keepEditing": "Keep Editing"
+    },
+    "unsavedChanges": {
+      "title": "Unsaved Changes",
+      "message": "Do you want to save the changes you made? Your changes will be lost if you don't save them.",
+      "dontSave": "Don't Save"
+    },
+    "agentNeedsWorkspace": "Agent mode requires a workspace",
+    "agentNeedsWorkspaceHint": "Open a workspace to use agent features",
+    "openWorkspaceToStart": "Open a workspace to get started"
+  },
+  "share": {
+    "couldNotShare": "Could not share to team",
+    "scopeUnavailable": "The active team collaboration scope is unavailable.",
+    "copyLink": "Copy Link",
+    "copyFailed": "Copy failed",
+    "copyFailedMessage": "Could not write the link to the clipboard.",
+    "linkedShared_zero": "Shared {{count}} linked documents.",
+    "linkedShared_one": "Shared {{count}} linked document.",
+    "linkedShared_other": "Shared {{count}} linked documents.",
+    "linkedFailed_zero": "{{count}} linked documents could not be shared and remain local links.",
+    "linkedFailed_one": "{{count}} linked document could not be shared and remain local links.",
+    "linkedFailed_other": "{{count}} linked documents could not be shared and remain local links.",
+    "nowCollaborativeMigrated_zero": "\"{{title}}\" is now a collaborative document. Migrated {{count}} attachments.",
+    "nowCollaborativeMigrated_one": "\"{{title}}\" is now a collaborative document. Migrated {{count}} attachment.",
+    "nowCollaborativeMigrated_other": "\"{{title}}\" is now a collaborative document. Migrated {{count}} attachments.",
+    "nowCollaborative": "\"{{title}}\" is now a collaborative document.",
+    "missingLinkedTitle": "Shared with missing linked documents",
+    "sharedToTeam": "Shared to team",
+    "missingAttachmentsTitle": "Shared with missing attachments",
+    "attachmentsFailed_zero": "\"{{title}}\" was shared but {{count}} attachments failed to upload.",
+    "attachmentsFailed_one": "\"{{title}}\" was shared but {{count}} attachment failed to upload.",
+    "attachmentsFailed_other": "\"{{title}}\" was shared but {{count}} attachments failed to upload.",
+    "imagesNotMigrated": "\"{{title}}\" is now collaborative, but image attachments could not be migrated.",
+    "imagesNotMigratedWithReason": "\"{{title}}\" is now collaborative, but image attachments could not be migrated: {{reason}}",
+    "folderTooLargeTitle": "Folder is too large to share",
+    "folderTooLarge": "\"{{folder}}\" holds {{count}} shareable documents, more than the {{max}} one promote can publish. Share its subfolders separately.",
+    "couldNotShareFolder": "Could not share folder to team",
+    "folderTreeFailed": "The shared folder tree could not be created: {{message}}",
+    "folderUnreadable": "\"{{folder}}\" could not be read: {{message}}",
+    "nothingToShare": "Nothing to share",
+    "noCollaborativeType": "No file in \"{{folder}}\" has a collaborative document type.",
+    "teamRoot": "the team root",
+    "nothingWasShared": "Nothing was shared",
+    "noDocumentCouldBeShared": "No document in \"{{folder}}\" could be shared.",
+    "documentCount_zero": "{{count}} documents",
+    "documentCount_one": "{{count}} document",
+    "documentCount_other": "{{count}} documents",
+    "failedToShareCount_zero": "{{count}} failed to share",
+    "failedToShareCount_one": "{{count}} failed to share",
+    "failedToShareCount_other": "{{count}} failed to share",
+    "skippedNoType_zero": "{{count}} files had no collaborative document type",
+    "skippedNoType_one": "{{count}} file had no collaborative document type",
+    "skippedNoType_other": "{{count}} files had no collaborative document type",
+    "folderSharedTitle": "Folder shared to team",
+    "folderShared": "Shared {{documents}} from \"{{folder}}\" to {{destination}}.",
+    "folderSharedWithExceptionsTitle": "Folder shared with exceptions",
+    "folderSharedWithExceptions": "Shared {{documents}} from \"{{folder}}\" to {{destination}}. {{exceptions}}."
+  },
+  "diskChange": {
+    "delayedTitle": "File updates delayed",
+    "delayedMessage": "Could not refresh {{file}}. Your unsaved edits are preserved."
+  },
+  "errors": {
+    "anErrorOccurred": "An error occurred",
+    "uncaughtError": "Uncaught Error",
+    "unhandledRejection": "Unhandled Promise Rejection"
+  },
+  "worktreeArchive": {
+    "failed": "Failed to archive \"{{name}}\"",
+    "autoRejected": "The backend rejected the auto-archive.",
+    "rejected": "The backend rejected the archive."
+  },
+  "links": {
+    "notInProjectTitle": "Not in this project",
+    "notInProjectMessage": "Open the project this link belongs to, then try the link again.",
+    "viewUnavailableTitle": "View not available",
+    "pageNotInProjectTitle": "Page not in this project",
+    "viewUnavailableMessage": "This list is not available to open on its own.",
+    "pageNotInProjectMessage": "The page this link points at is not in this project."
+  },
+  "fileWatch": {
+    "resumedTitle": "File updates resumed",
+    "resumedMessage": "Open files are being checked for changes.",
+    "delayedMessage": "Automatic file updates are recovering. Open files will continue to be checked for changes."
+  },
+  "deepLinks": {
+    "joinedTitle": "You joined {{team}}",
+    "joinedMessage": "Shared documents, trackers, and projects for this team are now available.",
+    "readyTitle": "{{team}} is ready",
+    "readyMessage": "Shared documents, trackers, and projects for this team are available in Nimbalyst.",
+    "signInToAcceptTitle": "Sign in to accept this invitation",
+    "signInAs": "Sign in to Nimbalyst as {{email}} to join this team.",
+    "signInWithInvitedAddress": "Sign in to Nimbalyst with the address the invitation was sent to.",
+    "signIn": "Sign in",
+    "invitationUnavailableTitle": "Invitation not available",
+    "invitationUnavailableMessage": "This invitation is no longer pending for your account. Ask the team admin to send a new one.",
+    "acceptFailedTitle": "Could not accept the invitation",
+    "signInRequired": "Sign in required",
+    "signInToOpenFolder": "Sign in to your Nimbalyst team account to open this shared folder.",
+    "noMatchingWorkspace": "No matching workspace",
+    "noWorkspaceForFolder": "You do not have a workspace open for the team that owns this folder.",
+    "signInToOpenDocument": "Sign in to your Nimbalyst team account to open this shared document.",
+    "noWorkspaceForDocument": "You do not have a workspace open for the team that owns this document.",
+    "signInToOpenTracker": "Sign in to your Nimbalyst team account to open this tracker.",
+    "noWorkspaceForTracker": "You do not have a workspace open for the team that owns this tracker."
+  },
+  "sessions": {
+    "deleteFailed": "Failed to delete session",
+    "unknownError": "Unknown error",
+    "branchFailed": "Failed to branch conversation",
+    "remoteCreateFailed": "Could not create remote session",
+    "remoteWorktreeUnavailable": "Remote worktree unavailable",
+    "remoteWorktreeUnsupported": "Worktrees are not supported by this remote host yet.",
+    "createFailed": "Failed to Create Session",
+    "worktreeAddUnexpected": "An unexpected error occurred while adding a session to the worktree."
+  },
+  "sessionNavigation": {
+    "fallbackLabel": "Session {{id}}",
+    "archived": "Session {{id}} is archived and was not opened. Restore it from archived sessions, then retry.",
+    "missing": "Session {{id}} could not be found in its originating project.",
+    "projectUnavailable": "Nimbalyst could not switch to the project for session {{id}}. Close a project from the rail, then retry.",
+    "lookupFailed": "Nimbalyst could not verify session {{id}} in its originating project.",
+    "unavailableTitle": "{{label}} unavailable"
+  },
+  "files": {
+    "cannotOpen": "Cannot Open File"
+  },
+  "workspaceFolders": {
+    "attachTitle": "Attach Folder to Workspace",
+    "attachButton": "Attach"
+  },
+  "attachments": {
+    "storageBudget": "Out of local space for pending uploads. Wait for earlier attachments to finish sending, then try again.",
+    "uploadFailedWithReason": "{{file}} could not be attached: {{message}}",
+    "uploadFailed": "{{file}} could not be attached.",
+    "empty": "{{file}} is empty.",
+    "tooLarge": "{{file}} is {{size}}. Attachments are limited to {{max}}.",
+    "tooLargeAfterCompression": "{{file}} is {{size}} after compression. Attachments are limited to {{max}}."
+  },
+  "providerCredentials": {
+    "loadFailed": "Could not load saved API keys. Retry when secure storage is available.",
+    "changeFailed": "Could not confirm the API key change. Unlock secure storage, refresh, and retry."
+  },
+  "audio": {
+    "noMicrophone": "No usable microphone was found. Connect or enable a microphone, check your system microphone settings, and try again."
+  },
+  "remoteSession": {
+    "openFailed": "Could not open the remote session."
+  },
+  "panelError": {
+    "title": "Panel Error",
+    "unknown": "An unknown error occurred"
+  },
+  "organizations": {
+    "loadFailed": "Organizations could not be loaded."
+  }
+}

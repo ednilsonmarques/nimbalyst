@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { Trans, useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   UnifiedOnboarding,
   type OnboardingData,
@@ -16,6 +17,7 @@ export const WorkspaceManagerOnboarding: React.FC<WorkspaceManagerOnboardingProp
   showOnboarding,
   safeMode = false,
 }) => {
+  const { t } = useTranslation('workspace');
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(showOnboarding);
 
   const handleComplete = useCallback(async (
@@ -45,8 +47,8 @@ export const WorkspaceManagerOnboarding: React.FC<WorkspaceManagerOnboardingProp
     <>
       {safeMode && (
         <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 border-b border-[var(--nim-warning)] bg-[var(--nim-bg-secondary)] px-4 py-2 text-sm text-[var(--nim-text)]">
-          <strong>Safe mode:</strong>
-          <span>Saved windows were not restored. Open a project to resume normal session saving, or relaunch without <code>--safe-mode</code>.</span>
+          <strong>{t('workspaceManager.safeMode.label')}</strong>
+          <span><Trans t={t} i18nKey="workspaceManager.safeMode.message" components={{ code: <code /> }} /></span>
         </div>
       )}
       <WorkspaceManager />

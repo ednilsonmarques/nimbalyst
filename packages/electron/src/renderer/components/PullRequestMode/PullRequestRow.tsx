@@ -8,6 +8,7 @@
 
 import type { JSX } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type { TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import type { PullRequestRow as PullRequestRowData } from '../../services/RendererPullRequestService';
 import { formatRelative } from './prFormat';
@@ -25,15 +26,15 @@ interface PullRequestRowProps {
 
 function stateBadge(
   pr: PullRequestRowData,
-): { label: string; className: string; icon: string } | null {
+): { labelKey: string; className: string; icon: string } | null {
   if (pr.isDraft) {
-    return { label: 'Draft', className: 'text-nim-muted bg-nim-tertiary', icon: 'edit_note' };
+    return { labelKey: 'prState.draft', className: 'text-nim-muted bg-nim-tertiary', icon: 'edit_note' };
   }
   switch (pr.state) {
     case 'merged':
-      return { label: 'Merged', className: 'text-nim-on-primary bg-[var(--nim-primary)]', icon: 'merge' };
+      return { labelKey: 'prState.merged', className: 'text-nim-on-primary bg-[var(--nim-primary)]', icon: 'merge' };
     case 'closed':
-      return { label: 'Closed', className: 'text-nim-on-primary bg-[var(--nim-error)]', icon: 'cancel' };
+      return { labelKey: 'prState.closed', className: 'text-nim-on-primary bg-[var(--nim-error)]', icon: 'cancel' };
     default:
       return null;
   }
@@ -53,6 +54,7 @@ function ciIcon(ci: PullRequestRowData['ciStatus']): { icon: string; className: 
 }
 
 export function PullRequestRow({ pr, selected, onSelect, trackerItem, hasSessions }: PullRequestRowProps): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const badge = stateBadge(pr);
   const ci = ciIcon(pr.ciStatus);
   const conflicting = pr.mergeable === 'conflicting';
@@ -96,7 +98,7 @@ export function PullRequestRow({ pr, selected, onSelect, trackerItem, hasSession
                 icon="smart_toy"
                 size={13}
                 className="text-nim-primary"
-                title="Has linked review sessions"
+                title={t('prRow.hasSessions')}
               />
             )}
             {trackerItem && <PrTrackerBadge record={trackerItem} compact />}
@@ -108,7 +110,7 @@ export function PullRequestRow({ pr, selected, onSelect, trackerItem, hasSession
                 className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${badge.className}`}
               >
                 <MaterialSymbol icon={badge.icon} size={12} />
-                {badge.label}
+                {t(badge.labelKey)}
               </span>
             )}
             <span className="shrink-0">{formatRelative(pr.updatedAt)}</span>

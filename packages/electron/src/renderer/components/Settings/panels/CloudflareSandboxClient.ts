@@ -6,6 +6,7 @@
  * rejection or, worse, a silently "successful" undefined.
  */
 
+import { t } from '@nimbalyst/runtime/i18n';
 import type { CloudflareSandboxResponse } from '../../../../shared/cloudflareSandbox';
 
 export async function invokeSandbox<T>(
@@ -21,12 +22,12 @@ export async function invokeSandbox<T>(
     }
     return {
       success: false,
-      error: { code: 'unknown', message: 'Cloudflare sandbox support is unavailable in this build.' },
+      error: { code: 'unknown', message: t('settings:cloudflareSandboxes.errors.unavailable') },
     };
   } catch (err: unknown) {
     return {
       success: false,
-      error: { code: 'unknown', message: err instanceof Error ? err.message : 'Unexpected error' },
+      error: { code: 'unknown', message: err instanceof Error ? err.message : t('settings:cloudflareSandboxes.errors.unexpected') },
     };
   }
 }

@@ -5,6 +5,7 @@
  */
 import { dialog } from 'electron';
 import { logger } from '../utils/logger';
+import { t } from '@nimbalyst/runtime/i18n';
 import { AnalyticsService } from '../services/analytics/AnalyticsService';
 import { startTutorialProject } from '../window/WorkspaceManagerWindow.ts';
 
@@ -22,8 +23,8 @@ export async function launchTutorialFromMenu(): Promise<void> {
     if (!result.success) {
         logger.menu.error('Failed to launch tutorial:', result.error);
         dialog.showErrorBox(
-            'Tutorial Unavailable',
-            `The tutorial project could not be opened.\n\n${result.error}`
+            t('menu:help.tutorialUnavailable.title'),
+            t('menu:help.tutorialUnavailable.message', { error: result.error })
         );
     }
 }

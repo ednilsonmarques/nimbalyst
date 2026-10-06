@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { errorNotificationService } from '../services/ErrorNotificationService';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 export interface ArchiveWorktreeDialogState {
   worktreeId: string;
@@ -100,12 +101,12 @@ export function useArchiveWorktreeDialog(): UseArchiveWorktreeDialogResult {
         // Backend rejected the archive (e.g. worktree row missing, filesystem
         // error renaming the worktree dir). Previously logged silently; now
         // surfaced so the user knows why nothing visible happened. See #282.
-        const msg = result.error ? String(result.error) : 'The backend rejected the auto-archive.';
-        errorNotificationService.showError(`Failed to archive "${worktreeName}"`, msg);
+        const msg = result.error ? String(result.error) : translate('general:worktreeArchive.autoRejected');
+        errorNotificationService.showError(translate('general:worktreeArchive.failed', { name: worktreeName }), msg);
         console.error('[useArchiveWorktreeDialog] Auto-archive failed:', result.error);
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        errorNotificationService.showError(`Failed to archive "${worktreeName}"`, msg);
+        errorNotificationService.showError(translate('general:worktreeArchive.failed', { name: worktreeName }), msg);
         console.error('[useArchiveWorktreeDialog] Auto-archive failed:', error);
       }
       // Fall through to show dialog on archive error
@@ -142,13 +143,13 @@ export function useArchiveWorktreeDialog(): UseArchiveWorktreeDialogResult {
         // The user clicked Confirm on the dialog. Previously the dialog
         // simply closed with no UI feedback on failure, which reads as
         // "Archive did nothing". Surface the rejection. See #282.
-        const msg = result.error ? String(result.error) : 'The backend rejected the archive.';
-        errorNotificationService.showError(`Failed to archive "${worktreeName}"`, msg);
+        const msg = result.error ? String(result.error) : translate('general:worktreeArchive.rejected');
+        errorNotificationService.showError(translate('general:worktreeArchive.failed', { name: worktreeName }), msg);
         console.error('[useArchiveWorktreeDialog] Failed to archive worktree:', result.error);
       }
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      errorNotificationService.showError(`Failed to archive "${worktreeName}"`, msg);
+      errorNotificationService.showError(translate('general:worktreeArchive.failed', { name: worktreeName }), msg);
       console.error('[useArchiveWorktreeDialog] Failed to archive worktree:', error);
     } finally {
       setDialogState(null);

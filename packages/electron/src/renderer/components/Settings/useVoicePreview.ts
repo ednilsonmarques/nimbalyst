@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { t } from '@nimbalyst/runtime/i18n';
 
 /** Owns a bundled sample, including pending play promises and selection changes. */
 export function useVoicePreview(source: string | undefined) {
@@ -31,7 +32,7 @@ export function useVoicePreview(source: string | undefined) {
     const finish = (failed: boolean) => {
       if (audioRef.current !== audio) return;
       stop();
-      if (failed) setError('Could not play this voice preview.');
+      if (failed) setError(t('settings:voiceEngine.notes.playbackFailed'));
     };
     audio.onended = () => finish(false);
     audio.onerror = () => finish(true);

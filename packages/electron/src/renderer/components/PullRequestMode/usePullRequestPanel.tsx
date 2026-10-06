@@ -13,6 +13,7 @@ import type { JSX, RefObject } from 'react';
 import { useCallback, useEffect } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   prModeLayoutAtom,
   setPrModeLayoutAtom,
@@ -239,15 +240,16 @@ export function usePullRequestPanel({
 }
 
 function PullRequestEmptyState(): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   return (
     <div className="pr-empty-state flex h-full items-center justify-center px-8 text-center">
       <div className="max-w-md space-y-3">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-nim bg-nim-secondary text-nim-faint">
           <MaterialSymbol icon="merge" size={24} />
         </div>
-        <div className="text-sm font-medium text-nim">Select a pull request</div>
+        <div className="text-sm font-medium text-nim">{t('prEmpty.title')}</div>
         <div className="text-sm text-nim-muted">
-          Pick a PR from the left to review its conversation, files, commits, and checks.
+          {t('prEmpty.body')}
         </div>
       </div>
     </div>

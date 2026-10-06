@@ -12,6 +12,7 @@ import { startFileWatcher, stopFileWatcher } from '../file/FileWatcher';
 import { AUTOSAVE_DELAY } from '../utils/constants';
 import { addWorkspaceRecentFile } from '../utils/store';
 import { logger } from '../utils/logger';
+import { t } from '@nimbalyst/runtime/i18n';
 import { homedir } from 'os';
 import { AnalyticsService } from '../services/analytics/AnalyticsService';
 import { isPathInWorkspace, getRelativeWorkspacePath } from '../utils/workspaceDetection';
@@ -64,8 +65,8 @@ export function registerFileHandlers() {
     }) => {
         const window = BrowserWindow.fromWebContents(event.sender);
         const dialogOptions: Electron.OpenDialogOptions = {
-            title: options?.title || 'Select File',
-            buttonLabel: options?.buttonLabel || 'Open',
+            title: options?.title || t('dialogs:fileDialogs.selectFile'),
+            buttonLabel: options?.buttonLabel || t('dialogs:fileDialogs.open'),
             properties: ['openFile'],
             filters: options?.filters,
             defaultPath: getDialogDefaultPath({ window, explicitPath: options?.defaultPath }),
@@ -311,9 +312,9 @@ export function registerFileHandlers() {
         try {
             const result = await dialog.showSaveDialog(window, {
                 filters: [
-                    { name: 'Markdown Files', extensions: ['md'] },
-                    { name: 'Text Files', extensions: ['txt'] },
-                    { name: 'All Files', extensions: ['*'] }
+                    { name: t('dialogs:fileDialogs.filters.markdown'), extensions: ['md'] },
+                    { name: t('dialogs:fileDialogs.filters.text'), extensions: ['txt'] },
+                    { name: t('dialogs:fileDialogs.filters.all'), extensions: ['*'] }
                 ],
                 // An already-saved doc reopens at its own path; a new one lands
                 // in the active workspace as untitled.md.

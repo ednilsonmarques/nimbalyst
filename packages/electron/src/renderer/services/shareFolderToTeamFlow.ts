@@ -42,6 +42,7 @@ import {
   reportFolderShareOutcome,
 } from "./folderSharePlan";
 import { ensureSharedFolderSegments } from "./sharedFolderPath";
+import { t as translate } from "@nimbalyst/runtime/i18n";
 import {
   discoverShareEmbeddedDocuments,
   resolveShareDescriptor,
@@ -147,9 +148,15 @@ export async function shareFolderToTeam(params: {
   // outcome this feature must never produce silently.
   if (candidateSet.candidates.length > MAX_FOLDER_SHARE_DOCUMENTS) {
     const error = `"${target.folderName}" holds ${candidateSet.candidates.length} shareable documents, more than the ${MAX_FOLDER_SHARE_DOCUMENTS} one promote can publish. Share its subfolders separately.`;
-    errorNotificationService.showError("Folder is too large to share", error, {
-      duration: 10000,
-    });
+    errorNotificationService.showError(
+      translate("general:share.folderTooLargeTitle"),
+      translate("general:share.folderTooLarge", {
+        folder: target.folderName,
+        count: candidateSet.candidates.length,
+        max: MAX_FOLDER_SHARE_DOCUMENTS,
+      }),
+      { duration: 10000 }
+    );
     return { status: "failed", error };
   }
 
@@ -159,7 +166,10 @@ export async function shareFolderToTeam(params: {
     : null;
   if (!scope) {
     const error = "The active team collaboration scope is unavailable.";
-    errorNotificationService.showError("Could not share folder to team", error);
+    errorNotificationService.showError(
+      translate("general:share.couldNotShareFolder"),
+      translate("general:share.scopeUnavailable")
+    );
     return { status: "failed", error };
   }
 
@@ -193,8 +203,8 @@ export async function shareFolderToTeam(params: {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     errorNotificationService.showError(
-      "Could not share folder to team",
-      `The shared folder tree could not be created: ${message}`
+      translate("general:share.couldNotShareFolder"),
+      translate("general:share.folderTreeFailed", { message })
     );
     return { status: "failed", error: message };
   }
@@ -352,18 +362,19 @@ export async function shareFolderToTeamFromContextMenu(
     collected = await collectFolderShareTargets(target.folderPath);
   } catch (error) {
     errorNotificationService.showError(
-      "Could not share folder to team",
-      `"${target.folderName}" could not be read: ${
-        error instanceof Error ? error.message : String(error)
-      }`
+      translate("general:share.couldNotShareFolder"),
+      translate("general:share.folderUnreadable", {
+        folder: target.folderName,
+        message: error instanceof Error ? error.message : String(error),
+      })
     );
     return;
   }
 
   if (collected.set.candidates.length === 0) {
     errorNotificationService.showWarning(
-      "Nothing to share",
-      `No file in "${target.folderName}" has a collaborative document type.`,
+      translate("general:share.nothingToShare"),
+      translate("general:share.noCollaborativeType", { folder: target.folderName }),
       { duration: 6000 }
     );
     return;
@@ -373,7 +384,7 @@ export async function shareFolderToTeamFromContextMenu(
     truncated: collected.truncated,
   });
   if (ask.status === "unavailable") {
-    errorNotificationService.showError("Could not share folder to team", ask.reason);
+    errorNotificationService.showError(translate("general:share.couldNotShareFolder"), ask.reason);
     return;
   }
   if (ask.status !== "answered") return;

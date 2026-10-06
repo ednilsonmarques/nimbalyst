@@ -1,6 +1,7 @@
 import type { OrganizationDirectoryResult, OrganizationDirectorySnapshot } from '../../../shared/organizationDirectory';
 import type { PersonalAccountSummary } from '../atoms/settingsDomains';
 import type { StytchAuthSnapshot } from '../atoms/stytchAuth';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 // Match Inbox's bounded startup recovery; a token-ready event is not guaranteed.
 const RETRY_DELAYS_MS = [500, 1000, 2000, 4000, 8000, 15000, 30000];
@@ -90,7 +91,7 @@ export function createOrganizationDirectoryLoader(deps: Dependencies) {
         const entries = new Map(snapshot.entries.map((entry) => [entry.orgId, entry]));
         for (const entry of result?.teams ?? []) entries.set(entry.orgId, entry);
         snapshot = { ...snapshot, entries: [...entries.values()] };
-        unavailable(result && !result.success ? result.error : 'Organizations could not be loaded.',
+        unavailable(result && !result.success ? result.error : translate('general:organizations.loadFailed'),
           result && !result.success ? result.retryable : true);
       }
     } catch (error) {

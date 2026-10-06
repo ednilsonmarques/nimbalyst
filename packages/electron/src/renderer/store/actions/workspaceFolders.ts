@@ -9,6 +9,8 @@
  * update the tree themselves.
  */
 
+import { t as translate } from '@nimbalyst/runtime/i18n';
+
 export interface AttachFolderOutcome {
   success: boolean;
   /** Absolute path the user chose, absent when they cancelled the picker. */
@@ -33,8 +35,8 @@ export async function attachWorkspaceFolderWithPicker(
   workspacePath: string,
 ): Promise<AttachFolderOutcome> {
   const picked = await window.electronAPI?.invoke?.('dialog:openDirectory', {
-    title: 'Attach Folder to Workspace',
-    buttonLabel: 'Attach',
+    title: translate('general:workspaceFolders.attachTitle'),
+    buttonLabel: translate('general:workspaceFolders.attachButton'),
   });
 
   const folderPath = picked?.canceled ? undefined : picked?.filePaths?.[0];

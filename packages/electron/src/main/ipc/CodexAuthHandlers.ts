@@ -10,6 +10,7 @@ import { shell } from 'electron';
 import path from 'node:path';
 import { safeHandle } from '../utils/ipcRegistry';
 import { logger } from '../utils/logger';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { codexAuthService, type CodexAuthStatus } from '../services/CodexAuthService';
 
 const log = logger.ipc;
@@ -72,7 +73,7 @@ export function registerCodexAuthHandlers(): void {
         email: null,
         planType: null,
         message: 'Codex CLI is unavailable.',
-        error: error?.message ?? 'Codex CLI is unavailable.',
+        error: error?.message ?? translate('settings:providers.openAiCodex.cliUnavailable'),
       };
     }
   });

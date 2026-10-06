@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { nimAssetUrl } from '../../utils/assetUrl';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface ImageDiffViewerProps {
   oldImagePath: string;
@@ -14,6 +15,7 @@ export function ImageDiffViewer({
   newImagePath,
   filePath
 }: ImageDiffViewerProps) {
+  const { t } = useTranslation('workspace');
   const [viewMode, setViewMode] = useState<ViewMode>('side-by-side');
   const [swipePosition, setSwipePosition] = useState(50);
   const [opacity, setOpacity] = useState(50);
@@ -26,25 +28,25 @@ export function ImageDiffViewer({
             className={`image-diff-mode-button px-3 py-1.5 text-[13px] bg-[var(--nim-bg-secondary)] border border-[var(--nim-border)] rounded text-[var(--nim-text)] cursor-pointer transition-all duration-200 hover:bg-[var(--nim-bg-hover)] ${viewMode === 'side-by-side' ? 'active !bg-[var(--nim-primary)] !text-white !border-[var(--nim-primary)]' : ''}`}
             onClick={() => setViewMode('side-by-side')}
           >
-            Side by Side
+            {t('history.imageDiff.sideBySide')}
           </button>
           <button
             className={`image-diff-mode-button px-3 py-1.5 text-[13px] bg-[var(--nim-bg-secondary)] border border-[var(--nim-border)] rounded text-[var(--nim-text)] cursor-pointer transition-all duration-200 hover:bg-[var(--nim-bg-hover)] ${viewMode === 'swipe' ? 'active !bg-[var(--nim-primary)] !text-white !border-[var(--nim-primary)]' : ''}`}
             onClick={() => setViewMode('swipe')}
           >
-            Swipe
+            {t('history.imageDiff.swipe')}
           </button>
           <button
             className={`image-diff-mode-button px-3 py-1.5 text-[13px] bg-[var(--nim-bg-secondary)] border border-[var(--nim-border)] rounded text-[var(--nim-text)] cursor-pointer transition-all duration-200 hover:bg-[var(--nim-bg-hover)] ${viewMode === 'onion-skin' ? 'active !bg-[var(--nim-primary)] !text-white !border-[var(--nim-primary)]' : ''}`}
             onClick={() => setViewMode('onion-skin')}
           >
-            Overlay
+            {t('history.imageDiff.overlay')}
           </button>
         </div>
 
         {viewMode === 'swipe' && (
           <div className="image-diff-slider-container flex items-center gap-2 ml-auto">
-            <label className="text-[13px] text-[var(--nim-text-muted)]">Position</label>
+            <label className="text-[13px] text-[var(--nim-text-muted)]">{t('history.imageDiff.position')}</label>
             <input
               type="range"
               min="0"
@@ -58,7 +60,7 @@ export function ImageDiffViewer({
 
         {viewMode === 'onion-skin' && (
           <div className="image-diff-slider-container flex items-center gap-2 ml-auto">
-            <label className="text-[13px] text-[var(--nim-text-muted)]">Opacity</label>
+            <label className="text-[13px] text-[var(--nim-text-muted)]">{t('history.imageDiff.opacity')}</label>
             <input
               type="range"
               min="0"
@@ -75,15 +77,15 @@ export function ImageDiffViewer({
         {viewMode === 'side-by-side' && (
           <div className="image-diff-side-by-side flex gap-4 w-full h-full p-4">
             <div className="image-diff-panel flex-1 flex flex-col min-w-0">
-              <div className="image-diff-label text-[13px] font-medium text-[var(--nim-text-muted)] mb-2 text-center">Old Version</div>
+              <div className="image-diff-label text-[13px] font-medium text-[var(--nim-text-muted)] mb-2 text-center">{t('history.oldVersion')}</div>
               <div className="image-diff-container flex-1 flex items-center justify-center bg-[var(--nim-bg-tertiary)] border border-[var(--nim-border)] rounded overflow-auto p-4 [&_img]:max-w-full [&_img]:max-h-full [&_img]:object-contain [&_img]:block">
-                <img src={nimAssetUrl(oldImagePath)} alt="Old version" />
+                <img src={nimAssetUrl(oldImagePath)} alt={t('history.imageDiff.oldVersionAlt')} />
               </div>
             </div>
             <div className="image-diff-panel flex-1 flex flex-col min-w-0">
-              <div className="image-diff-label text-[13px] font-medium text-[var(--nim-text-muted)] mb-2 text-center">New Version</div>
+              <div className="image-diff-label text-[13px] font-medium text-[var(--nim-text-muted)] mb-2 text-center">{t('history.newVersion')}</div>
               <div className="image-diff-container flex-1 flex items-center justify-center bg-[var(--nim-bg-tertiary)] border border-[var(--nim-border)] rounded overflow-auto p-4 [&_img]:max-w-full [&_img]:max-h-full [&_img]:object-contain [&_img]:block">
-                <img src={nimAssetUrl(newImagePath)} alt="New version" />
+                <img src={nimAssetUrl(newImagePath)} alt={t('history.imageDiff.newVersionAlt')} />
               </div>
             </div>
           </div>
@@ -94,7 +96,7 @@ export function ImageDiffViewer({
             <div className="image-diff-swipe-container relative max-w-full max-h-full inline-block">
               <img
                 src={nimAssetUrl(newImagePath)}
-                alt="New version"
+                alt={t('history.imageDiff.newVersionAlt')}
                 className="image-diff-swipe-new block max-w-full max-h-[calc(100vh-300px)] object-contain"
               />
               <div
@@ -103,7 +105,7 @@ export function ImageDiffViewer({
               >
                 <img
                   src={nimAssetUrl(oldImagePath)}
-                  alt="Old version"
+                  alt={t('history.imageDiff.oldVersionAlt')}
                   className="image-diff-swipe-old block max-w-full max-h-[calc(100vh-300px)] object-contain"
                 />
               </div>
@@ -120,12 +122,12 @@ export function ImageDiffViewer({
             <div className="image-diff-overlay-container relative max-w-full max-h-full inline-block">
               <img
                 src={nimAssetUrl(newImagePath)}
-                alt="New version"
+                alt={t('history.imageDiff.newVersionAlt')}
                 className="image-diff-overlay-new block max-w-full max-h-[calc(100vh-300px)] object-contain"
               />
               <img
                 src={nimAssetUrl(oldImagePath)}
-                alt="Old version"
+                alt={t('history.imageDiff.oldVersionAlt')}
                 className="image-diff-overlay-old absolute top-0 left-0 block max-w-full max-h-[calc(100vh-300px)] object-contain mix-blend-difference"
                 style={{ opacity: opacity / 100 }}
               />

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { useFloatingMenu, FloatingPortal, virtualElement } from '../../hooks/useFloatingMenu';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface TerminalContextMenuProps {
   x: number;
@@ -15,6 +16,7 @@ export function TerminalContextMenu({
   onClose,
   onClear,
 }: TerminalContextMenuProps) {
+  const { t } = useTranslation('menu');
   const reference = useMemo(() => virtualElement(x, y), [x, y]);
   const menu = useFloatingMenu({
     placement: 'right-start',
@@ -46,7 +48,7 @@ export function TerminalContextMenu({
       >
         <div className={menuItemClasses} onClick={handleClear}>
           <MaterialSymbol icon="backspace" size={18} />
-          <span>Clear</span>
+          <span>{t('contextMenu.terminal.clear')}</span>
         </div>
       </div>
     </FloatingPortal>

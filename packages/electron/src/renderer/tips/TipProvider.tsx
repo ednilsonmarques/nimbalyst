@@ -38,6 +38,7 @@ import { worktreesFeatureAvailableAtom } from '../store/atoms/appSettings';
 import { emptyTranscriptVisibleCountAtom } from './atoms';
 import type { FeatureUsageRecord } from '../../shared/featureUsage';
 import { tipTargetsScreen } from './filesEmptyTipSelection';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 interface TipProviderProps {
   children: ReactNode;
@@ -292,8 +293,8 @@ export function TipProvider({ children, currentMode, workspacePath }: TipProvide
     const tip = tips.find((t) => t.id === tipId);
     if (!tip) {
       errorNotificationService.showInfo(
-        'Unknown Tip',
-        `Tip "${tipId}" not found.`,
+        translate('general:tips.unknownTitle'),
+        translate('general:tips.unknownMessage', { tipId }),
         { duration: 3000 }
       );
       return;
@@ -325,8 +326,8 @@ export function TipProvider({ children, currentMode, workspacePath }: TipProvide
       store.set(walkthroughStateAtom, newState);
       setActiveTipId(null);
       errorNotificationService.showInfo(
-        'Tips Reset',
-        'All tips will show again.',
+        translate('general:tips.resetTitle'),
+        translate('general:tips.resetMessage'),
         { duration: 3000 }
       );
     })();

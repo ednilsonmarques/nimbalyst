@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -32,6 +33,7 @@ export function OrgDialog({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation('team');
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -103,7 +105,7 @@ export function OrgDialog({
               type="button"
               className="org-dialog-close flex size-6 items-center justify-center rounded text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
               data-testid={`${testId}-close`}
-              aria-label="Close"
+              aria-label={t('common:close')}
               onClick={onClose}
             >
               <MaterialSymbol icon="close" size={16} />

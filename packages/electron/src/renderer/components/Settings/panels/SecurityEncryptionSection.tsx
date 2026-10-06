@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 type KeyCustodyMode = 'server-managed' | 'unmigrated';
 
@@ -14,6 +15,7 @@ interface Props {
  * server refuses its team data, so it has to be set up again.
  */
 export function SecurityEncryptionSection({ orgId }: Props) {
+  const { t } = useTranslation('settings');
   const [mode, setMode] = useState<KeyCustodyMode | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -48,36 +50,33 @@ export function SecurityEncryptionSection({ orgId }: Props) {
           <MaterialSymbol icon="verified_user" size={22} fill />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="m-0 text-[15px] font-semibold text-[var(--nim-text)]">Encrypted by Nimbalyst</h3>
+          <h3 className="m-0 text-[15px] font-semibold text-[var(--nim-text)]">{t('securityEncryption.title')}</h3>
           <p className="m-0 mt-1 text-[12.5px] leading-relaxed text-[var(--nim-text-muted)]">
-            Team data is encrypted in transit and at rest with keys managed by Nimbalyst. This is
-            separate from Personal sync encryption, whose keys remain only on your devices.
+            {t('securityEncryption.description')}
           </p>
 
           {loading ? (
-            <p className="m-0 mt-3 text-xs text-[var(--nim-text-faint)]">Checking encryption status…</p>
+            <p className="m-0 mt-3 text-xs text-[var(--nim-text-faint)]">{t('securityEncryption.checking')}</p>
           ) : unmigrated ? (
             <div
               className="organization-encryption-diagnostic mt-3 rounded-md border border-[var(--nim-warning)] bg-[rgba(251,191,36,0.08)] p-3"
               data-testid="organization-encryption-unmigrated"
             >
               <p className="m-0 text-xs font-semibold text-[var(--nim-warning)]">
-                This organization uses retired encryption
+                {t('securityEncryption.unmigratedTitle')}
               </p>
               <p className="m-0 mt-1 select-text text-xs text-[var(--nim-text-muted)]">
-                It was never moved to Nimbalyst-managed encryption, which is now the only supported
-                mode. Team documents and trackers are unavailable for it. Create a new organization
-                and re-share this team&apos;s content.
+                {t('securityEncryption.unmigratedBody')}
               </p>
             </div>
           ) : mode === null ? (
             <p className="m-0 mt-3 text-xs text-[var(--nim-text-faint)]">
-              Encryption status is unavailable right now.
+              {t('securityEncryption.unavailable')}
             </p>
           ) : (
             <p className="m-0 mt-3 inline-flex items-center gap-1.5 text-xs text-[var(--nim-success)]">
               <MaterialSymbol icon="check_circle" size={14} fill />
-              Encryption active
+              {t('securityEncryption.active')}
             </p>
           )}
         </div>

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import type { OrgRosterMember } from './useOrgRoster';
 
@@ -17,7 +18,7 @@ export function MemberPicker({
   excludeIds = [],
   disabledIds = [],
   maxSelected,
-  emptyLabel = 'No other members in this organization yet.',
+  emptyLabel,
   testId,
   onToggle,
 }: {
@@ -32,6 +33,7 @@ export function MemberPicker({
   testId: string;
   onToggle: (memberId: string) => void;
 }) {
+  const { t } = useTranslation('team');
   const [query, setQuery] = useState('');
   const selected = useMemo(() => new Set(selectedIds), [selectedIds]);
   const excluded = useMemo(() => new Set(excludeIds), [excludeIds]);
@@ -68,7 +70,7 @@ export function MemberPicker({
           type="text"
           className="w-full rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] py-1.5 pl-8 pr-3 text-[12px] text-[var(--nim-text)] outline-none focus:border-[var(--nim-primary)]"
           data-testid={`${testId}-search`}
-          placeholder="Search people"
+          placeholder={t('memberPicker.search')}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
@@ -79,7 +81,7 @@ export function MemberPicker({
             className="m-0 px-3 py-2 text-[12px] text-[var(--nim-text-muted)]"
             data-testid={`${testId}-empty`}
           >
-            {query ? 'No matching members.' : emptyLabel}
+            {query ? t('memberPicker.noMatch') : (emptyLabel ?? t('memberPicker.empty'))}
           </p>
         )}
         {rows.map((row) => {

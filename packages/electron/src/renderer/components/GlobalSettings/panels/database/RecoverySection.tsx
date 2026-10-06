@@ -20,6 +20,8 @@
 import React, { useCallback, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation, Trans } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
   dbRecoveryCandidatesAtom,
   dbRecoveryLiveAtom,
@@ -31,10 +33,10 @@ import {
 import { formatArtifactDate, formatBytes, sizeBucketLabel } from './dbFormat';
 
 const VERDICT_HEADINGS: Record<RecoveryVerdict, string> = {
-  recovery_recommended: 'Worth reviewing',
-  needs_review: 'Needs your decision',
-  not_actionable: 'Nothing to do',
-  assessment_blocked: 'Could not be assessed',
+  recovery_recommended: 'settings:recovery.verdicts.worthReviewing',
+  needs_review: 'settings:recovery.verdicts.needsDecision',
+  not_actionable: 'settings:recovery.verdicts.nothingToDo',
+  assessment_blocked: 'settings:recovery.verdicts.couldNotAssess',
 };
 
 /**
@@ -44,27 +46,27 @@ const VERDICT_HEADINGS: Record<RecoveryVerdict, string> = {
  * will let become a recommendation.
  */
 const REASON_TEXT: Record<string, string> = {
-  candidate_missing: 'This copy is no longer on disk.',
-  already_resolved: 'You have already dealt with this copy.',
-  candidate_empty: 'This copy holds no data.',
-  candidate_invalid: 'This copy is not a database Nimbalyst can read.',
+  candidate_missing: 'settings:recovery.reasons.candidateMissing',
+  already_resolved: 'settings:recovery.reasons.alreadyResolved',
+  candidate_empty: 'settings:recovery.reasons.candidateEmpty',
+  candidate_invalid: 'settings:recovery.reasons.candidateInvalid',
   candidate_not_materially_richer:
-    'This copy does not appear to hold anything the current database is missing.',
-  candidate_unreadable: 'Nimbalyst could not read this copy well enough to describe it.',
+    'settings:recovery.reasons.candidateNotMateriallyRicher',
+  candidate_unreadable: 'settings:recovery.reasons.candidateUnreadable',
   live_unreadable:
-    'Nimbalyst could not read the current database, so it cannot compare the two.',
+    'settings:recovery.reasons.liveUnreadable',
   facts_changed_while_reading:
-    'The files changed while Nimbalyst was reading them, so it stopped rather than compare a moving target.',
+    'settings:recovery.reasons.factsChangedWhileReading',
   both_databases_have_content:
-    'This copy and the current database both hold data. Nimbalyst cannot tell which one you want.',
+    'settings:recovery.reasons.bothDatabasesHaveContent',
   live_empty_but_install_looks_new:
-    'The current database is empty, and this computer has no project history to compare it against.',
+    'settings:recovery.reasons.liveEmptyButInstallLooksNew',
   live_empty_on_established_install:
-    'The current database is empty, but this computer has settings for projects you have used, and this copy holds data.',
+    'settings:recovery.reasons.liveEmptyOnEstablishedInstall',
 };
 
 function reasonText(code: string): string {
-  return REASON_TEXT[code] ?? 'Nimbalyst has no description for this result.';
+  return translate(REASON_TEXT[code] ?? 'settings:recovery.reasons.unknown');
 }
 
 export interface RecoverySectionProps {
@@ -77,6 +79,7 @@ type RestoreResult =
   | { ok: false; name: string; message: string; rolledBack: boolean };
 
 export function RecoverySection({ onRefresh }: RecoverySectionProps): React.ReactElement | null {
+  const { t } = useTranslation('settings');
   const candidates = useAtomValue(dbRecoveryCandidatesAtom);
   const live = useAtomValue(dbRecoveryLiveAtom);
   const offer = useAtomValue(dbRecoveryOfferAtom);
@@ -142,21 +145,19 @@ export function RecoverySection({ onRefresh }: RecoverySectionProps): React.Reac
   return (
     <div className="provider-panel-section nim-database-recovery mb-6 select-text">
       <h4 className="provider-panel-section-title text-base font-semibold mb-2 text-[var(--nim-text)]">
-        Databases set aside on this computer
+        {t('recovery.title')}
       </h4>
       <p className="provider-panel-hint text-sm text-[var(--nim-text-muted)] mb-3">
-        Earlier versions of Nimbalyst moved a database aside when opening it failed.
-        These copies are kept indefinitely and are never removed automatically.
-        A copy being here does not mean the database you are using now is damaged.
+        {t('recovery.description')}
       </p>
 
       {offer && (
         <div className="nim-database-recovery-offer mb-3 rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] p-3">
           <div className="text-sm font-medium text-[var(--nim-text)]">
-            One of these copies may hold data your current database does not
+            {t('recovery.offer.title')}
           </div>
           <p className="mt-1 text-xs text-[var(--nim-text-muted)]">
-            {reasonText(offer.reasonCode)} Review it below before deciding anything.
+            {t('recovery.offer.reviewBelow', { reason: reasonText(offer.reasonCode) })}
           </p>
         </div>
       )}
@@ -183,18 +184,16 @@ export function RecoverySection({ onRefresh }: RecoverySectionProps): React.Reac
         >
           {result.ok ? (
             <>
-              Restored from {result.name}. The database that was live before this,
-              and the copy it was restored from, are both still on disk. Relaunch
-              Nimbalyst to use the restored database.
+              {t('recovery.result.restored', { name: result.name })}
             </>
           ) : (
             <>
-              <div className="font-medium">Nothing was restored.</div>
+              <div className="font-medium">{t('recovery.result.nothingRestored')}</div>
               <div className="mt-1">{result.message}</div>
               <div className="mt-1 text-[var(--nim-text-muted)]">
                 {result.rolledBack
-                  ? 'The database you were using has been put back, and every copy is still on disk.'
-                  : 'The database you were using was not changed, and every copy is still on disk.'}
+                  ? t('recovery.result.rolledBack')
+                  : t('recovery.result.notChanged')}
               </div>
             </>
           )}
@@ -226,6 +225,7 @@ function CandidateRow({
   onReveal: () => void;
   onKeep: () => void;
 }): React.ReactElement {
+  const { t } = useTranslation('settings');
   const canReview = candidate.verdict === 'recovery_recommended'
     || candidate.verdict === 'needs_review';
   return (
@@ -235,19 +235,17 @@ function CandidateRow({
           {candidate.name}
         </span>
         <span className="text-xs text-[var(--nim-text-muted)]">
-          {VERDICT_HEADINGS[candidate.verdict]}
+          {t(VERDICT_HEADINGS[candidate.verdict])}
         </span>
       </div>
       <div className="mt-1 text-xs text-[var(--nim-text-muted)]">
-        Set aside {formatArtifactDate(candidate.createdAt)} ·{' '}
-        {formatBytes(candidate.sizeBytes)} ({sizeBucketLabel(candidate.sizeBucket)})
+        {t('recovery.candidate.setAside', { date: formatArtifactDate(candidate.createdAt), size: formatBytes(candidate.sizeBytes), bucket: sizeBucketLabel(candidate.sizeBucket) })}
       </div>
       <p className="mt-2 text-sm text-[var(--nim-text)]">{reasonText(candidate.reasonCode)}</p>
 
       {!candidate.restoreAvailable && (
         <p className="mt-2 text-xs text-[var(--nim-text-muted)]">
-          This build cannot restore a PGLite copy onto a SQLite database. You can still
-          open the copy in Finder and keep it.
+          {t('recovery.candidate.cannotRestore')}
         </p>
       )}
 
@@ -259,7 +257,7 @@ function CandidateRow({
             className="nim-database-recovery-review-button setting-button inline-flex items-center gap-2 rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-primary)] px-3 py-1.5 text-sm text-[var(--nim-text)] hover:bg-[var(--nim-hover)]"
           >
             <MaterialSymbol icon="restore" size={16} />
-            Review restoring this copy
+            {t('recovery.candidate.review')}
           </button>
         )}
         <button
@@ -268,7 +266,7 @@ function CandidateRow({
           className="nim-database-recovery-reveal-button setting-button inline-flex items-center gap-2 rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-primary)] px-3 py-1.5 text-sm text-[var(--nim-text)] hover:bg-[var(--nim-hover)]"
         >
           <MaterialSymbol icon="folder_open" size={16} />
-          Show in Finder
+          {t('recovery.candidate.showInFinder')}
         </button>
         <button
           type="button"
@@ -276,7 +274,7 @@ function CandidateRow({
           className="nim-database-recovery-keep-button setting-button inline-flex items-center gap-2 rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-primary)] px-3 py-1.5 text-sm text-[var(--nim-text)] hover:bg-[var(--nim-hover)]"
         >
           <MaterialSymbol icon="check" size={16} />
-          Keep it and stop asking
+          {t('recovery.candidate.keep')}
         </button>
       </div>
     </div>
@@ -306,53 +304,46 @@ function RestoreConfirmation({
   onReveal: () => void;
   onRestore: () => void;
 }): React.ReactElement {
+  const { t } = useTranslation('settings');
   const [acknowledged, setAcknowledged] = useState(false);
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/45 px-4">
       <div className="nim-database-restore-confirmation w-full max-w-2xl select-text rounded-xl border border-[var(--nim-border)] bg-[var(--nim-bg-primary)] p-6 shadow-2xl">
         <h4 className="text-lg font-semibold text-[var(--nim-text)]">
-          Restore from a set-aside database
+          {t('recovery.confirm.title')}
         </h4>
         <p className="mt-1 text-sm text-[var(--nim-text-muted)]">
-          Read what each copy becomes. Nimbalyst does not delete any of them, now or later.
+          {t('recovery.confirm.description')}
         </p>
 
         <dl className="mt-4 space-y-3 rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] p-4 text-sm">
-          <Fact label="Copy to restore from">
+          <Fact label={t('recovery.confirm.copyToRestore')}>
             <span className="font-mono">{candidate.name}</span>
             <br />
-            Set aside {formatArtifactDate(candidate.createdAt)} ·{' '}
-            {formatBytes(candidate.sizeBytes)} ({sizeBucketLabel(candidate.sizeBucket)})
+            {t('recovery.candidate.setAside', { date: formatArtifactDate(candidate.createdAt), size: formatBytes(candidate.sizeBytes), bucket: sizeBucketLabel(candidate.sizeBucket) })}
           </Fact>
-          <Fact label="Database this replaces">
+          <Fact label={t('recovery.confirm.replaces')}>
             <span className="font-mono">{live.path}</span>
             <br />
-            {formatBytes(live.sizeBytes)} ({sizeBucketLabel(live.sizeBucket)}) ·{' '}
-            currently active on {live.backend === 'pglite' ? 'PGLite' : 'SQLite'}
+            {t('recovery.confirm.liveDetails', { size: formatBytes(live.sizeBytes), bucket: sizeBucketLabel(live.sizeBucket), backend: live.backend === 'pglite' ? 'PGLite' : 'SQLite' })}
           </Fact>
-          <Fact label="Kept afterwards">
+          <Fact label={t('recovery.confirm.keptAfterwards')}>
             <ul className="list-disc pl-5">
               <li>
-                The copy above, unchanged. Restoring reads it; it is never modified.
+                {t('recovery.confirm.keptCopy')}
               </li>
               <li>
-                A snapshot of the database you are using now, taken and verified before
-                anything moves, saved beside it with <code className="rounded bg-[var(--nim-bg-tertiary)] px-1 py-0.5 text-xs">pre-restore</code>{' '}
-                and a timestamp in its name.
+                <Trans t={t} i18nKey="recovery.confirm.keptSnapshot" components={{ code: <code className="rounded bg-[var(--nim-bg-tertiary)] px-1 py-0.5 text-xs" /> }} />
               </li>
               <li>
-                The database you are using now, moved aside with{' '}
-                <code className="rounded bg-[var(--nim-bg-tertiary)] px-1 py-0.5 text-xs">displaced</code>{' '}
-                and a timestamp in its name.
+                <Trans t={t} i18nKey="recovery.confirm.keptDisplaced" components={{ code: <code className="rounded bg-[var(--nim-bg-tertiary)] px-1 py-0.5 text-xs" /> }} />
               </li>
             </ul>
           </Fact>
         </dl>
 
         <p className="mt-3 text-sm text-[var(--nim-text-muted)]">
-          The copy is verified before it replaces anything. If verification or any later
-          step fails, the database you are using now stays in place and every copy remains
-          on disk. Nimbalyst must be relaunched afterwards either way.
+          {t('recovery.confirm.verificationNote')}
         </p>
 
         <label className="nim-database-restore-acknowledge mt-4 flex items-start gap-2 text-sm text-[var(--nim-text)]">
@@ -363,7 +354,7 @@ function RestoreConfirmation({
             className="mt-0.5"
           />
           <span>
-            I have read which database is replaced and which copies are kept.
+            {t('recovery.confirm.acknowledge')}
           </span>
         </label>
 
@@ -374,14 +365,14 @@ function RestoreConfirmation({
             disabled={restoring}
             className="nim-database-restore-cancel-button rounded-md border border-[var(--nim-border)] px-3 py-2 text-sm text-[var(--nim-text)] disabled:opacity-40"
           >
-            Cancel
+            {t('common:cancel')}
           </button>
           <button
             type="button"
             onClick={onReveal}
             className="nim-database-restore-reveal-button rounded-md border border-[var(--nim-border)] px-3 py-2 text-sm text-[var(--nim-text)]"
           >
-            Show the copy in Finder
+            {t('recovery.confirm.showCopyInFinder')}
           </button>
           <button
             type="button"
@@ -389,7 +380,7 @@ function RestoreConfirmation({
             disabled={!acknowledged || restoring}
             className="nim-database-restore-confirm-button rounded-md bg-[var(--nim-primary)] px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
-            {restoring ? 'Restoring...' : 'Restore from this copy'}
+            {restoring ? t('recovery.confirm.restoring') : t('recovery.confirm.restoreFromCopy')}
           </button>
         </div>
       </div>

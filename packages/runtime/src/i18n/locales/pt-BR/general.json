@@ -1,0 +1,967 @@
+{
+  "relativeTime": {
+    "justNow": "Agora",
+    "minutesAgo_zero": "há {{count}} min",
+    "minutesAgo_one": "há {{count}} min",
+    "minutesAgo_other": "há {{count}} min",
+    "hoursAgo_zero": "há {{count}} h",
+    "hoursAgo_one": "há {{count}} h",
+    "hoursAgo_other": "há {{count}} h",
+    "daysAgo_zero": "há {{count}} dias",
+    "daysAgo_one": "há {{count}} dia",
+    "daysAgo_other": "há {{count}} dias",
+    "weeksAgo_zero": "há {{count}} semanas",
+    "weeksAgo_one": "há {{count}} semana",
+    "weeksAgo_other": "há {{count}} semanas",
+    "monthsAgo_zero": "há {{count}} meses",
+    "monthsAgo_one": "há {{count}} mês",
+    "monthsAgo_other": "há {{count}} meses",
+    "yearsAgo_zero": "há {{count}} anos",
+    "yearsAgo_one": "há {{count}} ano",
+    "yearsAgo_other": "há {{count}} anos",
+    "monthsAgoShort_zero": "há {{count}} meses",
+    "monthsAgoShort_one": "há {{count}} mês",
+    "monthsAgoShort_other": "há {{count}} meses"
+  },
+  "usage": {
+    "resetUnknown": "Desconhecido",
+    "resetNow": "Agora"
+  },
+  "codexWindow": {
+    "session": "Sessão",
+    "daily": "Diário",
+    "weekly": "Semanal",
+    "monthly": "Mensal",
+    "annual": "Anual",
+    "secondaryUsage": "Uso secundário",
+    "usage": "Uso",
+    "usageWindow": "Janela de uso",
+    "hourWindow": "Janela de {{hours}} h",
+    "dayWindow": "Janela de {{days}} d",
+    "minuteWindow": "Janela de {{minutes}} min"
+  },
+  "backgroundWait": {
+    "taskLabel": "{{description}} ({{elapsed}})",
+    "defaultDescription": "tarefa em segundo plano",
+    "single": "Aguardando tarefa em segundo plano: {{task}}",
+    "multiple": "Aguardando {{total}} tarefas em segundo plano: {{tasks}}"
+  },
+  "filePlacement": {
+    "right": "Os arquivos abrem à direita no modo Agente",
+    "above": "Os arquivos abrem acima da transcrição no modo Agente",
+    "saveFailed": "Não foi possível salvar a posição dos arquivos. Seu layout pode ser redefinido ao reabrir o app."
+  },
+  "help": {
+    "h2-security-encryption-section": {
+      "title": "Segurança e criptografia",
+      "body": "Controla como os dados compartilhados da sua equipe são criptografados. Equipes com criptografia de ponta a ponta (somente desktop e celular) podem ser migradas para chaves gerenciadas pelo servidor para liberar o acesso pela web, pela CLI e por agentes de IA — criptografado, isolado por equipe e com registro de auditoria, mas não mais de conhecimento zero. Sua sincronização pessoal continua sempre com criptografia de ponta a ponta. Apenas proprietários e administradores podem migrar."
+    },
+    "team-tab-inbox": {
+      "title": "Caixa de entrada",
+      "body": "Menções, atribuições, respostas e atividade nas conversas que você acompanha nesta organização. A atividade de rastreadores e documentos também chega aqui, então a Caixa de entrada continua útil mesmo quando as salas estão desativadas."
+    },
+    "org-rooms-section-add": {
+      "title": "Salas",
+      "body": "Crie uma sala ou navegue pelo diretório.\n\nSalas são conversas de toda a organização. Salas **públicas** são abertas a todos na organização; salas **privadas** são limitadas às pessoas que você adicionar. Uma organização pode restringir a criação de salas aos administradores nas configurações — a navegação continua aberta a todos."
+    },
+    "org-dms-section-add": {
+      "title": "Iniciar uma mensagem direta",
+      "body": "Uma conversa privada com até outras sete pessoas. Mensagens diretas não podem ser renomeadas nem receber novos participantes depois — escolha os participantes desde o início."
+    },
+    "org-browse-rooms": {
+      "title": "Explorar salas",
+      "body": "Todas as salas que você pode ver: salas públicas de toda a organização e as privadas das quais você participa. Ao entrar em uma sala pública, a atividade dela passa a chegar à sua Caixa de entrada."
+    },
+    "org-rooms-create": {
+      "title": "Criar uma sala",
+      "body": "Adicione uma nova sala à organização. Salas públicas são abertas a todos; salas privadas são limitadas aos membros que você adicionar."
+    },
+    "org-room-notifications": {
+      "title": "Notificações desta conversa",
+      "body": "Escolha o que chega à sua Caixa de entrada a partir daqui:\n\n- **Todas as mensagens** — todas as mensagens\n- **Somente menções** — mensagens que mencionam você com @\n- **Nada** — absolutamente nada\n\nA configuração vale por conversa e acompanha você em todos os dispositivos."
+    },
+    "org-room-actions": {
+      "title": "Ações da sala",
+      "body": "Convide membros e abra as configurações da sala — renomeie, edite o tópico, gerencie os membros e os administradores da sala, permita ou bloqueie publicações de agentes ou arquive a sala. Disponível para administradores da sala e da organização."
+    },
+    "org-window-status-bar": {
+      "title": "O Nimbalyst Teams está em beta",
+      "body": "Espere encontrar bugs.\n\nAs organizações são gratuitas durante o beta e exigirão uma assinatura paga do Nimbalyst Teams após o lançamento; organizações existentes serão avisadas com antecedência antes de qualquer mudança de preço."
+    },
+    "organization-settings-rooms-toggle": {
+      "title": "Salas",
+      "body": "Desative as salas para uma organização que conversa em outro lugar. A seção de salas, o diretório e a criação de salas desaparecem para todos; as salas existentes são mantidas e voltam se você reativar esta opção. A Caixa de entrada, os comentários em documentos e os comentários em rastreadores não são afetados."
+    },
+    "organization-settings-dms-toggle": {
+      "title": "Mensagens diretas",
+      "body": "Desative as mensagens diretas para esta organização. A seção de mensagens diretas e todos os caminhos para escrever a uma pessoa desaparecem; as conversas existentes são mantidas e voltam se você reativar esta opção."
+    },
+    "organization-settings-room-creation": {
+      "title": "Quem pode criar salas",
+      "body": "Por padrão, qualquer membro pode criar salas. Restringir a criação aos administradores da organização ainda permite que todos os demais leiam, publiquem e entrem nas salas existentes."
+    },
+    "file-tree-filter-button": {
+      "title": "Filtre sua árvore de arquivos",
+      "body": "Mostre apenas arquivos markdown, alterações git não commitadas ou arquivos que a IA leu ou escreveu nesta sessão."
+    },
+    "file-tree-quick-open-button": {
+      "title": "Abertura rápida de arquivos",
+      "body": "Pesquise qualquer arquivo do seu projeto pelo nome. Os arquivos abertos recentemente aparecem no topo."
+    },
+    "file-tree-new-file-button": {
+      "title": "Novo arquivo",
+      "body": "Crie um novo arquivo na pasta selecionada."
+    },
+    "file-tree-new-folder-button": {
+      "title": "Nova pasta",
+      "body": "Crie uma nova pasta na pasta selecionada."
+    },
+    "file-tree-refresh-button": {
+      "title": "Atualizar árvore de arquivos",
+      "body": "Recarregue a lista de arquivos do disco para incluir arquivos adicionados ou removidos fora do Nimbalyst."
+    },
+    "document-session-control": {
+      "title": "Sessões de IA deste documento",
+      "body": "Volte direto para a última sessão deste documento ou use a seta para escolher outra sessão ou iniciar uma nova."
+    },
+    "file-history-button": {
+      "title": "Histórico do documento",
+      "body": "Veja versões anteriores deste documento. Restaure ou compare qualquer estado salvo."
+    },
+    "toc-toggle-button": {
+      "title": "Sumário",
+      "body": "Mostre ou oculte o painel de sumário. Navegue rapidamente até qualquer título do documento."
+    },
+    "diff-keep-button": {
+      "title": "Manter alterações",
+      "body": "Aceite as alterações da IA nesta seção e atualize o documento."
+    },
+    "diff-revert-button": {
+      "title": "Reverter alterações",
+      "body": "Rejeite as alterações da IA e restaure o conteúdo original."
+    },
+    "diff-keep-all-button": {
+      "title": "Manter todas as alterações",
+      "body": "Aceite todas as alterações pendentes da IA em todo o documento."
+    },
+    "diff-revert-all-button": {
+      "title": "Reverter todas as alterações",
+      "body": "Rejeite todas as alterações pendentes da IA e restaure o documento original."
+    },
+    "nav-back-button": {
+      "title": "Voltar",
+      "body": "Volte para o arquivo ou local anterior."
+    },
+    "nav-forward-button": {
+      "title": "Avançar",
+      "body": "Avance no seu histórico de navegação."
+    },
+    "files-mode-button": {
+      "title": "Modo Arquivos",
+      "body": "Navegue e edite os arquivos do seu projeto com assistência de IA em qualquer documento."
+    },
+    "agent-mode-button": {
+      "title": "Modo Agente",
+      "body": "Agente de programação com IA completo, com contexto de todo o projeto, uso de ferramentas e tarefas de várias etapas."
+    },
+    "agent-sessions-bubble": {
+      "title": "Sessões que precisam de atenção",
+      "body": "Abra sessões que aguardam sua resposta, estão em execução ou têm saída não lida."
+    },
+    "session-kanban-button": {
+      "title": "Quadro Kanban",
+      "body": "Alterne para uma visualização em quadro kanban das suas sessões organizadas por fase: Backlog, Planejamento, Implementação, Validação e Concluído. Arraste as sessões entre as colunas para atualizar o status delas."
+    },
+    "layout-controls": {
+      "title": "Modos de layout da sessão",
+      "body": "Veja sua sessão de IA e os arquivos editados juntos:\n\n**Arquivos**: mostra apenas as abas do editor de arquivos. Disponível quando você abre um arquivo editado em uma sessão de IA.\n\n**Dividido**: mostra a transcrição e o editor empilhados verticalmente. Arraste o divisor para ajustar.\n\n**Agente**: mostra apenas a transcrição da conversa."
+    },
+    "session-history-button": {
+      "title": "Histórico de sessões",
+      "body": "Navegue por sessões de IA anteriores. Pesquise, filtre e retome conversas anteriores."
+    },
+    "session-quick-open-button": {
+      "title": "Abertura rápida de sessão",
+      "body": "Pesquise e vá para qualquer sessão de IA pelo conteúdo ou título. Muito mais rápido do que rolar pelo histórico."
+    },
+    "session-quick-search-button": {
+      "title": "Pesquisar sessões",
+      "body": "Encontre rapidamente qualquer sessão de IA pelo nome. Digite **@** para pesquisar por arquivo editado -- encontre todas as sessões que mexeram em um arquivo específico. Pressione **Tab** para alternar para a pesquisa de prompts e encontrar sessões pelo que você pediu."
+    },
+    "session-archive-button": {
+      "title": "Arquivar sessão",
+      "body": "Arquive esta sessão para manter sua lista de sessões organizada. Sessões arquivadas podem ser restauradas a qualquer momento."
+    },
+    "tracker-automation-section": {
+      "title": "Automação do rastreador",
+      "body": "Conecte automaticamente commits git aos itens do seu rastreador. Quando ativado, o Nimbalyst vincula commits pelos itens de rastreador da sessão e pela leitura de chaves de issue (ex.: **NIM-123**) nas mensagens de commit — incluindo commits feitos no seu terminal.\n\nPara um comportamento específico do projeto, adicione instruções ao **CLAUDE.md** do projeto (ex.: \"sempre referencie as chaves de issue do rastreador nos commits\" ou \"não feche automaticamente bugs críticos sem revisão\")."
+    },
+    "agent-input": {
+      "title": "Entrada da IA",
+      "body": "Digite sua mensagem ou cole imagens e arquivos. A IA tem o contexto completo do seu projeto."
+    },
+    "plan-mode-toggle": {
+      "title": "Modo Plano vs. Agente",
+      "body": "Alterne entre os modos Plano e Agente. O modo Plano cria planos estruturados antes de a IA escrever código. O modo Agente executa as alterações diretamente."
+    },
+    "attach-files-input": {
+      "title": "Anexar arquivos e imagens",
+      "body": "Arraste e solte arquivos ou cole imagens diretamente no chat. Você também pode usar @ para mencionar arquivos do seu projeto."
+    },
+    "agent-welcome": {
+      "title": "Inicie sua primeira sessão",
+      "body": "Crie uma sessão de programação com IA. Descreva o que você quer construir e o agente vai ajudar você."
+    },
+    "files-scope-dropdown": {
+      "title": "Modos de escopo de arquivos",
+      "body": "Controle quais arquivos são exibidos. Veja as edições da IA desta sessão, apenas as alterações não commitadas ou todos os arquivos do espaço de trabalho. Em fluxos de trabalho, filtre por sessão individual ou veja todas as sessões combinadas."
+    },
+    "git-commit-mode-toggle": {
+      "title": "Modos de commit",
+      "body": "Escolha como fazer commit das suas alterações. O modo Manual permite escrever sua própria mensagem. O modo Inteligente usa IA para analisar as alterações e propor uma mensagem de commit."
+    },
+    "git-operations-commit-with-ai-button": {
+      "title": "Commit assistido por IA",
+      "body": "Peça à IA para analisar suas alterações e propor um conjunto de arquivos e uma mensagem de commit para você editar e aprovar."
+    },
+    "model-picker": {
+      "title": "Selecionar modelo de IA",
+      "body": "Escolha qual modelo de IA usar. Modelos diferentes têm capacidades e velocidades diferentes."
+    },
+    "model-picker-provider-claude-code": {
+      "title": "Claude Agent (recomendado)",
+      "body": "O agente do app baseado no Claude Code, com integração completa ao Nimbalyst: ele vê o documento e a seleção ativos, exibe a transcrição detalhada em linha e acompanha cada arquivo que edita. Funciona com sua assinatura do Claude quando você entra com seu plano do Claude, ou com sua chave de API da Anthropic."
+    },
+    "model-picker-provider-claude-code-cli": {
+      "title": "Claude Code CLI (modo terminal)",
+      "body": "Para quem prefere a própria ferramenta de linha de comando: executa o binário claude original em um terminal embutido, para você ter os comandos de barra e a TUI dele na gaveta do terminal bruto enquanto o Nimbalyst espelha a conversa na transcrição detalhada. Você não precisa disto para usar sua assinatura do Claude."
+    },
+    "action-prompts-dropdown": {
+      "title": "Prompts de ação",
+      "body": "Prompts reutilizáveis que você define em nimbalyst-local/ai-actions.md. Escolher um insere o conteúdo dele no rascunho para você ajustar antes de enviar."
+    },
+    "context-indicator": {
+      "title": "Janela de contexto",
+      "body": "Mostra quanto da janela de contexto da IA está em uso. Inclui arquivos, histórico da conversa e ferramentas."
+    },
+    "transcript-archive-button": {
+      "title": "Arquivar sessão",
+      "body": "Arquive esta sessão para manter sua lista de sessões organizada."
+    },
+    "transcript-search-button": {
+      "title": "Pesquisar na transcrição",
+      "body": "Pesquise nesta conversa por mensagens ou conteúdos específicos."
+    },
+    "voice-mode-toggle": {
+      "title": "Modo de voz",
+      "body": "Fale com a IA em vez de digitar. A IA responderá por voz."
+    },
+    "gutter-permissions-button": {
+      "title": "Permissões do agente",
+      "body": "Configure quais ferramentas o agente de IA pode usar. Controle o acesso a arquivos, a execução de comandos e mais."
+    },
+    "gutter-extension-dev-button": {
+      "title": "Modo de desenvolvimento de extensões",
+      "body": "Abra as ferramentas de desenvolvimento de extensões, os logs e as opções de recompilação."
+    },
+    "gutter-theme-button": {
+      "title": "Tema",
+      "body": "Alterne entre os temas claro e escuro."
+    },
+    "gutter-feedback-button": {
+      "title": "Enviar feedback",
+      "body": "Compartilhe feedback ou relate problemas para a equipe."
+    },
+    "gutter-user-button": {
+      "title": "Menu do usuário",
+      "body": "Abra o menu do usuário para acessar as Configurações do usuário, as Configurações do projeto, as Configurações da equipe e as informações da conta."
+    },
+    "terminal-panel-button": {
+      "title": "Terminal",
+      "body": "Mostre ou oculte o painel do terminal para executar comandos."
+    },
+    "tracker-mode-button": {
+      "title": "Rastreadores",
+      "body": "Alterne para o modo Rastreador para uma visão completa de gestão de projetos com layouts de tabela e kanban."
+    },
+    "collab-mode-button": {
+      "title": "Páginas",
+      "body": "Navegue e edite páginas compartilhadas com sua equipe em tempo real. Colabore em markdown, planilhas, diagramas e tipos de rastreador posicionados."
+    },
+    "org-mode-button": {
+      "title": "Organização",
+      "body": "A caixa de entrada, as salas e as mensagens diretas da organização à qual este projeto pertence."
+    },
+    "pr-review-mode-button": {
+      "title": "GitHub",
+      "body": "Trabalhe com o GitHub deste projeto sem sair do app: navegue por pull requests e issues, leia diffs e conversas e entregue qualquer um deles a um agente."
+    },
+    "settings-project-tab": {
+      "title": "Configurações do projeto",
+      "body": "Configurações específicas deste projeto. Armazenadas na pasta do projeto."
+    },
+    "settings-global-tab": {
+      "title": "Configurações globais",
+      "body": "Configurações que se aplicam a todos os projetos."
+    },
+    "settings-walkthroughs-toggle": {
+      "title": "Guias de recursos",
+      "body": "Mostre guias úteis para novos recursos. Os guias aparecem automaticamente conforme você usa o app."
+    },
+    "settings-walkthroughs-reset": {
+      "title": "Redefinir guias",
+      "body": "Mostre todos os guias de recursos novamente, inclusive os que você já viu."
+    },
+    "project-manager-open": {
+      "title": "Abrir projeto",
+      "body": "Abra uma pasta de projeto do seu computador."
+    },
+    "project-manager-recent": {
+      "title": "Projetos recentes",
+      "body": "Seus projetos abertos recentemente, para acesso rápido."
+    }
+  },
+  "tips": {
+    "unknownTitle": "Dica desconhecida",
+    "unknownMessage": "Dica \"{{tipId}}\" não encontrada.",
+    "resetTitle": "Dicas redefinidas",
+    "resetMessage": "Todas as dicas serão exibidas novamente."
+  },
+  "walkthroughs": {
+    "notFoundTitle": "Guia não encontrado",
+    "notFoundMessage": "Guia desconhecido: {{walkthroughId}}",
+    "cannotShowTitle": "Não é possível exibir o guia",
+    "targetMissing": "\"{{name}}\" requer elementos da interface que não estão visíveis nesta tela. Tente mudar para o {{mode}} primeiro.",
+    "conditionsNotMet": "As condições de \"{{name}}\" não foram atendidas. Tente mudar para o {{mode}} primeiro.",
+    "agentMode": "modo Agente",
+    "filesMode": "modo Arquivos",
+    "resetTitle": "Guias redefinidos",
+    "resetMessage": "Todos os guias serão exibidos novamente."
+  },
+  "terminal": {
+    "restartFailed": "Falha ao reiniciar o terminal",
+    "ptyInitFailed": "Falha ao inicializar o PTY",
+    "restoreFailed": "Não foi possível restaurar corretamente o histórico salvo do terminal. A saída ao vivo do terminal continua.",
+    "restorePartial": "Histórico salvo do terminal restaurado parcialmente. A saída ao vivo do terminal continua.",
+    "restorePartialTimeout": "Histórico salvo do terminal restaurado parcialmente porque a reprodução demorou demais.",
+    "unknownError": "Erro desconhecido",
+    "dismiss": "Dispensar",
+    "initializing": "Inicializando o terminal...",
+    "initFailed": "Falha ao inicializar o terminal: {{error}}",
+    "processExited": "O processo terminou com o código {{code}}.",
+    "restart": "Reiniciar",
+    "newTerminal": "Novo terminal",
+    "closePanel": "Fechar painel",
+    "noTerminals": "Nenhum terminal aberto",
+    "shellLabel": "Shell: {{shell}}",
+    "currentWorktreeSuffix": "(Worktree atual)",
+    "currentWorktreeTerminal": "Terminal do worktree atual",
+    "worktreeTerminal": "Terminal do worktree",
+    "commandRunning": "Comando em execução",
+    "closeTerminal": "Fechar terminal"
+  },
+  "feedbackIntake": {
+    "title": "Envie um feedback melhor com o seu agente",
+    "intro": "Use o seu agente para melhorar seus relatórios de bug e solicitações de recurso. O agente ajuda a redigir, e você aprova tudo antes de o GitHub abrir.",
+    "bugTitle": "Relatório de bug",
+    "bugDescription": "Comportamento incorreto, travamentos, problemas de sincronização ou regressões.",
+    "featureTitle": "Solicitação de recurso",
+    "featureDescription": "Recursos ausentes, melhorias de fluxo de trabalho ou mudanças de UX.",
+    "includeLogs": "Incluir logs e detalhes do ambiente",
+    "includeLogsDescription": "Os logs podem incluir caminhos de arquivos, nomes de espaços de trabalho e detalhes de erros. O assistente os anonimiza antes, e você revisa o relatório final antes de ele ser publicado.",
+    "mockupFirst": "Explorar a ideia com um mockup de UX primeiro",
+    "mockupFirstDescription": "Ideal para mudanças de interface ou de fluxo de trabalho. O assistente pode esboçar um mockup, refiná-lo com você e incluir essa direção visual na solicitação.",
+    "startBug": "Iniciar relatório de bug",
+    "startFeature": "Iniciar solicitação de recurso",
+    "chooseType": "Escolha um tipo para continuar",
+    "otherWays": "Outras formas de falar conosco",
+    "browseIssues": "Ver issues existentes no GitHub",
+    "discussIdea": "Discutir uma ideia no GitHub Discussions",
+    "emailSupport": "Enviar feedback privado por e-mail para {{email}}"
+  },
+  "alphaBadge": {
+    "stage": {
+      "alpha": {
+        "title": "Alfa",
+        "word": "alfa",
+        "ariaLabel": "Recurso alfa"
+      },
+      "beta": {
+        "title": "Beta",
+        "word": "beta",
+        "ariaLabel": "Recurso beta"
+      }
+    },
+    "defaultTooltip": "Recurso alfa — pode mudar ou ser removido.",
+    "settingsTooltip": "Recursos alfa podem estar incompletos, e dados compartilhados podem ser perdidos.\n\nOs recursos de equipe são gratuitos durante o beta e farão parte de uma assinatura do Nimbalyst Teams no futuro.",
+    "teamBetaTooltip": "O Nimbalyst Teams está em beta. Espere encontrar bugs.\n\nAs organizações são gratuitas durante o beta e exigirão uma assinatura paga do Nimbalyst Teams após o lançamento."
+  },
+  "teamBetaNotice": {
+    "text": "<highlight>O Nimbalyst Teams está em beta</highlight> — espere encontrar bugs. As organizações são gratuitas durante o beta e exigirão uma assinatura paga do Nimbalyst Teams após o lançamento; organizações existentes serão avisadas com antecedência antes de qualquer mudança de preço."
+  },
+  "trackerOwnership": {
+    "personal": "Pessoal",
+    "team": "Equipe",
+    "personalDescription": "Nesta máquina. Nunca sincronizado.",
+    "everyoneDescription": "Todos veem os mesmos campos, itens e números.",
+    "sharedWithPeopleDescription_zero": "Compartilhado com {{count}} pessoas. Todos veem os mesmos campos, itens e números.",
+    "sharedWithPeopleDescription_one": "Compartilhado com {{count}} pessoa. Todos veem os mesmos campos, itens e números.",
+    "sharedWithPeopleDescription_other": "Compartilhado com {{count}} pessoas. Todos veem os mesmos campos, itens e números.",
+    "localOnly": "Somente local",
+    "sharedPeople_zero": "Compartilhado · {{count}} pessoas",
+    "sharedPeople_one": "Compartilhado · {{count}} pessoa",
+    "sharedPeople_other": "Compartilhado · {{count}} pessoas",
+    "sharedWithTeam": "Compartilhado com a equipe",
+    "teamOwnsTooltip": "{{team}} é dono deste rastreador — alterar os campos dele altera para todos",
+    "onlyOnThisMachine": "Somente nesta máquina",
+    "withDrafts": "{{label}} · rascunhos"
+  },
+  "keyboardShortcuts": {
+    "groups": {
+      "file": "Arquivo",
+      "edit": "Editar",
+      "view": "Exibir",
+      "window": "Janela",
+      "organizationWindowMessages": "Janela da organização — Mensagens",
+      "trackerGrid": "Grade do rastreador",
+      "textFormatting": "Formatação de texto",
+      "paragraphFormatting": "Formatação de parágrafo",
+      "textAlignment": "Alinhamento de texto",
+      "textCaseAndSize": "Maiúsculas/minúsculas e tamanho",
+      "projectCanvas": "Canvas do projeto"
+    },
+    "items": {
+      "newFileNewSession": "Novo arquivo / Nova sessão",
+      "launchSessionPopup": "Abrir popup de nova sessão",
+      "newTrackerItem": "Novo item de rastreador",
+      "newBrowserTab": "Nova aba do navegador",
+      "openFile": "Abrir arquivo",
+      "save": "Salvar",
+      "closeTab": "Fechar aba",
+      "reopenClosedTab": "Reabrir aba fechada",
+      "closeProject": "Fechar projeto",
+      "quit": "Sair",
+      "undo": "Desfazer",
+      "redo": "Refazer",
+      "cut": "Recortar",
+      "copy": "Copiar",
+      "paste": "Colar",
+      "pasteAsText": "Colar como texto",
+      "selectAll": "Selecionar tudo",
+      "find": "Localizar",
+      "findNext": "Localizar próximo",
+      "findPrevious": "Localizar anterior",
+      "viewLocalHistory": "Ver histórico local",
+      "approveCurrentAction": "Aprovar ação atual",
+      "rejectCurrentAction": "Rejeitar ação atual",
+      "togglePlanModeClaudeCode": "Alternar modo Plano (Claude Code)",
+      "chooseAIModelAIInputFocused": "Escolher modelo de IA (com a entrada da IA em foco)",
+      "nextPreviousAIMenuModelEffortActions": "Menu de IA seguinte / anterior (modelo, esforço, ações)",
+      "filesMode": "Modo arquivos",
+      "agentMode": "Modo agente",
+      "sessionKanbanView": "Visualização kanban de sessões",
+      "toggleAIChatPanel": "Alternar painel de chat com IA",
+      "toggleBottomPanel": "Alternar painel inferior",
+      "toggleTerminalPanel": "Alternar painel do terminal",
+      "toggleClaudeCLITerminalDrawer": "Alternar gaveta do terminal do Claude CLI",
+      "trackerMode": "Modo rastreador",
+      "pages": "Páginas",
+      "organization": "Organização",
+      "toggleSidebar": "Alternar barra lateral",
+      "toggleExpandedTab": "Alternar aba expandida",
+      "navigateBack": "Voltar",
+      "navigateForward": "Avançar",
+      "nextTab": "Próxima aba",
+      "previousTab": "Aba anterior",
+      "actualSize": "Tamanho real",
+      "zoomIn": "Ampliar",
+      "zoomOut": "Reduzir",
+      "toggleFullScreen": "Alternar tela cheia",
+      "projectManager": "Gerenciador de projetos",
+      "switchProject": "Trocar de projeto",
+      "sessionQuickOpen": "Abertura rápida de sessão",
+      "promptQuickOpen": "Abertura rápida de prompt",
+      "contentSearch": "Pesquisa de conteúdo",
+      "memorySearch": "Pesquisa na memória",
+      "teamQuickOpen": "Abertura rápida da equipe",
+      "organizationMessages": "Mensagens da organização",
+      "newWorktree": "Novo worktree",
+      "settings": "Configurações",
+      "minimize": "Minimizar",
+      "newMessage": "Nova mensagem",
+      "goToInbox": "Ir para a caixa de entrada",
+      "searchMessages": "Pesquisar mensagens",
+      "nextConversation": "Próxima conversa",
+      "previousConversation": "Conversa anterior",
+      "markAllAsRead": "Marcar tudo como lido",
+      "moveBetweenCells": "Mover entre células",
+      "editFocusedCell": "Editar a célula em foco",
+      "openFocusedItemDetails": "Abrir detalhes do item em foco",
+      "commitEditNextRow": "Confirmar edição / próxima linha",
+      "cancelEditCloseDetails": "Cancelar edição / fechar detalhes",
+      "undoLastGridEdit": "Desfazer a última edição da grade",
+      "redoGridEdit": "Refazer edição da grade",
+      "bold": "Negrito",
+      "italic": "Itálico",
+      "underline": "Sublinhado",
+      "strikethrough": "Tachado",
+      "insertLink": "Inserir link",
+      "clearFormatting": "Limpar formatação",
+      "normalText": "Texto normal",
+      "heading1": "Título 1",
+      "heading2": "Título 2",
+      "heading3": "Título 3",
+      "numberedList": "Lista numerada",
+      "bulletList": "Lista com marcadores",
+      "checkList": "Lista de verificação",
+      "codeBlock": "Bloco de código",
+      "quote": "Citação",
+      "leftAlign": "Alinhar à esquerda",
+      "centerAlign": "Centralizar",
+      "rightAlign": "Alinhar à direita",
+      "justify": "Justificar",
+      "indent": "Aumentar recuo",
+      "outdent": "Diminuir recuo",
+      "lowercase": "Minúsculas",
+      "uppercase": "Maiúsculas",
+      "capitalize": "Iniciais maiúsculas",
+      "increaseFontSize": "Aumentar tamanho da fonte",
+      "decreaseFontSize": "Diminuir tamanho da fonte",
+      "subscript": "Subscrito",
+      "superscript": "Sobrescrito"
+    },
+    "keys": {
+      "arrowKeysOrTab": "Setas / Tab",
+      "f2OrType": "F2 ou comece a digitar",
+      "enterWhileEditing": "Enter (durante a edição)"
+    },
+    "title": "Atalhos de teclado",
+    "tabs": {
+      "general": "Geral",
+      "editor": "Formatação do editor",
+      "extensions": "Extensões"
+    },
+    "noExtensionKeybindings": "Nenhum atalho de extensão registrado. As extensões podem contribuir com atalhos pelo manifest.json delas.",
+    "pressEscToClose": "Pressione <kbd>Esc</kbd> para fechar"
+  },
+  "quickOpen": {
+    "tabs": {
+      "memory": "Memória",
+      "team": "Equipe",
+      "files": "Arquivos",
+      "inFiles": "Nos arquivos",
+      "sessions": "Sessões",
+      "prompts": "Prompts",
+      "projects": "Projetos",
+      "trackers": "Rastreadores"
+    },
+    "fileMasks": {
+      "styles": "Estilos",
+      "config": "Configuração"
+    },
+    "trackerTypes": {
+      "bug": "Bug",
+      "task": "Tarefa",
+      "plan": "Plano",
+      "idea": "Ideia",
+      "decision": "Decisão",
+      "feature": "Recurso"
+    },
+    "scopes": {
+      "all": "Tudo",
+      "docs": "Documentos",
+      "local": "Local",
+      "shared": "Compartilhado",
+      "me": "Eu",
+      "agents": "Agentes"
+    },
+    "placeholders": {
+      "memoryTrackers": "Pesquisar rastreadores por título, chave ou significado...",
+      "memoryDocs": "Pesquisar documentos indexados por significado...",
+      "memorySessions": "Pesquisar sessões indexadas por significado...",
+      "memoryAll": "Pesquisar a memória do projeto — documentos, rastreadores, sessões...",
+      "team": "Pesquisar documentos compartilhados da equipe...",
+      "projects": "Pesquisar projetos...",
+      "inFiles": "Pesquisar no conteúdo dos arquivos...",
+      "sessions": "Pesquisar sessões... (@ para filtrar por arquivo editado)",
+      "prompts": "Pesquisar prompts...",
+      "files": "Pesquisar arquivos..."
+    },
+    "comingSoon": "Em breve",
+    "soon": "em breve",
+    "searchingMessages": "Pesquisando mensagens...",
+    "backToTitleSearch": "Voltar à pesquisa por título",
+    "messageMatches": "Correspondências em mensagens",
+    "searchContentsHint": "Pressione Shift+Tab para pesquisar no conteúdo das mensagens",
+    "searchContents": "Pesquisar conteúdo",
+    "filters": {
+      "mask": "Máscara",
+      "type": "Tipo",
+      "show": "Mostrar"
+    },
+    "footer": {
+      "navigate": "Navegar",
+      "openAtPrompt": "Abrir neste prompt",
+      "open": "Abrir",
+      "nextTab": "Próxima aba"
+    },
+    "empty": {
+      "noMatchingTeamDocs": "Nenhum documento da equipe corresponde",
+      "noTeamDocs": "Ainda não há documentos compartilhados da equipe",
+      "noSharedDocsFound": "Nenhum documento compartilhado encontrado",
+      "noSharedDocs": "Nenhum documento compartilhado",
+      "noFilesFound": "Nenhum arquivo encontrado",
+      "noRecentFiles": "Nenhum arquivo recente",
+      "noMatchesWithMask": "Nenhuma correspondência com {{mask}}",
+      "noMatches": "Nenhuma correspondência",
+      "typeToSearchContents": "Digite para pesquisar no conteúdo dos arquivos",
+      "typeToSearchFiles": "Digite para pesquisar arquivos...",
+      "noSessionsEdited": "Nenhuma sessão editou {{file}}",
+      "noSessionsFound": "Nenhuma sessão encontrada",
+      "noRecentSessions": "Nenhuma sessão recente",
+      "noPromptsFound": "Nenhum prompt encontrado",
+      "noRecentPrompts": "Nenhum prompt recente",
+      "noProjectsFound": "Nenhum projeto encontrado",
+      "noRecentProjects": "Nenhum projeto recente",
+      "noMatchingTrackers": "Nenhum rastreador corresponde",
+      "noTrackers": "Ainda não há rastreadores"
+    },
+    "newOrChanged": "Novo ou alterado",
+    "favorite": "Favorito",
+    "searching": "Pesquisando...",
+    "showFileSessions": "Mostrar sessões que editaram este arquivo",
+    "badges": {
+      "shared": "Compartilhado",
+      "recent": "Recente",
+      "inWorkstream": "Em fluxo de trabalho",
+      "worktree": "Worktree",
+      "current": "Atual",
+      "open": "Aberto"
+    },
+    "searchingFileContents": "Pesquisando no conteúdo dos arquivos...",
+    "matchCount_zero": "{{count}} correspondências",
+    "matchCount_one": "{{count}} correspondência",
+    "matchCount_other": "{{count}} correspondências",
+    "lineNumber": "Linha {{line}}:",
+    "andMore": "...e mais {{count}}",
+    "status": {
+      "processing": "Processando...",
+      "waitingForResponse": "Aguardando sua resposta",
+      "unreadResponse": "Resposta não lida"
+    },
+    "newConversation": "Nova conversa",
+    "filteredToSessionsThatEdited": "Filtrado para sessões que editaram:",
+    "clearFileFilter": "Limpar filtro de arquivo",
+    "messageCount_zero": "{{count}} msgs",
+    "messageCount_one": "{{count}} msg",
+    "messageCount_other": "{{count}} msgs",
+    "uncommittedChanges_zero": "{{count}} alterações não commitadas",
+    "uncommittedChanges_one": "{{count}} alteração não commitada",
+    "uncommittedChanges_other": "{{count}} alterações não commitadas",
+    "promptsFrom": "Prompts de",
+    "copiedToClipboard": "Copiado para a área de transferência",
+    "attachFolder": "Anexar pasta ao espaço de trabalho...",
+    "attachFolderDescription": "Navegue por ela aqui e deixe os agentes lerem, sem sair deste projeto",
+    "searchIn": "Pesquisar em",
+    "refTypes": {
+      "tracker": "Rastreador",
+      "session": "Sessão",
+      "document": "Documento"
+    },
+    "semantic": {
+      "scopeAll": "rastreadores, documentos e sessões",
+      "scopeDocs": "documentos indexados",
+      "scopeTrackers": "rastreadores",
+      "scopeSessions": "sessões",
+      "searchByMeaning": "Pesquise {{scope}} por significado",
+      "noMatches": "Nenhuma correspondência semântica em {{scope}}",
+      "match": "Correspondência semântica"
+    },
+    "loadingTrackers": "Carregando rastreadores...",
+    "searchingTrackers": "Pesquisando rastreadores...",
+    "filterChip": {
+      "any": "Qualquer",
+      "clear": "Limpar filtro",
+      "options": "Opções",
+      "recent": "Recentes",
+      "removeFromHistory": "Remover do histórico",
+      "custom": "Personalizado",
+      "placeholder": "Filtrar..."
+    }
+  },
+  "projectTrust": {
+    "agentVerifiedDescription": "Trabalha sem interromper você; ações arriscadas, como deploys e comandos destrutivos, aguardam sua aprovação."
+  },
+  "errorBoundary": {
+    "title": "Algo deu errado",
+    "unexpected": "Ocorreu um erro inesperado",
+    "tryAgain": "Tentar novamente"
+  },
+  "remoteMachine": {
+    "ariaLabel": "Máquina de execução",
+    "thisMac": "Este Mac",
+    "lastSeen": "Visto pela última vez em {{time}}",
+    "offline": "Offline",
+    "remoteOffline": "Máquina remota · Offline"
+  },
+  "extensionPermissions": {
+    "risk": {
+      "high": "Alto risco",
+      "elevated": "Elevado",
+      "low": "Baixo risco"
+    },
+    "enableTitle": "Ativar {{name}}?",
+    "needsNewPermissions": "{{name}} precisa de novas permissões",
+    "updatedBanner_zero": "Esta extensão foi atualizada e agora requer {{count}} permissões adicionais, marcadas como NOVA abaixo.",
+    "updatedBanner_one": "Esta extensão foi atualizada e agora requer {{count}} permissão adicional, marcada como NOVA abaixo.",
+    "updatedBanner_other": "Esta extensão foi atualizada e agora requer {{count}} permissões adicionais, marcadas como NOVA abaixo.",
+    "nativeCodeTitle": "Esta extensão executará código nativo no seu computador.",
+    "nativeCodeBody": "Ativar este módulo permite que ele inicie processos, abra conexões de rede e leia ou grave arquivos com o mesmo acesso da sua conta de usuário. Ative apenas extensões de fontes confiáveis.",
+    "newBadge": "Nova",
+    "revokeHint": "Você pode revogar isso a qualquer momento em Configurações → Extensões.",
+    "notNow": "Agora não",
+    "enable": "Ativar",
+    "backend": {
+      "apiNotLoaded": "A API de recursos privilegiados ainda não foi carregada. Reinicie o Nimbalyst para gerenciar as permissões dos módulos de backend.",
+      "title": "Recursos privilegiados",
+      "unknownPermission": "Permissão desconhecida: {{id}}",
+      "thisWorkspace": "Este espaço de trabalho",
+      "noWorkspaceOpen": "Nenhum espaço de trabalho aberto",
+      "allWorkspaces": "Todos os espaços de trabalho",
+      "scopeNotApplicable": "{{scope}}: n/d",
+      "scopeNotEnabled": "{{scope}}: não ativado",
+      "scopeEnabled": "{{scope}}: ativado",
+      "revoke": "revogar"
+    },
+    "hostState": {
+      "running": "Em execução",
+      "starting": "Iniciando",
+      "awaitingConsent": "Aguardando consentimento",
+      "awaitingTrust": "Espaço de trabalho não confiável",
+      "crashed": "Travou",
+      "denied": "Negado",
+      "stopped": "Parado"
+    }
+  },
+  "extensionDev": {
+    "buildFailedGeneric": "A compilação da extensão falhou. Abra Ver logs para mais detalhes.",
+    "rebuiltOne": "{{name}} recompilada e recarregada.",
+    "buildFailedFor": "A compilação falhou para {{names}}. Abra Ver logs para mais detalhes.",
+    "rebuiltMany_zero": "{{count}} extensões recompiladas e recarregadas.",
+    "rebuiltMany_one": "{{count}} extensão recompilada e recarregada.",
+    "rebuiltMany_other": "{{count}} extensões recompiladas e recarregadas.",
+    "ariaLabel": "Modo de desenvolvimento de extensões",
+    "title": "Modo de desenvolvimento de extensões",
+    "toolsActive": "Ferramentas de desenvolvimento ativas",
+    "started": "Iniciado {{time}}",
+    "staleBundles_zero": "{{count}} pacotes de extensão desatualizados detectados. Recompile antes de testar.",
+    "staleBundles_one": "{{count}} pacote de extensão desatualizado detectado. Recompile antes de testar.",
+    "staleBundles_other": "{{count}} pacotes de extensão desatualizados detectados. Recompile antes de testar.",
+    "viewLogs": "Ver logs",
+    "settings": "Configurações de extensões",
+    "rebuilding": "Recompilando...",
+    "rebuildExtensions": "Recompilar extensões",
+    "rebuildingAll": "Recompilando todas...",
+    "allExtensions": "Todas as extensões",
+    "noBuildable": "Nenhuma extensão compilável encontrada",
+    "restarting": "Reiniciando...",
+    "restart": "Reiniciar o Nimbalyst"
+  },
+  "extensionLogs": {
+    "title": "Logs de extensões",
+    "filterByLevel": "Filtrar por nível",
+    "allLevels": "Todos os níveis",
+    "levels": {
+      "error": "Erros",
+      "warn": "Avisos",
+      "info": "Info",
+      "debug": "Debug"
+    },
+    "filterBySource": "Filtrar por origem",
+    "allSources": "Todas as origens",
+    "sources": {
+      "renderer": "Renderer",
+      "main": "Main",
+      "build": "Build"
+    },
+    "filterByExtension": "Filtrar por extensão",
+    "autoRefresh": "Atualização automática",
+    "clearLogs": "Limpar logs",
+    "empty": "Nenhum log para exibir",
+    "emptyHint": "Os logs de extensões aparecerão aqui quando as extensões emitirem mensagens de console ou erros.",
+    "filterByExtensionId": "Filtrar por {{id}}"
+  },
+  "app": {
+    "gitLogUnavailable": "O Git Log não está disponível. Ative a extensão Git para abri-lo.",
+    "figmaMcp": {
+      "title": "O servidor MCP do Figma precisa ser reconfigurado",
+      "message": "Sua configuração atual do MCP do Figma não funcionará no Nimbalyst. O Figma não permite MCP baseado em OAuth em determinados apps.\n\nPara corrigir, abra as configurações de MCP e faça o seguinte:\n\n1. Remova a configuração existente do MCP do Figma com OAuth.\n2. Adicione uma nova configuração de MCP do Figma a partir do modelo de MCP do Nimbalyst.\n3. Adicione seu Personal Access Token à configuração de MCP.",
+      "openSettings": "Abrir configurações de MCP"
+    },
+    "nothingToCommit": {
+      "title": "Nada para commitar",
+      "message": "Os arquivos selecionados não podem ser commitados (arquivos com conflito são excluídos)."
+    },
+    "commitWithAiFailed": "Falha no commit com IA",
+    "unsyncedCollab": {
+      "title": "Alterações colaborativas não sincronizadas",
+      "replaying": "Este documento colaborativo ainda está reenviando alterações locais ao servidor. Fechar agora pode atrasar a recuperação até você reabri-lo.",
+      "unconfirmed": "Este documento colaborativo tem alterações locais que ainda não foram confirmadas pelo servidor. Fechar agora as manterá na fila localmente, mas elas não serão sincronizadas até você reabrir o documento e reconectar.",
+      "keepEditing": "Continuar editando"
+    },
+    "unsavedChanges": {
+      "title": "Alterações não salvas",
+      "message": "Deseja salvar as alterações feitas? Suas alterações serão perdidas se você não salvá-las.",
+      "dontSave": "Não salvar"
+    },
+    "agentNeedsWorkspace": "O modo Agente requer um espaço de trabalho",
+    "agentNeedsWorkspaceHint": "Abra um espaço de trabalho para usar os recursos de agente",
+    "openWorkspaceToStart": "Abra um espaço de trabalho para começar"
+  },
+  "share": {
+    "couldNotShare": "Não foi possível compartilhar com a equipe",
+    "scopeUnavailable": "O escopo de colaboração da equipe ativa não está disponível.",
+    "copyLink": "Copiar link",
+    "copyFailed": "Falha ao copiar",
+    "copyFailedMessage": "Não foi possível copiar o link para a área de transferência.",
+    "linkedShared_zero": "{{count}} documentos vinculados compartilhados.",
+    "linkedShared_one": "{{count}} documento vinculado compartilhado.",
+    "linkedShared_other": "{{count}} documentos vinculados compartilhados.",
+    "linkedFailed_zero": "{{count}} documentos vinculados não puderam ser compartilhados e continuam como links locais.",
+    "linkedFailed_one": "{{count}} documento vinculado não pôde ser compartilhado e continua como link local.",
+    "linkedFailed_other": "{{count}} documentos vinculados não puderam ser compartilhados e continuam como links locais.",
+    "nowCollaborativeMigrated_zero": "\"{{title}}\" agora é um documento colaborativo. {{count}} anexos migrados.",
+    "nowCollaborativeMigrated_one": "\"{{title}}\" agora é um documento colaborativo. {{count}} anexo migrado.",
+    "nowCollaborativeMigrated_other": "\"{{title}}\" agora é um documento colaborativo. {{count}} anexos migrados.",
+    "nowCollaborative": "\"{{title}}\" agora é um documento colaborativo.",
+    "missingLinkedTitle": "Compartilhado com documentos vinculados ausentes",
+    "sharedToTeam": "Compartilhado com a equipe",
+    "missingAttachmentsTitle": "Compartilhado com anexos ausentes",
+    "attachmentsFailed_zero": "\"{{title}}\" foi compartilhado, mas {{count}} anexos não puderam ser enviados.",
+    "attachmentsFailed_one": "\"{{title}}\" foi compartilhado, mas {{count}} anexo não pôde ser enviado.",
+    "attachmentsFailed_other": "\"{{title}}\" foi compartilhado, mas {{count}} anexos não puderam ser enviados.",
+    "imagesNotMigrated": "\"{{title}}\" agora é colaborativo, mas os anexos de imagem não puderam ser migrados.",
+    "imagesNotMigratedWithReason": "\"{{title}}\" agora é colaborativo, mas os anexos de imagem não puderam ser migrados: {{reason}}",
+    "folderTooLargeTitle": "A pasta é grande demais para compartilhar",
+    "folderTooLarge": "\"{{folder}}\" contém {{count}} documentos compartilháveis, mais do que os {{max}} que uma única promoção pode publicar. Compartilhe as subpastas separadamente.",
+    "couldNotShareFolder": "Não foi possível compartilhar a pasta com a equipe",
+    "folderTreeFailed": "Não foi possível criar a árvore de pastas compartilhada: {{message}}",
+    "folderUnreadable": "Não foi possível ler \"{{folder}}\": {{message}}",
+    "nothingToShare": "Nada para compartilhar",
+    "noCollaborativeType": "Nenhum arquivo em \"{{folder}}\" tem um tipo de documento colaborativo.",
+    "teamRoot": "raiz da equipe",
+    "nothingWasShared": "Nada foi compartilhado",
+    "noDocumentCouldBeShared": "Nenhum documento em \"{{folder}}\" pôde ser compartilhado.",
+    "documentCount_zero": "{{count}} documentos",
+    "documentCount_one": "{{count}} documento",
+    "documentCount_other": "{{count}} documentos",
+    "failedToShareCount_zero": "{{count}} não puderam ser compartilhados",
+    "failedToShareCount_one": "{{count}} não pôde ser compartilhado",
+    "failedToShareCount_other": "{{count}} não puderam ser compartilhados",
+    "skippedNoType_zero": "{{count}} arquivos não tinham tipo de documento colaborativo",
+    "skippedNoType_one": "{{count}} arquivo não tinha tipo de documento colaborativo",
+    "skippedNoType_other": "{{count}} arquivos não tinham tipo de documento colaborativo",
+    "folderSharedTitle": "Pasta compartilhada com a equipe",
+    "folderShared": "Compartilhamento concluído: {{documents}} de \"{{folder}}\" (destino: {{destination}}).",
+    "folderSharedWithExceptionsTitle": "Pasta compartilhada com exceções",
+    "folderSharedWithExceptions": "Compartilhamento concluído: {{documents}} de \"{{folder}}\" (destino: {{destination}}). {{exceptions}}."
+  },
+  "diskChange": {
+    "delayedTitle": "Atualizações de arquivo atrasadas",
+    "delayedMessage": "Não foi possível atualizar {{file}}. Suas edições não salvas foram preservadas."
+  },
+  "errors": {
+    "anErrorOccurred": "Ocorreu um erro",
+    "uncaughtError": "Erro não tratado",
+    "unhandledRejection": "Rejeição de promise não tratada"
+  },
+  "worktreeArchive": {
+    "failed": "Falha ao arquivar \"{{name}}\"",
+    "autoRejected": "O backend rejeitou o arquivamento automático.",
+    "rejected": "O backend rejeitou o arquivamento."
+  },
+  "links": {
+    "notInProjectTitle": "Não está neste projeto",
+    "notInProjectMessage": "Abra o projeto ao qual este link pertence e tente o link novamente.",
+    "viewUnavailableTitle": "Visualização indisponível",
+    "pageNotInProjectTitle": "A página não está neste projeto",
+    "viewUnavailableMessage": "Esta lista não pode ser aberta sozinha.",
+    "pageNotInProjectMessage": "A página para a qual este link aponta não está neste projeto."
+  },
+  "fileWatch": {
+    "resumedTitle": "Atualizações de arquivos retomadas",
+    "resumedMessage": "Os arquivos abertos estão sendo verificados quanto a alterações.",
+    "delayedMessage": "As atualizações automáticas de arquivos estão se recuperando. Os arquivos abertos continuarão sendo verificados quanto a alterações."
+  },
+  "deepLinks": {
+    "joinedTitle": "Você entrou em {{team}}",
+    "joinedMessage": "Os documentos compartilhados, rastreadores e projetos desta equipe já estão disponíveis.",
+    "readyTitle": "{{team}} está pronta",
+    "readyMessage": "Os documentos compartilhados, rastreadores e projetos desta equipe estão disponíveis no Nimbalyst.",
+    "signInToAcceptTitle": "Entre para aceitar este convite",
+    "signInAs": "Entre no Nimbalyst como {{email}} para participar desta equipe.",
+    "signInWithInvitedAddress": "Entre no Nimbalyst com o endereço para o qual o convite foi enviado.",
+    "signIn": "Entrar",
+    "invitationUnavailableTitle": "Convite indisponível",
+    "invitationUnavailableMessage": "Este convite não está mais pendente para sua conta. Peça ao administrador da equipe para enviar um novo.",
+    "acceptFailedTitle": "Não foi possível aceitar o convite",
+    "signInRequired": "É necessário entrar",
+    "signInToOpenFolder": "Entre na sua conta de equipe do Nimbalyst para abrir esta pasta compartilhada.",
+    "noMatchingWorkspace": "Nenhum espaço de trabalho correspondente",
+    "noWorkspaceForFolder": "Você não tem um espaço de trabalho aberto para a equipe dona desta pasta.",
+    "signInToOpenDocument": "Entre na sua conta de equipe do Nimbalyst para abrir este documento compartilhado.",
+    "noWorkspaceForDocument": "Você não tem um espaço de trabalho aberto para a equipe dona deste documento.",
+    "signInToOpenTracker": "Entre na sua conta de equipe do Nimbalyst para abrir este rastreador.",
+    "noWorkspaceForTracker": "Você não tem um espaço de trabalho aberto para a equipe dona deste rastreador."
+  },
+  "sessions": {
+    "deleteFailed": "Falha ao excluir a sessão",
+    "unknownError": "Erro desconhecido",
+    "branchFailed": "Falha ao ramificar a conversa",
+    "remoteCreateFailed": "Não foi possível criar a sessão remota",
+    "remoteWorktreeUnavailable": "Worktree remoto indisponível",
+    "remoteWorktreeUnsupported": "Este host remoto ainda não oferece suporte a worktrees.",
+    "createFailed": "Falha ao criar a sessão",
+    "worktreeAddUnexpected": "Ocorreu um erro inesperado ao adicionar uma sessão ao worktree."
+  },
+  "sessionNavigation": {
+    "fallbackLabel": "Sessão {{id}}",
+    "archived": "A sessão {{id}} está arquivada e não foi aberta. Restaure-a nas sessões arquivadas e tente novamente.",
+    "missing": "Não foi possível encontrar a sessão {{id}} no projeto de origem.",
+    "projectUnavailable": "O Nimbalyst não conseguiu mudar para o projeto da sessão {{id}}. Feche um projeto na barra lateral de projetos e tente novamente.",
+    "lookupFailed": "O Nimbalyst não conseguiu verificar a sessão {{id}} no projeto de origem.",
+    "unavailableTitle": "{{label}} indisponível"
+  },
+  "files": {
+    "cannotOpen": "Não é possível abrir o arquivo"
+  },
+  "workspaceFolders": {
+    "attachTitle": "Anexar pasta ao espaço de trabalho",
+    "attachButton": "Anexar"
+  },
+  "attachments": {
+    "storageBudget": "Sem espaço local para envios pendentes. Aguarde os anexos anteriores terminarem de ser enviados e tente novamente.",
+    "uploadFailedWithReason": "Não foi possível anexar {{file}}: {{message}}",
+    "uploadFailed": "Não foi possível anexar {{file}}.",
+    "empty": "{{file}} está vazio.",
+    "tooLarge": "{{file}} tem {{size}}. Os anexos são limitados a {{max}}.",
+    "tooLargeAfterCompression": "{{file}} tem {{size}} após a compressão. Os anexos são limitados a {{max}}."
+  },
+  "providerCredentials": {
+    "loadFailed": "Não foi possível carregar as chaves de API salvas. Tente novamente quando o armazenamento seguro estiver disponível.",
+    "changeFailed": "Não foi possível confirmar a alteração da chave de API. Desbloqueie o armazenamento seguro, atualize e tente novamente."
+  },
+  "audio": {
+    "noMicrophone": "Nenhum microfone utilizável foi encontrado. Conecte ou ative um microfone, verifique as configurações de microfone do sistema e tente novamente."
+  },
+  "remoteSession": {
+    "openFailed": "Não foi possível abrir a sessão remota."
+  },
+  "panelError": {
+    "title": "Erro no painel",
+    "unknown": "Ocorreu um erro desconhecido"
+  },
+  "organizations": {
+    "loadFailed": "Não foi possível carregar as organizações."
+  }
+}

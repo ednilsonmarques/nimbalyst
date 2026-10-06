@@ -6,6 +6,7 @@ import type {
   MentionDirectory,
 } from '../Comments/commentTypes';
 import { dmLabel, roomLabel } from './orgSidebarViewModel';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import type { OrgRosterMember } from './useOrgRoster';
 
 /**
@@ -66,7 +67,7 @@ export function buildRoomHeader(
     isPrivate: isDm || entry.visibility === 'private',
     isDirectMessage: isDm,
     archived: entry.archivedAt !== undefined,
-    composerLabel: `Message ${prefix}${title}`,
+    composerLabel: translate('team:comments.composer.messageAria', { surface: `${prefix}${title}` }),
   };
 }
 
@@ -83,16 +84,16 @@ export function roomEmptyLabel(
 ): string {
   const name = `${header.prefix}${header.title}`;
   if (header.archived) {
-    return `${name} was archived without any messages.`;
+    return translate('team:room.empty.archived', { name });
   }
   if (header.isDirectMessage) {
     return canComment
-      ? `This is the beginning of your conversation with ${header.title}. Say hello.`
-      : `This is the beginning of your conversation with ${header.title}.`;
+      ? translate('team:room.empty.dmCanComment', { name: header.title })
+      : translate('team:room.empty.dm', { name: header.title });
   }
   return canComment
-    ? `This is the beginning of ${name}. Send the first message to get it started.`
-    : `This is the beginning of ${name}. Nothing has been posted here yet.`;
+    ? translate('team:room.empty.roomCanComment', { name })
+    : translate('team:room.empty.room', { name });
 }
 
 /**

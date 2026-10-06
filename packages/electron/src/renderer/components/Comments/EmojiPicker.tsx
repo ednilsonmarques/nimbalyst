@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { useFloating, autoUpdate, flip, offset, shift, type ReferenceElement } from '@floating-ui/react';
 import { windowControlsClearance } from '@nimbalyst/runtime/ui/floating/windowControlsClearance';
 
@@ -8,10 +9,10 @@ import { EMOJI_CATALOG, QUICK_REACTIONS, emojiGlyphOrShortcode, searchEmoji } fr
 import type { EmojiEntry } from './emojiCatalog';
 
 const GROUP_LABELS: Record<EmojiEntry['group'], string> = {
-  reactions: 'Frequently used',
-  people: 'People',
-  objects: 'Objects',
-  symbols: 'Symbols',
+  reactions: 'comments.emoji.groups.reactions',
+  people: 'comments.emoji.groups.people',
+  objects: 'comments.emoji.groups.objects',
+  symbols: 'comments.emoji.groups.symbols',
 };
 
 /**
@@ -41,20 +42,21 @@ export function EmojiPicker({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
+  const { t } = useTranslation('team');
   const menu = useFloatingMenu({ placement, open, onOpenChange });
   const [query, setQuery] = useState('');
 
   const groups = useMemo(() => {
     if (query.trim().length > 0) {
-      return [{ group: 'reactions' as const, label: 'Results', entries: searchEmoji(query, 24) }];
+      return [{ group: 'reactions' as const, label: t('comments.emoji.results'), entries: searchEmoji(query, 24) }];
     }
     const order: EmojiEntry['group'][] = ['reactions', 'people', 'objects', 'symbols'];
     return order.map((group) => ({
       group,
-      label: GROUP_LABELS[group],
+      label: t(GROUP_LABELS[group]),
       entries: EMOJI_CATALOG.filter((entry) => entry.group === group),
     }));
-  }, [query]);
+  }, [query, t]);
 
   const choose = (shortcode: string) => {
     onSelect(shortcode);
@@ -102,16 +104,16 @@ export function EmojiPicker({
               type="text"
               value={query}
               autoFocus
-              placeholder="Search emoji"
+              placeholder={t('comments.emoji.search')}
               data-testid="emoji-picker-search"
-              aria-label="Search emoji"
+              aria-label={t('comments.emoji.search')}
               onChange={(event) => setQuery(event.target.value)}
               className="emoji-picker-search mb-2 w-full rounded border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] px-2 py-1 text-[12px] text-[var(--nim-text)] outline-none focus:border-[var(--nim-border-focus)]"
             />
 
             {groups.every((group) => group.entries.length === 0) ? (
               <p className="emoji-picker-empty m-0 px-1 py-2 text-[12px] text-[var(--nim-text-faint)]">
-                No emoji match that.
+                {t('comments.emoji.noMatch')}
               </p>
             ) : (
               groups
@@ -167,6 +169,7 @@ export function EmojiAutocomplete({
   onSelect: (entry: EmojiEntry) => void;
   onActiveIndexChange: (index: number) => void;
 }) {
+  const { t } = useTranslation('team');
   const listRef = useRef<HTMLDivElement | null>(null);
   const virtualReference = useMemo<ReferenceElement>(
     () => ({ getBoundingClientRect: () => anchorRect ?? new DOMRect(0, 0, 0, 0) }),
@@ -198,7 +201,7 @@ export function EmojiAutocomplete({
         ref={refs.setFloating}
         style={floatingStyles}
         role="listbox"
-        aria-label="Emoji suggestions"
+        aria-label={t('comments.emoji.suggestions')}
         data-testid="emoji-autocomplete"
         className="emoji-autocomplete z-[10000] max-h-[220px] w-[240px] overflow-y-auto rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg)] p-1 shadow-[0_6px_18px_rgba(0,0,0,0.22)]"
       >

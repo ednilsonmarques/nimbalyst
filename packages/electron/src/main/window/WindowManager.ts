@@ -15,6 +15,7 @@ import { ElectronFileSystemService } from '../services/ElectronFileSystemService
 import { isWorktreePath, resolveProjectPath, resolveProjectPathCandidates } from '../utils/workspaceDetection';
 import { getPreloadPath } from '../utils/appPaths';
 import { createUnresponsiveHandler } from './unresponsiveHandler';
+import { t } from '@nimbalyst/runtime/i18n';
 import { recoverAfterProjectWindowClosed } from './ApplicationWindowRecovery';
 import {
   setFileSystemService,
@@ -645,7 +646,7 @@ export function createWindow(
 
         // Handle unresponsive renderer
         window.webContents.on('unresponsive', createUnresponsiveHandler({
-            message: 'The window is not responding',
+            message: () => t('dialogs:unresponsive.windowMessage'),
             logLabel: '[MAIN]',
             getWindow: () => window
         }));
@@ -672,7 +673,7 @@ export function createWindow(
                     }
                 } else {
                     menuTemplate.push({
-                        label: 'No suggestions',
+                        label: t('system:contextMenu.noSuggestions'),
                         enabled: false
                     });
                 }
@@ -680,7 +681,7 @@ export function createWindow(
                 menuTemplate.push({ type: 'separator' });
 
                 menuTemplate.push({
-                    label: 'Add to Dictionary',
+                    label: t('system:contextMenu.addToDictionary'),
                     click: () => {
                         window.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord);
                     }
@@ -692,21 +693,21 @@ export function createWindow(
             // Standard edit operations when there's editable content
             if (params.isEditable) {
                 menuTemplate.push(
-                    { label: 'Cut', role: 'cut', enabled: params.editFlags.canCut },
-                    { label: 'Copy', role: 'copy', enabled: params.editFlags.canCopy },
-                    { label: 'Paste', role: 'paste', enabled: params.editFlags.canPaste }
+                    { label: t('menu:edit.cut'), role: 'cut', enabled: params.editFlags.canCut },
+                    { label: t('menu:edit.copy'), role: 'copy', enabled: params.editFlags.canCopy },
+                    { label: t('menu:edit.paste'), role: 'paste', enabled: params.editFlags.canPaste }
                 );
 
                 if (params.selectionText) {
                     menuTemplate.push(
                         { type: 'separator' },
-                        { label: 'Select All', role: 'selectAll' }
+                        { label: t('menu:edit.selectAll'), role: 'selectAll' }
                     );
                 }
             } else if (params.selectionText) {
                 // Non-editable but has selection - just show copy
                 menuTemplate.push(
-                    { label: 'Copy', role: 'copy' }
+                    { label: t('menu:edit.copy'), role: 'copy' }
                 );
             }
 

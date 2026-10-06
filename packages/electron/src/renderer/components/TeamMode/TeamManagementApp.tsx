@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import { DialogProvider } from '../../contexts/DialogContext';
 import { selectedOrgIdAtom } from '../../store/atoms/orgScope';
@@ -70,6 +71,7 @@ function readTarget(): WindowTarget {
 }
 
 export function TeamManagementApp() {
+  const { t } = useTranslation('team');
   const setSelectedOrgId = useSetAtom(selectedOrgIdAtom);
   const setOrgWindowRoute = useSetAtom(
     orgWindowRouteAtomFamily(ORG_WINDOW_SURFACE_ID),
@@ -138,8 +140,8 @@ export function TeamManagementApp() {
   ]);
 
   useEffect(() => {
-    window.electronAPI?.setTitle?.('Organization Messages - Nimbalyst');
-  }, []);
+    window.electronAPI?.setTitle?.(t('orgWindow.title'));
+  }, [t]);
 
   // Accepting an invite or finishing the creation wizard queues "#general" for
   // this window rather than dead-ending the user in a settings list.
@@ -241,7 +243,7 @@ export function TeamManagementApp() {
           )
           : (
             <div className="team-management-resolving flex flex-1 items-center justify-center text-sm text-[var(--nim-text-muted)]">
-              Loading organization…
+              {t('orgMode.loadingOrganization')}
             </div>
           )}
       </div>

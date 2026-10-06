@@ -5,6 +5,7 @@ import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { getProviderIcon } from '@nimbalyst/runtime/ui/icons/ProviderIcons';
 import { advancedSettingsAtom } from '../../../store/atoms/appSettings';
 import { isProviderVisible } from '../../../utils/chatProviderVisibility';
+import { useTranslation, Trans } from '@nimbalyst/runtime/i18n/react';
 
 interface ProviderOverride {
   enabled?: boolean;
@@ -57,6 +58,7 @@ const PROVIDERS: ProviderInfo[] = [
 
 export function ProjectAIProvidersPanel({ workspacePath, workspaceName }: ProjectAIProvidersPanelProps) {
   const { showDirectChatProviders } = useAtomValue(advancedSettingsAtom);
+  const { t } = useTranslation('settings');
   const [globalSettings, setGlobalSettings] = useState<Record<string, GlobalProviderSettings>>({});
   const [globalApiKeys, setGlobalApiKeys] = useState<Record<string, string>>({});
   const [projectOverrides, setProjectOverrides] = useState<AIProviderOverrides>({});
@@ -251,7 +253,7 @@ export function ProjectAIProvidersPanel({ workspacePath, workspaceName }: Projec
   if (loading) {
     return (
       <div className="project-ai-providers-panel flex flex-col h-full p-6 gap-6">
-        <div className="panel-loading flex items-center justify-center h-[200px] text-[var(--nim-text-muted)]">Loading settings...</div>
+        <div className="panel-loading flex items-center justify-center h-[200px] text-[var(--nim-text-muted)]">{t('projectAiProviders.loading')}</div>
       </div>
     );
   }
@@ -259,10 +261,9 @@ export function ProjectAIProvidersPanel({ workspacePath, workspaceName }: Projec
   return (
     <div className="project-ai-providers-panel flex flex-col h-full p-6 gap-6">
       <div className="panel-header">
-        <h2 className="m-0 mb-2 text-lg font-semibold text-[var(--nim-text)]">AI Providers</h2>
+        <h2 className="m-0 mb-2 text-lg font-semibold text-[var(--nim-text)]">{t('projectAiProviders.title')}</h2>
         <p className="panel-description m-0 text-[13px] text-[var(--nim-text-muted)] leading-normal">
-          Override AI provider settings for <strong className="text-[var(--nim-text)] font-medium">{workspaceName}</strong>.
-          Enable overrides to use different API keys or models for this project.
+          <Trans t={t} i18nKey="projectAiProviders.description" values={{ workspaceName }} components={{ bold: <strong className="text-[var(--nim-text)] font-medium" /> }} />
         </p>
       </div>
 
@@ -297,19 +298,19 @@ export function ProjectAIProvidersPanel({ workspacePath, workspaceName }: Projec
                     </span>
                     <div className="provider-details flex flex-col gap-0.5">
                       <span className="provider-name text-sm font-medium text-[var(--nim-text)]">{provider.name}</span>
-                      <span className="provider-subtitle text-xs text-[var(--nim-text-faint)]">{provider.subtitle}</span>
+                      <span className="provider-subtitle text-xs text-[var(--nim-text-faint)]">{t(`projectAiProviders.providerSubtitles.${provider.id}`, { defaultValue: provider.subtitle })}</span>
                     </div>
                   </div>
 
                   <div className="provider-status flex items-center gap-2.5">
                     <span className={`global-status text-[11px] px-2 py-0.5 rounded font-medium ${globalEnabled ? 'bg-[rgba(34,197,94,0.12)] text-[#22c55e]' : 'bg-[var(--nim-bg-tertiary)] text-[var(--nim-text-faint)]'}`}>
-                      Global: {globalEnabled ? 'On' : 'Off'}
+                      {globalEnabled ? t('projectAiProviders.globalOn') : t('projectAiProviders.globalOff')}
                     </span>
                     {overriding && (
-                      <span className="override-badge text-[11px] px-2 py-0.5 rounded font-medium bg-[var(--nim-accent-muted)] text-[var(--nim-primary)]">Overridden</span>
+                      <span className="override-badge text-[11px] px-2 py-0.5 rounded font-medium bg-[var(--nim-accent-muted)] text-[var(--nim-primary)]">{t('projectAiProviders.overridden')}</span>
                     )}
                     <span className={`effective-status text-[11px] px-2.5 py-1 rounded-xl font-semibold ${effectiveEnabled ? 'bg-[#22c55e] text-white' : 'bg-[var(--nim-bg-tertiary)] text-[var(--nim-text-faint)]'}`}>
-                      {effectiveEnabled ? 'Active' : 'Inactive'}
+                      {effectiveEnabled ? t('projectAiProviders.active') : t('projectAiProviders.inactive')}
                     </span>
                     <span className={`expand-icon text-[var(--nim-text-faint)] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
                       <MaterialSymbol icon="expand_more" size={16} />
@@ -331,7 +332,7 @@ export function ProjectAIProvidersPanel({ workspacePath, workspaceName }: Projec
                         />
                         <span className={`toggle-slider relative w-11 h-6 rounded-xl shrink-0 transition-colors duration-200 before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:w-5 before:h-5 before:bg-white before:rounded-full before:transition-transform before:duration-200 before:shadow-[0_1px_3px_rgba(0,0,0,0.2)] ${overriding ? 'bg-[var(--nim-primary)] before:translate-x-5' : 'bg-[var(--nim-bg-tertiary)]'}`}></span>
                         <span className="toggle-label text-[13px] text-[var(--nim-text-muted)]">
-                          {overriding ? 'Override enabled - using project settings' : 'Using global settings'}
+                          {overriding ? t('projectAiProviders.overrideEnabled') : t('projectAiProviders.usingGlobal')}
                         </span>
                       </label>
                     </div>
@@ -341,7 +342,7 @@ export function ProjectAIProvidersPanel({ workspacePath, workspaceName }: Projec
                         {/* Enable Toggle */}
                         <div className="config-section py-4 border-b border-[var(--nim-border)]">
                           <div className="config-row flex items-center justify-between">
-                            <span className="config-label text-[13px] text-[var(--nim-text)]">Enable for this project</span>
+                            <span className="config-label text-[13px] text-[var(--nim-text)]">{t('projectAiProviders.enableForProject')}</span>
                             <label className="toggle-switch relative inline-block cursor-pointer">
                               <input
                                 type="checkbox"
@@ -357,18 +358,18 @@ export function ProjectAIProvidersPanel({ workspacePath, workspaceName }: Projec
                         {/* API Key (if applicable) */}
                         {provider.apiKeyField && (
                           <div className="config-section py-4 border-b border-[var(--nim-border)]">
-                            <h4 className="config-section-title nim-section-label m-0 mb-3">API Key</h4>
+                            <h4 className="config-section-title nim-section-label m-0 mb-3">{t('projectAiProviders.apiKey.title')}</h4>
                             <div className="api-key-info mb-2">
                               <span className="api-key-hint text-xs text-[var(--nim-text-faint)]">
                                 {globalApiKeys[provider.apiKeyField]
-                                  ? 'Leave empty to use global key, or enter a project-specific key'
-                                  : 'Enter an API key for this project'}
+                                  ? t('projectAiProviders.apiKey.hintWithGlobal')
+                                  : t('projectAiProviders.apiKey.hintNoGlobal')}
                               </span>
                             </div>
                             <input
                               type="password"
                               className="api-key-input nim-input font-mono text-[13px]"
-                              placeholder={globalApiKeys[provider.apiKeyField] ? 'Using global key...' : 'Enter API key...'}
+                              placeholder={globalApiKeys[provider.apiKeyField] ? t('projectAiProviders.apiKey.placeholderGlobal') : t('projectAiProviders.apiKey.placeholder')}
                               value={override?.apiKey === SAVED_CREDENTIAL ? '' : override?.apiKey || ''}
                               onFocus={(e) => e.target.select()}
                               onChange={(e) => handleApiKeyChange(provider.id, e.target.value)}
@@ -380,19 +381,19 @@ export function ProjectAIProvidersPanel({ workspacePath, workspaceName }: Projec
                         {models.length > 0 && (
                           <div className="config-section py-4 border-b border-[var(--nim-border)] last:border-b-0">
                             <div className="config-section-header flex items-center justify-between mb-3">
-                              <h4 className="config-section-title nim-section-label m-0">Models</h4>
+                              <h4 className="config-section-title nim-section-label m-0">{t('projectAiProviders.models.title')}</h4>
                               <div className="models-actions flex gap-1.5">
                                 <button
                                   className="models-action-btn px-2.5 py-1 text-[11px] font-medium text-[var(--nim-text-muted)] bg-[var(--nim-bg-tertiary)] border-none rounded cursor-pointer transition-all duration-150 hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
                                   onClick={() => handleSelectAllModels(provider.id, true)}
                                 >
-                                  All
+                                  {t('projectAiProviders.models.selectAll')}
                                 </button>
                                 <button
                                   className="models-action-btn px-2.5 py-1 text-[11px] font-medium text-[var(--nim-text-muted)] bg-[var(--nim-bg-tertiary)] border-none rounded cursor-pointer transition-all duration-150 hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
                                   onClick={() => handleSelectAllModels(provider.id, false)}
                                 >
-                                  None
+                                  {t('projectAiProviders.models.selectNone')}
                                 </button>
                               </div>
                             </div>
@@ -422,8 +423,8 @@ export function ProjectAIProvidersPanel({ workspacePath, workspaceName }: Projec
 
                     {!overriding && (
                       <div className="no-override-message py-4 text-center">
-                        <p className="m-0 text-[13px] text-[var(--nim-text-muted)]">This project uses global settings for {provider.name}.</p>
-                        <p className="hint mt-1 text-xs text-[var(--nim-text-faint)]">Enable override to customize API key or models for this project.</p>
+                        <p className="m-0 text-[13px] text-[var(--nim-text-muted)]">{t('projectAiProviders.noOverride', { provider: provider.name })}</p>
+                        <p className="hint mt-1 text-xs text-[var(--nim-text-faint)]">{t('projectAiProviders.noOverrideHint')}</p>
                       </div>
                     )}
                   </div>
@@ -436,14 +437,14 @@ export function ProjectAIProvidersPanel({ workspacePath, workspaceName }: Projec
         {hasAnyOverrides() && (
           <div className="overrides-summary flex items-center gap-2 mt-4 px-4 py-3 rounded-lg text-[13px] bg-[var(--nim-accent-subtle)] border border-[var(--nim-accent-subtle)] text-[var(--nim-primary)]">
             <MaterialSymbol icon="info" size={16} className="shrink-0" />
-            <span>This project has custom AI provider settings</span>
+            <span>{t('projectAiProviders.hasOverrides')}</span>
           </div>
         )}
       </div>
 
       {/* Tracker Automation Override */}
       <div className="tracker-automation-override mt-6 pt-4 border-t border-[var(--nim-border)]">
-        <h3 className="text-sm font-semibold text-[var(--nim-text)] mb-3">Tracker Automation</h3>
+        <h3 className="text-sm font-semibold text-[var(--nim-text)] mb-3">{t('projectAiProviders.trackerAutomation.title')}</h3>
         <div className="flex items-center gap-3 mb-2">
           <select
             className="text-sm rounded border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] text-[var(--nim-text)] px-3 py-1.5"
@@ -458,13 +459,13 @@ export function ProjectAIProvidersPanel({ workspacePath, workspaceName }: Projec
               setHasChanges(true);
             }}
           >
-            <option value="inherit">Inherit from global settings</option>
-            <option value="enable">Enable for this project</option>
-            <option value="disable">Disable for this project</option>
+            <option value="inherit">{t('projectAiProviders.trackerAutomation.inherit')}</option>
+            <option value="enable">{t('projectAiProviders.trackerAutomation.enable')}</option>
+            <option value="disable">{t('projectAiProviders.trackerAutomation.disable')}</option>
           </select>
         </div>
         <p className="text-xs text-[var(--nim-text-faint)] m-0">
-          Override the global tracker automation setting for this workspace.
+          {t('projectAiProviders.trackerAutomation.description')}
         </p>
       </div>
 
@@ -474,7 +475,7 @@ export function ProjectAIProvidersPanel({ workspacePath, workspaceName }: Projec
           onClick={handleSave}
           disabled={!hasChanges || saving}
         >
-          {saving ? 'Saving...' : hasChanges ? 'Save Changes' : 'Saved'}
+          {saving ? t('common:saving') : hasChanges ? t('projectAiProviders.saveChanges') : t('projectAiProviders.saved')}
         </button>
       </div>
     </div>

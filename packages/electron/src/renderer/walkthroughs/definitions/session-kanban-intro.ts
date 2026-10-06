@@ -30,8 +30,8 @@ export const sessionKanbanIntro: WalkthroughDefinition = {
       target: {
         testId: 'session-kanban-button',
       },
-      title: kanbanHelp.title,
-      body: kanbanHelp.body,
+      title: 'walkthroughs.sessionKanban.title',
+      body: 'walkthroughs.sessionKanban.body',
       shortcut: kanbanHelp.shortcut,
       placement: 'bottom',
     },

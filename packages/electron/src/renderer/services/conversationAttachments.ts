@@ -26,6 +26,7 @@ import {
 } from '@nimbalyst/collab-protocol';
 
 import { MAX_COLLAB_ASSET_BYTES } from '@nimbalyst/runtime/sync/collabAssetFormat';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 /** Longest edge a re-encoded image keeps. Above this it is scaled down. */
 export const ATTACHMENT_MAX_IMAGE_EDGE = 1920;
@@ -121,7 +122,7 @@ export function preflightAttachment(file: {
     return {
       ok: false,
       code: 'empty',
-      message: `${file.name} is empty.`,
+      message: translate('general:attachments.empty', { file: file.name }),
     };
   }
 
@@ -133,7 +134,11 @@ export function preflightAttachment(file: {
     return {
       ok: false,
       code: 'tooLarge',
-      message: `${file.name} is ${formatByteSize(file.size)}. Attachments are limited to ${formatByteSize(MAX_MESSAGE_ATTACHMENT_BYTES)}.`,
+      message: translate('general:attachments.tooLarge', {
+        file: file.name,
+        size: formatByteSize(file.size),
+        max: formatByteSize(MAX_MESSAGE_ATTACHMENT_BYTES),
+      }),
     };
   }
 
@@ -188,7 +193,11 @@ export async function uploadConversationAttachment(
   if (blob.size > MAX_MESSAGE_ATTACHMENT_BYTES) {
     throw new AttachmentError(
       'tooLarge',
-      `${file.name} is ${formatByteSize(blob.size)} after compression. Attachments are limited to ${formatByteSize(MAX_MESSAGE_ATTACHMENT_BYTES)}.`,
+      translate('general:attachments.tooLargeAfterCompression', {
+        file: file.name,
+        size: formatByteSize(blob.size),
+        max: formatByteSize(MAX_MESSAGE_ATTACHMENT_BYTES),
+      }),
     );
   }
 
@@ -235,14 +244,14 @@ function toAttachmentError(error: unknown, fileName: string): AttachmentError {
   if (message.includes('COLLAB_ASSET_STORAGE_BUDGET_EXCEEDED')) {
     return new AttachmentError(
       'storageBudget',
-      'Out of local space for pending uploads. Wait for earlier attachments to finish sending, then try again.',
+      translate('general:attachments.storageBudget'),
     );
   }
   return new AttachmentError(
     'uploadFailed',
     message.trim().length > 0
-      ? `${fileName} could not be attached: ${message}`
-      : `${fileName} could not be attached.`,
+      ? translate('general:attachments.uploadFailedWithReason', { file: fileName, message })
+      : translate('general:attachments.uploadFailed', { file: fileName }),
   );
 }
 

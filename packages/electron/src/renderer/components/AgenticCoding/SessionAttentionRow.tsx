@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { ProviderIcon } from '@nimbalyst/runtime/ui/icons/ProviderIcons';
 import { getRelativeTimeString } from '../../utils/dateFormatting';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 /**
  * The attention-row layout, with no data dependencies of its own.
@@ -63,7 +64,8 @@ export function SessionAttentionRow({
     if (rowRef) rowRef.current = node;
   }, [rowRef]);
 
-  const resolvedTitle = title || 'Untitled Session';
+  const { t } = useTranslation('agent');
+  const resolvedTitle = title || t('sessionItem.untitled');
   const modelLabel = displayModel(model, provider);
 
   return (

@@ -3,7 +3,9 @@ import { useAtomValue } from 'jotai';
 import {
   collabAwarenessAtom,
   collabProductStatusAtom,
+  localizeCollabProductStatus,
 } from '../../store/atoms/collabEditor';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 function statusDotClass(severity: ReturnType<typeof useCollabStatus>['severity']): string {
   if (severity === 'success') return 'bg-[var(--nim-success)]';
@@ -14,7 +16,9 @@ function statusDotClass(severity: ReturnType<typeof useCollabStatus>['severity']
 }
 
 function useCollabStatus(filePath: string) {
-  return useAtomValue(collabProductStatusAtom(filePath));
+  // Subscribes to language changes; label/detail are translated for display only.
+  useTranslation();
+  return localizeCollabProductStatus(useAtomValue(collabProductStatusAtom(filePath)));
 }
 
 const CollabAvatars: React.FC<{ filePath: string }> = ({ filePath }) => {
@@ -57,6 +61,7 @@ export const CollabDocumentHeaderMeta: React.FC<{
   filePath: string;
   displayPath: string;
 }> = ({ filePath, displayPath }) => {
+  const { t } = useTranslation('editor');
   const status = useCollabStatus(filePath);
   const segments = displayPath.split('/').filter(Boolean);
   const statusDescription = status.detail
@@ -100,7 +105,7 @@ export const CollabDocumentHeaderMeta: React.FC<{
         data-testid="collab-sync-dot"
         data-status-kind={status.kind}
         role="status"
-        aria-label={`Sync status: ${statusDescription}`}
+        aria-label={t('collab.syncStatus', { status: statusDescription })}
         title={statusDescription}
       />
       <CollabAvatars filePath={filePath} />
@@ -136,6 +141,7 @@ export const CollabRecoveryBanner: React.FC<{
   onCopyCurrentDocument: () => Promise<void>;
   onDiscardLocalCopy: () => Promise<void>;
 }> = ({ filePath, onCopyCurrentDocument, onDiscardLocalCopy }) => {
+  const { t } = useTranslation('editor');
   const status = useCollabStatus(filePath);
   if (!status.showRejectedActions) return null;
 
@@ -152,14 +158,14 @@ export const CollabRecoveryBanner: React.FC<{
         className="collab-copy-unsent-edits rounded border border-[var(--nim-border)] px-2 py-1 text-[var(--nim-text)] hover:bg-[var(--nim-bg-hover)]"
         onClick={() => { void onCopyCurrentDocument(); }}
       >
-        Copy current document
+        {t('collab.copyCurrentDocument')}
       </button>
       <button
         type="button"
         className="collab-discard-local-copy rounded border border-[var(--nim-error)] px-2 py-1 text-[var(--nim-error)] hover:bg-[var(--nim-bg-hover)]"
         onClick={() => { void onDiscardLocalCopy(); }}
       >
-        Discard local copy
+        {t('collab.discardLocalCopy')}
       </button>
     </div>
   );

@@ -16,6 +16,7 @@ import { store } from '@nimbalyst/runtime/store';
 import { TerminalPanel } from '../Terminal/TerminalPanel';
 import { TerminalTab } from './TerminalTab';
 import { usePostHog } from 'posthog-js/react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   terminalListAtom,
   activeTerminalIdAtom,
@@ -78,6 +79,7 @@ export const TerminalBottomPanel: React.FC<TerminalBottomPanelProps> = ({
   minHeight = 150,
   maxHeight = 600,
 }) => {
+  const { t } = useTranslation('general');
   // Panel state from Jotai atoms
   const visible = useAtomValue(terminalPanelVisibleAtom);
   const height = useAtomValue(terminalPanelHeightAtom);
@@ -336,7 +338,7 @@ export const TerminalBottomPanel: React.FC<TerminalBottomPanelProps> = ({
             <button
               className="terminal-bottom-panel-new-tab flex items-center justify-center w-6 h-6 p-0 bg-transparent border-none text-[var(--nim-text-muted)] cursor-pointer rounded shrink-0 transition-colors duration-150 hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
               onClick={handleCreateTerminal}
-              title="New Terminal"
+              title={t('terminal.newTerminal')}
             >
               <MaterialSymbol icon="add" size={16} />
             </button>
@@ -344,7 +346,7 @@ export const TerminalBottomPanel: React.FC<TerminalBottomPanelProps> = ({
           <button
             className="terminal-bottom-panel-close flex items-center justify-center w-6 h-6 p-0 bg-transparent border-none text-[var(--nim-text-muted)] cursor-pointer rounded ml-2 shrink-0 transition-colors duration-150 hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
             onClick={handleClose}
-            title="Close panel"
+            title={t('terminal.closePanel')}
           >
             <MaterialSymbol icon="close" size={18} />
           </button>
@@ -367,13 +369,13 @@ export const TerminalBottomPanel: React.FC<TerminalBottomPanelProps> = ({
           ))}
           {terminals.length === 0 && (
             <div className="terminal-bottom-panel-empty flex-1 flex flex-col items-center justify-center gap-3 text-[var(--nim-text-muted)] text-sm">
-              <p>No terminals open</p>
+              <p>{t('terminal.noTerminals')}</p>
               <button
                 className="flex items-center gap-1.5 px-4 py-2 bg-[var(--nim-bg-secondary)] border border-[var(--nim-border)] rounded-md text-[var(--nim-text)] text-[13px] cursor-pointer transition-colors duration-150 hover:bg-[var(--nim-bg-tertiary)] hover:border-[var(--nim-primary)]"
                 onClick={handleCreateTerminal}
               >
                 <MaterialSymbol icon="terminal" size={16} />
-                New Terminal
+                {t('terminal.newTerminal')}
               </button>
             </div>
           )}

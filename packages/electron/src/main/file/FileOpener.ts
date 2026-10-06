@@ -28,6 +28,7 @@ import { addWorkspaceRecentFile } from '../utils/store';
 import { AnalyticsService } from '../services/analytics/AnalyticsService';
 import { logger } from '../utils/logger';
 import { getDialogDefaultPath, rememberDialogSelection } from '../utils/dialogPaths';
+import { t } from '@nimbalyst/runtime/i18n';
 
 const analytics = AnalyticsService.getInstance();
 
@@ -92,9 +93,9 @@ export async function openFileWithDialog(sourceWindow: BrowserWindow): Promise<O
     defaultPath: getDialogDefaultPath({ window: sourceWindow }),
     properties: ['openFile'],
     filters: [
-      { name: 'Markdown Files', extensions: ['md', 'markdown'] },
-      { name: 'Text Files', extensions: ['txt'] },
-      { name: 'All Files', extensions: ['*'] }
+      { name: t('dialogs:fileOpener.filters.markdown'), extensions: ['md', 'markdown'] },
+      { name: t('dialogs:fileOpener.filters.text'), extensions: ['txt'] },
+      { name: t('dialogs:fileOpener.filters.all'), extensions: ['*'] }
     ]
   });
 

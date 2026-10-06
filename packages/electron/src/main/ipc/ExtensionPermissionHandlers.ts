@@ -28,7 +28,7 @@ import {
   isModuleEnabled,
   clearAllGrantsForExtension,
 } from '../extensions/permissionGrantStore';
-import { listPermissionDescriptors } from '../extensions/permissionRegistry';
+import { listPermissionDescriptors, localizePermissionDescriptor } from '../extensions/permissionRegistry';
 import {
   setPermissionPromptResolver,
   type PermissionPromptRequest,
@@ -108,7 +108,7 @@ export function registerExtensionPermissionHandlers(): void {
   // -------------------------------------------------------------------
 
   safeHandle('ext-permissions:list-descriptors', () => {
-    return listPermissionDescriptors();
+    return listPermissionDescriptors().map(localizePermissionDescriptor);
   });
 
   safeHandle(

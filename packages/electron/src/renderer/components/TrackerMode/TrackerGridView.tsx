@@ -72,6 +72,7 @@ import {
 import { errorNotificationService } from '../../services/ErrorNotificationService';
 import { confirmTrackerItemDelete } from './confirmTrackerItemDelete';
 import '@nimbalyst/collab-client/trackers-ui/grid.css';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 const ROW_GROUP_LABEL = '__trackerGroupLabel';
 const ROW_GROUP_KEY = '__trackerGroupKey';
@@ -162,6 +163,7 @@ export function TrackerGridView({
   favoriteItemIds,
   onToggleFavorite,
 }: TrackerGridViewProps): JSX.Element {
+  const { t } = useTranslation('tracker');
   const [filterTarget, setFilterTarget] = useState<{ columnId: string; rect: DOMRect } | null>(null);
   const activeTypeFilter = filterType;
   const schemaType = activeTypeFilter === 'all' ? '' : activeTypeFilter;
@@ -343,10 +345,12 @@ export function TrackerGridView({
     const generation = captureUndoGeneration();
     await onArchiveItems(itemIds, archive);
     recordUndoEntry({
-      label: `${archive ? 'Archive' : 'Unarchive'} ${changes.length} item${changes.length === 1 ? '' : 's'}`,
+      label: archive
+        ? t('grid.undo.archive', { count: changes.length })
+        : t('grid.undo.unarchive', { count: changes.length }),
       changes,
     }, generation);
-  }, [captureUndoGeneration, itemsById, onArchiveItems, recordUndoEntry]);
+  }, [captureUndoGeneration, itemsById, onArchiveItems, recordUndoEntry, t]);
   useEffect(() => {
     archiveRecorderRef.current = archiveWithUndo;
   }, [archiveWithUndo]);
@@ -581,7 +585,7 @@ export function TrackerGridView({
         (total, [, changes]) => total + Object.keys(changes as Record<string, unknown>).length,
         0,
       );
-      void runUndoable(`Paste ${cellCount} cell${cellCount === 1 ? '' : 's'}`, async () => {
+      void runUndoable(t('grid.undo.paste', { count: cellCount }), async () => {
         const resolved = await Promise.all(rowEntries.map(([rowKey, changes]) =>
           prepareRow(Number(rowKey), changes as Record<string, unknown>)));
         await handleItemsUpdate(resolved.filter((entry): entry is NonNullable<typeof entry> => entry !== null));
@@ -592,8 +596,8 @@ export function TrackerGridView({
     const single = detail as BeforeSaveDataDetails;
     const prop = String(single.prop);
     const columnLabel = visibleColumnDefs.find(column => column.id === prop)?.label ?? prop;
-    void runUndoable(`Edit ${columnLabel}`, () => commitRow(single.rowIndex, { [prop]: single.val }));
-  }, [commitRow, handleItemsUpdate, prepareRow, runUndoable, visibleColumnDefs]);
+    void runUndoable(t('grid.undo.edit', { column: columnLabel }), () => commitRow(single.rowIndex, { [prop]: single.val }));
+  }, [commitRow, handleItemsUpdate, prepareRow, runUndoable, visibleColumnDefs, t]);
 
   const openFocusedItem = useCallback(async (): Promise<void> => {
     const focused = await gridRef.current?.getFocused();
@@ -833,7 +837,7 @@ export function TrackerGridView({
   if (loading) {
     return (
       <div className="tracker-grid-view h-full flex items-center justify-center text-sm text-nim-muted" data-testid="tracker-grid-loading">
-        Loading tracker items...
+        {t('grid.loading')}
       </div>
     );
   }
@@ -858,11 +862,11 @@ export function TrackerGridView({
       >
         {sortedItems.length === 0 && !columnFiltersActive ? (
           <div className="tracker-grid-empty flex h-full flex-col items-center justify-center gap-2 text-sm text-nim-muted" data-testid="tracker-grid-empty">
-            <span>{hasAnyFilters ? 'No items match these filters.' : 'No tracker items yet.'}</span>
+            <span>{hasAnyFilters ? t('grid.noMatches') : t('grid.empty')}</span>
             <div className="flex items-center gap-2">
               {hasAnyFilters && onClearFilters && (
                 <button className="text-xs underline hover:text-nim" onClick={onClearFilters}>
-                  Clear filters
+                  {t('filters.clearFilters')}
                 </button>
               )}
               {activeTypeFilter !== 'all'
@@ -874,7 +878,7 @@ export function TrackerGridView({
                   data-testid="tracker-grid-new-item"
                   onClick={() => onNewItem(activeTypeFilter as TrackerItemType)}
                 >
-                  New {activeTypeFilter.charAt(0).toUpperCase() + activeTypeFilter.slice(1)}
+                  {t('grid.newItem', { type: activeTypeFilter.charAt(0).toUpperCase() + activeTypeFilter.slice(1) })}
                 </button>
               )}
             </div>
@@ -900,12 +904,12 @@ export function TrackerGridView({
           className="absolute inset-x-0 top-10 flex flex-col items-center gap-2 pt-6 text-sm text-nim-muted"
           data-testid="tracker-grid-filtered-empty"
         >
-          <span>No items match these column filters.</span>
+          <span>{t('grid.noColumnMatches')}</span>
           <button
             className="text-xs underline hover:text-nim"
             onClick={() => onColumnFiltersChange?.({ combinator: 'and', clauses: [] })}
           >
-            Clear column filters
+            {t('grid.clearColumnFilters')}
           </button>
         </div>
         )}

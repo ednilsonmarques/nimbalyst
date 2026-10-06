@@ -34,8 +34,8 @@ export const planModeIntro: WalkthroughDefinition = {
       target: {
         testId: 'plan-mode-toggle',
       },
-      title: planModeHelp.title,
-      body: planModeHelp.body,
+      title: 'walkthroughs.planModeToggle.title',
+      body: 'walkthroughs.planModeToggle.body',
       placement: 'bottom',
     },
   ],

@@ -26,6 +26,7 @@ import type {
 // Deep path, not the Comments barrel: this module wants one string helper and
 // the barrel drags the composer's Lexical tree in behind it.
 import { initialsFor } from '../Comments/commentBodyParser';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 export interface FeedbackResultsVoter {
   userId: string;
@@ -208,20 +209,23 @@ interface RankedAccumulator {
 }
 
 function rankedSummary(entry: RankedAccumulator, orderingCount: number, contested: boolean): string {
-  if (entry.rankedByCount === 0) return 'No one ranked this';
+  if (entry.rankedByCount === 0) return translate('onboarding:feedback.ranked.noOne');
   if (contested) {
-    return `Contested — ${entry.topThirdCount} of ${orderingCount} put it near the top, `
-      + `${entry.bottomThirdCount} near the bottom`;
+    return translate('onboarding:feedback.ranked.contested', {
+      top: entry.topThirdCount,
+      total: orderingCount,
+      bottom: entry.bottomThirdCount,
+    });
   }
   const majority = Math.ceil(orderingCount / 2);
   if (entry.firstPlaceCount >= majority) {
-    return `Ranked first by ${entry.firstPlaceCount} of ${orderingCount}`;
+    return translate('onboarding:feedback.ranked.first', { first: entry.firstPlaceCount, total: orderingCount });
   }
   if (entry.lastPlaceCount >= majority) {
-    return `Ranked last by ${entry.lastPlaceCount} of ${orderingCount}`;
+    return translate('onboarding:feedback.ranked.last', { last: entry.lastPlaceCount, total: orderingCount });
   }
   const mean = entry.positionSum / entry.rankedByCount;
-  return `Average position ${mean.toFixed(1)}`;
+  return translate('onboarding:feedback.ranked.average', { mean: mean.toFixed(1) });
 }
 
 /**
@@ -340,8 +344,8 @@ function tallyChoice(
           description: item.subtitle,
         }))
         : [
-          { id: 'yes', label: 'Yes' },
-          { id: 'no', label: 'No' },
+          { id: 'yes', label: translate('onboarding:feedback.results.yes') },
+          { id: 'no', label: translate('onboarding:feedback.results.no') },
         ];
 
   const counts = new Map<string, { count: number; voters: FeedbackResultsVoter[] }>();

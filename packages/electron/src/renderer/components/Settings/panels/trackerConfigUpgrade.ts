@@ -1,5 +1,6 @@
 import type { ConfirmDialogOptions } from '../../../contexts/DialogContext.types';
 import type { TrackerSharing } from '@nimbalyst/runtime';
+import { t } from '@nimbalyst/runtime/i18n';
 
 export const LOCAL_TRACKER_CONFIG_LOCATION = '.nimbalyst/trackers/*.yaml';
 export const SHARED_TRACKER_CONFIG_LOCATION = 'the shared Cloudflare-hosted tracker database';
@@ -24,7 +25,7 @@ export function canChangeTrackerSharing(
 }
 
 export function getTrackerStorageCopy(): string {
-  return `Local tracker config is stored in ${LOCAL_TRACKER_CONFIG_LOCATION}. Shared tracker config is stored in ${SHARED_TRACKER_CONFIG_LOCATION}.`;
+  return t('settings:trackerConfigUpgrade.storageCopy', { localLocation: LOCAL_TRACKER_CONFIG_LOCATION });
 }
 
 export function buildTrackerSharingConfirmOptions(
@@ -32,9 +33,9 @@ export function buildTrackerSharingConfirmOptions(
   _nextSharing: TrackerSharing,
 ): ConfirmDialogOptions {
   return {
-    title: `Share ${trackerDisplayNamePlural} with the team?`,
-    message: `${trackerDisplayNamePlural} currently use local YAML config from ${LOCAL_TRACKER_CONFIG_LOCATION}. Proceeding will move this tracker config into ${SHARED_TRACKER_CONFIG_LOCATION}. The resulting Kanban config will keep the union of every column already in use, and all tracker items will be preserved. Afterward, you can use your agent to move items, consolidate columns, and delete any extra columns.`,
-    confirmLabel: 'Proceed',
-    cancelLabel: 'Cancel',
+    title: t('settings:trackerConfigUpgrade.confirmTitle', { trackers: trackerDisplayNamePlural }),
+    message: t('settings:trackerConfigUpgrade.confirmMessage', { trackers: trackerDisplayNamePlural, localLocation: LOCAL_TRACKER_CONFIG_LOCATION }),
+    confirmLabel: t('settings:trackerConfigUpgrade.confirmLabel'),
+    cancelLabel: t('common:cancel'),
   };
 }

@@ -32,6 +32,7 @@ import {
   setOSNotificationsEnabled,
 } from '../utils/store';
 import { logger } from '../utils/logger';
+import { onLanguageChanged, t } from '@nimbalyst/runtime/i18n';
 import { isPreventingSleep, getSleepPreventionMode } from '../services/PowerSaveService';
 import { updateSleepPrevention, resolvePreventSleepMode, getSyncProvider } from '../services/SyncManager';
 import {
@@ -226,6 +227,7 @@ export class TrayManager {
   private lingerTimers: Map<string, NodeJS.Timeout> = new Map();
   private database: DatabaseWorker | null = null;
   private themeListener: (() => void) | null = null;
+  private languageUnsubscribe: (() => void) | null = null;
 
   // ─── Menu bar strip ───────────────────────────────────────────────────
   private stripMachine = new StripStateMachine();
@@ -332,6 +334,9 @@ export class TrayManager {
         systemPreferences.unsubscribeNotification(appearanceSubId);
       }
     };
+
+    // Rebuild the tray menu when the interface language changes (app.uiLanguage).
+    this.languageUnsubscribe = onLanguageChanged(() => this.refreshMenuBar());
 
     // Seed the cache with sessions that are already unread in the database.
     // Without this, sessions that completed before this app session started
@@ -487,6 +492,11 @@ export class TrayManager {
     if (this.themeListener) {
       this.themeListener();
       this.themeListener = null;
+    }
+
+    if (this.languageUnsubscribe) {
+      this.languageUnsubscribe();
+      this.languageUnsubscribe = null;
     }
 
     if (this.menuRebuildTimer) {
@@ -919,11 +929,11 @@ export class TrayManager {
 
     // Needs Attention section
     if (feed.needsAttention.length > 0) {
-      menuItems.push({ label: 'Needs Attention', enabled: false });
+      menuItems.push({ label: t('menu:tray.needsAttention'), enabled: false });
       for (const session of feed.needsAttention) {
-        const suffix = session.hasError ? ' (error)' : ' (blocked)';
+        const title = this.truncateTitle(session.title);
         menuItems.push({
-          label: this.truncateTitle(session.title) + suffix,
+          label: session.hasError ? t('menu:tray.sessionError', { title }) : t('menu:tray.sessionBlocked', { title }),
           icon: session.hasError ? redDot : orangeDot,
           click: () => this.handleSessionClick(session.sessionId, session.workspacePath),
         });
@@ -933,11 +943,11 @@ export class TrayManager {
 
     // Running section
     if (feed.running.length > 0) {
-      menuItems.push({ label: 'Running', enabled: false });
+      menuItems.push({ label: t('menu:tray.running'), enabled: false });
       for (const session of feed.running) {
-        const suffix = session.isStreaming ? ' (streaming...)' : '';
+        const title = this.truncateTitle(session.title);
         menuItems.push({
-          label: this.truncateTitle(session.title) + suffix,
+          label: session.isStreaming ? t('menu:tray.sessionStreaming', { title }) : title,
           click: () => this.handleSessionClick(session.sessionId, session.workspacePath),
         });
       }
@@ -946,7 +956,7 @@ export class TrayManager {
 
     // Unread section
     if (feed.unread.length > 0) {
-      menuItems.push({ label: 'Unread', enabled: false });
+      menuItems.push({ label: t('menu:tray.unread'), enabled: false });
       for (const session of feed.unread) {
         menuItems.push({
           label: this.truncateTitle(session.title),
@@ -955,7 +965,7 @@ export class TrayManager {
         });
       }
       menuItems.push({
-        label: 'Clear All Unread',
+        label: t('menu:tray.clearAllUnread'),
         click: () => {
           void this.clearAllUnreadSessions();
         },
@@ -971,11 +981,11 @@ export class TrayManager {
     const menuItems: Electron.MenuItemConstructorOptions[] = [];
 
     menuItems.push({
-      label: 'New Session',
+      label: t('menu:tray.newSession'),
       click: () => this.handleNewSession(),
     });
     menuItems.push({
-      label: 'Open Nimbalyst',
+      label: t('menu:tray.openApp'),
       click: () => this.handleOpenApp(),
     });
     // Prevent Sleep submenu (only show when sync is configured)
@@ -984,11 +994,11 @@ export class TrayManager {
       const currentMode = resolvePreventSleepMode(syncConfig);
       const setMode = (mode: 'off' | 'always' | 'pluggedIn') => this.setPreventSleepMode(mode);
       menuItems.push({
-        label: 'Prevent Sleep',
+        label: t('menu:tray.preventSleep.title'),
         submenu: [
-          { label: 'Off', type: 'radio', checked: currentMode === 'off', click: () => setMode('off') },
-          { label: 'Always', type: 'radio', checked: currentMode === 'always', click: () => setMode('always') },
-          { label: 'When Plugged In', type: 'radio', checked: currentMode === 'pluggedIn', click: () => setMode('pluggedIn') },
+          { label: t('menu:tray.preventSleep.off'), type: 'radio', checked: currentMode === 'off', click: () => setMode('off') },
+          { label: t('menu:tray.preventSleep.always'), type: 'radio', checked: currentMode === 'always', click: () => setMode('always') },
+          { label: t('menu:tray.preventSleep.pluggedIn'), type: 'radio', checked: currentMode === 'pluggedIn', click: () => setMode('pluggedIn') },
         ],
       });
     }
@@ -997,7 +1007,7 @@ export class TrayManager {
     // item fitting and vanishing under the notch.
     if (process.platform === 'darwin') {
       menuItems.push({
-        label: 'Show Fleet Status',
+        label: t('menu:tray.showFleetStatus'),
         type: 'checkbox',
         checked: isShowTrayStrip(),
         click: () => this.setStripVisible(!isShowTrayStrip()),
@@ -1005,16 +1015,16 @@ export class TrayManager {
       if (isShowTrayStrip()) {
         const style = getTrayStripStyle();
         menuItems.push({
-          label: 'Fleet Status Style',
+          label: t('menu:tray.fleetStatusStyle.title'),
           submenu: [
             {
-              label: 'Menu Bar Item',
+              label: t('menu:tray.fleetStatusStyle.menuBarItem'),
               type: 'radio',
               checked: style === 'image',
               click: () => this.setStripStyle('image'),
             },
             {
-              label: 'Island',
+              label: t('menu:tray.fleetStatusStyle.island'),
               type: 'radio',
               checked: style === 'island',
               click: () => this.setStripStyle('island'),
@@ -1024,12 +1034,12 @@ export class TrayManager {
       }
     }
     menuItems.push({
-      label: 'Hide Menu Bar Icon',
+      label: t('menu:tray.hideMenuBarIcon'),
       click: () => this.setVisible(false),
     });
     menuItems.push({ type: 'separator' });
     menuItems.push({
-      label: 'Quit',
+      label: t('menu:tray.quit'),
       click: () => app.quit(),
     });
 
@@ -1838,7 +1848,7 @@ export class TrayManager {
   private createFallbackSession(sessionId: string): TraySessionInfo {
     return {
       sessionId,
-      title: 'AI Session',
+      title: t('system:tray.fallbackSessionTitle'),
       workspacePath: '',
       status: 'running',
       isStreaming: false,

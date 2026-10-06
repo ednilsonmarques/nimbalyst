@@ -16,6 +16,8 @@ import type { JSX } from 'react';
 import { useEffect, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { githubIssueDetailAtom } from '../../../store/atoms/githubIssues';
 import {
   getGithubIssueService,
@@ -24,7 +26,7 @@ import {
 import { formatRelative } from '../prFormat';
 import { PullRequestActionError } from '../PullRequestActionError';
 import { isSameIssue } from './issueFilters';
-import { githubLabelStyle, issueHtmlUrl, issueStateLabel } from './issueFormat';
+import { githubLabelStyle, issueHtmlUrl } from './issueFormat';
 import { IssueConversationTab } from './tabs/IssueConversationTab';
 import { IssueActivityTab } from './tabs/IssueActivityTab';
 import { IssueLocalTab } from './tabs/IssueLocalTab';
@@ -52,11 +54,18 @@ interface GithubIssueDetailProps {
   onOpenSession?: (sessionId: string) => void;
 }
 
-const TABS: { id: IssueDetailTab; label: string }[] = [
-  { id: 'conversation', label: 'Conversation' },
-  { id: 'activity', label: 'Activity' },
-  { id: 'local', label: 'Local' },
+const TABS: { id: IssueDetailTab; labelKey: string }[] = [
+  { id: 'conversation', labelKey: 'detail.tabs.conversation' },
+  { id: 'activity', labelKey: 'issues.tabs.activity' },
+  { id: 'local', labelKey: 'issues.tabs.local' },
 ];
+
+/** i18n key for the upstream state phrase (mirrors issueStateLabel, which stays English for AI context). */
+function issueStateLabelKey(issue: GithubIssueRow): string {
+  if (issue.state === 'open') return 'issues.state.open';
+  if (issue.stateReason === 'not_planned') return 'issues.state.closedNotPlanned';
+  return 'issues.state.closed';
+}
 
 const DETAIL_POLL_MS = 60_000;
 
@@ -72,6 +81,7 @@ export function GithubIssueDetail({
   onOverlayWrite,
   onOpenSession,
 }: GithubIssueDetailProps): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const fetched = useAtomValue(githubIssueDetailAtom);
   const setFetched = useSetAtom(githubIssueDetailAtom);
   const [refreshToken, setRefreshToken] = useState(0);
@@ -103,7 +113,7 @@ export function GithubIssueDetail({
         // list row, and the failure is said out loud rather than looking like
         // fresh upstream data.
         if (!cancelled) {
-          setFetchError(err instanceof Error ? err.message : 'Failed to load this issue');
+          setFetchError(err instanceof Error ? err.message : translate('pullRequest:issues.detail.failedToLoad'));
         }
       });
     return () => {
@@ -139,17 +149,17 @@ export function GithubIssueDetail({
                 }`}
               >
                 <MaterialSymbol icon={closed ? 'check_circle' : 'adjust'} size={12} />
-                {issueStateLabel(issue)}
+                {t(issueStateLabelKey(issue))}
               </span>
               <span className="text-nim-faint font-mono">#{issue.number}</span>
               <span className="text-nim font-medium truncate select-text">{issue.title}</span>
             </div>
             <div className="flex items-center gap-2 mt-1 text-[11px] text-nim-faint flex-wrap">
               {issue.authorLogin && <span>{issue.authorLogin}</span>}
-              <span>opened {formatRelative(issue.createdAt)}</span>
-              <span>· updated {formatRelative(issue.updatedAt)}</span>
+              <span>{t('issues.detail.opened', { time: formatRelative(issue.createdAt) })}</span>
+              <span>{t('issues.detail.updated', { time: formatRelative(issue.updatedAt) })}</span>
               {issue.assignees.length > 0 && (
-                <span title="Assignees">
+                <span title={t('issues.detail.assignees')}>
                   · {issue.assignees.map((assignee) => assignee.login).join(', ')}
                 </span>
               )}
@@ -169,7 +179,7 @@ export function GithubIssueDetail({
             <button
               className="flex items-center gap-1 px-2 py-1 text-xs text-nim-muted hover:text-nim border border-nim rounded transition-colors"
               onClick={() => window.electronAPI?.openExternal(issueHtmlUrl(issue, remote))}
-              title="Open on GitHub"
+              title={t('common.openOnGithub')}
             >
               <MaterialSymbol icon="open_in_new" size={14} />
               GitHub
@@ -178,10 +188,10 @@ export function GithubIssueDetail({
               className="flex items-center gap-1 px-2 py-1 text-xs bg-nim-primary text-nim-on-primary hover:bg-nim-primary-hover rounded transition-colors"
               onClick={onStartInvestigationSession}
               data-testid="issue-start-investigation-session"
-              title={`Investigate #${issue.number} with AI`}
+              title={t('issues.detail.investigateTitle', { number: issue.number })}
             >
               <MaterialSymbol icon="chat" size={14} />
-              Investigate
+              {t('issues.detail.investigate')}
             </button>
           </div>
         </div>
@@ -189,7 +199,7 @@ export function GithubIssueDetail({
         {fetchError && (
           <div className="px-4 pt-2" data-testid="issue-detail-error">
             <PullRequestActionError
-              error={`Showing the cached copy of #${listRow.number} — loading it from GitHub failed: ${fetchError}`}
+              error={t('issues.detail.cachedCopyError', { number: listRow.number, error: fetchError })}
             />
           </div>
         )}
@@ -206,7 +216,7 @@ export function GithubIssueDetail({
                   : 'border-transparent text-nim-muted hover:text-nim'
               }`}
             >
-              {tab.label}
+              {t(tab.labelKey)}
               {tab.id === 'conversation' && issue.commentsCount > 0 && (
                 <span className="ml-1 text-nim-faint">{issue.commentsCount}</span>
               )}

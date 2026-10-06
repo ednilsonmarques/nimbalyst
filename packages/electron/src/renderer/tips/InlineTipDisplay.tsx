@@ -24,6 +24,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
 import { usePostHog } from 'posthog-js/react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { TipCard } from './TipCard';
 import { tips } from './definitions';
 import { markTipCompleted, recordTipShown } from './TipService';
@@ -59,6 +60,7 @@ interface InlineTipDisplayProps {
 }
 
 export function InlineTipDisplay({ onInsertPrompt }: InlineTipDisplayProps = {}) {
+  const { t } = useTranslation('onboarding');
   const posthog = usePostHog();
   const [activeTipId, setActiveTipId] = useAtom(activeTipIdAtom);
   const setVisibleCount = useSetAtom(emptyTranscriptVisibleCountAtom);
@@ -156,10 +158,10 @@ export function InlineTipDisplay({ onInsertPrompt }: InlineTipDisplayProps = {})
           type="button"
           className="inline-flex items-center gap-1 px-2.5 py-1 text-[12.5px] text-[var(--nim-text-muted)] bg-transparent border border-[var(--nim-border)] rounded-md cursor-pointer transition-all duration-150 hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
           onClick={handleNext}
-          aria-label="Next tip"
-          title="Next tip"
+          aria-label={t('tips.ui.nextTip')}
+          title={t('tips.ui.nextTip')}
         >
-          Next
+          {t('tips.ui.next')}
           <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M9 6l6 6-6 6" />
           </svg>
@@ -169,10 +171,10 @@ export function InlineTipDisplay({ onInsertPrompt }: InlineTipDisplayProps = {})
         type="button"
         className="inline-flex items-center gap-1 px-2.5 py-1 text-[12.5px] text-[var(--nim-text-muted)] bg-transparent border border-[var(--nim-border)] rounded-md cursor-pointer transition-all duration-150 hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
         onClick={handleOpenAllTips}
-        aria-label="Show all tips"
-        title="Show all tips"
+        aria-label={t('tips.ui.showAllTips')}
+        title={t('tips.ui.showAllTips')}
       >
-        All tips
+        {t('tips.ui.allTips')}
       </button>
     </>
   );

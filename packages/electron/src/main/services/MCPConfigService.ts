@@ -10,6 +10,7 @@ import {
   type MCPProviderId,
 } from '@nimbalyst/runtime/types/MCPServerConfig';
 import { logger } from '../utils/logger';
+import { t } from '@nimbalyst/runtime/i18n';
 import { getEnhancedPath } from './shellEnvironment';
 import {
   applyDisabledMcpjsonServersToSettings,
@@ -1568,7 +1569,7 @@ export class MCPConfigService {
         logger.mcp.info(`[MCP Test] Env keys: ${Object.keys(config.env || {}).join(', ')}`);
         logger.mcp.info(`[MCP Test] Enhanced PATH (first 300 chars): ${enhancedPath.substring(0, 300)}...`);
 
-        onProgress?.('connecting', 'Starting server...');
+        onProgress?.('connecting', t('system:mcpTest.startingServer'));
 
         // Spawn the process (command is validated above)
         // On Windows, .cmd files need shell:true to execute properly
@@ -1633,7 +1634,7 @@ export class MCPConfigService {
 
           try {
             logger.mcp.info('[MCP Test] Sending initialize request');
-            onProgress?.('testing', 'Testing server connection...');
+            onProgress?.('testing', t('system:mcpTest.testingConnection'));
             child.stdin.write(JSON.stringify(initRequest) + '\n');
           } catch (error: any) {
             logger.mcp.error('[MCP Test] Failed to send initialize request:', error);
@@ -1700,7 +1701,7 @@ export class MCPConfigService {
               chunk.includes('Cloning') || chunk.includes('Fetching'))) {
             hasExtendedTimeout = true;
             logger.mcp.info('[MCP Test] Detected package download, extending timeout to 120s');
-            onProgress?.('downloading', 'Downloading packages...');
+            onProgress?.('downloading', t('system:mcpTest.downloadingPackages'));
             resetTimeout(this.DOWNLOAD_TIMEOUT_MS);
           }
 

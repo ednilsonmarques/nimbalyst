@@ -11,6 +11,7 @@
 import React, { useCallback } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   sessionTaskListAtom,
   taskListPanelCollapsedAtom,
@@ -26,6 +27,7 @@ interface TaskListPanelProps {
 export const TaskListPanel: React.FC<TaskListPanelProps> = React.memo(({
   sessionId,
 }) => {
+  const { t } = useTranslation('agent');
   const isCollapsed = useAtomValue(taskListPanelCollapsedAtom);
   const toggleCollapsed = useSetAtom(toggleTaskListPanelCollapsedAtom);
   const tasks = useAtomValue(sessionTaskListAtom(sessionId));
@@ -63,7 +65,7 @@ export const TaskListPanel: React.FC<TaskListPanelProps> = React.memo(({
           className="text-[var(--nim-text-muted)] shrink-0"
         />
         <span className="task-list-panel-title text-xs font-medium text-[var(--nim-text)]">
-          Task List
+          {t('panels.taskList')}
         </span>
         <span className="task-list-panel-count ml-auto text-[11px] text-[var(--nim-text-muted)] font-mono">
           {completedCount}/{totalCount}
@@ -92,6 +94,7 @@ interface TaskRowProps {
 }
 
 const TaskRow: React.FC<TaskRowProps> = React.memo(({ task, openIds }) => {
+  const { t } = useTranslation('agent');
   const displayText = task.status === 'in_progress' && task.activeForm
     ? task.activeForm
     : task.subject;
@@ -133,7 +136,7 @@ const TaskRow: React.FC<TaskRowProps> = React.memo(({ task, openIds }) => {
             {isBlocked && (
               <span className="task-list-item-blocked inline-flex items-center gap-0.5">
                 <MaterialSymbol icon="lock" size={11} className="shrink-0" />
-                blocked by {blockedBy.map(id => `#${id}`).join(', ')}
+                {t('panels.blockedBy', { ids: blockedBy.map(id => `#${id}`).join(', ') })}
               </span>
             )}
             {task.owner && (

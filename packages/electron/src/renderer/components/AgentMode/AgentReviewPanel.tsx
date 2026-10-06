@@ -26,6 +26,8 @@ import {
   useFloatingMenu,
 } from "../../hooks/useFloatingMenu";
 import { InlineFileDiff } from "../PullRequestMode/PrFileDiff";
+import { useTranslation } from "@nimbalyst/runtime/i18n/react";
+import { t as translate } from "@nimbalyst/runtime/i18n";
 
 interface AgentReviewPanelProps {
   workstreamId: string;
@@ -110,6 +112,7 @@ export function AgentReviewPanel({
   worktreePath,
   width,
 }: AgentReviewPanelProps) {
+  const { t } = useTranslation("agent");
   const effectiveWorkspacePath = worktreePath || workspacePath;
   const reviewSessionId = activeSessionId || workstreamId;
   const workstreamSessions = useAtomValue(workstreamSessionsAtom(workstreamId));
@@ -302,7 +305,7 @@ export function AgentReviewPanel({
           unifiedDiff: "",
           isBinary: false,
           status,
-          error: error instanceof Error ? error.message : "Failed to load diff",
+          error: error instanceof Error ? error.message : translate("agent:review.loadDiffFailed"),
         };
       }
     },
@@ -389,7 +392,7 @@ export function AgentReviewPanel({
           canSelectCurrent={Boolean(activeSessionId)}
         />
         <span className="ml-auto text-xs text-[var(--nim-text-faint)] shrink-0">
-          {reviewFiles.length} file{reviewFiles.length === 1 ? "" : "s"}
+          {t("review.fileCount", { count: reviewFiles.length })}
         </span>
       </div>
 
@@ -397,7 +400,7 @@ export function AgentReviewPanel({
         {reviewFiles.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center gap-2 px-6 text-center text-[var(--nim-text-faint)]">
             <MaterialSymbol icon="check_circle" size={32} />
-            <span className="text-sm">No changed files to review.</span>
+            <span className="text-sm">{t("review.empty")}</span>
           </div>
         ) : (
           <VList
@@ -456,10 +459,11 @@ function ReviewTargetDropdown({
   workstreamSessionCount: number;
   canSelectCurrent: boolean;
 }) {
+  const { t } = useTranslation("agent");
   const menu = useFloatingMenu({ placement: "bottom-start" });
   const targetLabel = filterToCurrentSession
-    ? "Current session only"
-    : `All sessions (${workstreamSessionCount})`;
+    ? t("filesScope.currentSessionOnly")
+    : t("filesScope.allSessions", { count: workstreamSessionCount });
 
   return (
     <div className="workstream-review-target min-w-0">
@@ -482,7 +486,7 @@ function ReviewTargetDropdown({
             className="text-[var(--nim-text-muted)] shrink-0"
           />
           <span className="workstream-review-target__title text-sm font-medium text-[var(--nim-text)] truncate min-w-0">
-            Workstream Review
+            {t("review.title")}
           </span>
           <MaterialSymbol
             icon="expand_more"
@@ -507,7 +511,7 @@ function ReviewTargetDropdown({
           >
             <div className="workstream-review-target__section px-3 py-2">
               <div className="workstream-review-target__section-header text-[10px] font-semibold text-[var(--nim-text-faint)] uppercase tracking-wide mb-1.5">
-                Review Target
+                {t("review.target")}
               </div>
               <label className="workstream-review-target__option flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-[var(--nim-bg-hover)]">
                 <input
@@ -521,7 +525,7 @@ function ReviewTargetDropdown({
                   className="cursor-pointer"
                 />
                 <span className="text-xs text-[var(--nim-text)]">
-                  All sessions ({workstreamSessionCount})
+                  {t("filesScope.allSessions", { count: workstreamSessionCount })}
                 </span>
               </label>
               {canSelectCurrent && (
@@ -537,7 +541,7 @@ function ReviewTargetDropdown({
                     className="cursor-pointer"
                   />
                   <span className="text-xs text-[var(--nim-text)]">
-                    Current session only
+                    {t("filesScope.currentSessionOnly")}
                   </span>
                 </label>
               )}
@@ -585,6 +589,7 @@ function ReviewFileSection({
     status,
   ]);
 
+  const { t } = useTranslation("agent");
   const stats = countDiffChanges(diff?.unifiedDiff ?? "");
 
   return (
@@ -628,7 +633,7 @@ function ReviewFileSection({
         <div className="agent-review-panel__diff overflow-x-auto bg-[var(--nim-bg)]">
           {!diff ? (
             <div className="px-4 py-6 text-xs text-[var(--nim-text-faint)]">
-              Loading diff…
+              {t("review.loadingDiff")}
             </div>
           ) : diff.error ? (
             <div className="px-4 py-6 text-xs text-[var(--nim-error)]">
@@ -636,7 +641,7 @@ function ReviewFileSection({
             </div>
           ) : diff.isBinary ? (
             <div className="px-4 py-6 text-xs text-[var(--nim-text-faint)]">
-              Binary file — no text diff available.
+              {t("review.binary")}
             </div>
           ) : (
             <InlineFileDiff

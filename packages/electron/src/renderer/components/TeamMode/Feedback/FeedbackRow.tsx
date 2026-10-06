@@ -1,5 +1,6 @@
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import type { FeedbackListRowView, FeedbackListStatus } from './feedbackListModel';
 
@@ -27,6 +28,7 @@ export function FeedbackRow({
   selected: boolean;
   onSelect: (requestId: string) => void;
 }) {
+  const { t } = useTranslation('team');
   return (
     <button
       type="button"
@@ -84,7 +86,7 @@ export function FeedbackRow({
               className="feedback-row-needs-response rounded-full bg-[color-mix(in_srgb,var(--nim-primary)_18%,transparent)] px-2 text-[10px] font-semibold leading-4 text-[var(--nim-primary)]"
               data-testid="feedback-row-needs-response"
             >
-              Your answer
+              {t('feedback.yourAnswer')}
             </span>
           )}
         </span>

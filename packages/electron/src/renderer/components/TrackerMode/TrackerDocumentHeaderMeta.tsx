@@ -14,6 +14,7 @@
 import React from 'react';
 import { TrackerCollabAvatars, TrackerCollabSyncDot } from './trackerCollabChrome';
 import type { TrackerDocumentBreadcrumb } from './TrackerDocumentViewHeader';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 /** Segment list plus a tooltip, derived from either breadcrumb shape. */
 export function trackerBreadcrumbSegments(
@@ -47,6 +48,7 @@ export const TrackerDocumentHeaderMeta: React.FC<TrackerDocumentHeaderMetaProps>
   title,
   showCollabChrome,
 }) => {
+  const { t } = useTranslation('tracker');
   const { segments, tooltip } = trackerBreadcrumbSegments(breadcrumb, title);
 
   return (
@@ -83,7 +85,7 @@ export const TrackerDocumentHeaderMeta: React.FC<TrackerDocumentHeaderMetaProps>
         {breadcrumb.kind === 'file' && breadcrumb.dirty && (
           <span
             className="ml-0.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--nim-warning)]"
-            title="Unsaved changes"
+            title={t('document.unsavedChanges')}
             data-testid="tracker-document-breadcrumb-dirty"
           />
         )}

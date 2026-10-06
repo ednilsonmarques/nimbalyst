@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { usePostHog } from 'posthog-js/react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface ExtensionPluginCommand {
   extensionId: string;
@@ -51,6 +52,7 @@ export const SlashCommandSuggestions: React.FC<SlashCommandSuggestionsProps> = (
   workspacePath,
   onCommandSelect
 }) => {
+  const { t } = useTranslation('ai');
   const posthog = usePostHog();
   const [extensionCommands, setExtensionCommands] = useState<ExtensionPluginCommand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -145,7 +147,7 @@ export const SlashCommandSuggestions: React.FC<SlashCommandSuggestionsProps> = (
   return (
     <div className="slash-command-suggestions flex flex-col items-center gap-2 px-3 py-2 max-w-4xl mx-auto">
       <div className="slash-command-suggestions-label text-xs font-medium text-[var(--nim-text-faint)]">
-        Try a command:
+        {t('slashSuggestions.tryCommand')}
       </div>
       <div className="slash-command-suggestions-pills flex flex-wrap justify-center gap-2">
         {displayCommands.map((cmd) => (

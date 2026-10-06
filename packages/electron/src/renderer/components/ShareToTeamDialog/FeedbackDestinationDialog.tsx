@@ -18,6 +18,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type { FeedbackComposeDestination } from '@nimbalyst/runtime/ui/AgentTranscript/components/CustomToolWidgets/InteractiveWidgetHost';
 import { normalizeCollabPath } from '../CollabMode/collabTree';
 import { SharedFolderTree } from './SharedFolderTree';
@@ -40,6 +41,7 @@ export const FeedbackDestinationDialog: React.FC<FeedbackDestinationDialogProps>
   subjectCount,
   onConfirm,
 }) => {
+  const { t } = useTranslation('team');
   const folderTree = useSharedFolderTree(isOpen);
   const {
     tree,
@@ -142,7 +144,7 @@ export const FeedbackDestinationDialog: React.FC<FeedbackDestinationDialogProps>
     ? `${selectedPath ? `${selectedPath.split('/').join(' / ')} / ` : ''}${pendingFolder.name}`
     : selectedPath
       ? selectedPath.split('/').join(' / ')
-      : 'Team root';
+      : t('shareToTeam.teamRoot');
 
   return (
     <div
@@ -153,37 +155,35 @@ export const FeedbackDestinationDialog: React.FC<FeedbackDestinationDialogProps>
         className="feedback-destination-dialog flex max-h-[90vh] w-[440px] max-w-[92%] flex-col overflow-hidden rounded-xl border border-[var(--nim-border)] bg-[var(--nim-bg)] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label="Choose a destination"
+        aria-label={t('feedbackDestination.aria')}
       >
         <div className="flex items-start justify-between gap-3 border-b border-[var(--nim-border)] px-4 py-3">
           <div className="min-w-0">
             <h2 className="m-0 text-[15px] font-semibold text-[var(--nim-text)]">
-              Where should these go?
+              {t('feedbackDestination.title')}
             </h2>
             <p className="m-0 mt-0.5 text-[12px] text-[var(--nim-text-muted)]">
-              {subjectCount === 1
-                ? '1 subject will be published here when you send.'
-                : `${subjectCount} subjects will be published here when you send.`}
+              {t('feedbackDestination.subjects', { count: subjectCount })}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('common:close')}
             className="shrink-0 text-[var(--nim-text-faint)] hover:text-[var(--nim-text)] bg-transparent border-none cursor-pointer p-0"
           >
             <MaterialSymbol icon="close" size={18} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-2 py-2" role="tree" aria-label="Team folders">
+        <div className="flex-1 overflow-y-auto px-2 py-2" role="tree" aria-label={t('feedbackDestination.teamFolders')}>
           {refreshFailed ? (
             <div className="px-3 py-6 text-center text-[13px] text-[var(--nim-text-muted)]">
-              Your team folders could not be loaded, so there is nowhere to choose from yet.
+              {t('feedbackDestination.loadFailed')}
             </div>
           ) : isRefreshing ? (
             <div className="px-3 py-6 text-center text-[13px] text-[var(--nim-text-muted)]">
-              Loading team folders…
+              {t('feedbackDestination.loading')}
             </div>
           ) : (
             <>
@@ -211,7 +211,7 @@ export const FeedbackDestinationDialog: React.FC<FeedbackDestinationDialogProps>
                 <span className="inline-flex items-center justify-center text-[var(--nim-text-muted)]">
                   <MaterialSymbol icon="workspaces" size={18} />
                 </span>
-                <span className="flex-1 truncate">Team root</span>
+                <span className="flex-1 truncate">{t('shareToTeam.teamRoot')}</span>
               </div>
 
               <SharedFolderTree
@@ -245,7 +245,7 @@ export const FeedbackDestinationDialog: React.FC<FeedbackDestinationDialogProps>
                       }
                     }}
                     onBlur={commitNewFolder}
-                    placeholder="Folder name"
+                    placeholder={t('shareToTeam.folderNamePlaceholder')}
                     className="flex-1 bg-[var(--nim-bg)] border border-[var(--nim-primary)] rounded text-[13px] text-[var(--nim-text)] px-2 py-1 outline-none"
                   />
                 </div>
@@ -263,7 +263,7 @@ export const FeedbackDestinationDialog: React.FC<FeedbackDestinationDialogProps>
             className="inline-flex items-center gap-1.5 text-[13px] text-[var(--nim-primary)] bg-transparent border-none p-0 cursor-pointer hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <MaterialSymbol icon="create_new_folder" size={16} />
-            New folder
+            {t('shareToTeam.newFolder')}
           </button>
           <div className="flex items-center gap-2">
             <button
@@ -271,7 +271,7 @@ export const FeedbackDestinationDialog: React.FC<FeedbackDestinationDialogProps>
               onClick={onClose}
               className="px-3 py-1.5 rounded-md text-[13px] text-[var(--nim-text)] bg-transparent border border-[var(--nim-border)] cursor-pointer"
             >
-              Cancel
+              {t('common:cancel')}
             </button>
             <button
               type="button"
@@ -280,7 +280,7 @@ export const FeedbackDestinationDialog: React.FC<FeedbackDestinationDialogProps>
               disabled={isRefreshing || refreshFailed}
               className="px-3 py-1.5 rounded-md text-[13px] font-medium text-[var(--nim-on-primary)] bg-[var(--nim-primary)] border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Use {destinationLabel}
+              {t('feedbackDestination.use', { destination: destinationLabel })}
             </button>
           </div>
         </div>

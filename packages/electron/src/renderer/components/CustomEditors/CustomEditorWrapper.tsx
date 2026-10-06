@@ -11,6 +11,7 @@ import React, { Component, useRef, useEffect, useState, useCallback } from 'reac
 import type { EditorHost } from '@nimbalyst/runtime';
 import { MaterialSymbol } from '@nimbalyst/runtime';
 import type { CustomEditorComponent } from './types';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface CustomEditorWrapperProps {
   component: CustomEditorComponent;
@@ -91,6 +92,7 @@ const ErrorFallback: React.FC<{
   onRetry: () => void;
   isRenderLoop?: boolean;
 }> = ({ error, errorInfo, extensionId, componentName, onRetry, isRenderLoop }) => {
+  const { t } = useTranslation('editor');
   return (
     <div className="custom-editor-error flex items-center justify-center h-full p-10 bg-[var(--nim-bg)]">
       <div className="custom-editor-error-content max-w-[500px] text-center">
@@ -100,18 +102,18 @@ const ErrorFallback: React.FC<{
           <MaterialSymbol icon={isRenderLoop ? 'loop' : 'error'} size={48} />
         </div>
         <h2 className="m-0 mb-2 text-xl font-semibold text-[var(--nim-text)]">
-          {isRenderLoop ? 'Render Loop Detected' : 'Custom Editor Error'}
+          {isRenderLoop ? t('customEditor.renderLoopTitle') : t('customEditor.errorTitle')}
         </h2>
         {extensionId && (
           <p className="custom-editor-error-extension m-0 mb-4 text-[13px] text-[var(--nim-text-muted)]">
-            Extension:{' '}
+            {t('customEditor.extensionLabel')}{' '}
             <code className="px-1.5 py-0.5 bg-[var(--nim-bg-secondary)] rounded font-mono text-xs">
               {extensionId}
             </code>
             {componentName && (
               <>
                 {' '}
-                / Component:{' '}
+                {t('customEditor.componentLabel')}{' '}
                 <code className="px-1.5 py-0.5 bg-[var(--nim-bg-secondary)] rounded font-mono text-xs">
                   {componentName}
                 </code>
@@ -121,13 +123,13 @@ const ErrorFallback: React.FC<{
         )}
         <p className="custom-editor-error-message m-0 mb-5 text-sm text-[var(--nim-text-muted)] leading-normal">
           {isRenderLoop
-            ? 'The custom editor is rendering too rapidly, which may indicate an infinite loop. This has been stopped to prevent freezing.'
-            : error?.message || 'An unexpected error occurred while rendering the custom editor.'}
+            ? t('customEditor.renderLoopMessage')
+            : error?.message || t('customEditor.unexpectedError')}
         </p>
         {error?.stack && !isRenderLoop && (
           <details className="custom-editor-error-details m-0 mb-5 text-left">
             <summary className="cursor-pointer text-[13px] text-[var(--nim-text-muted)] py-2 hover:text-[var(--nim-text)]">
-              Error Details
+              {t('customEditor.errorDetails')}
             </summary>
             <pre className="mt-2 p-3 bg-[var(--nim-bg-secondary)] border border-[var(--nim-border)] rounded-md text-[11px] font-mono text-[var(--nim-text-muted)] overflow-x-auto whitespace-pre-wrap break-words max-h-[200px] overflow-y-auto">
               {error.stack}
@@ -137,19 +139,19 @@ const ErrorFallback: React.FC<{
         {isRenderLoop && (
           <div className="custom-editor-error-hint m-0 mb-5 px-4 py-3 bg-[color-mix(in_srgb,var(--nim-warning)_10%,transparent)] border border-[color-mix(in_srgb,var(--nim-warning)_30%,transparent)] rounded-lg text-left">
             <strong className="block mb-2 text-[13px] text-[var(--nim-text)]">
-              Common causes:
+              {t('customEditor.commonCauses')}
             </strong>
             <ul className="m-0 pl-5 text-xs text-[var(--nim-text-muted)] leading-relaxed">
-              <li>State updates in useEffect without proper dependencies</li>
-              <li>Callback props recreated on every render</li>
-              <li>Object/array references changing on every render</li>
+              <li>{t('customEditor.causeEffectDependencies')}</li>
+              <li>{t('customEditor.causeRecreatedCallbacks')}</li>
+              <li>{t('customEditor.causeChangingReferences')}</li>
             </ul>
           </div>
         )}
         <div className="custom-editor-error-actions flex justify-center gap-3">
           <button className="custom-editor-error-retry nim-btn-primary" onClick={onRetry}>
             <MaterialSymbol icon="refresh" size={18} />
-            Try Again
+            {t('customEditor.tryAgain')}
           </button>
         </div>
       </div>

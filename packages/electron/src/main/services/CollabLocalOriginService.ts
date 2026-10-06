@@ -32,6 +32,7 @@ import {
 import { readCollabAsset } from '../protocols/collabAssetProtocol';
 import { historyManager } from '../HistoryManager';
 import { SessionFileWatcher } from '../file/SessionFileWatcher';
+import { t } from '@nimbalyst/runtime/i18n';
 import {
   rewriteMarkdownImageRefs,
   resolveAssetRef,
@@ -822,7 +823,7 @@ export async function pullFromSharedOrigin(params: {
     return {
       success: false,
       status: 'error',
-      message: 'No local source is linked to this shared document.',
+      message: t('dialogs:collabOrigin.service.noLinkedSource'),
     };
   }
 
@@ -830,7 +831,7 @@ export async function pullFromSharedOrigin(params: {
     return {
       success: false,
       status: 'unsupported',
-      message: `No collab codec is available for document type '${binding.documentType}'.`,
+      message: t('dialogs:collabOrigin.service.noCodec', { documentType: binding.documentType }),
       binding,
     };
   }
@@ -839,7 +840,7 @@ export async function pullFromSharedOrigin(params: {
     return {
       success: false,
       status: 'missing-source',
-      message: 'The linked local source file is not available in this workspace.',
+      message: t('dialogs:collabOrigin.service.sourceFileUnavailable'),
       binding,
     };
   }
@@ -855,7 +856,7 @@ export async function pullFromSharedOrigin(params: {
       return {
         success: false,
         status: 'error',
-        message: 'Could not read the current shared document state.',
+        message: t('dialogs:collabOrigin.service.readSharedFailed'),
         binding,
       };
     }
@@ -889,7 +890,7 @@ export async function pullFromSharedOrigin(params: {
       return {
         success: true,
         status: 'noop',
-        message: 'The local file already matches the shared document.',
+        message: t('dialogs:collabOrigin.service.localAlreadyMatches'),
         binding: classification.repairBaselines
           ? await getLocalOriginBinding(params.workspacePath, params.documentId)
           : binding,
@@ -936,7 +937,7 @@ export async function pullFromSharedOrigin(params: {
     return {
       success: true,
       status: 'pulled',
-      message: 'Updated the local file from the shared document.',
+      message: t('dialogs:collabOrigin.service.localUpdated'),
       binding: await getLocalOriginBinding(params.workspacePath, params.documentId),
       materializedAssetCount: candidate.materializedAssetCount,
     };
@@ -961,7 +962,7 @@ export async function reuploadFromLocalOrigin(params: {
     return {
       success: false,
       status: 'error',
-      message: 'No local source is linked to this shared document.',
+      message: t('dialogs:collabOrigin.service.noLinkedSource'),
     };
   }
 
@@ -969,7 +970,7 @@ export async function reuploadFromLocalOrigin(params: {
     return {
       success: false,
       status: 'unsupported',
-      message: `No collab codec is available for document type '${binding.documentType}'.`,
+      message: t('dialogs:collabOrigin.service.noCodec', { documentType: binding.documentType }),
       binding,
     };
   }
@@ -978,7 +979,7 @@ export async function reuploadFromLocalOrigin(params: {
     return {
       success: false,
       status: 'missing-source',
-      message: 'The linked local source file is not available in this workspace.',
+      message: t('dialogs:collabOrigin.service.sourceFileUnavailable'),
       binding,
     };
   }
@@ -995,7 +996,7 @@ export async function reuploadFromLocalOrigin(params: {
       return {
         success: false,
         status: 'error',
-        message: 'Could not read the current shared document state.',
+        message: t('dialogs:collabOrigin.service.readSharedFailed'),
         binding,
       };
     }
@@ -1011,7 +1012,7 @@ export async function reuploadFromLocalOrigin(params: {
       return {
         success: true,
         status: 'noop',
-        message: 'The local source and shared document already match the last synced baseline.',
+        message: t('dialogs:collabOrigin.service.alreadyMatchBaseline'),
         binding,
       };
     } else if (sourceHash === baselineLocal && sharedHash !== baselineShared) {
@@ -1079,7 +1080,7 @@ export async function reuploadFromLocalOrigin(params: {
       return {
         success: false,
         status: 'error',
-        message: 'Failed to write the local file back into the shared document.',
+        message: t('dialogs:collabOrigin.service.writeSharedFailed'),
         binding,
       };
     }
@@ -1106,7 +1107,7 @@ export async function reuploadFromLocalOrigin(params: {
     return {
       success: true,
       status: 'uploaded',
-      message: 'Uploaded the current local file into the shared document.',
+      message: t('dialogs:collabOrigin.service.uploaded'),
       binding: await getLocalOriginBinding(params.workspacePath, params.documentId),
       migration,
     };

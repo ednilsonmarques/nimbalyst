@@ -45,8 +45,8 @@ export const contextWindowIntro: WalkthroughDefinition = {
       target: {
         testId: 'context-indicator',
       },
-      title: contextHelp.title,
-      body: contextHelp.body,
+      title: 'walkthroughs.contextIndicator.title',
+      body: 'walkthroughs.contextIndicator.body',
       placement: 'bottom',
     },
   ],

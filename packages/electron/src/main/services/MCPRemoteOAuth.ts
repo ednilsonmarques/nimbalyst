@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { MCPServerConfig } from '@nimbalyst/runtime/types/MCPServerConfig';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { getEnhancedPath } from './shellEnvironment';
 import { logger } from '../utils/logger';
 
@@ -544,35 +545,35 @@ function getMcpRemoteOAuthErrorMessage(
 ): string {
   switch (errorType) {
     case 'invalid_config':
-      return 'Invalid OAuth configuration.';
+      return translate('system:mcpOAuth.errors.invalidConfig');
     case 'timeout':
-      return 'OAuth authorization timed out. Please try again.';
+      return translate('system:mcpOAuth.errors.timeout');
     case 'browser_launch':
-      return 'The authorization page could not be opened. Check your default browser and try again.';
+      return translate('system:mcpOAuth.errors.browserLaunch');
     case 'stale_pending_auth':
-      return 'Another OAuth authorization is still pending. Clear the auth cache and try again.';
+      return translate('system:mcpOAuth.errors.stalePendingAuth');
     case 'port_conflict':
-      return 'Another process is using the OAuth callback port. Clear the auth cache and try again.';
+      return translate('system:mcpOAuth.errors.portConflict');
     case 'command_unavailable':
-      return 'The OAuth helper could not be started because a required command is unavailable.';
+      return translate('system:mcpOAuth.errors.commandUnavailable');
     case 'provider_rejected':
-      return 'The provider did not approve authorization.';
+      return translate('system:mcpOAuth.errors.providerRejected');
     case 'dynamic_registration_unsupported':
-      return 'This provider does not support dynamic client registration, so it cannot be authorized from here. Add a pre-registered OAuth client ID for this server (oauth.staticClientInfo) and try again. Clearing the auth cache will not help.';
+      return translate('system:mcpOAuth.errors.dynamicRegistrationUnsupported');
     case 'callback_validation':
-      return 'The OAuth callback could not be validated. Please try again.';
+      return translate('system:mcpOAuth.errors.callbackValidation');
     case 'token_exchange':
-      return 'The provider did not accept the authorization response. Please try again.';
+      return translate('system:mcpOAuth.errors.tokenExchange');
     case 'network':
-      return 'The OAuth provider could not be reached. Check your connection and try again.';
+      return translate('system:mcpOAuth.errors.network');
     case 'process_error':
-      return 'The OAuth helper could not be started.';
+      return translate('system:mcpOAuth.errors.processError');
     case 'process_exit':
       return exitCode === null || exitCode === undefined
-        ? 'The OAuth helper exited before authorization completed.'
-        : `The OAuth helper exited before authorization completed (exit code ${exitCode}).`;
+        ? translate('system:mcpOAuth.errors.processExit')
+        : translate('system:mcpOAuth.errors.processExitWithCode', { exitCode });
     case 'unknown':
-      return 'OAuth authorization failed for an unknown reason.';
+      return translate('system:mcpOAuth.errors.unknown');
   }
 }
 
@@ -953,18 +954,18 @@ function logSlowAuthCheck(startTime: number, foundToken: boolean): void {
 function getCommandNotFoundHelp(command: string): { message: string; helpUrl?: string } {
   const commandHelp: Record<string, { message: string; helpUrl: string }> = {
     npx: {
-      message: `Command 'npx' not found. Node.js needs to be installed to use this MCP server.`,
+      message: translate('system:mcpOAuth.commandNotFound.npx'),
       helpUrl: 'https://nodejs.org/en/download'
     },
     node: {
-      message: `Command 'node' not found. Node.js needs to be installed to use this MCP server.`,
+      message: translate('system:mcpOAuth.commandNotFound.node'),
       helpUrl: 'https://nodejs.org/en/download'
     },
   };
 
   const normalizedCommand = command.replace(/\.(cmd|exe)$/i, '');
   return commandHelp[normalizedCommand] || {
-    message: `Command '${command}' not found. Please ensure it is installed and available in your PATH.`
+    message: translate('system:mcpOAuth.commandNotFound.generic', { command })
   };
 }
 

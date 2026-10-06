@@ -46,6 +46,7 @@ import {
 import { renderFeedbackArtifactDetail } from './FeedbackArtifactDetail';
 import { feedbackRequestViewMode } from './feedbackRequestViewMode';
 import { useResourcePreviewResolver } from '../../hooks/useResourcePreviewResolver';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export interface FeedbackRequestSurfaceProps {
   /** Workspace whose team JWT backs the request room. */
@@ -87,6 +88,7 @@ export function FeedbackRequestSurface({
   className = '',
   discussionClassName = DEFAULT_DISCUSSION_CLASS,
 }: FeedbackRequestSurfaceProps) {
+  const { t } = useTranslation('onboarding');
   const target = useMemo<FeedbackRequestServiceTarget>(
     () => ({ workspacePath, orgId, requestId }),
     [workspacePath, orgId, requestId],
@@ -174,13 +176,13 @@ export function FeedbackRequestSurface({
           conversationTitle: title,
           agentPostingEnabled: false,
           attachedAgentSessionIds: [],
-          surfaceLabel: title ?? 'Feedback request',
+          surfaceLabel: title ?? t('feedback.title'),
         }}
         directory={directory}
         orgId={orgId}
         viewerUserId={teamMemberId}
         viewerActor={viewerActor}
-        emptyLabel="No discussion yet."
+        emptyLabel={t('feedback.discussion.empty')}
         density={density}
       />
     </div>

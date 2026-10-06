@@ -50,8 +50,8 @@ export const layoutControlsIntro: WalkthroughDefinition = {
       target: {
         testId: 'layout-controls',
       },
-      title: layoutControlsHelp.title,
-      body: layoutControlsHelp.body,
+      title: 'walkthroughs.layoutControls.title',
+      body: 'walkthroughs.layoutControls.body',
       placement: 'bottom',
       wide: true,
     },

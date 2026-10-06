@@ -1,4 +1,5 @@
 import type { OpenCodeAgentSummary } from '../../../shared/openCodeAgentCatalog';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 /**
  * Nimbalyst model id for the model an OpenCode role declares, in the same
@@ -102,41 +103,41 @@ export function summarizeRolePermissions(role: OpenCodeRolePolicy): string[] {
   const { permission } = role;
   const summary: string[] = [];
 
-  if (permission.edit === 'deny') summary.push('no edits');
-  else if (permission.edit === 'ask') summary.push('edits on approval');
-  else summary.push('edits files');
+  if (permission.edit === 'deny') summary.push(translate('ai:openCode.permissions.noEdits'));
+  else if (permission.edit === 'ask') summary.push(translate('ai:openCode.permissions.editsOnApproval'));
+  else summary.push(translate('ai:openCode.permissions.editsFiles'));
 
   const bashDecisions = Object.values(permission.bash ?? {});
   const wildcard = permission.bash?.['*'];
   if (bashDecisions.length === 0) {
     // No policy at all: OpenCode's own default applies, so claim nothing.
   } else if (wildcard === 'deny' && bashDecisions.every((d) => d === 'deny')) {
-    summary.push('no commands');
+    summary.push(translate('ai:openCode.permissions.noCommands'));
   } else if (wildcard === 'allow' && bashDecisions.every((d) => d === 'allow')) {
-    summary.push('runs commands');
+    summary.push(translate('ai:openCode.permissions.runsCommands'));
   } else if (wildcard === 'ask' && bashDecisions.every((d) => d === 'ask')) {
-    summary.push('commands on approval');
+    summary.push(translate('ai:openCode.permissions.commandsOnApproval'));
   } else {
-    summary.push('commands vary by rule');
+    summary.push(translate('ai:openCode.permissions.commandsVary'));
   }
 
   // The workspace boundary: a role allowed outside it can read and write files
   // the user never opened this project to expose.
-  if (permission.external_directory === 'allow') summary.push('works outside the workspace');
-  else if (permission.external_directory === 'ask') summary.push('outside the workspace on approval');
-  else if (permission.external_directory === 'deny') summary.push('workspace only');
+  if (permission.external_directory === 'allow') summary.push(translate('ai:openCode.permissions.outsideWorkspace'));
+  else if (permission.external_directory === 'ask') summary.push(translate('ai:openCode.permissions.outsideWorkspaceOnApproval'));
+  else if (permission.external_directory === 'deny') summary.push(translate('ai:openCode.permissions.workspaceOnly'));
 
-  if (permission.webfetch === 'deny') summary.push('no web access');
+  if (permission.webfetch === 'deny') summary.push(translate('ai:openCode.permissions.noWebAccess'));
 
   // Named with OpenCode's own permission key rather than a paraphrase of what
   // the server does with it.
-  if (permission.doom_loop === 'allow') summary.push('doom loop allowed');
-  else if (permission.doom_loop === 'ask') summary.push('doom loop on approval');
-  else if (permission.doom_loop === 'deny') summary.push('no doom loop');
+  if (permission.doom_loop === 'allow') summary.push(translate('ai:openCode.permissions.doomLoopAllowed'));
+  else if (permission.doom_loop === 'ask') summary.push(translate('ai:openCode.permissions.doomLoopOnApproval'));
+  else if (permission.doom_loop === 'deny') summary.push(translate('ai:openCode.permissions.noDoomLoop'));
 
   const disabledTools = Object.values(role.tools ?? {}).filter((enabled) => enabled === false).length;
   if (disabledTools > 0) {
-    summary.push(`${disabledTools} tool${disabledTools === 1 ? '' : 's'} disabled`);
+    summary.push(translate('ai:openCode.permissions.toolsDisabled', { count: disabledTools }));
   }
 
   return summary;
@@ -153,11 +154,11 @@ export function describeRoleOrigin(role: Pick<OpenCodeAgentSummary, 'builtIn'>):
 } {
   return role.builtIn
     ? {
-      label: 'built-in',
-      title: 'Ships with OpenCode.',
+      label: translate('ai:openCode.origin.builtIn'),
+      title: translate('ai:openCode.origin.builtInTitle'),
     }
     : {
-      label: 'custom',
-      title: "Defined in OpenCode config -- this project's .opencode/agent or your own -- not shipped with OpenCode.",
+      label: translate('ai:openCode.origin.custom'),
+      title: translate('ai:openCode.origin.customTitle'),
     };
 }

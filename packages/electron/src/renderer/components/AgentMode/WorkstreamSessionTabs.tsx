@@ -14,6 +14,7 @@ import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { ProviderIcon } from '@nimbalyst/runtime/ui/icons/ProviderIcons';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { store } from '@nimbalyst/runtime/store';
 import { sessionArchivedAtom, sessionRegistryAtom } from '../../store/atoms/sessions';
 import { AgentSessionPanel } from './AgentSessionPanel';
@@ -62,6 +63,7 @@ const SessionTab: React.FC<{
   onUnarchive?: () => void;
   onRename?: (newName: string) => void;
 }> = React.memo(({ sessionId, isActive, onClick, onArchive, onUnarchive, onRename }) => {
+  const { t } = useTranslation('agent');
   const title = useAtomValue(sessionTitleAtom(sessionId));
   const provider = useAtomValue(sessionProviderAtom(sessionId));
   const isProcessing = useAtomValue(sessionProcessingAtom(sessionId));
@@ -120,7 +122,7 @@ const SessionTab: React.FC<{
         } ${hasUnread ? 'unread' : ''} ${isArchived ? 'opacity-60' : ''}`}
         onClick={onClick}
         onContextMenu={handleContextMenu}
-        title={title || 'Untitled'}
+        title={title || t('sessionTabs.untitled')}
       >
         {isProcessing && (
           <span className="session-tab-processing-dot w-1.5 h-1.5 rounded-full bg-[var(--nim-primary)] animate-pulse" />
@@ -143,7 +145,7 @@ const SessionTab: React.FC<{
           />
         ) : (
           <span className={`session-tab-title max-w-[150px] overflow-hidden text-ellipsis ${hasUnread ? 'font-semibold' : ''}`}>
-            {title || 'Untitled'}
+            {title || t('sessionTabs.untitled')}
           </span>
         )}
         {hasUnread && !isRenaming && (
@@ -155,7 +157,7 @@ const SessionTab: React.FC<{
       {showContextMenu && (
         <SessionContextMenu
           sessionId={sessionId}
-          title={title || 'Untitled'}
+          title={title || t('sessionTabs.untitled')}
           position={contextMenuPosition}
           onClose={() => setShowContextMenu(false)}
           isArchived={isArchived}
@@ -184,6 +186,7 @@ const SessionTabBar: React.FC<{
   onSessionUnarchive?: (sessionId: string) => void;
   onSessionRename?: (sessionId: string, newName: string) => void;
 }> = React.memo(({ sessions, activeSessionId, onSessionSelect, onNewSession, onSessionArchive, onSessionUnarchive, onSessionRename }) => {
+  const { t } = useTranslation('agent');
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollEdges, setScrollEdges] = useState({ left: false, right: false });
   const updateScrollEdges = useCallback(() => {
@@ -261,7 +264,8 @@ const SessionTabBar: React.FC<{
       <button
         className="session-tab-new nim-btn-icon-sm shrink-0 text-[var(--nim-text-faint)] hover:text-[var(--nim-text-muted)] active:bg-[var(--nim-bg-tertiary)]"
         onClick={onNewSession}
-        title="New session in workstream"
+        title={t('sessionTabs.newSession')}
+        aria-label={t('sessionTabs.newSession')}
       >
         <MaterialSymbol icon="add" size={16} />
       </button>
@@ -295,6 +299,7 @@ export const WorkstreamSessionTabs: React.FC<WorkstreamSessionTabsProps> = React
   const createChildSession = useSetAtom(createChildSessionAtom);
   const convertToWorkstream = useSetAtom(convertToWorkstreamAtom);
   const defaultModel = useAtomValue(defaultAgentModelAtom);
+  const { t } = useTranslation('agent');
 
   // Handle creating a new child session
   const handleNewSession = useCallback(async () => {
@@ -330,7 +335,7 @@ export const WorkstreamSessionTabs: React.FC<WorkstreamSessionTabsProps> = React
   if (!activeSessionId) {
     return (
       <div className="workstream-session-tabs-empty flex items-center justify-center h-full text-[var(--nim-text-muted)] text-sm">
-        <p>Loading sessions...</p>
+        <p>{t('sessionTabs.loading')}</p>
       </div>
     );
   }

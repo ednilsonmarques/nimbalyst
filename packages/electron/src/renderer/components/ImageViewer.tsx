@@ -9,6 +9,7 @@ import React, { useEffect, useState } from 'react';
 import { ZoomableImageSurface } from '@nimbalyst/runtime/ui/AgentTranscript/components/ZoomableImageSurface';
 import { nimAssetUrl } from '../utils/assetUrl';
 import { DiskChangeSubscription } from '../services/document-model/DiskChangeSubscription';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface ImageViewerProps {
   filePath: string;
@@ -16,8 +17,9 @@ interface ImageViewerProps {
 }
 
 export const ImageViewer: React.FC<ImageViewerProps> = ({ filePath, fileName }) => {
+  const { t } = useTranslation('editor');
   const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<'imageViewer.missing' | 'imageViewer.loadFailed' | null>(null);
   const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
@@ -37,13 +39,13 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ filePath, fileName }) 
       // text through DocumentModel just to invalidate their preview.
       async () => freshUrl(),
       ({ content }) => showImage(content as string),
-      () => setError('Image file no longer exists'),
+      () => setError('imageViewer.missing'),
     );
     return () => subscription.dispose();
   }, [filePath]);
 
   const handleImageError = () => {
-    setError('Failed to load image');
+    setError('imageViewer.loadFailed');
   };
 
   if (error) {
@@ -51,7 +53,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ filePath, fileName }) 
       <div className="flex items-center justify-center h-full text-nim-muted">
         <div className="text-center">
           <div className="text-5xl mb-4">📷</div>
-          <div>{error}</div>
+          <div>{t(error)}</div>
           <div className="text-xs mt-2 opacity-70">{fileName}</div>
         </div>
       </div>
@@ -61,7 +63,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ filePath, fileName }) 
   if (!imageSrc) {
     return (
       <div className="flex items-center justify-center h-full text-nim-muted">
-        Loading...
+        {t('common:loading')}
       </div>
     );
   }

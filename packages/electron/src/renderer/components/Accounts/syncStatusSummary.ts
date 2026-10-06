@@ -10,6 +10,7 @@
 
 import type { SessionSyncStatus } from '../../../shared/sessionSyncStatus';
 import { describePersonalSyncWriteGate, describeSkippedSyncRows } from '@nimbalyst/runtime/sync/personalSyncWriteGate';
+import { t } from '@nimbalyst/runtime/i18n';
 
 export interface SyncStatusSnapshot extends SessionSyncStatus {
   /** Sync is configured at the app level (i.e. the user is signed in). */
@@ -38,11 +39,11 @@ export function formatLastSync(lastSyncedAt: number | null, now: number): string
   if (!lastSyncedAt) return null;
   const diffMs = now - lastSyncedAt;
   const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffMins < 1) return t('menu:accountMenu.sync.justNow');
+  if (diffMins < 60) return t('menu:accountMenu.sync.minutesAgo', { count: diffMins });
   const diffHours = Math.floor(diffMs / 3600000);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  return `${Math.floor(diffMs / 86400000)}d ago`;
+  if (diffHours < 24) return t('menu:accountMenu.sync.hoursAgo', { count: diffHours });
+  return t('menu:accountMenu.sync.daysAgo', { count: Math.floor(diffMs / 86400000) });
 }
 
 export function summarizeSyncStatus(
@@ -57,7 +58,7 @@ export function summarizeSyncStatus(
 
   // A project the user deliberately opted out of is not a problem to flag.
   if (!status.projectEnabled) {
-    return { ...advisory, tone: 'idle', detail: 'Off for this project', needsAttention: false };
+    return { ...advisory, tone: 'idle', detail: t('menu:accountMenu.sync.offForProject'), needsAttention: false };
   }
 
   if (status.error) {
@@ -66,22 +67,22 @@ export function summarizeSyncStatus(
 
   const gate = status.personalSyncWriteGate;
   if (gate?.state === 'blocked') {
-    return { ...advisory, tone: 'error', detail: describePersonalSyncWriteGate(gate) ?? 'Session sync is paused.', needsAttention: true };
+    return { ...advisory, tone: 'error', detail: describePersonalSyncWriteGate(gate) ?? t('menu:accountMenu.sync.paused'), needsAttention: true };
   }
   if (status.connected && gate?.state === 'unverified') {
-    return { ...advisory, tone: 'idle', detail: 'Checking session sync…', needsAttention: false };
+    return { ...advisory, tone: 'idle', detail: t('menu:accountMenu.sync.checking'), needsAttention: false };
   }
 
   if (status.syncing) {
-    return { ...advisory, tone: 'ok', detail: 'Syncing…', needsAttention: false };
+    return { ...advisory, tone: 'ok', detail: t('menu:accountMenu.sync.syncing'), needsAttention: false };
   }
 
   if (status.connected) {
     const age = formatLastSync(status.lastSyncedAt, now);
-    return { ...advisory, tone: 'ok', detail: age ? `Synced ${age}` : 'Connected', needsAttention: false };
+    return { ...advisory, tone: 'ok', detail: age ? t('menu:accountMenu.sync.synced', { age }) : t('menu:accountMenu.sync.connected'), needsAttention: false };
   }
 
   // Enabled for this project but not connected — the case the old cloud icon
   // existed to make visible, so it has to keep reaching the user somehow.
-  return { ...advisory, tone: 'warning', detail: 'Disconnected', needsAttention: true };
+  return { ...advisory, tone: 'warning', detail: t('menu:accountMenu.sync.disconnected'), needsAttention: true };
 }

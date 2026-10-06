@@ -7,6 +7,7 @@ import { defaultAgentModelAtom } from '../../store/atoms/appSettings';
 import { sessionRegistryAtom } from '../../store';
 import { sessionTokenUsageAtom } from '../../store/atoms/sessions';
 import { getRelativeTimeString } from '../../utils/dateFormatting';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { createMetaAgentSession } from '../../utils/metaAgentUtils';
 import { SessionTranscript } from '../UnifiedAI/SessionTranscript';
 
@@ -105,6 +106,7 @@ function getBarTone(status: string): string {
 
 /** Reads per-session token usage from Jotai without causing parent to subscribe */
 function TimelineRowLabel({ window }: { window: TimelineWindow }) {
+  const { t } = useTranslation('agent');
   const tokenUsage = useAtomValue(sessionTokenUsageAtom(window.sessionId));
 
   const totalTokens = tokenUsage?.totalTokens ?? 0;
@@ -118,19 +120,19 @@ function TimelineRowLabel({ window }: { window: TimelineWindow }) {
       <div className="truncate text-sm font-medium text-[var(--nim-text)]">{window.title}</div>
       <div className="mt-1 flex items-center gap-2 text-[11px] text-[var(--nim-text-muted)]">
         <span className={`rounded-full px-2 py-0.5 ${getStatusTone(window.status)}`}>
-          {window.status}
+          {t(`metaAgent.status.${window.status}`, { defaultValue: window.status })}
         </span>
         <span>{formatDuration(window.durationMs)}</span>
       </div>
       <div className="mt-1 flex items-center gap-2 text-[11px] text-[var(--nim-text-faint)]">
         <span>
-          {totalTokens > 0 ? `${formatTokensShort(totalTokens)} tokens` : '--'}
+          {totalTokens > 0 ? t('metaAgent.tokens', { tokens: formatTokensShort(totalTokens) }) : '--'}
         </span>
         {hasCtx && (
           <>
             <span className="text-[var(--nim-border)]">|</span>
             <span className="flex items-center gap-1.5">
-              {formatTokensShort(ctxTokens)}/{formatTokensShort(ctxWindow)} ctx
+              {t('metaAgent.context', { used: formatTokensShort(ctxTokens), total: formatTokensShort(ctxWindow) })}
               <span className="inline-flex h-1.5 w-10 rounded-full bg-[var(--nim-bg-tertiary)] overflow-hidden">
                 <span
                   className={`h-full rounded-full ${ctxPct > 80 ? 'bg-[var(--nim-warning)]' : 'bg-[var(--nim-primary)]'}`}
@@ -167,12 +169,13 @@ function TimelineAggregateSummary({ sessionIds }: { sessionIds: string[] }) {
     [sessionIds]
   );
   const totalTokens = useAtomValue(aggregateAtom);
+  const { t } = useTranslation('agent');
 
   if (totalTokens === 0) return null;
 
   return (
     <span className="rounded-full bg-[var(--nim-bg-secondary)] px-2.5 py-1 text-[var(--nim-text-muted)]">
-      {formatTokensShort(totalTokens)} total tokens
+      {t('metaAgent.totalTokens', { tokens: formatTokensShort(totalTokens) })}
     </span>
   );
 }
@@ -183,6 +186,7 @@ export function MetaAgentMode({
   sessionId: externalSessionId,
   onOpenSessionInAgent,
 }: MetaAgentModeProps) {
+  const { t } = useTranslation('agent');
   const defaultModel = useAtomValue(defaultAgentModelAtom);
   const [metaSessionId, setMetaSessionId] = useState<string | null>(externalSessionId ?? null);
   const [loadingSession, setLoadingSession] = useState(!externalSessionId);
@@ -424,11 +428,11 @@ export function MetaAgentMode({
   }, [childSessions]);
 
   if (loadingSession) {
-    return <div className="meta-agent-mode flex-1 flex items-center justify-center text-nim-muted">Loading meta-agent session...</div>;
+    return <div className="meta-agent-mode flex-1 flex items-center justify-center text-nim-muted">{t('metaAgent.loadingSession')}</div>;
   }
 
   if (!metaSessionId) {
-    return <div className="meta-agent-mode flex-1 flex items-center justify-center text-nim-muted">Unable to initialize meta-agent mode.</div>;
+    return <div className="meta-agent-mode flex-1 flex items-center justify-center text-nim-muted">{t('metaAgent.initFailed')}</div>;
   }
 
   return (
@@ -448,8 +452,8 @@ export function MetaAgentMode({
         <div className="px-4 py-4 border-b border-nim">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-[var(--nim-text)]">Delegated Sessions</h2>
-              <p className="text-xs text-[var(--nim-text-muted)]">Child sessions created by this meta-agent.</p>
+              <h2 className="text-sm font-semibold text-[var(--nim-text)]">{t('metaAgent.delegatedTitle')}</h2>
+              <p className="text-xs text-[var(--nim-text-muted)]">{t('metaAgent.delegatedSubtitle')}</p>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -459,7 +463,7 @@ export function MetaAgentMode({
                 disabled={childSessions.length === 0}
                 data-testid="meta-agent-open-timeline"
               >
-                Timeline
+                {t('metaAgent.timeline')}
               </button>
               <button
                 type="button"
@@ -467,7 +471,7 @@ export function MetaAgentMode({
                 onClick={() => void handleClearMetaSession()}
                 data-testid="meta-agent-clear"
               >
-                Clear
+                {t('metaAgent.clear')}
               </button>
               <button
                 type="button"
@@ -475,29 +479,29 @@ export function MetaAgentMode({
                 onClick={() => void refreshSpawnedSessions(metaSessionId)}
                 data-testid="meta-agent-refresh"
               >
-                Refresh
+                {t('metaAgent.refresh')}
               </button>
             </div>
           </div>
           <div className="mt-3 flex gap-2 text-xs">
             <span className="px-2 py-1 rounded-full bg-[var(--nim-bg-tertiary)] text-[var(--nim-text-muted)]">
-              {summary.total} total
+              {t('metaAgent.summaryTotal', { count: summary.total })}
             </span>
             <span className="px-2 py-1 rounded-full bg-[rgba(59,130,246,0.12)] text-[var(--nim-primary)]">
-              {summary.runningCount} running
+              {t('metaAgent.summaryRunning', { count: summary.runningCount })}
             </span>
             <span className="px-2 py-1 rounded-full bg-[rgba(245,158,11,0.16)] text-[var(--nim-warning)]">
-              {summary.waitingCount} waiting
+              {t('metaAgent.summaryWaiting', { count: summary.waitingCount })}
             </span>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
           {loadingChildren && childSessions.length === 0 ? (
-            <div className="text-sm text-[var(--nim-text-muted)] px-2 py-4">Loading child sessions...</div>
+            <div className="text-sm text-[var(--nim-text-muted)] px-2 py-4">{t('metaAgent.loadingChildren')}</div>
           ) : childSessions.length === 0 ? (
             <div className="border border-dashed border-nim rounded-lg p-4 text-sm text-[var(--nim-text-muted)]" data-testid="meta-agent-empty-state">
-              No delegated sessions yet. The meta-agent will populate this dashboard as it spawns child sessions.
+              {t('metaAgent.emptyDashboard')}
             </div>
           ) : (
             childSessions.map((session) => (
@@ -516,33 +520,33 @@ export function MetaAgentMode({
                     </div>
                   </div>
                   <span className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-medium ${getStatusTone(session.status)}`}>
-                    {session.status}
+                    {t(`metaAgent.status.${session.status}`, { defaultValue: session.status })}
                   </span>
                 </div>
 
                 <div className="mt-3 space-y-2 text-xs text-[var(--nim-text-muted)]">
                   <div className="flex items-center gap-1">
                     <MaterialSymbol icon="schedule" size={14} />
-                    <span>Last activity {session.lastActivity ? getRelativeTimeString(session.lastActivity) : 'No activity yet'}</span>
+                    <span>{session.lastActivity ? t('metaAgent.lastActivity', { time: getRelativeTimeString(session.lastActivity) }) : t('metaAgent.lastActivityNone')}</span>
                   </div>
                   {session.originalPrompt && (
                     <p className="line-clamp-2">
-                      <span className="text-[var(--nim-text-faint)]">Task:</span> {session.originalPrompt}
+                      <span className="text-[var(--nim-text-faint)]">{t('metaAgent.taskLabel')}</span> {session.originalPrompt}
                     </p>
                   )}
                   {session.lastResponse && (
                     <p className="line-clamp-3">
-                      <span className="text-[var(--nim-text-faint)]">Result:</span> {session.lastResponse}
+                      <span className="text-[var(--nim-text-faint)]">{t('metaAgent.resultLabel')}</span> {session.lastResponse}
                     </p>
                   )}
                   {session.pendingPrompt && (
                     <div className="rounded-lg bg-[rgba(245,158,11,0.10)] px-2 py-2 text-[var(--nim-warning)]">
-                      Waiting for {session.pendingPrompt.promptType}
+                      {t('metaAgent.waitingFor', { promptType: session.pendingPrompt.promptType })}
                     </div>
                   )}
                   {session.editedFiles.length > 0 && (
                     <p className="line-clamp-2">
-                      <span className="text-[var(--nim-text-faint)]">Edited:</span> {session.editedFiles.join(', ')}
+                      <span className="text-[var(--nim-text-faint)]">{t('metaAgent.editedLabel')}</span> {session.editedFiles.join(', ')}
                     </p>
                   )}
                 </div>
@@ -554,7 +558,7 @@ export function MetaAgentMode({
                     onClick={() => onOpenSessionInAgent?.(session.sessionId)}
                     data-testid="meta-agent-open-session"
                   >
-                    Open In Agent
+                    {t('metaAgent.openInAgent')}
                   </button>
                 </div>
               </section>
@@ -567,12 +571,12 @@ export function MetaAgentMode({
         <div className="absolute inset-4 z-20 flex flex-col rounded-2xl border border-nim bg-[var(--nim-bg)] shadow-2xl" data-testid="meta-agent-gantt-view">
           <div className="flex items-center justify-between gap-4 border-b border-nim px-5 py-3">
             <div className="flex items-center gap-3 text-xs">
-              <h3 className="text-sm font-semibold text-[var(--nim-text)]">Timeline</h3>
+              <h3 className="text-sm font-semibold text-[var(--nim-text)]">{t('metaAgent.timeline')}</h3>
               <span className="text-[var(--nim-text-muted)]">
-                {timeline.windows.length} sessions
+                {t('metaAgent.timelineSessions', { count: timeline.windows.length })}
               </span>
               <span className="text-[var(--nim-primary)]" data-testid="meta-agent-gantt-peak">
-                Peak {timeline.peakConcurrency}x
+                {t('metaAgent.peak', { count: timeline.peakConcurrency })}
               </span>
               {timeline.spanLabel && (
                 <span className="text-[var(--nim-text-faint)]">
@@ -587,20 +591,20 @@ export function MetaAgentMode({
               onClick={() => setShowTimeline(false)}
               data-testid="meta-agent-close-timeline"
             >
-              Close
+              {t('metaAgent.close')}
             </button>
           </div>
 
           <div className="flex-1 overflow-auto px-5 py-4">
             {timeline.windows.length === 0 ? (
               <div className="rounded-lg border border-dashed border-nim px-4 py-6 text-sm text-[var(--nim-text-muted)]">
-                No delegated sessions yet.
+                {t('metaAgent.emptyTimeline')}
               </div>
             ) : (
               <div className="min-w-[720px]">
                 <div className="grid grid-cols-[220px_minmax(420px,1fr)] items-end gap-3 pb-2">
                   <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--nim-text-faint)]">
-                    Session
+                    {t('metaAgent.sessionColumn')}
                   </div>
                   <div className="relative h-5">
                     {timeline.ticks.map((tick) => (

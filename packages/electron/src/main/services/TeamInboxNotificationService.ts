@@ -4,6 +4,7 @@ import {
   type CommentRef,
 } from "@nimbalyst/collab-protocol";
 import type { TeamInboxMaterializedDelivery } from "@nimbalyst/runtime/sync";
+import { t } from "@nimbalyst/runtime/i18n";
 
 export interface TeamInboxNativeNotification {
   title: string;
@@ -43,14 +44,15 @@ type DeliveryRoute =
    */
   | { kind: "inbox"; orgId: string };
 
+// i18n keys, resolved when the notification is built.
 const SOURCE_FALLBACKS: Record<CommentRef["sourceKind"], string> = {
-  roomMessage: "Room",
-  dmMessage: "Direct message",
-  documentDiscussion: "Document discussion",
-  documentDecision: "Document question",
-  trackerComment: "Tracker",
-  documentInlineComment: "Document",
-  feedbackRequest: "Feedback request",
+  roomMessage: "system:teamInbox.sources.room",
+  dmMessage: "dialogs:teamInbox.directMessage",
+  documentDiscussion: "system:teamInbox.sources.documentDiscussion",
+  documentDecision: "system:teamInbox.sources.documentQuestion",
+  trackerComment: "system:teamInbox.sources.tracker",
+  documentInlineComment: "system:teamInbox.sources.document",
+  feedbackRequest: "system:teamInbox.sources.feedbackRequest",
 };
 
 /**
@@ -68,10 +70,11 @@ const ACTIVITY_DEEP_LINK_HOSTS: Record<
   feedbackRequest: null,
 };
 
+// i18n keys, resolved when the notification is built.
 const ACTIVITY_FALLBACKS: Record<ActivityRef["resourceKind"], string> = {
-  tracker: "Tracker",
-  document: "Document",
-  feedbackRequest: "Feedback request",
+  tracker: "system:teamInbox.sources.tracker",
+  document: "system:teamInbox.sources.document",
+  feedbackRequest: "system:teamInbox.sources.feedbackRequest",
 };
 const MAX_NOTIFICATION_SANITIZER_INPUT_CHARS =
   MAX_INBOX_PREVIEW_SNIPPET_CHARS * 8;
@@ -93,7 +96,7 @@ function boundedSnippet(value: string | null | undefined): string {
     ?.replace(NIMBALYST_MARKDOWN_LINK_PATTERN, "$1")
     .replace(MARKDOWN_LINK_PATTERN, "$1")
     .replace(BARE_NIMBALYST_URL_PATTERN, "");
-  const cleaned = cleanLabel(sanitized) ?? "New activity";
+  const cleaned = cleanLabel(sanitized) ?? t("system:teamInbox.newActivity");
   return cleaned.slice(0, MAX_INBOX_PREVIEW_SNIPPET_CHARS);
 }
 
@@ -174,9 +177,9 @@ function routeForDelivery(
 
 function sourceFallback(delivery: TeamInboxMaterializedDelivery): string {
   const source = delivery.source;
-  if (!source) return "Inbox";
-  if ("sourceKind" in source) return SOURCE_FALLBACKS[source.sourceKind];
-  return ACTIVITY_FALLBACKS[source.resourceKind];
+  if (!source) return t("system:teamInbox.inbox");
+  if ("sourceKind" in source) return t(SOURCE_FALLBACKS[source.sourceKind]);
+  return t(ACTIVITY_FALLBACKS[source.resourceKind]);
 }
 
 /**
@@ -246,7 +249,7 @@ export class TeamInboxNotificationService {
       cleanLabel(delivery.preview?.actorLabel) ??
       cleanLabel(delivery.actor?.sessionName) ??
       cleanLabel(resolvedMemberLabel) ??
-      "A teammate";
+      t("system:teamInbox.aTeammate");
     const orgName = cleanLabel(delivery.orgName) ?? "Nimbalyst Teams";
     const body = `${sender}: ${boundedSnippet(delivery.preview?.snippet)}`;
 

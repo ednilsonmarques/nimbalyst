@@ -13,6 +13,7 @@ import * as path from 'path';
 import { randomUUID } from 'crypto';
 import { safeHandle } from '../utils/ipcRegistry';
 import { logger } from '../utils/logger';
+import { t } from '@nimbalyst/runtime/i18n';
 import { getCollabSyncWsUrl, getCollabSyncHttpUrl } from '../utils/collabSyncUrl';
 import { isAuthenticated, getStytchUserId, getUserEmail, getAuthState, getPersonalUserId, getPersonalSessionJwt, refreshPersonalSessionDetailed } from '../services/StytchAuthService';
 import { findTeamForWorkspace, resolveTeamForWorkspace, getOrgScopedJwt } from '../services/TeamService';
@@ -1243,7 +1244,7 @@ export function registerDocumentSyncHandlers(): void {
       .filter((ext) => ext.length > 0);
 
     const dialogOptions: Electron.SaveDialogOptions = {
-      title: 'Save a copy',
+      title: t('dialogs:documentSync.saveCopy.title'),
       defaultPath: getDialogDefaultPath({ window, explicitPath: payload.defaultFileName }),
       filters: filterExtensions.length > 0
         ? [{ name: payload.documentType, extensions: filterExtensions }]

@@ -20,6 +20,7 @@ import type {
   FeedbackResultsActionResult,
   FeedbackResultsHost,
 } from './FeedbackRequestResults';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 type Invoke = (channel: string, request: unknown) => Promise<unknown>;
 
@@ -74,7 +75,7 @@ export function createFeedbackResultsHost(
         await invoke('feedback-request:nudge', request);
         return { success: true };
       } catch (error) {
-        return failure(error, 'The nudge could not be sent.');
+        return failure(error, translate('onboarding:feedback.errors.nudgeNotSent'));
       }
     },
 
@@ -93,8 +94,8 @@ export function createFeedbackResultsHost(
         return failure(
           error,
           status === 'cancelled'
-            ? 'The request could not be cancelled.'
-            : 'The request could not be closed.',
+            ? translate('onboarding:feedback.errors.notCancelled')
+            : translate('onboarding:feedback.errors.notClosed'),
         );
       }
     },

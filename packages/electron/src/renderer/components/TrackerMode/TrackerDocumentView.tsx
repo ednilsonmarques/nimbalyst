@@ -49,6 +49,7 @@ import {
 } from './TrackerDocumentViewHeader';
 import { TrackerDocumentFieldPills } from './TrackerDocumentFieldPills';
 import './TrackerDocumentView.css';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 /** Breadcrumbs stay readable: deep paths keep their tail, not their root. */
 const MAX_BREADCRUMB_SEGMENTS = 3;
@@ -109,6 +110,7 @@ export const TrackerDocumentView: React.FC<TrackerDocumentViewProps> = ({
   onFileOpen,
   onSwitchToAgentMode,
 }) => {
+  const { t } = useTranslation('tracker');
   const documentMode = presentation === 'document' && Boolean(documentItemId);
   const item = useAtomValue(trackerItemByIdAtom(documentItemId ?? ''));
   const modeLayout = useAtomValue(trackerModeLayoutAtom);
@@ -152,10 +154,10 @@ export const TrackerDocumentView: React.FC<TrackerDocumentViewProps> = ({
     }
     return {
       kind: 'degraded',
-      collection: 'Trackers',
-      typeLabel: model?.displayName ?? item?.primaryType ?? 'Item',
+      collection: t('sidebar.title'),
+      typeLabel: model?.displayName ?? item?.primaryType ?? t('document.item'),
     };
-  }, [absoluteDocumentPath, documentPath, fileDirty, item?.primaryType, model?.displayName]);
+  }, [absoluteDocumentPath, documentPath, fileDirty, item?.primaryType, model?.displayName, t]);
 
   const handleNavigateToTypeList = useCallback(() => {
     if (!item) return;
@@ -267,8 +269,8 @@ export const TrackerDocumentView: React.FC<TrackerDocumentViewProps> = ({
           >
             {documentMode && (
               <TrackerDocumentListPaneHeader
-                collectionLabel="Trackers"
-                typeLabel={model?.displayNamePlural ?? model?.displayName ?? item?.primaryType ?? 'Items'}
+                collectionLabel={t('sidebar.title')}
+                typeLabel={model?.displayNamePlural ?? model?.displayName ?? item?.primaryType ?? t('viewTitle.items')}
                 onCollapseToTracker={onCollapseToTracker}
                 onNavigateToTypeList={handleNavigateToTypeList}
               />
@@ -286,7 +288,7 @@ export const TrackerDocumentView: React.FC<TrackerDocumentViewProps> = ({
             onPointerDown={handleListResizePointerDown}
             role="separator"
             aria-orientation="vertical"
-            aria-label="Resize tracker list pane"
+            aria-label={t('document.resizeListPane')}
             data-testid="tracker-document-list-pane-resize"
           >
             <div className="mx-auto h-full w-0.5 bg-nim-border transition-colors duration-200 hover:bg-nim-accent" />
@@ -302,7 +304,7 @@ export const TrackerDocumentView: React.FC<TrackerDocumentViewProps> = ({
             {documentMode && (
               <TrackerDocumentViewHeader
                 issueKey={item ? (item.issueKey || item.id) : null}
-                title={item ? getRecordTitle(item) : 'Loading…'}
+                title={item ? getRecordTitle(item) : t('detail.loading')}
                 fieldPills={documentItemId ? (
                   <TrackerDocumentFieldPills
                     itemId={documentItemId}
@@ -325,7 +327,7 @@ export const TrackerDocumentView: React.FC<TrackerDocumentViewProps> = ({
                   <TrackerDocumentHeaderMeta
                     itemId={documentItemId}
                     breadcrumb={breadcrumb}
-                    title={item ? getRecordTitle(item) : 'Untitled'}
+                    title={item ? getRecordTitle(item) : t('plans.untitled')}
                     showCollabChrome={contentMode === 'collaborative'}
                   />
                 )}
@@ -361,7 +363,7 @@ export const TrackerDocumentView: React.FC<TrackerDocumentViewProps> = ({
             onPointerDown={handlePanelResizePointerDown}
             role="separator"
             aria-orientation="vertical"
-            aria-label="Resize the tracker document panel"
+            aria-label={t('document.resizePanel')}
             data-testid="tracker-document-right-panel-resize"
           >
             <div className="mx-auto h-full w-0.5 bg-nim-border transition-colors duration-200 hover:bg-nim-accent" />

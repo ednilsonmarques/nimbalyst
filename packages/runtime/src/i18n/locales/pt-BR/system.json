@@ -1,0 +1,131 @@
+{
+  "contextMenu": {
+    "noSuggestions": "Nenhuma sugestão",
+    "addToDictionary": "Adicionar ao dicionário"
+  },
+  "tray": {
+    "fallbackSessionTitle": "Sessão de IA"
+  },
+  "claudeCode": {
+    "loginTerminalOpened": "Janela do terminal aberta. Digite /login e pressione Enter para autenticar e depois clique em \"Atualizar status\" para verificar.",
+    "logoutTerminalOpened": "Janela do terminal aberta. Digite /logout e pressione Enter para concluir o logout.",
+    "noTerminalLogin": "Nenhum emulador de terminal encontrado. Execute \"{{path}}\" manualmente e digite /login para autenticar.",
+    "noTerminalLogout": "Nenhum emulador de terminal encontrado. Execute \"{{path}}\" manualmente e digite /logout no terminal."
+  },
+  "mcpTest": {
+    "startingServer": "Iniciando servidor...",
+    "testingConnection": "Testando conexão com o servidor...",
+    "downloadingPackages": "Baixando pacotes..."
+  },
+  "extensionPermissions": {
+    "workspaceFiles": {
+      "label": "Arquivos do espaço de trabalho",
+      "description": "Ler e gravar arquivos dentro do espaço de trabalho atual."
+    },
+    "mcpServerRegister": {
+      "label": "Registrar ferramentas MCP",
+      "description": "Expor ao agente de IA as ferramentas MCP definidas pela extensão."
+    },
+    "nimbalystDatabaseRead": {
+      "label": "Ler o banco de dados do Nimbalyst",
+      "description": "Ler o armazenamento PGLite local do Nimbalyst (sessões, documentos, rastreadores)."
+    },
+    "nimbalystDatabaseWrite": {
+      "label": "Gravar no banco de dados do Nimbalyst",
+      "description": "Modificar o armazenamento PGLite local do Nimbalyst. Pode alterar sessões, documentos e rastreadores."
+    },
+    "secretsRead": {
+      "label": "Ler segredos",
+      "description": "Ler credenciais armazenadas, chaves de API e outros segredos."
+    },
+    "aiSessions": {
+      "label": "Executar sessões de IA",
+      "description": "Iniciar sessões de agentes de IA neste projeto, enviar prompts a elas e ler seus resultados e o uso de tokens. As sessões são executadas no modo de permissão do projeto."
+    }
+  },
+  "notifications": {
+    "responseReady": "Resposta pronta",
+    "responseComplete": "Resposta concluída",
+    "claudeCliPaused": "Claude CLI pausado",
+    "anthropicOverloaded": "A Anthropic está sobrecarregada. O Claude tentará novamente em breve.",
+    "rateLimited": "Limite de requisições atingido na Anthropic.",
+    "rateLimitedRetry": "Limite de requisições atingido na Anthropic (tente novamente em {{seconds}}s)."
+  },
+  "teamInbox": {
+    "sources": {
+      "room": "Sala",
+      "documentDiscussion": "Discussão do documento",
+      "documentQuestion": "Pergunta do documento",
+      "tracker": "Rastreador",
+      "document": "Documento",
+      "feedbackRequest": "Solicitação de feedback"
+    },
+    "newActivity": "Nova atividade",
+    "inbox": "Caixa de entrada",
+    "aTeammate": "Um colega de equipe"
+  },
+  "migrationSplash": {
+    "initializing": "Inicializando",
+    "headline": "Atualizando seu banco de dados local",
+    "note": "Isso acontece uma única vez. Mantenha o Nimbalyst aberto &mdash; ele será reiniciado automaticamente ao terminar.",
+    "rowsProgress": "{{copied}} de {{expected}} linhas",
+    "copyingTable": "Copiando {{table}}",
+    "working": "Processando",
+    "phases": {
+      "preparing": "Preparando",
+      "copying": "Copiando",
+      "rebuildingFts": "Reconstruindo o índice de pesquisa",
+      "verifyingCounts": "Verificando a contagem de linhas",
+      "verifyingIntegrity": "Verificando a integridade",
+      "verifyingForeignKeys": "Verificando as referências",
+      "verifyingSpotCheck": "Conferindo uma amostra de linhas",
+      "finalizing": "Finalizando"
+    },
+    "eta": {
+      "underAMinute": "menos de um minuto",
+      "aboutAMinute": "cerca de um minuto restante",
+      "aboutMinutes": "cerca de {{minutes}} min restantes",
+      "overMinutes": "{{minutes}}+ min restantes"
+    }
+  },
+  "about": {
+    "version": "Versão {{version}}",
+    "description": "Nimbalyst é o espaço de trabalho visual para criar com Codex e Claude Code",
+    "featureEditors": "Editores visuais WYSIWYG com agentes para markdown, mockups, excalidraw, mermaid, modelos de dados, csv e código. Extensões.",
+    "featureSessions": "Gerenciamento de sessões em paralelo e kanban para entender o estado das sessões, pesquisar e retomar sessões e vincular sessões a arquivos e arquivos a sessões",
+    "featureTracking": "Rastreamento de itens e kanban para gerenciar planos, bugs e tarefas com o seu agente",
+    "featureStorage": "Armazenamento aberto de conteúdo e status em arquivos de texto simples no disco e no git.",
+    "builtWith": "Feito com ❤️ por",
+    "thirdPartyNotices": "Avisos de terceiros",
+    "supportIdLabel": "Seu ID de suporte do Nimbalyst:",
+    "clickToCopy": "Clique para copiar",
+    "loading": "Carregando...",
+    "copied": "Copiado!",
+    "notAvailable": "Indisponível",
+    "versionLabel": "Versão"
+  },
+  "mcpOAuth": {
+    "errors": {
+      "invalidConfig": "Configuração OAuth inválida.",
+      "timeout": "A autorização OAuth expirou. Tente novamente.",
+      "browserLaunch": "Não foi possível abrir a página de autorização. Verifique seu navegador padrão e tente novamente.",
+      "stalePendingAuth": "Outra autorização OAuth ainda está pendente. Limpe o cache de autenticação e tente novamente.",
+      "portConflict": "Outro processo está usando a porta de callback do OAuth. Limpe o cache de autenticação e tente novamente.",
+      "commandUnavailable": "Não foi possível iniciar o auxiliar de OAuth porque um comando necessário não está disponível.",
+      "providerRejected": "O provedor não aprovou a autorização.",
+      "dynamicRegistrationUnsupported": "Este provedor não oferece suporte ao registro dinâmico de clientes, então não pode ser autorizado por aqui. Adicione um ID de cliente OAuth pré-registrado para este servidor (oauth.staticClientInfo) e tente novamente. Limpar o cache de autenticação não vai ajudar.",
+      "callbackValidation": "Não foi possível validar o callback do OAuth. Tente novamente.",
+      "tokenExchange": "O provedor não aceitou a resposta de autorização. Tente novamente.",
+      "network": "Não foi possível acessar o provedor OAuth. Verifique sua conexão e tente novamente.",
+      "processError": "Não foi possível iniciar o auxiliar de OAuth.",
+      "processExit": "O auxiliar de OAuth foi encerrado antes de a autorização ser concluída.",
+      "processExitWithCode": "O auxiliar de OAuth foi encerrado antes de a autorização ser concluída (código de saída {{exitCode}}).",
+      "unknown": "A autorização OAuth falhou por um motivo desconhecido."
+    },
+    "commandNotFound": {
+      "npx": "Comando 'npx' não encontrado. É preciso instalar o Node.js para usar este servidor MCP.",
+      "node": "Comando 'node' não encontrado. É preciso instalar o Node.js para usar este servidor MCP.",
+      "generic": "Comando '{{command}}' não encontrado. Verifique se ele está instalado e disponível no seu PATH."
+    }
+  }
+}

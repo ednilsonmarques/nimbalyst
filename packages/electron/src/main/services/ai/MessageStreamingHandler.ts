@@ -172,6 +172,7 @@ import { registerSessionWorktreeAssetRoot } from '../../protocols/nimAssetWorktr
 import type Store from 'electron-store';
 import type { AIService } from './AIService';
 import type { HooklessAgentFileWatcher } from './HooklessAgentFileWatcher';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import type { WorkspaceFileAttributionMode } from '../WorkspaceFileAttributionPolicy';
 import {
   attributionModeForFileChangeFidelity,
@@ -2719,7 +2720,7 @@ export class MessageStreamingHandler {
               const notificationText = lastTextSection.trim() || prevTextSection || fullResponse;
               const notificationBody = notificationText.length > 0
                 ? notificationText.substring(0, 100) + (notificationText.length > 100 ? '...' : '')
-                : 'Response complete';
+                : translate('system:notifications.responseComplete');
               const sessionLabel = session.title || session.provider;
 
               // logger.ai.info('[AIService] Notification content', {
@@ -2735,7 +2736,7 @@ export class MessageStreamingHandler {
               // });
 
               await notificationService.showNotification({
-                title: composeNotificationTitle(sessionLabel, 'Response Ready'),
+                title: composeNotificationTitle(sessionLabel, translate('system:notifications.responseReady')),
                 body: notificationBody,
                 kind: 'agent-complete',
                 sessionId: session.id,

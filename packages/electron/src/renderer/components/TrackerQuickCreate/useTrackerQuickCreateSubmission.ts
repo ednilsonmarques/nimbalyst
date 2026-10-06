@@ -18,6 +18,7 @@ import {
   creationPublicationKey,
   publishCreatedTrackerItem,
 } from './TrackerCreationPublication';
+import { t } from '@nimbalyst/runtime/i18n';
 
 export function useTrackerQuickCreateSubmission(
   workspacePath: string | null,
@@ -43,7 +44,7 @@ export function useTrackerQuickCreateSubmission(
         store.set(draftAtom, {
           ...draft,
           error:
-            'Finish adding screenshots, or remove failed images, before creating the item.',
+            t('tracker:quickCreate.finishScreenshots'),
         });
         return;
       }
@@ -71,7 +72,7 @@ export function useTrackerQuickCreateSubmission(
             built.payload,
           );
         if (!result.success)
-          throw new Error(result.error || 'Could not create the item');
+          throw new Error(result.error || t('tracker:quickCreate.createFailed'));
         const current = store.get(draftAtom);
         // A result for an old draft must never clear another workspace/type's input.
         if (current.id === draft.id) {

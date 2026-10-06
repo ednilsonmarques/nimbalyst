@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Trans, useTranslation } from '@nimbalyst/runtime/i18n/react';
 import './UnifiedOnboarding.css';
 
 export interface UnifiedOnboardingProps {
@@ -19,34 +20,35 @@ export interface OnboardingData {
   developerMode: boolean;
 }
 
+// Labels are i18n keys in the 'onboarding' namespace; values are persisted.
 const ROLE_OPTIONS = [
-  { value: '', label: 'No Answer' },
-  { value: 'developer', label: 'Software Developer' },
-  { value: 'product_manager', label: 'Product Manager' },
-  { value: 'designer', label: 'Designer' },
-  { value: 'writer', label: 'Writer / Content' },
-  { value: 'researcher', label: 'Researcher' },
-  { value: 'marketing', label: 'Marketing' },
-  { value: 'sales', label: 'Sales' },
-  { value: 'finance', label: 'Finance' },
-  { value: 'student', label: 'Student' },
-  { value: 'hobbyist', label: 'Hobbyist / Personal Use' },
-  { value: 'other', label: 'Other' },
+  { value: '', label: 'unifiedOnboarding.roles.noAnswer' },
+  { value: 'developer', label: 'unifiedOnboarding.roles.developer' },
+  { value: 'product_manager', label: 'unifiedOnboarding.roles.productManager' },
+  { value: 'designer', label: 'unifiedOnboarding.roles.designer' },
+  { value: 'writer', label: 'unifiedOnboarding.roles.writer' },
+  { value: 'researcher', label: 'unifiedOnboarding.roles.researcher' },
+  { value: 'marketing', label: 'unifiedOnboarding.roles.marketing' },
+  { value: 'sales', label: 'unifiedOnboarding.roles.sales' },
+  { value: 'finance', label: 'unifiedOnboarding.roles.finance' },
+  { value: 'student', label: 'unifiedOnboarding.roles.student' },
+  { value: 'hobbyist', label: 'unifiedOnboarding.roles.hobbyist' },
+  { value: 'other', label: 'unifiedOnboarding.roles.other' },
 ];
 
 const REFERRAL_OPTIONS = [
-  { value: '', label: 'No Answer' },
-  { value: 'search', label: 'Search' },
-  { value: 'social', label: 'Social', hasSubOptions: true },
-  { value: 'friend', label: 'Friend' },
-  { value: 'ai', label: 'AI' },
-  { value: 'ad', label: 'Ad' },
-  { value: 'youtube', label: 'YouTube' },
-  { value: 'github', label: 'GitHub' },
-  { value: 'course_training', label: 'Course/Training' },
-  { value: 'podcast', label: 'Podcast' },
-  { value: 'newsletter_article', label: 'Newsletter/Article' },
-  { value: 'other', label: 'Other' },
+  { value: '', label: 'unifiedOnboarding.referral.noAnswer' },
+  { value: 'search', label: 'unifiedOnboarding.referral.search' },
+  { value: 'social', label: 'unifiedOnboarding.referral.social', hasSubOptions: true },
+  { value: 'friend', label: 'unifiedOnboarding.referral.friend' },
+  { value: 'ai', label: 'unifiedOnboarding.referral.ai' },
+  { value: 'ad', label: 'unifiedOnboarding.referral.ad' },
+  { value: 'youtube', label: 'unifiedOnboarding.referral.youtube' },
+  { value: 'github', label: 'unifiedOnboarding.referral.github' },
+  { value: 'course_training', label: 'unifiedOnboarding.referral.courseTraining' },
+  { value: 'podcast', label: 'unifiedOnboarding.referral.podcast' },
+  { value: 'newsletter_article', label: 'unifiedOnboarding.referral.newsletterArticle' },
+  { value: 'other', label: 'unifiedOnboarding.referral.other' },
 ];
 
 const SOCIAL_MEDIA_OPTIONS = [
@@ -71,6 +73,7 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
   onSkip,
   forcedMode,
 }) => {
+  const { t } = useTranslation('onboarding');
   // Mode Selection (at top) - null means no selection yet
   const [developerMode, setDeveloperMode] = useState<boolean | null>(null);
 
@@ -175,7 +178,7 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
   const handleEmailChange = (value: string) => {
     setEmail(value);
     if (value && !isValidEmail(value)) {
-      setEmailError('Please enter a valid email address');
+      setEmailError('unifiedOnboarding.emailInvalid');
     } else {
       setEmailError('');
     }
@@ -229,14 +232,14 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
           <img src="./icon.png" alt="Nimbalyst" className="unified-onboarding-logo-image" />
         </div>
         <div className="unified-onboarding-header">
-          <h2>Welcome to Nimbalyst</h2>
+          <h2>{t('unifiedOnboarding.title')}</h2>
         </div>
 
         <div className="unified-onboarding-content">
           {/* Mode Selection - Always shown at top */}
           <div className="unified-onboarding-section">
             <label className="unified-onboarding-label unified-onboarding-label-centered">
-              Choose Your Mode<span className="required-asterisk">*</span>
+              {t('unifiedOnboarding.chooseMode')}<span className="required-asterisk">*</span>
             </label>
             <div className="mode-selection">
               <label
@@ -254,10 +257,10 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
                     <span className="material-symbols-outlined mode-option-icon">
                       edit_note
                     </span>
-                    <span className="mode-option-title">Standard Mode</span>
+                    <span className="mode-option-title">{t('unifiedOnboarding.standardMode')}</span>
                   </div>
                   <p className="mode-option-description">
-                    Simplified interface focused on writing, editing, and AI assistance
+                    {t('unifiedOnboarding.standardModeDescription')}
                   </p>
                 </div>
               </label>
@@ -277,10 +280,10 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
                     <span className="material-symbols-outlined mode-option-icon">
                       terminal
                     </span>
-                    <span className="mode-option-title">Developer Mode</span>
+                    <span className="mode-option-title">{t('unifiedOnboarding.developerMode')}</span>
                   </div>
                   <p className="mode-option-description">
-                    Full development environment with git worktrees, terminal access, development specific features
+                    {t('unifiedOnboarding.developerModeDescription')}
                   </p>
                 </div>
               </label>
@@ -296,7 +299,7 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
               {/* Role Dropdown */}
               <div className="unified-onboarding-section">
                 <label className="unified-onboarding-label" htmlFor="role-select">
-                  What best describes your role?
+                  {t('unifiedOnboarding.roleLabel')}
                 </label>
                 <select
                   id="role-select"
@@ -307,7 +310,7 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
                 >
                   {ROLE_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      {t(option.label)}
                     </option>
                   ))}
                 </select>
@@ -317,7 +320,7 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
                     <input
                       id="custom-role-input"
                       type="text"
-                      placeholder="e.g. Designer, Writer, Student"
+                      placeholder={t('unifiedOnboarding.customRolePlaceholder')}
                       value={customRole}
                       onChange={(e) => setCustomRole(e.target.value)}
                       className="unified-onboarding-input"
@@ -331,7 +334,7 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
               {/* Referral Source */}
               <div className="unified-onboarding-section">
                 <label className="unified-onboarding-label" htmlFor="referral-select">
-                  How did you hear about Nimbalyst?
+                  {t('unifiedOnboarding.referralLabel')}
                 </label>
                 <select
                   id="referral-select"
@@ -356,7 +359,7 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
                 >
                   {REFERRAL_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      {t(option.label)}
                     </option>
                   ))}
                 </select>
@@ -366,7 +369,7 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
                     <input
                       id="custom-referral-input"
                       type="text"
-                      placeholder="e.g. Podcast, Blog, Conference"
+                      placeholder={t('unifiedOnboarding.customReferralPlaceholder')}
                       value={customReferral}
                       onChange={(e) => setCustomReferral(e.target.value)}
                       className="unified-onboarding-input"
@@ -381,7 +384,7 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
                     <input
                       id="ai-detail-input"
                       type="text"
-                      placeholder="What model and prompt did you use?"
+                      placeholder={t('unifiedOnboarding.aiDetailPlaceholder')}
                       value={aiDetail}
                       onChange={(e) => setAiDetail(e.target.value)}
                       className="unified-onboarding-input"
@@ -396,8 +399,8 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
                     <input
                       id="search-detail-input"
                       type="text"
-                      aria-label="What did you search for?"
-                      placeholder="What did you search for?"
+                      aria-label={t('unifiedOnboarding.searchDetail')}
+                      placeholder={t('unifiedOnboarding.searchDetail')}
                       value={searchDetail}
                       onChange={(e) => setSearchDetail(e.target.value)}
                       className="unified-onboarding-input"
@@ -411,10 +414,10 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
               {/* Email */}
               <div className="unified-onboarding-section">
                 <label className="unified-onboarding-label" htmlFor="email-input">
-                  Email address
+                  {t('unifiedOnboarding.emailLabel')}
                 </label>
                 <p className="unified-onboarding-help-text">
-                  Receive occasional product updates and tips
+                  {t('unifiedOnboarding.emailHelp')}
                 </p>
                 <input
                   id="email-input"
@@ -425,14 +428,14 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
                   className={`unified-onboarding-input ${emailError ? 'error' : ''}`}
                   disabled={!isModeSelected}
                 />
-                {emailError && <p className="error-text">{emailError}</p>}
+                {emailError && <p className="error-text">{t(emailError)}</p>}
               </div>
 
               {/* Social Media Platform - appears when social is selected */}
               {referralSource === 'social' && (
                 <div className="unified-onboarding-section">
                   <label className="unified-onboarding-label" htmlFor="social-platform-select">
-                    Which platform?
+                    {t('unifiedOnboarding.platformLabel')}
                   </label>
                   <select
                     id="social-platform-select"
@@ -441,10 +444,10 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
                     className="unified-onboarding-select"
                     disabled={!isModeSelected}
                   >
-                    <option value="">Select one</option>
+                    <option value="">{t('unifiedOnboarding.selectOne')}</option>
                     {SOCIAL_MEDIA_OPTIONS.map((platform) => (
                       <option key={platform} value={platform}>
-                        {platform}
+                        {platform === 'Other' ? t('unifiedOnboarding.socialOther') : platform}
                       </option>
                     ))}
                   </select>
@@ -453,7 +456,7 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
 
               <div className="unified-onboarding-disclaimer">
                 <p className="disclaimer-text">
-                  We collect usage data to improve Nimbalyst. No prompts or content is ever collected. You can opt out of analytics any time in Settings.
+                  {t('unifiedOnboarding.disclaimer')}
                 </p>
               </div>
             </div>
@@ -468,7 +471,7 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
               onClick={() => handleComplete('get-started')}
               disabled={!isModeSelected || (showDataCollection && !isEmailValid)}
             >
-              Get started…
+              {t('unifiedOnboarding.getStarted')}
             </button>
             <button
               type="button"
@@ -476,29 +479,32 @@ export const UnifiedOnboarding: React.FC<UnifiedOnboardingProps> = ({
               onClick={() => handleComplete('tutorial')}
               disabled={!isModeSelected || (showDataCollection && !isEmailValid)}
             >
-              Start tutorial
+              {t('unifiedOnboarding.startTutorial')}
             </button>
           </div>
           <p className="unified-onboarding-legal-links">
-            By continuing, you agree to our{' '}
-            <a
-              href="https://nimbalyst.com/terms-of-service"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="unified-onboarding-link"
-            >
-              Terms of Service
-            </a>{' '}
-            and{' '}
-            <a
-              href="https://nimbalyst.com/privacy-policy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="unified-onboarding-link"
-            >
-              Privacy Policy
-            </a>
-            .
+            <Trans
+              t={t}
+              i18nKey="unifiedOnboarding.legal"
+              components={{
+                terms: (
+                  <a
+                    href="https://nimbalyst.com/terms-of-service"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="unified-onboarding-link"
+                  />
+                ),
+                privacy: (
+                  <a
+                    href="https://nimbalyst.com/privacy-policy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="unified-onboarding-link"
+                  />
+                ),
+              }}
+            />
           </p>
         </div>
       </div>

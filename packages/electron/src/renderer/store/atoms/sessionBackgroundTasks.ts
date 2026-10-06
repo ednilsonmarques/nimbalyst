@@ -1,5 +1,6 @@
 import { atom } from 'jotai';
 import { atomFamily } from 'jotai/utils';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 /** Mirrors `BackgroundTaskSummary` in the runtime's claudeCode/subagentDrain.ts. */
 export interface BackgroundTaskSummary {
@@ -31,7 +32,10 @@ function formatElapsed(ms: number): string {
 /** One-line description, e.g. "Waiting on background task: Run the gates (12m)". */
 export function describeBackgroundWait(tasks: BackgroundTaskSummary[], now: number): string {
   const label = (t: BackgroundTaskSummary) =>
-    `${t.description || 'background task'} (${formatElapsed(now - t.startedAt)})`;
-  if (tasks.length === 1) return `Waiting on background task: ${label(tasks[0])}`;
-  return `Waiting on ${tasks.length} background tasks: ${tasks.map(label).join('; ')}`;
+    translate('general:backgroundWait.taskLabel', {
+      description: t.description || translate('general:backgroundWait.defaultDescription'),
+      elapsed: formatElapsed(now - t.startedAt),
+    });
+  if (tasks.length === 1) return translate('general:backgroundWait.single', { task: label(tasks[0]) });
+  return translate('general:backgroundWait.multiple', { total: tasks.length, tasks: tasks.map(label).join('; ') });
 }

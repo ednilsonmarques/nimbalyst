@@ -1,5 +1,6 @@
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import { FloatingPortal, useFloatingMenu } from '../../../hooks/useFloatingMenu';
 import { toggleScopeValue } from './inboxViewModel';
@@ -25,6 +26,7 @@ export function InboxScopeMenu({
   disabled: boolean;
   onChange: (scope: InboxScope) => void;
 }) {
+  const { t } = useTranslation('team');
   const menu = useFloatingMenu({ placement: 'bottom-end' });
   // Only the axes this menu owns. The source-kind axis lives in the type chips,
   // so it must not light this trigger up or be swept away by "Reset scope".
@@ -34,10 +36,10 @@ export function InboxScopeMenu({
   const projectIds = options.projects.map((project) => project.id);
 
   const summary = () => {
-    if (!active) return 'All orgs & projects';
+    if (!active) return t('inbox.scope.all');
     const parts: string[] = [];
-    if (scope.orgIds) parts.push(`${scope.orgIds.length} org${scope.orgIds.length === 1 ? '' : 's'}`);
-    if (scope.projectIds) parts.push(`${scope.projectIds.length} project${scope.projectIds.length === 1 ? '' : 's'}`);
+    if (scope.orgIds) parts.push(t('inbox.scope.orgs', { count: scope.orgIds.length }));
+    if (scope.projectIds) parts.push(t('inbox.scope.projects', { count: scope.projectIds.length }));
     return parts.join(', ');
   };
 
@@ -86,7 +88,7 @@ export function InboxScopeMenu({
           >
             {options.orgs.length > 1 && (
               <>
-                <div className="inbox-scope-section-label px-2 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--nim-text-faint)]">Organization</div>
+                <div className="inbox-scope-section-label px-2 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--nim-text-faint)]">{t('inbox.scope.organization')}</div>
                 {options.orgs.map((org) => renderCheck(
                   !scope.orgIds || scope.orgIds.includes(org.id),
                   org.name,
@@ -98,7 +100,7 @@ export function InboxScopeMenu({
 
             {options.projects.length > 0 && (
               <>
-                <div className="inbox-scope-section-label px-2 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--nim-text-faint)]">Project</div>
+                <div className="inbox-scope-section-label px-2 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--nim-text-faint)]">{t('inbox.scope.project')}</div>
                 {options.projects.map((project) => renderCheck(
                   !scope.projectIds || scope.projectIds.includes(project.id),
                   project.name,
@@ -117,7 +119,7 @@ export function InboxScopeMenu({
                   data-testid="inbox-scope-reset"
                   onClick={() => onChange({ ...scope, orgIds: null, projectIds: null })}
                 >
-                  <MaterialSymbol icon="restart_alt" size={16} /> Reset scope
+                  <MaterialSymbol icon="restart_alt" size={16} /> {t('inbox.scope.reset')}
                 </button>
               </>
             )}

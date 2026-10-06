@@ -9,6 +9,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { atom, useAtomValue, useStore, type Atom } from 'jotai';
 import type { CollabScope } from '@nimbalyst/collab-client/core';
 import type { SharedDocument } from '@nimbalyst/collab-client/docs';
@@ -80,6 +81,7 @@ export interface TypePageTabProps {
 }
 
 export const TypePageTab: React.FC<TypePageTabProps> = ({ typeId, workspacePath, onOpenItem }) => {
+  const { t } = useTranslation('team');
   const store = useStore();
   const identity = useDesktopTrackerIdentity(workspacePath);
   const writer = useMemo(() => new ElectronTrackerDataSource({ workspacePath }), [workspacePath]);
@@ -116,8 +118,8 @@ export const TypePageTab: React.FC<TypePageTabProps> = ({ typeId, workspacePath,
     [store, typePlacements, itemPlacements, pages],
   );
   const crumb = useMemo(
-    () => [...(lane === 'personal' ? ['Personal'] : []), ...trackerPageCrumbFolders(typeId, typePlacements, pages, { itemPlacements, item: itemLookup })],
-    [lane, typeId, typePlacements, pages, itemPlacements, itemLookup],
+    () => [...(lane === 'personal' ? [t('pages.personal')] : []), ...trackerPageCrumbFolders(typeId, typePlacements, pages, { itemPlacements, item: itemLookup })],
+    [lane, typeId, typePlacements, pages, itemPlacements, itemLookup, t],
   );
   const parentFolderId = typePlacements.find((placement) => placement.typeId === typeId)?.parentFolderId ?? null;
   const fieldLabels = useMemo(() => typeFieldLabels(typeId), [typeId, model]);
@@ -141,15 +143,15 @@ export const TypePageTab: React.FC<TypePageTabProps> = ({ typeId, workspacePath,
             <div className="tracker-page-view-props flex flex-wrap items-center gap-x-[18px] gap-y-1.5 border-b border-nim pb-3 text-xs" data-testid="type-page-props">
               <span className="type-page-tab-type-chip inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium">
                 <MaterialSymbol icon="table" size={13} />
-                Type
+                {t('pages.typePage.type')}
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="text-nim-faint">Pages</span>
+                <span className="text-nim-faint">{t('pages.typePage.pages')}</span>
                 <span className="text-nim">{itemCount}</span>
               </span>
               {fieldLabels.length > 0 && (
                 <span className="inline-flex min-w-0 items-center gap-1.5">
-                  <span className="text-nim-faint">Fields</span>
+                  <span className="text-nim-faint">{t('pages.typePage.fields')}</span>
                   <span className="truncate text-nim">{fieldLabels.join(', ')}</span>
                 </span>
               )}
@@ -170,7 +172,7 @@ export const TypePageTab: React.FC<TypePageTabProps> = ({ typeId, workspacePath,
             <TypePageTable
               typeId={typeId}
               typeLabel={typeName}
-              rootLabel={lane === 'personal' ? 'Personal' : 'Team'}
+              rootLabel={lane === 'personal' ? t('pages.personal') : t('pages.team')}
               itemPlacements={itemPlacements}
               pages={pages}
               itemTitle={itemTitle}

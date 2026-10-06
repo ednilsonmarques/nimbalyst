@@ -6,6 +6,7 @@
  */
 
 import { atom } from 'jotai';
+import { t } from '@nimbalyst/runtime/i18n';
 import { formatResetTime } from './claudeUsageAtoms';
 
 export { formatResetTime };
@@ -105,25 +106,25 @@ function isApproximateDuration(actual: number, expected: number): boolean {
 export function formatCodexWindowLabel(window: CodexUsageWindow): string {
   const minutes = window.windowDurationMins;
   if (minutes !== null) {
-    if (isApproximateDuration(minutes, 5 * 60)) return 'Session';
-    if (isApproximateDuration(minutes, 24 * 60)) return 'Daily';
-    if (isApproximateDuration(minutes, 7 * 24 * 60)) return 'Weekly';
-    if (isApproximateDuration(minutes, 30 * 24 * 60)) return 'Monthly';
-    if (isApproximateDuration(minutes, 365 * 24 * 60)) return 'Annual';
+    if (isApproximateDuration(minutes, 5 * 60)) return t('general:codexWindow.session');
+    if (isApproximateDuration(minutes, 24 * 60)) return t('general:codexWindow.daily');
+    if (isApproximateDuration(minutes, 7 * 24 * 60)) return t('general:codexWindow.weekly');
+    if (isApproximateDuration(minutes, 30 * 24 * 60)) return t('general:codexWindow.monthly');
+    if (isApproximateDuration(minutes, 365 * 24 * 60)) return t('general:codexWindow.annual');
   }
-  return window.slot === 'secondary' ? 'Secondary usage' : 'Usage';
+  return window.slot === 'secondary' ? t('general:codexWindow.secondaryUsage') : t('general:codexWindow.usage');
 }
 
 export function formatCodexWindowSubtitle(window: CodexUsageWindow): string {
   const minutes = window.windowDurationMins;
-  if (minutes === null) return 'Usage window';
-  if (isApproximateDuration(minutes, 5 * 60)) return '5-hour window';
-  if (isApproximateDuration(minutes, 24 * 60)) return '24-hour window';
-  if (isApproximateDuration(minutes, 7 * 24 * 60)) return '7-day window';
-  if (isApproximateDuration(minutes, 30 * 24 * 60)) return '30-day window';
-  if (isApproximateDuration(minutes, 365 * 24 * 60)) return '365-day window';
-  if (minutes >= 60 && minutes % 60 === 0) return `${minutes / 60}-hour window`;
-  return `${minutes}-minute window`;
+  if (minutes === null) return t('general:codexWindow.usageWindow');
+  if (isApproximateDuration(minutes, 5 * 60)) return t('general:codexWindow.hourWindow', { hours: 5 });
+  if (isApproximateDuration(minutes, 24 * 60)) return t('general:codexWindow.hourWindow', { hours: 24 });
+  if (isApproximateDuration(minutes, 7 * 24 * 60)) return t('general:codexWindow.dayWindow', { days: 7 });
+  if (isApproximateDuration(minutes, 30 * 24 * 60)) return t('general:codexWindow.dayWindow', { days: 30 });
+  if (isApproximateDuration(minutes, 365 * 24 * 60)) return t('general:codexWindow.dayWindow', { days: 365 });
+  if (minutes >= 60 && minutes % 60 === 0) return t('general:codexWindow.hourWindow', { hours: minutes / 60 });
+  return t('general:codexWindow.minuteWindow', { minutes });
 }
 
 export function codexUsageColor(usedPercent: number): 'green' | 'yellow' | 'red' {

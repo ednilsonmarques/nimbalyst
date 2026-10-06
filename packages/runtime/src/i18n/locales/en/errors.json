@@ -1,0 +1,39 @@
+{
+  "database": {
+    "unknownError": "Unknown error"
+  },
+  "update": {
+    "releasePending": "A new release is being published. Check back in a few minutes.",
+    "unknownError": "Unknown error",
+    "devModeUnavailable": "Update checking is not available in development mode",
+    "checkFailed": "Failed to check for updates",
+    "downloadFailed": "Failed to download the update"
+  },
+  "fileOps": {
+    "unknownError": "unknown error",
+    "noFilesystemPath": "No filesystem path",
+    "deleteNoReason": "The OS did not provide a reason. Check that the file still exists and that the trash folder is writable."
+  },
+  "save": {
+    "auto": {
+      "permission": "Autosave is blocked because Nimbalyst does not have permission to write this file. Your edits remain unsaved.",
+      "diskFull": "Autosave is blocked because the disk is full. Your edits remain unsaved.",
+      "notFound": "Autosave is blocked because the file is no longer available. Your edits remain unsaved.",
+      "notWritable": "Autosave is blocked because the file location is not writable. Your edits remain unsaved.",
+      "osWrite": "Autosave is blocked because the operating system could not write the file. Your edits remain unsaved.",
+      "conflict": "Autosave is blocked because the file changed on disk. Your edits remain unsaved.",
+      "emptyWrite": "Autosave is blocked because it would have emptied a file that still has content. Your edits remain unsaved — save manually if you meant to clear the file.",
+      "generic": "Autosave is blocked. Your edits remain unsaved."
+    },
+    "manual": {
+      "permission": "Save failed because Nimbalyst does not have permission to write this file. Your edits remain unsaved.",
+      "diskFull": "Save failed because the disk is full. Your edits remain unsaved.",
+      "notFound": "Save failed because the file is no longer available. Your edits remain unsaved.",
+      "notWritable": "Save failed because the file location is not writable. Your edits remain unsaved.",
+      "osWrite": "Save failed because the operating system could not write the file. Your edits remain unsaved.",
+      "conflict": "Save failed because the file changed on disk. Your edits remain unsaved.",
+      "emptyWrite": "Save failed because it would have emptied a file that still has content. Your edits remain unsaved — save manually if you meant to clear the file.",
+      "generic": "Save failed. Your edits remain unsaved."
+    }
+  }
+}

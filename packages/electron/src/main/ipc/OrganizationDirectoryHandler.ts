@@ -1,4 +1,5 @@
 import { safeHandle } from '../utils/ipcRegistry';
+import { t } from '@nimbalyst/runtime/i18n';
 import type { OrganizationDirectoryEntry, OrganizationDirectoryResult } from '../../shared/organizationDirectory';
 
 export function registerOrganizationDirectoryHandler(
@@ -13,7 +14,7 @@ export function registerOrganizationDirectoryHandler(
       return directory.complete
         ? { success: true, complete: true, teams: directory.teams }
         : { success: false, complete: false, teams: directory.teams, retryable: true,
-          error: 'Some organizations could not be loaded. Retrying may restore the list.' };
+          error: t('team:orgMode.directory.partialLoad') };
     } catch (error) {
       return { success: false, complete: false, teams: [], retryable: true,
         error: error instanceof Error ? error.message : String(error) };

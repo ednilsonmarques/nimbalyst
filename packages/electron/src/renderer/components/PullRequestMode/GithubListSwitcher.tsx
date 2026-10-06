@@ -6,6 +6,7 @@
 
 import type { JSX } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type { GithubListKind } from '../../store/atoms/pullRequests';
 
 interface GithubListSwitcherProps {
@@ -16,9 +17,9 @@ interface GithubListSwitcherProps {
   issueCount?: number;
 }
 
-const SEGMENTS: { id: GithubListKind; label: string; icon: string }[] = [
-  { id: 'prs', label: 'Pull Requests', icon: 'merge' },
-  { id: 'issues', label: 'Issues', icon: 'adjust' },
+const SEGMENTS: { id: GithubListKind; labelKey: string; icon: string }[] = [
+  { id: 'prs', labelKey: 'list.pullRequests', icon: 'merge' },
+  { id: 'issues', labelKey: 'list.issues', icon: 'adjust' },
 ];
 
 export function GithubListSwitcher({
@@ -27,13 +28,14 @@ export function GithubListSwitcher({
   prCount,
   issueCount,
 }: GithubListSwitcherProps): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const counts: Record<GithubListKind, number | undefined> = { prs: prCount, issues: issueCount };
 
   return (
     <div className="github-list-switcher px-2 py-2 border-b border-nim shrink-0">
       <div
         role="tablist"
-        aria-label="GitHub list"
+        aria-label={t('list.ariaLabel')}
         className="flex gap-0.5 p-0.5 rounded-md bg-nim border border-nim"
       >
         {SEGMENTS.map((segment) => {
@@ -53,7 +55,7 @@ export function GithubListSwitcher({
               }`}
             >
               <MaterialSymbol icon={segment.icon} size={14} />
-              {segment.label}
+              {t(segment.labelKey)}
               {count !== undefined && count > 0 && (
                 <span
                   className={`px-1.5 rounded-full text-[10px] ${

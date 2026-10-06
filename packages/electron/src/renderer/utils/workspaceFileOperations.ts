@@ -5,6 +5,7 @@
  */
 
 import { errorNotificationService } from '../services/ErrorNotificationService';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 const LOG_CONFIG = {
   WORKSPACE_FILE_SELECT: false,
@@ -93,7 +94,7 @@ export async function handleWorkspaceFileSelect(options: FileSelectOptions): Pro
 
     // Handle error response from main process
     if ('error' in result) {
-      errorNotificationService.showWarning('Cannot Open File', (result as { error: string }).error, { duration: 5000 });
+      errorNotificationService.showWarning(translate('general:files.cannotOpen'), (result as { error: string }).error, { duration: 5000 });
       return;
     }
 

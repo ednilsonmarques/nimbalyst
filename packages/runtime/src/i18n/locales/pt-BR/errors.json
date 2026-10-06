@@ -1,0 +1,39 @@
+{
+  "database": {
+    "unknownError": "Erro desconhecido"
+  },
+  "update": {
+    "releasePending": "Uma nova versão está sendo publicada. Verifique novamente em alguns minutos.",
+    "unknownError": "Erro desconhecido",
+    "devModeUnavailable": "A verificação de atualizações não está disponível no modo de desenvolvimento",
+    "checkFailed": "Falha ao verificar atualizações",
+    "downloadFailed": "Falha ao baixar a atualização"
+  },
+  "fileOps": {
+    "unknownError": "erro desconhecido",
+    "noFilesystemPath": "Sem caminho no sistema de arquivos",
+    "deleteNoReason": "O sistema operacional não informou o motivo. Verifique se o arquivo ainda existe e se a pasta da lixeira permite gravação."
+  },
+  "save": {
+    "auto": {
+      "permission": "O salvamento automático está bloqueado porque o Nimbalyst não tem permissão para gravar este arquivo. Suas edições continuam sem salvar.",
+      "diskFull": "O salvamento automático está bloqueado porque o disco está cheio. Suas edições continuam sem salvar.",
+      "notFound": "O salvamento automático está bloqueado porque o arquivo não está mais disponível. Suas edições continuam sem salvar.",
+      "notWritable": "O salvamento automático está bloqueado porque o local do arquivo não permite gravação. Suas edições continuam sem salvar.",
+      "osWrite": "O salvamento automático está bloqueado porque o sistema operacional não conseguiu gravar o arquivo. Suas edições continuam sem salvar.",
+      "conflict": "O salvamento automático está bloqueado porque o arquivo foi alterado no disco. Suas edições continuam sem salvar.",
+      "emptyWrite": "O salvamento automático está bloqueado porque esvaziaria um arquivo que ainda tem conteúdo. Suas edições continuam sem salvar — salve manualmente se você pretendia limpar o arquivo.",
+      "generic": "O salvamento automático está bloqueado. Suas edições continuam sem salvar."
+    },
+    "manual": {
+      "permission": "Falha ao salvar porque o Nimbalyst não tem permissão para gravar este arquivo. Suas edições continuam sem salvar.",
+      "diskFull": "Falha ao salvar porque o disco está cheio. Suas edições continuam sem salvar.",
+      "notFound": "Falha ao salvar porque o arquivo não está mais disponível. Suas edições continuam sem salvar.",
+      "notWritable": "Falha ao salvar porque o local do arquivo não permite gravação. Suas edições continuam sem salvar.",
+      "osWrite": "Falha ao salvar porque o sistema operacional não conseguiu gravar o arquivo. Suas edições continuam sem salvar.",
+      "conflict": "Falha ao salvar porque o arquivo foi alterado no disco. Suas edições continuam sem salvar.",
+      "emptyWrite": "Falha ao salvar porque esvaziaria um arquivo que ainda tem conteúdo. Suas edições continuam sem salvar — salve manualmente se você pretendia limpar o arquivo.",
+      "generic": "Falha ao salvar. Suas edições continuam sem salvar."
+    }
+  }
+}

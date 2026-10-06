@@ -20,6 +20,8 @@ import { setVoiceActiveSession, clearVoiceActiveSession, persistAndClearVoiceSes
 import { openSettingsCommandAtom } from '../../store';
 import { buildVoiceUsageDisplay, voiceUsageToneVar } from './voiceUsageDisplay';
 import { HelpTooltip } from '../../help';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { store } from '@nimbalyst/runtime/store';
 
 // Global singleton state - only ONE voice session can be active at a time
@@ -245,6 +247,7 @@ interface VoiceModeButtonProps {
 }
 
 export function VoiceModeButton({ workspacePath }: VoiceModeButtonProps) {
+  const { t } = useTranslation('ai');
   const voiceModeEnabled = useAtomValue(voiceModeEnabledAtom);
   const activeSessionId = useAtomValue(activeSessionIdAtom);
   const listenState = useAtomValue(voiceListenStateAtom);
@@ -352,7 +355,7 @@ export function VoiceModeButton({ workspacePath }: VoiceModeButtonProps) {
         if (!result.success) {
           readyChime.dispose();
           timing.finish('failed');
-          setError({ type: 'connection_failed', message: result.message || 'Failed to connect to voice service' });
+          setError({ type: 'connection_failed', message: result.message || t('voice.connectFailed') });
           setIsConnecting(false);
           return;
         }
@@ -393,7 +396,7 @@ export function VoiceModeButton({ workspacePath }: VoiceModeButtonProps) {
         readyChime.dispose();
         timing.finish('failed');
         console.error('[VoiceModeButton] Failed to start voice mode:', err);
-        setError({ type: 'connection_failed', message: err instanceof Error ? err.message : 'Failed to start voice mode' });
+        setError({ type: 'connection_failed', message: err instanceof Error ? err.message : t('voice.startFailed') });
         if (globalAudioCapture) {
           globalAudioCapture.stop();
           globalAudioCapture = null;
@@ -437,13 +440,13 @@ export function VoiceModeButton({ workspacePath }: VoiceModeButtonProps) {
   };
 
   const getButtonTitle = () => {
-    if (isReconnecting) return 'Voice Mode reconnecting...';
-    if (isConnecting) return 'Connecting...';
-    if (error) return `Error: ${getErrorMessage(error)}`;
-    if (isVoiceActive && isSleeping) return 'Voice Mode (sleeping) - Click to wake';
-    if (isVoiceActive) return 'Stop Voice Mode';
-    if (!activeSessionId) return 'Voice Mode (no active session)';
-    return 'Start Voice Mode';
+    if (isReconnecting) return t('voice.reconnecting');
+    if (isConnecting) return t('voice.connecting');
+    if (error) return t('voice.errorTitle', { message: getErrorMessage(error) });
+    if (isVoiceActive && isSleeping) return t('voice.sleeping');
+    if (isVoiceActive) return t('voice.stop');
+    if (!activeSessionId) return t('voice.noActiveSession');
+    return t('voice.start');
   };
 
   // Disabled when no session is selected and voice isn't already active
@@ -473,7 +476,7 @@ export function VoiceModeButton({ workspacePath }: VoiceModeButtonProps) {
       ))}
       {usageDisplay.isFloor && (
         <span className="text-[var(--nim-text-faint)]">
-          At least this much -- the session ended before final usage arrived.
+          {t('voice.usageFloor')}
         </span>
       )}
     </div>
@@ -548,7 +551,7 @@ export function VoiceModeButton({ workspacePath }: VoiceModeButtonProps) {
             <div className="flex items-start gap-2 text-nim">
               <MaterialSymbol icon="error" size={18} className="text-nim-error shrink-0" />
               <div className="text-[13px] leading-[1.4]">
-                <div className="font-semibold mb-1">Voice Mode Error</div>
+                <div className="font-semibold mb-1">{t('voice.errorHeading')}</div>
                 <div className="text-nim-muted">{getErrorMessage(error)}</div>
                 {shouldShowVoiceModeSettingsLink(error) && (
                   <button
@@ -557,7 +560,7 @@ export function VoiceModeButton({ workspacePath }: VoiceModeButtonProps) {
                     data-testid="voice-mode-error-open-settings"
                     className="voice-mode-error-settings-link mt-2 bg-transparent border-none cursor-pointer p-0 text-left text-[var(--nim-link)] hover:text-[var(--nim-link-hover)]"
                   >
-                    Open Voice Mode Settings
+                    {t('voice.openSettings')}
                   </button>
                 )}
               </div>
@@ -582,15 +585,15 @@ export function VoiceModeButton({ workspacePath }: VoiceModeButtonProps) {
 function getErrorMessage(error: { type: string; message: string }): string {
   switch (error.type) {
     case 'insufficient_quota':
-      return 'OpenAI API quota exceeded. Please check your billing at platform.openai.com.';
+      return translate('ai:voice.errors.quota');
     case 'rate_limit_exceeded':
-      return 'Too many requests. Please wait a moment and try again.';
+      return translate('ai:voice.errors.rateLimit');
     case 'invalid_api_key':
-      return 'Invalid OpenAI API key. Please check your settings.';
+      return translate('ai:voice.errors.invalidKey');
     case 'connection_failed':
-      return error.message || 'Failed to connect to voice service.';
+      return error.message || translate('ai:voice.errors.connectionFailed');
     default:
-      return error.message || 'An unexpected error occurred.';
+      return error.message || translate('ai:voice.errors.unexpected');
   }
 }
 

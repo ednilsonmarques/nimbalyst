@@ -5,6 +5,7 @@ import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { agentCapabilitiesForProviderType } from '@nimbalyst/runtime/ai/server/agentCapabilities';
 import { getHelpContent } from '../../help';
 import { openSettingsCommandAtom } from '../../store';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 const CATEGORY_COLORS = [
   'var(--nim-primary)',
@@ -60,6 +61,7 @@ export function ContextUsageDisplay({
   categories,
   currentContext
 }: ContextUsageDisplayProps) {
+  const { t } = useTranslation('ai');
   const contextReporting = agentCapabilitiesForProviderType(provider).contextReporting;
   // For context window display, prefer currentContext (from /context command)
   // Fall back to legacy fields for backward compatibility
@@ -76,11 +78,12 @@ export function ContextUsageDisplay({
   // input in it, Claude Code does not), so with a cache split the tooltip's
   // total is the sum of the rows above it.
   const hasCacheSplit = cacheReadInputTokens > 0 || cacheCreationInputTokens > 0;
+  // Row labels are ai-namespace i18n keys, translated at render time.
   const ioRows: Array<[string, number]> = [
-    [hasCacheSplit ? 'Input (uncached)' : 'Input', inputTokens],
-    ...(cacheReadInputTokens > 0 ? [['Cache read', cacheReadInputTokens] as [string, number]] : []),
-    ...(cacheCreationInputTokens > 0 ? [['Cache write', cacheCreationInputTokens] as [string, number]] : []),
-    ['Output', outputTokens],
+    [hasCacheSplit ? 'contextUsage.inputUncached' : 'contextUsage.input', inputTokens],
+    ...(cacheReadInputTokens > 0 ? [['contextUsage.cacheRead', cacheReadInputTokens] as [string, number]] : []),
+    ...(cacheCreationInputTokens > 0 ? [['contextUsage.cacheWrite', cacheCreationInputTokens] as [string, number]] : []),
+    ['contextUsage.output', outputTokens],
   ];
   const ioTotal = hasCacheSplit
     ? inputTokens + outputTokens + cacheReadInputTokens + cacheCreationInputTokens
@@ -229,14 +232,14 @@ export function ContextUsageDisplay({
     if (hasContextWindow) {
       return `${formatTokensShort(displayTokens)}/${formatTokensShort(displayContextWindow)} (${percentage}%)`;
     }
-    return `${formatTokensShort(displayTokens)} tokens used`;
+    return t('contextUsage.tokensUsed', { tokens: formatTokensShort(displayTokens) });
   };
 
   const label = hasTokenData
     ? hasContextWindow
-      ? `Context usage ${formatTokensShort(displayTokens)} of ${formatTokensShort(displayContextWindow)} tokens (${percentage}%)`
-      : `Session token usage: ${displayTokens.toLocaleString()} tokens used; this agent reports no context window size`
-    : 'Token usage data not available yet';
+      ? t('contextUsage.ariaWithWindow', { used: formatTokensShort(displayTokens), total: formatTokensShort(displayContextWindow), percentage })
+      : t('contextUsage.ariaNoWindow', { tokens: displayTokens.toLocaleString() })
+    : t('contextUsage.ariaNoData');
 
   // Usage level styling
   const usageClass = getUsageClass();
@@ -280,7 +283,7 @@ export function ContextUsageDisplay({
         >
           <div className="tooltip-header flex justify-between items-center text-xs mb-2 text-[var(--nim-text-muted)]">
             <div className="tooltip-header-left flex items-center gap-1.5">
-              <span>{hasContextWindow ? 'Context Breakdown' : 'Session Token Usage'}</span>
+              <span>{hasContextWindow ? t('contextUsage.breakdownTitle') : t('contextUsage.sessionUsageTitle')}</span>
               {helpContent && (
                 <button
                   className="tooltip-help-button inline-flex items-center justify-center w-[18px] h-[18px] p-0 border-none rounded-full bg-[var(--nim-bg-tertiary)] text-[var(--nim-text-faint)] cursor-pointer transition-all duration-150 hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text-muted)]"
@@ -288,7 +291,7 @@ export function ContextUsageDisplay({
                     e.stopPropagation();
                     setHelpExpanded(!helpExpanded);
                   }}
-                  title={helpExpanded ? 'Hide help' : 'What is this?'}
+                  title={helpExpanded ? t('contextUsage.hideHelp') : t('contextUsage.whatIsThis')}
                   aria-expanded={helpExpanded}
                 >
                   <MaterialSymbol icon={helpExpanded ? 'expand_less' : 'help'} size={14} />
@@ -316,7 +319,7 @@ export function ContextUsageDisplay({
               (#914 forbids manufacturing the denominator to fill the gap). */}
           {!hasContextWindow && (
             <div className="tooltip-no-window-note text-[11px] text-[var(--nim-text-muted)] leading-[1.4] whitespace-normal mb-2">
-              Cumulative spend for this session. This agent reports no context window size, so there is no fill percentage to show.
+              {t('contextUsage.noWindowNote')}
             </div>
           )}
 
@@ -331,17 +334,17 @@ export function ContextUsageDisplay({
             <div className="tooltip-io-breakdown flex flex-col gap-1 py-2 border-b border-[var(--nim-border)] mb-2">
               {hasContextWindow && (
                 <div className="tooltip-io-heading text-[11px] font-semibold text-[var(--nim-text-muted)]">
-                  Session totals (cumulative)
+                  {t('contextUsage.sessionTotals')}
                 </div>
               )}
               {ioRows.map(([label, value]) => (
                 <div key={label} className="tooltip-io-row flex justify-between text-[11px]">
-                  <span className="tooltip-io-label text-[var(--nim-text-muted)]">{label}:</span>
+                  <span className="tooltip-io-label text-[var(--nim-text-muted)]">{t(label)}:</span>
                   <span className="tooltip-io-value text-[var(--nim-text)] tabular-nums">{value.toLocaleString()}</span>
                 </div>
               ))}
               <div className="tooltip-io-row tooltip-io-total flex justify-between text-[11px] font-semibold pt-1 border-t border-[var(--nim-border)] mt-1">
-                <span className="tooltip-io-label text-[var(--nim-text-muted)]">Total:</span>
+                <span className="tooltip-io-label text-[var(--nim-text-muted)]">{t('contextUsage.total')}:</span>
                 <span className="tooltip-io-value text-[var(--nim-text)] tabular-nums">{ioTotal.toLocaleString()}</span>
               </div>
             </div>
@@ -379,7 +382,7 @@ export function ContextUsageDisplay({
                         style={isFreeSpace ? undefined : { backgroundColor: cat.color }}
                       />
                       <span className="tooltip-category-name text-[var(--nim-text)]">{cat.name}</span>
-                      <span className="tooltip-category-tokens text-[var(--nim-text-muted)] tabular-nums">{cat.tokens.toLocaleString()} tokens</span>
+                      <span className="tooltip-category-tokens text-[var(--nim-text-muted)] tabular-nums">{t('contextUsage.categoryTokens', { tokens: cat.tokens.toLocaleString() })}</span>
                       <span className="tooltip-category-percent text-[var(--nim-text)] font-semibold tabular-nums">{cat.percentText}%</span>
                     </div>
                   );
@@ -392,8 +395,8 @@ export function ContextUsageDisplay({
           <div className="tooltip-tools-footer flex justify-between items-center gap-2 pt-2 mt-2 border-t border-[var(--nim-border)] text-[11px]">
             <span className="tooltip-baseline text-[var(--nim-text-muted)]">
               {toolBaselineTokens !== null
-                ? `Always-loaded tools: ~${toolBaselineTokens.toLocaleString()} tokens`
-                : 'Other tool groups load on demand'}
+                ? t('contextUsage.alwaysLoadedTools', { tokens: toolBaselineTokens.toLocaleString() })
+                : t('contextUsage.toolsOnDemand')}
             </span>
             <button
               className="tooltip-manage-tools text-[var(--nim-primary)] hover:underline whitespace-nowrap"
@@ -403,7 +406,7 @@ export function ContextUsageDisplay({
                 openSettings({ category: 'tools-mcp', timestamp: Date.now() });
               }}
             >
-              Manage tools
+              {t('contextUsage.manageTools')}
             </button>
           </div>
         </div>

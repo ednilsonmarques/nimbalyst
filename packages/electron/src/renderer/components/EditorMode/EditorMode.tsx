@@ -44,6 +44,8 @@ import {
 } from '../../store/atoms/workspaceLayout';
 import { refreshFileTree } from '../../store/listeners/fileTreeListeners';
 import { requestConfirmation } from '../../dialogs/requestConfirmation';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export interface EditorModeRef {
   closeActiveTab: () => void;
@@ -93,6 +95,7 @@ const EditorMode = forwardRef<EditorModeRef, EditorModeProps>(function EditorMod
   onOpenQuickSearch,
   onSwitchToAgentMode
 }, ref) {
+  const { t } = useTranslation('editor');
   // Sidebar state — kept in per-workspace atom families so each open
   // project preserves its own width / collapse state when the project rail
   // hides and re-shows it.
@@ -375,11 +378,11 @@ const EditorMode = forwardRef<EditorModeRef, EditorModeProps>(function EditorMod
 
     if (isCollabUri(tab.filePath) && hasCollabUnsyncedChanges(collabStatus)) {
       const confirmed = await requestConfirmation({
-        title: 'Close document?',
+        title: translate('dialogs:editorMode.closeCollab.title'),
         message: collabStatus === 'replaying'
-          ? 'This collaborative document is still replaying local changes to the server. Close it anyway?'
-          : 'This collaborative document still has local changes that have not been confirmed by the server. Close it anyway?',
-        confirmLabel: 'Close Anyway',
+          ? translate('dialogs:editorMode.closeCollab.replayingMessage')
+          : translate('dialogs:editorMode.closeCollab.unconfirmedMessage'),
+        confirmLabel: translate('dialogs:editorMode.closeCollab.confirm'),
         destructive: true,
       });
       if (!confirmed) {
@@ -1361,7 +1364,7 @@ const EditorMode = forwardRef<EditorModeRef, EditorModeProps>(function EditorMod
               className="editor-mode-sidebar-resize-handle w-1 cursor-col-resize shrink-0 relative z-10 bg-nim-secondary"
               data-testid="editor-mode-sidebar-resize-handle"
               role="separator"
-              aria-label="Resize file sidebar"
+              aria-label={t('editorMode.resizeSidebar')}
               aria-orientation="vertical"
             >
               <div
@@ -1435,7 +1438,7 @@ const EditorMode = forwardRef<EditorModeRef, EditorModeProps>(function EditorMod
             style={{ display: 'flex', flex: 1 }}
           >
             <WorkspaceWelcome
-              workspaceName={workspaceName || 'Open a file to get started'}
+              workspaceName={workspaceName || t('editorMode.welcomeFallback')}
               workspacePath={workspacePath}
               hasWorkspace={true}
               onNewFile={handleWelcomeNewFile}

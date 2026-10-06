@@ -22,6 +22,8 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 interface WorktreeBaseBranchPickerProps {
   isOpen: boolean;
@@ -79,32 +81,32 @@ async function fetchBranches(repoPath: string): Promise<BranchSections> {
  */
 function validateName(name: string): string | null {
   if (!name) return null;
-  if (name.length > 64) return 'Name is too long (max 64 chars).';
+  if (name.length > 64) return translate('agent:worktreePicker.nameErrors.tooLong');
 
-  if (name.startsWith('/')) return 'Name cannot start with "/".';
-  if (name.endsWith('/')) return 'Name cannot end with "/".';
-  if (name.startsWith('.')) return 'Name cannot start with ".".';
-  if (name.endsWith('.')) return 'Name cannot end with ".".';
-  if (name.startsWith('-')) return 'Name cannot start with "-".';
+  if (name.startsWith('/')) return translate('agent:worktreePicker.nameErrors.cannotStartWith', { value: '/' });
+  if (name.endsWith('/')) return translate('agent:worktreePicker.nameErrors.cannotEndWith', { value: '/' });
+  if (name.startsWith('.')) return translate('agent:worktreePicker.nameErrors.cannotStartWith', { value: '.' });
+  if (name.endsWith('.')) return translate('agent:worktreePicker.nameErrors.cannotEndWith', { value: '.' });
+  if (name.startsWith('-')) return translate('agent:worktreePicker.nameErrors.cannotStartWith', { value: '-' });
 
-  if (name.endsWith('.lock')) return 'Name cannot end with ".lock".';
+  if (name.endsWith('.lock')) return translate('agent:worktreePicker.nameErrors.cannotEndWith', { value: '.lock' });
 
-  if (name.includes('..')) return 'Name cannot contain "..".';
-  if (name.includes('//')) return 'Name cannot contain "//".';
-  if (name.includes('@{')) return 'Name cannot contain "@{".';
+  if (name.includes('..')) return translate('agent:worktreePicker.nameErrors.cannotContain', { value: '..' });
+  if (name.includes('//')) return translate('agent:worktreePicker.nameErrors.cannotContain', { value: '//' });
+  if (name.includes('@{')) return translate('agent:worktreePicker.nameErrors.cannotContain', { value: '@{' });
 
   // ASCII control chars, space, and git's forbidden refname chars.
   // eslint-disable-next-line no-control-regex
   const forbiddenChar = /[\x00-\x1f\x7f \t~^:?*[\\]/;
   if (forbiddenChar.test(name)) {
-    return 'Name cannot contain spaces or any of: ~ ^ : ? * [ \\';
+    return translate('agent:worktreePicker.nameErrors.forbiddenChars');
   }
 
   // Each path component must not be empty (covered by // check) and
   // must not start/end with forbidden boundary chars individually.
   for (const segment of name.split('/')) {
-    if (segment.startsWith('.')) return 'Path components cannot start with ".".';
-    if (segment.endsWith('.lock')) return 'Path components cannot end with ".lock".';
+    if (segment.startsWith('.')) return translate('agent:worktreePicker.nameErrors.segmentCannotStartWith', { value: '.' });
+    if (segment.endsWith('.lock')) return translate('agent:worktreePicker.nameErrors.segmentCannotEndWith', { value: '.lock' });
   }
 
   return null;
@@ -117,6 +119,7 @@ export function WorktreeBaseBranchPicker({
   onCreate,
   onCancel,
 }: WorktreeBaseBranchPickerProps) {
+  const { t } = useTranslation('agent');
   const [sections, setSections] = useState<BranchSections>(EMPTY_SECTIONS);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshingRemotes, setIsRefreshingRemotes] = useState(false);
@@ -172,7 +175,7 @@ export function WorktreeBaseBranchPicker({
         setIsLoading(false);
       } catch (error) {
         if (!aliveRef.current) return;
-        setLoadError(error instanceof Error ? error.message : 'Failed to load branches');
+        setLoadError(error instanceof Error ? error.message : translate('agent:worktreePicker.loadFailed'));
         setIsLoading(false);
       }
     };
@@ -228,7 +231,7 @@ export function WorktreeBaseBranchPicker({
     return () => window.removeEventListener('keydown', handler, true);
   }, [isOpen, handleCancel]);
 
-  const nameError = useMemo(() => validateName(name.trim()), [name]);
+  const nameError = useMemo(() => validateName(name.trim()), [name, t]);
 
   // Narrow local and remote in one pass so a query matches across both
   // sections. Selection is intentionally NOT exempt from the filter -- the
@@ -262,7 +265,7 @@ export function WorktreeBaseBranchPicker({
     } catch (error) {
       // Surface the failure inline; keep the modal open so the user
       // can adjust the name and retry without losing their selection.
-      setSubmitError(error instanceof Error ? error.message : 'Failed to create worktree');
+      setSubmitError(error instanceof Error ? error.message : translate('agent:worktreePicker.createFailed'));
       setIsSubmitting(false);
     }
   }, [canSubmit, name, onCreate, selectedBranch, stopBackgroundWork]);
@@ -297,13 +300,13 @@ export function WorktreeBaseBranchPicker({
         data-component="WorktreeBaseBranchPicker"
         role="dialog"
         aria-modal="true"
-        aria-label="Create new worktree"
+        aria-label={t('worktreePicker.title')}
         aria-busy={isSubmitting}
       >
         <div className="worktree-base-branch-picker-header px-6 pt-6 pb-4 border-b border-nim">
-          <h2 className="m-0 text-[18px] font-semibold text-nim">Create new worktree</h2>
+          <h2 className="m-0 text-[18px] font-semibold text-nim">{t('worktreePicker.title')}</h2>
           <p className="m-0 mt-1 text-[13px] text-nim-muted">
-            Pick a base branch and (optionally) a name for the new worktree.
+            {t('worktreePicker.subtitle')}
           </p>
         </div>
 
@@ -313,7 +316,7 @@ export function WorktreeBaseBranchPicker({
               htmlFor="worktree-name-input"
               className="text-[12px] font-semibold text-nim uppercase tracking-wider"
             >
-              Worktree name
+              {t('worktreePicker.nameLabel')}
             </label>
             <input
               id="worktree-name-input"
@@ -321,7 +324,7 @@ export function WorktreeBaseBranchPicker({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Leave blank to auto-generate (e.g. swift-rabbit)"
+              placeholder={t('worktreePicker.namePlaceholder')}
               className="worktree-name-input px-3 py-2 text-[13px] rounded-md border border-nim bg-nim-secondary text-nim focus:outline-none focus:border-nim-primary disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="worktree-name-input"
               autoComplete="off"
@@ -332,8 +335,8 @@ export function WorktreeBaseBranchPicker({
             />
             <div className="flex items-center justify-between text-[11px] text-nim-muted gap-2">
               <span className="font-mono truncate" data-testid="worktree-branch-preview">
-                Branch: {branchPreview}
-                {selectedBranch && ` · from ${selectedBranch}`}
+                {t('worktreePicker.branchPreview', { branch: branchPreview })}
+                {selectedBranch && t('worktreePicker.fromBranch', { branch: selectedBranch })}
               </span>
               {nameError && (
                 <span
@@ -350,14 +353,14 @@ export function WorktreeBaseBranchPicker({
           <div className="worktree-base-branch-field flex flex-col gap-1.5 min-h-[140px]">
             <div className="flex items-center justify-between">
               <span className="text-[12px] font-semibold text-nim uppercase tracking-wider">
-                Base branch
+                {t('worktreePicker.baseBranch')}
               </span>
               {isRefreshingRemotes && (
                 <span
                   className="text-[11px] text-nim-muted italic"
                   data-testid="worktree-base-branch-refreshing"
                 >
-                  Refreshing remotes…
+                  {t('worktreePicker.refreshingRemotes')}
                 </span>
               )}
             </div>
@@ -367,7 +370,7 @@ export function WorktreeBaseBranchPicker({
                 className="px-3 py-3 text-[12px] text-nim-muted"
                 data-testid="worktree-base-branch-loading"
               >
-                Loading branches…
+                {t('worktreePicker.loadingBranches')}
               </div>
             )}
 
@@ -376,7 +379,7 @@ export function WorktreeBaseBranchPicker({
             )}
 
             {!isLoading && !loadError && !hasAnyBranch && (
-              <div className="px-3 py-3 text-[12px] text-nim-muted">No branches found.</div>
+              <div className="px-3 py-3 text-[12px] text-nim-muted">{t('worktreePicker.noBranches')}</div>
             )}
 
             {!isLoading && !loadError && hasAnyBranch && (
@@ -391,13 +394,13 @@ export function WorktreeBaseBranchPicker({
                     type="text"
                     value={branchQuery}
                     onChange={(e) => setBranchQuery(e.target.value)}
-                    placeholder="Search branches"
+                    placeholder={t('worktreePicker.searchBranches')}
                     className="worktree-base-branch-search-input w-full pl-8 pr-8 py-1.5 text-[13px] rounded-md border border-nim bg-nim-secondary text-nim placeholder:text-nim-faint focus:outline-none focus:border-nim-primary disabled:opacity-50 disabled:cursor-not-allowed"
                     data-testid="worktree-base-branch-search"
                     autoComplete="off"
                     spellCheck={false}
                     disabled={isSubmitting}
-                    aria-label="Search branches"
+                    aria-label={t('worktreePicker.searchBranches')}
                   />
                   {branchQuery && (
                     <button
@@ -406,7 +409,7 @@ export function WorktreeBaseBranchPicker({
                       data-testid="worktree-base-branch-search-clear"
                       onClick={() => setBranchQuery('')}
                       disabled={isSubmitting}
-                      aria-label="Clear branch search"
+                      aria-label={t('worktreePicker.clearSearch')}
                     >
                       <MaterialSymbol icon="close" size={14} />
                     </button>
@@ -418,18 +421,18 @@ export function WorktreeBaseBranchPicker({
                     className="worktree-base-branch-empty px-3 py-3 text-[12px] text-nim-muted"
                     data-testid="worktree-base-branch-no-matches"
                   >
-                    No branches match “{branchQuery.trim()}”.
+                    {t('worktreePicker.noMatches', { query: branchQuery.trim() })}
                   </div>
                 ) : (
                   <div
                     id="worktree-base-branch-list"
                     className="worktree-base-branch-list flex flex-col gap-3 max-h-[44vh] overflow-y-auto rounded-md border border-nim bg-nim-secondary p-2"
                     role="radiogroup"
-                    aria-label="Base branch"
+                    aria-label={t('worktreePicker.baseBranch')}
                   >
                     {visibleSections.local.length > 0 && (
                       <BranchSection
-                        title="Local branches"
+                        title={t('worktreePicker.localBranches')}
                         branches={visibleSections.local}
                         current={visibleSections.current}
                         selected={selectedBranch}
@@ -439,7 +442,7 @@ export function WorktreeBaseBranchPicker({
                     )}
                     {visibleSections.remote.length > 0 && (
                       <BranchSection
-                        title="Remote branches"
+                        title={t('worktreePicker.remoteBranches')}
                         branches={visibleSections.remote}
                         current={visibleSections.current}
                         selected={selectedBranch}
@@ -472,7 +475,7 @@ export function WorktreeBaseBranchPicker({
             onClick={handleCancel}
             disabled={isSubmitting}
           >
-            Cancel
+            {t('worktreePicker.cancel')}
           </button>
           <button
             type="button"
@@ -482,7 +485,7 @@ export function WorktreeBaseBranchPicker({
             disabled={!canSubmit}
           >
             {isSubmitting && <Spinner />}
-            {isSubmitting ? 'Creating…' : 'Create Worktree'}
+            {isSubmitting ? t('worktreePicker.creating') : t('worktreePicker.create')}
           </button>
         </div>
       </div>
@@ -510,6 +513,7 @@ interface BranchSectionProps {
 }
 
 function BranchSection({ title, branches, current, selected, onSelect, disabled }: BranchSectionProps) {
+  const { t } = useTranslation('agent');
   const sectionLabelId = `worktree-branch-section-${title.replace(/\s+/g, '-').toLowerCase()}`;
   return (
     <div className="worktree-base-branch-section" role="group" aria-labelledby={sectionLabelId}>
@@ -540,8 +544,8 @@ function BranchSection({ title, branches, current, selected, onSelect, disabled 
               >
                 <span className="flex-1 truncate font-mono text-[12px]">{branch}</span>
                 {isCurrent && (
-                  <span className="text-[10px] text-nim-muted" aria-label="current branch">
-                    current
+                  <span className="text-[10px] text-nim-muted" aria-label={t('worktreePicker.currentBranchAria')}>
+                    {t('worktreePicker.current')}
                   </span>
                 )}
                 {isSelected && (

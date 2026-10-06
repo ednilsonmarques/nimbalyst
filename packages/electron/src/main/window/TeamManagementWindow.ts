@@ -10,6 +10,7 @@ import {
 import { getBackgroundColor } from '../theme/ThemeManager';
 import { windows, windowStates } from './windowState';
 import { windowControlsOverlayOptions } from './windowChrome';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
   ORG_WINDOW_COMMAND_CHANNEL,
   type OrgWindowCommand,
@@ -317,7 +318,7 @@ export function setupTeamManagementHandlers(
   safeHandle('app:open-account-settings', async () => {
     const workspaceWindow = getMostRecentlyFocusedWorkspaceWindow();
     if (!workspaceWindow || workspaceWindow.isDestroyed()) {
-      return { success: false, error: 'No workspace window is available for account settings.' };
+      return { success: false, error: translate('team:userIndicator.noWorkspaceWindow') };
     }
     workspaceWindow.focus();
     workspaceWindow.webContents.send('open-settings-command', {

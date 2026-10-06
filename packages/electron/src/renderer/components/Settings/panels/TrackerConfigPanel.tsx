@@ -39,6 +39,8 @@ import {
 } from '../../common/TrackerOwnershipChip';
 import type { TrackerOwnership } from '../../TrackerMode/trackerNavigationTree';
 import { useTrackerTeamOwnership, type TrackerTeam } from '../../TrackerMode/useTrackerTeamMembers';
+import { useTranslation, Trans } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 // ============================================================================
 // Types
@@ -113,20 +115,21 @@ function DeleteTrackerTypeButton({
   workspacePath?: string;
 }) {
   const count = useAtomValue(trackerItemCountByTypeAtom(model.type));
+  const { t } = useTranslation('settings');
 
   const handleClick = useCallback(async () => {
     if (!workspacePath) return;
     if (count > 0) {
       errorNotificationService.showWarning(
-        'Tracker type still has items',
-        `Cannot delete "${model.displayNamePlural}": ${count} item${count === 1 ? '' : 's'} of this type still exist. Delete those items first.`
+        t('trackerConfig.deleteType.blockedTitle'),
+        t('trackerConfig.deleteType.blockedMessage', { name: model.displayNamePlural, count })
       );
       return;
     }
     const approved = await requestConfirmation({
-      title: 'Delete tracker type?',
-      message: `Delete tracker type "${model.displayNamePlural}"? This cannot be undone.`,
-      confirmLabel: 'Delete',
+      title: t('trackerConfig.deleteType.confirmTitle'),
+      message: t('trackerConfig.deleteType.confirmMessage', { name: model.displayNamePlural }),
+      confirmLabel: t('common:delete'),
       destructive: true,
     });
     if (!approved) {
@@ -135,19 +138,19 @@ function DeleteTrackerTypeButton({
     const fileDeleted = await deleteCustomTrackerYAML(workspacePath, model.type);
     if (!fileDeleted) {
       errorNotificationService.showError(
-        'Could not delete tracker type',
-        `Could not find the source YAML file for "${model.displayNamePlural}" in .nimbalyst/trackers/. The tracker type was not deleted.`
+        t('trackerConfig.deleteType.notFoundTitle'),
+        t('trackerConfig.deleteType.notFoundMessage', { name: model.displayNamePlural })
       );
       return;
     }
     globalRegistry.unregister(model.type);
-  }, [count, model.displayNamePlural, model.type, workspacePath]);
+  }, [count, model.displayNamePlural, model.type, workspacePath, t]);
 
   return (
     <button
       onClick={handleClick}
       className="p-1 rounded text-[var(--nim-text-muted)] hover:text-[#ef4444] hover:bg-[var(--nim-bg-tertiary)] cursor-pointer"
-      title={`Delete tracker type "${model.displayNamePlural}"`}
+      title={t('trackerConfig.deleteType.buttonTitle', { name: model.displayNamePlural })}
       data-testid={`delete-tracker-type-${model.type}`}
     >
       <MaterialSymbol icon="delete" size={14} />
@@ -168,6 +171,7 @@ function SchemaOverrideActions({
   onCustomize: (model: TrackerDataModel) => void;
   onReset: (model: TrackerDataModel) => void;
 }) {
+  const { t } = useTranslation('settings');
   const isBuiltin = globalRegistry.isBuiltin(model.type);
   if (!workspacePath) return null;
 
@@ -176,15 +180,15 @@ function SchemaOverrideActions({
       {override?.overridden && (
         <span
           className="px-1.5 py-[1px] rounded bg-[rgba(245,158,11,0.12)] text-[#f59e0b] text-[10px] font-semibold"
-          title="Workspace override"
+          title={t('trackerConfig.schemaOverride.badgeTitle')}
         >
-          Override
+          {t('trackerConfig.schemaOverride.badge')}
         </span>
       )}
       <button
         onClick={() => onCustomize(model)}
         className="p-1 rounded text-[var(--nim-text-muted)] hover:text-[var(--nim-primary)] hover:bg-[var(--nim-bg-tertiary)] cursor-pointer"
-        title={override?.overridden ? `Edit ${model.displayNamePlural} schema override` : `Customize ${model.displayNamePlural}`}
+        title={override?.overridden ? t('trackerConfig.schemaOverride.editTitle', { name: model.displayNamePlural }) : t('trackerConfig.schemaOverride.customizeTitle', { name: model.displayNamePlural })}
         data-testid={`customize-tracker-type-${model.type}`}
       >
         <MaterialSymbol icon={override?.overridden ? 'edit' : 'tune'} size={14} />
@@ -193,7 +197,7 @@ function SchemaOverrideActions({
         <button
           onClick={() => onReset(model)}
           className="p-1 rounded text-[var(--nim-text-muted)] hover:text-[#ef4444] hover:bg-[var(--nim-bg-tertiary)] cursor-pointer"
-          title={`Reset ${model.displayNamePlural} to default`}
+          title={t('trackerConfig.schemaOverride.resetTitle', { name: model.displayNamePlural })}
           data-testid={`reset-tracker-type-${model.type}`}
         >
           <MaterialSymbol icon="restart_alt" size={14} />
@@ -229,14 +233,14 @@ function TrackerStorageInfoBanner() {
 
 function getSharingMetaText(tracker: TrackerTypeConfig): string {
   const base = tracker.sharing === 'personal'
-    ? 'Only on this machine'
+    ? translate('settings:trackerConfig.sharing.personal')
     : tracker.draftByDefault
-      ? 'Shared with the team; new items start as drafts'
-      : 'Shared with the team';
+      ? translate('settings:trackerConfig.sharing.teamDrafts')
+      : translate('settings:trackerConfig.sharing.team');
   // Archived leads, because it is the fact that changes what you can do here.
   // Phrased as retention, never as removal.
   return isTrackerArchived(tracker.model)
-    ? `Archived — items kept and searchable, read-only. ${base}`
+    ? translate('settings:trackerConfig.sharing.archived', { base })
     : base;
 }
 
@@ -261,6 +265,7 @@ function TrackerLifecycleActions({
   const itemCount = useAtomValue(trackerItemCountByTypeAtom(tracker.model.type));
   const archived = isTrackerArchived(tracker.model);
   const promotion = resolveTrackerPromotionEligibility(tracker.model);
+  const { t } = useTranslation('settings');
 
   const run = useCallback(async () => {
     if (!workspacePath || !confirmation) return;
@@ -269,13 +274,13 @@ function TrackerLifecycleActions({
       const api = window.electronAPI;
       if (confirmation.kind === 'promote') {
         const result = await api.trackerLifecycle.promoteToTeam({ workspacePath, type: tracker.model.type });
-        if (!result?.success) throw new Error(result?.error || 'Could not share this tracker with your team.');
+        if (!result?.success) throw new Error(result?.error || t('trackerConfig.lifecycle.promoteFailed'));
         const { publishedCount = 0, pendingKeyCount = 0 } = result.promotion ?? {};
         errorNotificationService.showInfo(
-          `${tracker.model.displayNamePlural} is now your team's`,
+          t('trackerConfig.lifecycle.promotedTitle', { name: tracker.model.displayNamePlural }),
           pendingKeyCount > 0
-            ? `${publishedCount} item(s) published. ${pendingKeyCount} are waiting on the server for their keys.`
-            : `${publishedCount} item(s) published, each with its issue key.`,
+            ? t('trackerConfig.lifecycle.promotedPendingMessage', { publishedCount, pendingKeyCount })
+            : t('trackerConfig.lifecycle.promotedMessage', { publishedCount }),
           { duration: 4000 },
         );
       } else {
@@ -285,25 +290,25 @@ function TrackerLifecycleActions({
           type: tracker.model.type,
           archived: archiving,
         });
-        if (!result?.success) throw new Error(result?.error || 'Could not update this tracker.');
+        if (!result?.success) throw new Error(result?.error || t('trackerConfig.lifecycle.updateFailed'));
         errorNotificationService.showInfo(
-          archiving ? `${tracker.model.displayNamePlural} archived` : `${tracker.model.displayNamePlural} unarchived`,
+          archiving ? t('trackerConfig.lifecycle.archivedTitle', { name: tracker.model.displayNamePlural }) : t('trackerConfig.lifecycle.unarchivedTitle', { name: tracker.model.displayNamePlural }),
           archiving
-            ? 'Every item is kept and stays searchable. They are read-only from now on.'
-            : 'Its items can be edited again.',
+            ? t('trackerConfig.lifecycle.archivedMessage')
+            : t('trackerConfig.lifecycle.unarchivedMessage'),
           { duration: 4000 },
         );
       }
       setConfirmation(null);
     } catch (error) {
       errorNotificationService.showError(
-        'Tracker update failed',
+        t('trackerConfig.lifecycle.updateFailedTitle'),
         error instanceof Error ? error.message : String(error),
       );
     } finally {
       setPending(false);
     }
-  }, [confirmation, tracker.model, workspacePath]);
+  }, [confirmation, tracker.model, workspacePath, t]);
 
   return (
     <>
@@ -311,7 +316,7 @@ function TrackerLifecycleActions({
         <button
           type="button"
           className="tracker-promote-button p-1 rounded hover:bg-[var(--nim-bg-tertiary)] text-[var(--nim-text-muted)]"
-          title="Share this tracker with your team"
+          title={t('trackerConfig.lifecycle.promoteTitle')}
           data-testid="tracker-promote-to-team"
           onClick={() => setConfirmation({
             kind: 'promote',
@@ -324,7 +329,7 @@ function TrackerLifecycleActions({
       <button
         type="button"
         className="tracker-archive-button p-1 rounded hover:bg-[var(--nim-bg-tertiary)] text-[var(--nim-text-muted)]"
-        title={archived ? 'Unarchive this tracker' : 'Archive this tracker — items are kept'}
+        title={archived ? t('trackerConfig.lifecycle.unarchiveTitle') : t('trackerConfig.lifecycle.archiveTitle')}
         data-testid="tracker-archive-toggle"
         onClick={() => setConfirmation(
           archived
@@ -338,8 +343,8 @@ function TrackerLifecycleActions({
         isOpen={confirmation !== null}
         title={confirmation?.copy.title ?? ''}
         message={confirmation?.copy.message ?? ''}
-        confirmLabel={pending ? 'Working…' : confirmation?.copy.confirmLabel ?? 'Confirm'}
-        cancelLabel="Cancel"
+        confirmLabel={pending ? t('trackerConfig.lifecycle.working') : confirmation?.copy.confirmLabel ?? t('common:confirm')}
+        cancelLabel={t('common:cancel')}
         // Nothing here removes data, so nothing here is styled as danger --
         // archive in particular must not borrow delete's red.
         destructive={false}
@@ -372,10 +377,11 @@ function TrackerOwnershipGroup({
   description: string;
   renderActions?: (tracker: TrackerTypeConfig) => React.ReactNode;
 }) {
+  const { t } = useTranslation('settings');
   if (trackers.length === 0) return null;
   const title = ownership === null
-    ? 'Trackers'
-    : ownership === 'team' ? trackerOwnershipLabel(ownership, teamName) : 'My trackers';
+    ? t('trackerConfig.groups.trackers')
+    : ownership === 'team' ? trackerOwnershipLabel(ownership, teamName) : t('trackerConfig.groups.myTrackers');
 
   return (
     <div
@@ -446,14 +452,14 @@ function partitionTrackersByOwnership(trackers: TrackerTypeConfig[]) {
  * started this work, answered without opening a config file.
  */
 const TEAM_GROUP_DESCRIPTION =
-  'Everyone on the team sees the same fields, items, and numbers. Changing this tracker\'s fields changes them for the whole team; the YAML file in .nimbalyst/trackers is a local copy of the team\'s definition.';
+  'trackerConfig.groups.teamDescription';
 
 const PERSONAL_GROUP_DESCRIPTION =
-  'These trackers stay on this machine. They never sync, and nobody on your team can see them.';
+  'trackerConfig.groups.personalDescription';
 
 /** Solo workspaces get no ownership vocabulary at all — there is nothing to contrast with. */
 const SOLO_GROUP_DESCRIPTION =
-  'Each tracker keeps its own fields and items, defined in .nimbalyst/trackers and stored on this machine.';
+  'trackerConfig.groups.soloDescription';
 
 // ============================================================================
 // Issue Key Prefix Input
@@ -473,6 +479,7 @@ function IssueKeyPrefixInput({ value, onChange, readOnly = false }: {
 }) {
   const [draft, setDraft] = useState(value);
   const [error, setError] = useState('');
+  const { t } = useTranslation('settings');
 
   useEffect(() => {
     setDraft(value);
@@ -481,14 +488,14 @@ function IssueKeyPrefixInput({ value, onChange, readOnly = false }: {
   const handleBlur = useCallback(() => {
     const upper = draft.toUpperCase();
     if (!ISSUE_KEY_PREFIX_REGEX.test(upper)) {
-      setError('Must be 2-5 uppercase letters');
+      setError(t('trackerConfig.issueKeyPrefix.invalid'));
       return;
     }
     setError('');
     if (upper !== value) {
       onChange(upper);
     }
-  }, [draft, value, onChange]);
+  }, [draft, value, onChange, t]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -499,10 +506,10 @@ function IssueKeyPrefixInput({ value, onChange, readOnly = false }: {
   return (
     <div className="provider-panel-section py-4 mb-4 border-b border-[var(--nim-border)] last:border-b-0 last:mb-0 last:pb-0">
       <h4 className="provider-panel-section-title text-[15px] font-semibold mb-2 text-[var(--nim-text)]">
-        Team Issue Key Prefix
+        {t('trackerConfig.issueKeyPrefix.title')}
       </h4>
       <p className="text-[13px] leading-relaxed text-[var(--nim-text-muted)] mb-3">
-        Published tracker items use this shared prefix (e.g., <code className="text-[11px] text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 py-[1px] rounded">{draft || 'NIM'}-42</code>).
+        <Trans t={t} i18nKey="trackerConfig.issueKeyPrefix.description" values={{ prefix: draft || 'NIM' }} components={{ code: <code className="text-[11px] text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 py-[1px] rounded" /> }} />
       </p>
       <div className="flex items-center gap-2">
         {readOnly ? (
@@ -531,8 +538,8 @@ function IssueKeyPrefixInput({ value, onChange, readOnly = false }: {
       )}
       <p className="text-[11px] text-[var(--nim-text-faint)] mt-2">
         {readOnly
-          ? 'Only a team admin can change this project\'s prefix.'
-          : 'Changing the prefix only affects new items. Existing items keep their current keys.'}
+          ? t('trackerConfig.issueKeyPrefix.readOnlyHint')
+          : t('trackerConfig.issueKeyPrefix.changeHint')}
       </p>
     </div>
   );
@@ -552,14 +559,14 @@ function AgentAccessSection({ enabled, onChange }: {
   enabled: boolean;
   onChange: (enabled: boolean) => void;
 }) {
+  const { t } = useTranslation('settings');
   return (
     <div className="provider-panel-section py-4 mb-4 border-b border-[var(--nim-border)] last:border-b-0 last:mb-0 last:pb-0">
       <h4 className="provider-panel-section-title text-[15px] font-semibold mb-2 text-[var(--nim-text)]">
-        AI Agent Access
+        {t('trackerConfig.agentAccess.title')}
       </h4>
       <p className="text-[13px] leading-relaxed text-[var(--nim-text-muted)] mb-3">
-        Let AI agents read and update trackers in this project. When off, tracker
-        tools are removed from the agent entirely. Applies to new agent sessions.
+        {t('trackerConfig.agentAccess.description')}
       </p>
       <button
         type="button"
@@ -581,7 +588,7 @@ function AgentAccessSection({ enabled, onChange }: {
           />
         </span>
         <span className="text-[13px] font-medium text-[var(--nim-text)]">
-          {enabled ? 'Enabled' : 'Disabled'}
+          {enabled ? t('common:enabled') : t('common:disabled')}
         </span>
       </button>
     </div>
@@ -608,7 +615,8 @@ function AdminView({
   onResetSchema: (model: TrackerDataModel) => void;
 }) {
   const groups = partitionTrackersByOwnership(trackers);
-  const rowActions = (tracker: TrackerTypeConfig) => (
+  const { t } = useTranslation('settings');
+  const rowActions =(tracker: TrackerTypeConfig) => (
     <>
       <TrackerLifecycleActions
         tracker={tracker}
@@ -634,7 +642,7 @@ function AdminView({
         <TrackerOwnershipGroup
           ownership={null}
           trackers={trackers}
-          description={SOLO_GROUP_DESCRIPTION}
+          description={t(SOLO_GROUP_DESCRIPTION)}
           renderActions={rowActions}
         />
       ) : (
@@ -643,13 +651,13 @@ function AdminView({
             ownership="team"
             teamName={team.name}
             trackers={groups.team}
-            description={TEAM_GROUP_DESCRIPTION}
+            description={t(TEAM_GROUP_DESCRIPTION)}
             renderActions={rowActions}
           />
           <TrackerOwnershipGroup
             ownership="personal"
             trackers={groups.personal}
-            description={PERSONAL_GROUP_DESCRIPTION}
+            description={t(PERSONAL_GROUP_DESCRIPTION)}
             renderActions={rowActions}
           />
         </>
@@ -660,7 +668,7 @@ function AdminView({
         <div className="flex items-start gap-1.5 p-2.5 bg-[var(--nim-bg-secondary)] rounded-md text-[11px] text-[var(--nim-text-faint)] leading-relaxed">
           <MaterialSymbol icon="info" size={14} className="shrink-0 mt-0.5" />
           <span>
-            Inline trackers (<code className="text-[11px] text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 py-[1px] rounded">#bug[...]</code>) are always local, regardless of tracker sharing. Only tracked items created from the panel participate in team sync.
+            <Trans t={t} i18nKey="trackerConfig.inlineNote.admin" components={{ code: <code className="text-[11px] text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 py-[1px] rounded" /> }} />
           </span>
         </div>
       </div>
@@ -670,7 +678,7 @@ function AdminView({
         <div className="flex items-center gap-2 p-3 bg-[rgba(167,139,250,0.08)] border border-[rgba(167,139,250,0.15)] rounded-lg">
           <MaterialSymbol icon="arrow_upward" size={16} className="text-[#a78bfa] shrink-0" />
           <div className="flex-1 text-[12px] text-[var(--nim-text-muted)] leading-snug">
-            <strong className="text-[#a78bfa]">Promote inline items</strong> to tracked items to share them with the team. Right-click any inline tracker and select "Promote to Tracked Item."
+            <Trans t={t} i18nKey="trackerConfig.promoteBanner" components={{ bold: <strong className="text-[#a78bfa]" /> }} />
           </div>
         </div>
       </div>
@@ -692,6 +700,7 @@ function MemberView({
   workspacePath?: string;
 }) {
   const groups = partitionTrackersByOwnership(trackers);
+  const { t } = useTranslation('settings');
 
   return (
     <>
@@ -699,12 +708,12 @@ function MemberView({
         ownership="team"
         teamName={team?.name}
         trackers={groups.team}
-        description={TEAM_GROUP_DESCRIPTION}
+        description={t(TEAM_GROUP_DESCRIPTION)}
       />
       <TrackerOwnershipGroup
         ownership="personal"
         trackers={groups.personal}
-        description={PERSONAL_GROUP_DESCRIPTION}
+        description={t(PERSONAL_GROUP_DESCRIPTION)}
         renderActions={(tracker) => (
           !globalRegistry.isBuiltin(tracker.model.type)
             ? <DeleteTrackerTypeButton model={tracker.model} workspacePath={workspacePath} />
@@ -717,7 +726,7 @@ function MemberView({
         <div className="flex items-start gap-1.5 p-2.5 bg-[var(--nim-bg-secondary)] rounded-md text-[11px] text-[var(--nim-text-faint)] leading-relaxed">
           <MaterialSymbol icon="info" size={14} className="shrink-0 mt-0.5" />
           <span>
-            Inline trackers (<code className="text-[11px] text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 py-[1px] rounded">#bug[...]</code>) in your documents are always local. Promote them to tracked items to share with the team.
+            <Trans t={t} i18nKey="trackerConfig.inlineNote.member" components={{ code: <code className="text-[11px] text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 py-[1px] rounded" /> }} />
           </span>
         </div>
       </div>
@@ -746,6 +755,7 @@ export function TrackerConfigPanel({ workspacePath }: TrackerConfigPanelProps) {
   >(null);
   const [schemaChangePending, setSchemaChangePending] = useState(false);
   const { confirm } = useDialog();
+  const { t } = useTranslation('settings');
   // Same lookup the sidebar sections use, so both name the team identically.
   const { team } = useTrackerTeamOwnership(workspacePath);
 
@@ -889,14 +899,14 @@ export function TrackerConfigPanel({ workspacePath }: TrackerConfigPanelProps) {
   }, [workspacePath, isSyncConnected]);
 
   const handleLocalPrefixChange = useCallback(async (prefix: string): Promise<LocalKeyPrefixConfig> => {
-    if (!workspacePath) throw new Error('Open a project before changing its local tracker prefix.');
+    if (!workspacePath) throw new Error(t('trackerConfig.openProjectFirst'));
     const config = await (window as any).electronAPI.invoke('tracker-local-key:set-prefix', {
       workspacePath,
       prefix,
     }) as LocalKeyPrefixConfig;
     setLocalKeyPrefixConfig(config);
     return config;
-  }, [workspacePath]);
+  }, [workspacePath, t]);
 
   const handleAgentAccessChange = useCallback((enabled: boolean) => {
     setAgentAccessEnabled(enabled);
@@ -924,11 +934,11 @@ export function TrackerConfigPanel({ workspacePath }: TrackerConfigPanelProps) {
       await refreshSchemaOverrides(globalRegistry.getAll());
     } catch (err) {
       errorNotificationService.showError(
-        'Could not customize schema',
-        err instanceof Error ? err.message : `Could not customize ${model.displayNamePlural}.`,
+        t('trackerConfig.schemaOverride.customizeErrorTitle'),
+        err instanceof Error ? err.message : t('trackerConfig.schemaOverride.customizeErrorMessage', { name: model.displayNamePlural }),
       );
     }
-  }, [refreshSchemaOverrides, workspacePath]);
+  }, [refreshSchemaOverrides, workspacePath, t]);
 
   const applyResetSchema = useCallback(async (model: TrackerDataModel, confirmDestructive: boolean) => {
     try {
@@ -941,11 +951,11 @@ export function TrackerConfigPanel({ workspacePath }: TrackerConfigPanelProps) {
       await refreshSchemaOverrides(globalRegistry.getAll());
     } catch (err) {
       errorNotificationService.showError(
-        'Could not reset schema',
-        err instanceof Error ? err.message : `Could not reset ${model.displayNamePlural}.`,
+        t('trackerConfig.schemaOverride.resetErrorTitle'),
+        err instanceof Error ? err.message : t('trackerConfig.schemaOverride.resetErrorMessage', { name: model.displayNamePlural }),
       );
     }
-  }, [refreshSchemaOverrides, workspacePath]);
+  }, [refreshSchemaOverrides, workspacePath, t]);
 
   /**
    * Resetting an override removes whatever it added, so it is priced by the same
@@ -973,28 +983,28 @@ export function TrackerConfigPanel({ workspacePath }: TrackerConfigPanelProps) {
     }
 
     const approved = await confirm({
-      title: `Reset ${model.displayNamePlural}?`,
-      message: `Delete the workspace schema override for "${model.displayNamePlural}" and return to the built-in default?`,
-      confirmLabel: 'Reset to default',
-      cancelLabel: 'Cancel',
+      title: t('trackerConfig.schemaOverride.resetConfirmTitle', { name: model.displayNamePlural }),
+      message: t('trackerConfig.schemaOverride.resetConfirmMessage', { name: model.displayNamePlural }),
+      confirmLabel: t('trackerConfig.schemaOverride.resetConfirmLabel'),
+      cancelLabel: t('common:cancel'),
       destructive: true,
     });
     if (!approved) return;
     await applyResetSchema(model, false);
-  }, [applyResetSchema, confirm, workspacePath]);
+  }, [applyResetSchema, confirm, workspacePath, t]);
 
   return (
     <div className="tracker-config-panel provider-panel flex flex-col">
       {/* Header */}
       <div className="provider-panel-header mb-5 pb-4 border-b border-[var(--nim-border)]">
         <h3 className="provider-panel-title text-xl font-semibold leading-tight mb-1.5 text-[var(--nim-text)] flex items-center gap-2">
-          Trackers
+          {t('trackerConfig.title')}
           <AlphaBadge size="sm" tooltip={SETTINGS_ALPHA_TOOLTIP} />
         </h3>
         <p className="provider-panel-description text-[13px] leading-relaxed text-[var(--nim-text-muted)]">
           {team
-            ? 'Each tracker owns its fields, its items and its numbering, and is either yours or your team\'s.'
-            : 'Each tracker owns its fields and its items. Everything here stays on this machine.'}
+            ? t('trackerConfig.descriptionTeam')
+            : t('trackerConfig.descriptionSolo')}
         </p>
       </div>
 

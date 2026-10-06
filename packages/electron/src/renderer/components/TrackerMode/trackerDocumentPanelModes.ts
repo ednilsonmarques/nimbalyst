@@ -11,10 +11,12 @@ import type { TrackerDocumentPanelMode } from '../../store/atoms/trackers';
 export interface TrackerDocumentPanelModeOption {
   id: TrackerDocumentPanelMode;
   label: string;
+  /** i18n key (tracker namespace) for `label`; `label` stays the English source. */
+  labelKey: string;
   icon: string;
 }
 
 export const TRACKER_DOCUMENT_PANEL_MODES: readonly TrackerDocumentPanelModeOption[] = [
-  { id: 'chat', label: 'Chat about this item', icon: 'forum' },
-  { id: 'discussion', label: 'Discussion', icon: 'chat' },
+  { id: 'chat', label: 'Chat about this item', labelKey: 'document.panel.chat', icon: 'forum' },
+  { id: 'discussion', label: 'Discussion', labelKey: 'document.panel.discussion', icon: 'chat' },
 ];

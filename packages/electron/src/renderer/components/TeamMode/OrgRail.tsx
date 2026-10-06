@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAtomValue } from 'jotai';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import { teamInboxSnapshotAtom } from '../../store/atoms/teamInbox';
 import type { OrgChoice } from './defaultOrg';
@@ -25,6 +26,7 @@ export const OrgRail = React.memo(function OrgRail({
   selectedOrgId: string;
   onSelectOrganization: (orgId: string) => void;
 }) {
+  const { t } = useTranslation('team');
   const inboxSnapshot = useAtomValue(teamInboxSnapshotAtom);
   const choices = activeOrganizations(organizations);
   if (choices.length < 2) return null;
@@ -35,7 +37,7 @@ export const OrgRail = React.memo(function OrgRail({
       data-testid="org-rail"
       data-component="OrgRail"
       data-window-drag-region="true"
-      aria-label="Organizations"
+      aria-label={t('sidebar.organizations')}
     >
       {/* No traffic-light spacer here any more: the window title bar above the
           rail carries the lights, so the rail starts at its own top edge. */}
@@ -77,7 +79,7 @@ export const OrgRail = React.memo(function OrgRail({
               {unread > 0 && (
                 <span
                   className="org-rail-unread absolute right-1 top-0 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-[var(--nim-bg-tertiary)] bg-[var(--nim-error)] px-1 text-[9px] font-semibold leading-none text-white"
-                  aria-label={`${unread} unread`}
+                  aria-label={t('sidebar.unreadCount', { count: unread })}
                 >
                   {unread > 99 ? '99+' : unread}
                 </span>
@@ -85,7 +87,7 @@ export const OrgRail = React.memo(function OrgRail({
               {!ready && (
                 <span
                   className="org-rail-connection-dot absolute bottom-1 right-2 size-2.5 rounded-full border-2 border-[var(--nim-bg-tertiary)] bg-[var(--nim-warning)]"
-                  aria-label="Reconnecting"
+                  aria-label={t('sidebar.reconnecting')}
                 />
               )}
             </button>

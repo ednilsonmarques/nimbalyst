@@ -1,3 +1,4 @@
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import type { ConversationDirectoryEntry } from '../../../shared/conversationDirectory';
 import { createDirectoryConversation } from '../../services/conversationDirectoryClient';
 import {
@@ -23,7 +24,7 @@ export async function openOrCreateDirectMessage(options: {
     options.selectedMemberIds,
     options.viewerUserId,
   );
-  if (error || !request) throw new Error(error ?? 'Unable to start a direct message.');
+  if (error || !request) throw new Error(error ?? translate('team:newDm.startFailed'));
 
   const existing = findExistingDirectMessage(
     options.conversations,

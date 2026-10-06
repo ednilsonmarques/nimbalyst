@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation, Trans } from '@nimbalyst/runtime/i18n/react';
 import { bucketMemberCount, categorizeTeamAnalyticsError } from '../../../../shared/analytics/teamAnalytics';
 import { trackTeamAnalyticsEvent } from '../../../utils/teamAnalytics';
 
@@ -57,6 +58,7 @@ interface MoveProjectWizardProps {
 type Step = 'pick' | 'review' | 'running' | 'done';
 
 export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, onMoved, onUpdateEncryption }: MoveProjectWizardProps) {
+  const { t } = useTranslation('settings');
   const candidates = destCandidates.filter(o => o.orgId !== srcOrgId);
   const [step, setStep] = useState<Step>('pick');
   const [destOrgId, setDestOrgId] = useState<string | null>(null);
@@ -69,7 +71,7 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
   const [result, setResult] = useState<MoveResultSummary | null>(null);
 
   const destName = candidates.find(o => o.orgId === destOrgId)?.name ?? '';
-  const projectLabel = project.name || 'this project';
+  const projectLabel = project.name || t('moveProject.thisProject');
 
   const loadPreview = useCallback(async (dest: string) => {
     setPreviewLoading(true);
@@ -80,14 +82,14 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
         setPreview(res.preview as MovePreview);
         setStep('review');
       } else {
-        setError(res?.error || 'Failed to load move preview');
+        setError(res?.error || t('moveProject.errors.loadPreview'));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setPreviewLoading(false);
     }
-  }, [srcOrgId, project.projectId]);
+  }, [srcOrgId, project.projectId, t]);
 
   // When a destination is picked, fetch the preview.
   useEffect(() => {
@@ -130,7 +132,7 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
           callerRole: 'admin',
           errorCategory: categorizeTeamAnalyticsError('project', res?.error),
         });
-        setError(res?.error || 'Move failed');
+        setError(res?.error || t('moveProject.errors.moveFailed'));
         setStep('review');
       }
     } catch (err) {
@@ -165,22 +167,21 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-[16px] font-semibold text-[var(--nim-text)] flex items-center gap-2">
             <MaterialSymbol icon="drive_file_move" size={20} className="text-[var(--nim-primary)]" />
-            Move project to another organization
+            {t('moveProject.title')}
           </h3>
           {step !== 'running' && (
             <button
               className="text-[var(--nim-text-faint)] hover:text-[var(--nim-text)]"
               onClick={onClose}
               data-testid="move-project-wizard-close"
-              aria-label="Close"
+              aria-label={t('common:close')}
             >
               <MaterialSymbol icon="close" size={20} />
             </button>
           )}
         </div>
         <p className="text-[12px] text-[var(--nim-text-muted)] mb-4">
-          Moving <span className="font-medium text-[var(--nim-text)]">{projectLabel}</span> relocates its trackers,
-          documents, and member access into another organization. The originals are removed from this org.
+          <Trans t={t} i18nKey="moveProject.description" values={{ projectLabel }} components={{ project: <span className="font-medium text-[var(--nim-text)]" /> }} />
         </p>
 
         {error && (
@@ -194,11 +195,11 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
           <div data-testid="move-project-wizard-pick">
             {candidates.length === 0 ? (
               <p className="text-[13px] text-[var(--nim-text-muted)]">
-                You don&apos;t own or admin any other organization to move this project into.
+                {t('moveProject.noCandidates')}
               </p>
             ) : (
               <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-medium text-[var(--nim-text-muted)] mb-1">Destination organization</label>
+                <label className="text-[12px] font-medium text-[var(--nim-text-muted)] mb-1">{t('moveProject.destinationLabel')}</label>
                 {candidates.map(o => (
                   <button
                     key={o.orgId}
@@ -214,7 +215,7 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
                   </button>
                 ))}
                 {previewLoading && (
-                  <div className="text-[12px] text-[var(--nim-text-faint)] mt-2">Loading preview…</div>
+                  <div className="text-[12px] text-[var(--nim-text-faint)] mt-2">{t('moveProject.loadingPreview')}</div>
                 )}
               </div>
             )}
@@ -227,28 +228,27 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
             {preview.custodyBlocked ? (
               <div className="px-3 py-3 rounded-md bg-[var(--nim-warning-bg,rgba(217,119,6,0.12))] text-[12px] text-[var(--nim-text)]" data-testid="move-project-custody-blocked">
                 <div className="font-medium mb-1 flex items-center gap-1.5">
-                  <MaterialSymbol icon="lock" size={16} /> Encryption update required
+                  <MaterialSymbol icon="lock" size={16} /> {t('moveProject.custodyBlockedTitle')}
                 </div>
-                This move needs both organizations on server-managed encryption. Update this team&apos;s encryption
-                (Security &amp; Encryption) before moving the project.
+                {t('moveProject.custodyBlockedBody')}
               </div>
             ) : (
               <>
                 <div className="text-[13px] text-[var(--nim-text)] mb-2">
-                  Moving to <span className="font-semibold">{destName}</span>.
+                  <Trans t={t} i18nKey="moveProject.movingTo" values={{ destName }} components={{ dest: <span className="font-semibold" /> }} />
                 </div>
                 {preview.slugCollision && (
                   <div className="mb-3 px-3 py-2 rounded-md bg-[var(--nim-warning-bg,rgba(217,119,6,0.12))] text-[12px] text-[var(--nim-text)]" data-testid="move-project-slug-collision">
-                    A project with this name already exists in {destName}. Both will coexist; deep links may be ambiguous.
+                    {t('moveProject.slugCollision', { destName })}
                   </div>
                 )}
 
                 <div className="text-[12px] font-medium text-[var(--nim-text-muted)] mt-3 mb-1.5">
-                  Members &amp; access ({preview.members.length})
+                  {t('moveProject.membersAndAccess', { total: preview.members.length })}
                 </div>
                 <div className="bg-[var(--nim-bg-secondary)] rounded-lg overflow-hidden mb-2">
                   {preview.members.length === 0 && (
-                    <div className="px-3.5 py-2.5 text-[12px] text-[var(--nim-text-faint)]">No project-specific grants to transfer.</div>
+                    <div className="px-3.5 py-2.5 text-[12px] text-[var(--nim-text-faint)]">{t('moveProject.noGrants')}</div>
                   )}
                   {preview.members.map((m, i) => {
                     const email = m.email;
@@ -261,15 +261,15 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
                           disabled={!email}
                           onChange={() => email && toggleOptOut(email)}
                           data-testid={`move-project-member-${email ?? 'noemail'}`}
-                          title={email ? 'Uncheck to drop this member from the destination' : 'No email on record — cannot transfer'}
+                          title={email ? t('moveProject.member.uncheckToDrop') : t('moveProject.member.noEmailCannotTransfer')}
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="text-[12px] text-[var(--nim-text)] truncate">{email ?? '(no email on record)'}</div>
+                          <div className="text-[12px] text-[var(--nim-text)] truncate">{email ?? t('moveProject.member.noEmail')}</div>
                           <div className="text-[11px] text-[var(--nim-text-faint)]">
                             {m.projectRole.replace('project-', '')}
-                            {m.willInvite && !dropped && <span className="text-[var(--nim-primary)]"> · will be invited (new seat)</span>}
-                            {m.inDest && <span> · already a member</span>}
-                            {dropped && <span className="text-[var(--nim-error,#dc2626)]"> · dropped</span>}
+                            {m.willInvite && !dropped && <span className="text-[var(--nim-primary)]"> · {t('moveProject.member.willBeInvited')}</span>}
+                            {m.inDest && <span> · {t('moveProject.member.alreadyMember')}</span>}
+                            {dropped && <span className="text-[var(--nim-error,#dc2626)]"> · {t('moveProject.member.dropped')}</span>}
                           </div>
                         </div>
                       </div>
@@ -277,11 +277,11 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
                   })}
                 </div>
                 <div className="text-[12px] text-[var(--nim-text-muted)] mb-3" data-testid="move-project-seat-delta">
-                  Seat impact on {destName}: <span className="font-semibold text-[var(--nim-text)]">+{seatDelta}</span> {seatDelta === 1 ? 'seat' : 'seats'}.
+                  <Trans t={t} i18nKey="moveProject.seatImpact" count={seatDelta} values={{ destName }} components={{ delta: <span className="font-semibold text-[var(--nim-text)]" /> }} />
                 </div>
 
                 <label className="text-[12px] text-[var(--nim-text-muted)] block mb-1">
-                  Type <span className="font-mono font-semibold text-[var(--nim-text)]">{destName}</span> to confirm this move:
+                  <Trans t={t} i18nKey="moveProject.typeToConfirm" values={{ destName }} components={{ dest: <span className="font-mono font-semibold text-[var(--nim-text)]" /> }} />
                 </label>
                 <input
                   type="text"
@@ -300,8 +300,8 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
         {step === 'running' && (
           <div className="py-6 text-center text-[13px] text-[var(--nim-text-muted)]" data-testid="move-project-wizard-running">
             <MaterialSymbol icon="progress_activity" size={28} className="text-[var(--nim-primary)] animate-spin" />
-            <div className="mt-2">Moving project… relocating trackers, documents, and access.</div>
-            <div className="mt-1 text-[11px] text-[var(--nim-text-faint)]">Do not close this window.</div>
+            <div className="mt-2">{t('moveProject.running')}</div>
+            <div className="mt-1 text-[11px] text-[var(--nim-text-faint)]">{t('moveProject.doNotClose')}</div>
           </div>
         )}
 
@@ -309,14 +309,14 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
         {step === 'done' && result && (
           <div className="py-4 text-[13px] text-[var(--nim-text)]" data-testid="move-project-wizard-done">
             <div className="flex items-center gap-2 text-[var(--nim-success,#16a34a)] font-medium mb-2">
-              <MaterialSymbol icon="check_circle" size={20} /> Project moved to {destName}
+              <MaterialSymbol icon="check_circle" size={20} /> {t('moveProject.done.title', { destName })}
             </div>
             <ul className="text-[12px] text-[var(--nim-text-muted)] list-disc pl-5 space-y-0.5">
-              <li>{result.movedDocuments} document{result.movedDocuments === 1 ? '' : 's'} relocated</li>
-              <li>{result.grantsTransferred} member grant{result.grantsTransferred === 1 ? '' : 's'} transferred</li>
-              {result.grantsPending > 0 && <li>{result.grantsPending} invited (grant activates on accept)</li>}
-              {result.grantsDropped > 0 && <li>{result.grantsDropped} dropped per your selection</li>}
-              {result.grantsSkipped > 0 && <li>{result.grantsSkipped} skipped (no email on record)</li>}
+              <li>{t('moveProject.done.documentsRelocated', { count: result.movedDocuments })}</li>
+              <li>{t('moveProject.done.grantsTransferred', { count: result.grantsTransferred })}</li>
+              {result.grantsPending > 0 && <li>{t('moveProject.done.grantsPending', { count: result.grantsPending })}</li>}
+              {result.grantsDropped > 0 && <li>{t('moveProject.done.grantsDropped', { count: result.grantsDropped })}</li>}
+              {result.grantsSkipped > 0 && <li>{t('moveProject.done.grantsSkipped', { count: result.grantsSkipped })}</li>}
             </ul>
           </div>
         )}
@@ -330,7 +330,7 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
                 onClick={() => { setStep('pick'); setPreview(null); setConfirmText(''); }}
                 data-testid="move-project-back"
               >
-                Back
+                {t('common:back')}
               </button>
               <button
                 className="px-3.5 py-2 text-[13px] rounded-md bg-[var(--nim-primary)] text-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -338,7 +338,7 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
                 disabled={!confirmOk}
                 data-testid="move-project-run"
               >
-                Move project
+                {t('moveProject.moveButton')}
               </button>
             </>
           )}
@@ -348,7 +348,7 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
               onClick={() => { onClose(); onUpdateEncryption(); }}
               data-testid="move-project-update-encryption"
             >
-              Update encryption
+              {t('moveProject.updateEncryption')}
             </button>
           )}
           {(step === 'pick' || (step === 'review' && preview?.custodyBlocked)) && (
@@ -357,7 +357,7 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
               onClick={onClose}
               data-testid="move-project-cancel"
             >
-              Cancel
+              {t('common:cancel')}
             </button>
           )}
           {step === 'done' && (
@@ -366,7 +366,7 @@ export function MoveProjectWizard({ srcOrgId, project, destCandidates, onClose, 
               onClick={onClose}
               data-testid="move-project-finish"
             >
-              Done
+              {t('common:done')}
             </button>
           )}
         </div>

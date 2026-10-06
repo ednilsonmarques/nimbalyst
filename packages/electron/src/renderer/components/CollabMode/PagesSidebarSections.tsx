@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type { CollabScope } from '@nimbalyst/collab-client/core';
 import type { PageTypeLane } from '@nimbalyst/collab-client/docs/pageTypes';
 import { CollabSidebar, type CollabSidebarCreateMenu } from '@nimbalyst/collab-client/docs-ui';
@@ -45,6 +46,7 @@ export function PagesSidebarSections({
   registerTeamCreateMenu,
   registerPersonalCreateMenu,
 }: PagesSidebarSectionsProps) {
+  const { t } = useTranslation('team');
   const teamTypeResolver = useCollabTypeResolver('team');
   const personalTypeResolver = useCollabTypeResolver('personal');
   const setPageType = useSetPageType(workspacePath, teamScope);
@@ -74,7 +76,7 @@ export function PagesSidebarSections({
               reaches it through the per-artifact backlinks. */}
           <ElectronCollabDocsUIRoot scope={teamScope}>
             <CollabSidebar
-              sectionTitle="Team"
+              sectionTitle={t('pages.team')}
               activeDocumentId={activeTeamDocumentId}
               activeItemId={activeRow.itemId}
               activeTypeId={activeRow.typeId}
@@ -93,13 +95,13 @@ export function PagesSidebarSections({
           className="pages-sidebar-team-note px-3 py-2 text-xs text-nim-faint bg-nim-secondary border-r border-b border-nim shrink-0"
           data-testid="pages-sidebar-team-note"
         >
-          Sign in and share this project to see team pages
+          {t('pages.signInForTeamPages')}
         </div>
       )}
       <div className={`pages-sidebar-personal-section ${sectionClass(collapsed.personal)}`}>
         <ElectronCollabDocsUIRoot scope={personalScope}>
           <CollabSidebar
-            sectionTitle="Personal"
+            sectionTitle={t('pages.personal')}
             activeDocumentId={activePersonalDocumentId}
             activeItemId={activeRow.itemId}
             activeTypeId={activeRow.typeId}

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import type { ConversationDirectoryEntry } from '../../../shared/conversationDirectory';
 import { OrgDialog, OrgDialogSecondaryButton } from './OrgDialog';
@@ -46,6 +47,7 @@ export function ComposeDestinationDialog({
   onClose: () => void;
   onOpenConversation: (conversationId: string) => void;
 }) {
+  const { t } = useTranslation('team');
   const [query, setQuery] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -121,14 +123,14 @@ export function ComposeDestinationDialog({
 
   return (
     <OrgDialog
-      title="New message"
-      description="Pick a room or a person to write to."
+      title={t('inbox.newMessage')}
+      description={t('compose.description')}
       testId="compose-destination-dialog"
       error={error}
       onClose={onClose}
       footer={(
         <OrgDialogSecondaryButton testId="compose-destination-cancel" onClick={onClose}>
-          Cancel
+          {t('common:cancel')}
         </OrgDialogSecondaryButton>
       )}
     >
@@ -142,7 +144,7 @@ export function ComposeDestinationDialog({
           type="text"
           className="w-full rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] py-2 pl-8 pr-3 text-[13px] text-[var(--nim-text)] outline-none focus:border-[var(--nim-primary)]"
           data-testid="compose-destination-search"
-          placeholder="Search rooms and people"
+          placeholder={t('compose.searchPlaceholder')}
           autoFocus
           role="combobox"
           aria-expanded={destinations.length > 0}
@@ -167,7 +169,7 @@ export function ComposeDestinationDialog({
             className="m-0 px-3 py-2 text-[12px] text-[var(--nim-text-muted)]"
             data-testid="compose-destination-empty"
           >
-            {query ? `Nothing matches “${query}”.` : 'Nothing to write to yet.'}
+            {query ? t('compose.noMatch', { query }) : t('compose.empty')}
           </p>
         )}
         {destinations.map((destination, index) => (
@@ -200,7 +202,7 @@ export function ComposeDestinationDialog({
             </span>
             {destination.sublabel && (
               <span className="min-w-0 shrink truncate text-[11px] text-[var(--nim-text-faint)]">
-                {busyId === destination.id ? 'Opening…' : destination.sublabel}
+                {busyId === destination.id ? t('compose.opening') : destination.sublabel}
               </span>
             )}
           </button>

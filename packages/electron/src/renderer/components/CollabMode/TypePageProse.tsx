@@ -10,6 +10,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type { CollabScope } from '@nimbalyst/collab-client/core';
 import { TYPE_PAGE_DOCUMENT_PREFIX, type SharedDocument } from '@nimbalyst/collab-client/docs';
 import { CollaborativeEmbedEditor } from '../EmbedFrame/CollaborativeEmbedEditor';
@@ -42,6 +43,7 @@ export const TypePageProse: React.FC<TypePageProseProps> = ({
   parentFolderId,
   documents,
 }) => {
+  const { t } = useTranslation('team');
   const documentId = `${TYPE_PAGE_DOCUMENT_PREFIX}${typeId}`;
   const [created, setCreated] = useState<SharedDocument | null>(null);
   const [creating, setCreating] = useState(false);
@@ -76,9 +78,9 @@ export const TypePageProse: React.FC<TypePageProseProps> = ({
           onClick={() => void startWriting()}
           data-testid="type-page-prose-start"
         >
-          {creating ? 'Creating the page...' : `Describe what a ${itemName.toLowerCase()} is and what belongs here`}
+          {creating ? t('pages.typePage.creating') : t('pages.typePage.describe', { item: itemName.toLowerCase() })}
         </button>
-        {error && <div className="pb-2 text-xs text-nim-error" role="alert">This page could not be created: {error}</div>}
+        {error && <div className="pb-2 text-xs text-nim-error" role="alert">{t('pages.typePage.createFailed', { error })}</div>}
       </div>
     );
   }

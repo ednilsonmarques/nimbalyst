@@ -45,12 +45,14 @@ import {
   carryValuesAcrossTypes,
   splitQuickCreateFields,
 } from './trackerQuickCreateFields';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface TrackerQuickCreatePopupProps {
   workspacePath: string | null;
 }
 
 export const TrackerQuickCreatePopup: React.FC<TrackerQuickCreatePopupProps> = ({ workspacePath }) => {
+  const { t } = useTranslation('tracker');
   const requestVersion = useAtomValue(trackerQuickCreateRequestAtom);
   const workspaceKey = workspacePath ?? '';
   const draftAtom = useMemo(() => trackerQuickCreateDraftAtom(workspaceKey), [workspaceKey]);
@@ -287,7 +289,7 @@ export const TrackerQuickCreatePopup: React.FC<TrackerQuickCreatePopupProps> = (
   if (!workspacePath) return null;
 
   const sharingNote = model?.sharing === 'team'
-    ? (model.draftByDefault ? 'Saved as a draft' : 'Publishes to the team on create')
+    ? (model.draftByDefault ? t('quickCreate.savedAsDraft') : t('quickCreate.publishesOnCreate'))
     : null;
   const modifierLabel = navigator.platform.startsWith('Mac') ? 'Cmd' : 'Ctrl';
 
@@ -297,17 +299,17 @@ export const TrackerQuickCreatePopup: React.FC<TrackerQuickCreatePopupProps> = (
       onOpenChange={setOpen}
       title={(
         <div className="tracker-quick-create-heading flex min-w-0 items-center gap-1.5">
-          <span className="shrink-0">New</span>
+          <span className="shrink-0">{t('quickCreate.new')}</span>
           <button
             type="button"
             disabled={draft.submitting}
             data-testid="tracker-quick-create-type-chip"
             className="flex min-w-0 items-center gap-1 rounded px-1 py-0.5 font-semibold text-[var(--nim-text)] transition-colors hover:bg-[var(--nim-bg-hover)]"
-            title={`Change type (${modifierLabel}+T)`}
+            title={t('quickCreate.changeType', { modifier: modifierLabel })}
             onClick={openTypePicker}
           >
             {selectedType && <MaterialSymbol icon={getTypeIcon(selectedType)} size={13} />}
-            <span className="truncate">{model?.displayName ?? 'type'}</span>
+            <span className="truncate">{model?.displayName ?? t('quickCreate.typePlaceholder')}</span>
             <MaterialSymbol icon="expand_more" size={13} />
           </button>
           {sharingNote && (
@@ -317,8 +319,8 @@ export const TrackerQuickCreatePopup: React.FC<TrackerQuickCreatePopupProps> = (
           )}
         </div>
       )}
-      ariaLabel="New tracker item"
-      closeLabel="Close tracker quick create"
+      ariaLabel={t('quickCreate.ariaLabel')}
+      closeLabel={t('quickCreate.closeLabel')}
       classPrefix="tracker-quick-create-popup"
       width="min(640px, calc(100vw - 32px))"
       resetKey={workspacePath}
@@ -340,9 +342,9 @@ export const TrackerQuickCreatePopup: React.FC<TrackerQuickCreatePopupProps> = (
           footer={
             <div className="tracker-quick-create-type-hint flex items-center justify-between gap-2 border-t border-[var(--nim-border)] px-3 py-2 text-[11px] text-[var(--nim-text-muted)]">
               <span className="truncate">
-                {draft.title.trim() ? `Keeping “${draft.title.trim()}”` : 'Type to filter, Enter to pick'}
+                {draft.title.trim() ? t('quickCreate.keepingTitle', { title: draft.title.trim() }) : t('quickCreate.typeFilterHint')}
               </span>
-              <span className="shrink-0">↑↓ to move</span>
+              <span className="shrink-0">{t('quickCreate.moveHint')}</span>
             </div>
           }
         />
@@ -354,7 +356,7 @@ export const TrackerQuickCreatePopup: React.FC<TrackerQuickCreatePopupProps> = (
             type="text"
             data-testid="tracker-quick-create-title"
             className="tracker-quick-create-title block w-full select-text bg-transparent px-3 py-2 text-sm font-bold text-[var(--nim-text)] outline-none placeholder:font-normal placeholder:text-[var(--nim-text-muted)]"
-            placeholder="Title"
+            placeholder={t('quickCreate.titlePlaceholder')}
             value={draft.title}
             onChange={(event) => {
               // Typing returns Enter to its primary action. A duplicate row
@@ -402,7 +404,7 @@ export const TrackerQuickCreatePopup: React.FC<TrackerQuickCreatePopupProps> = (
                 onClick={() => setDraft((current) => ({ ...current, showMoreFields: !current.showMoreFields }))}
               >
                 <MaterialSymbol icon={draft.showMoreFields ? 'expand_more' : 'chevron_right'} size={14} />
-                More fields
+                {t('quickCreate.moreFields')}
               </button>
               {draft.showMoreFields && (
                 <TrackerFieldPills
@@ -428,7 +430,7 @@ export const TrackerQuickCreatePopup: React.FC<TrackerQuickCreatePopupProps> = (
 
           <div className="tracker-quick-create-actions flex items-center justify-between border-t border-[var(--nim-border)] px-3 py-2">
             <span className="text-[11px] text-[var(--nim-text-muted)]">
-              {modifierLabel}+Enter to create, Enter in Title to create and add another, {modifierLabel}+T to change type
+              {t('quickCreate.shortcutsHint', { modifier: modifierLabel })}
             </span>
             <button
               type="button"
@@ -437,7 +439,7 @@ export const TrackerQuickCreatePopup: React.FC<TrackerQuickCreatePopupProps> = (
               disabled={!draft.title.trim() || !selectedType || draft.submitting || draft.pendingImages > 0 || draft.failedImages.length > 0}
               onClick={() => handleCreate(false)}
             >
-              {draft.submitting ? 'Saving…' : draft.error ? 'Retry' : 'Add'}
+              {draft.submitting ? t('quickCreate.saving') : draft.error ? t('common:retry') : t('common:add')}
             </button>
           </div>
 

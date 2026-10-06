@@ -35,6 +35,7 @@ import {
   hasVisibleOverlay,
 } from '../WalkthroughService';
 import { WalkthroughCallout } from './WalkthroughCallout';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import { walkthroughs } from '../definitions';
 import {
   walkthroughStateAtom,
@@ -411,8 +412,8 @@ export function WalkthroughProvider({
     const walkthrough = walkthroughs.find((w) => w.id === walkthroughId);
     if (!walkthrough) {
       errorNotificationService.showInfo(
-        'Walkthrough Not Found',
-        `Unknown walkthrough: ${walkthroughId}`,
+        translate('general:walkthroughs.notFoundTitle'),
+        translate('general:walkthroughs.notFoundMessage', { walkthroughId }),
         { duration: 3000 }
       );
       return;
@@ -424,8 +425,11 @@ export function WalkthroughProvider({
 
     if (!targetElement) {
       errorNotificationService.showInfo(
-        'Cannot Show Walkthrough',
-        `"${walkthrough.name}" requires UI elements that aren't visible on this screen. Try switching to ${walkthrough.trigger.screen === 'agent' ? 'Agent Mode' : 'Files Mode'} first.`,
+        translate('general:walkthroughs.cannotShowTitle'),
+        translate('general:walkthroughs.targetMissing', {
+          name: walkthrough.name,
+          mode: walkthrough.trigger.screen === 'agent' ? translate('general:walkthroughs.agentMode') : translate('general:walkthroughs.filesMode'),
+        }),
         { duration: 5000 }
       );
       return;
@@ -434,8 +438,11 @@ export function WalkthroughProvider({
     // Check if walkthrough's condition is met
     if (walkthrough.trigger.condition && !walkthrough.trigger.condition()) {
       errorNotificationService.showInfo(
-        'Cannot Show Walkthrough',
-        `"${walkthrough.name}" conditions aren't met. Try switching to ${walkthrough.trigger.screen === 'agent' ? 'Agent Mode' : 'Files Mode'} first.`,
+        translate('general:walkthroughs.cannotShowTitle'),
+        translate('general:walkthroughs.conditionsNotMet', {
+          name: walkthrough.name,
+          mode: walkthrough.trigger.screen === 'agent' ? translate('general:walkthroughs.agentMode') : translate('general:walkthroughs.filesMode'),
+        }),
         { duration: 5000 }
       );
       return;
@@ -458,8 +465,8 @@ export function WalkthroughProvider({
       setState(newState);
       lastTriggeredModeRef.current = null;
       errorNotificationService.showInfo(
-        'Walkthroughs Reset',
-        'All walkthrough guides will show again.',
+        translate('general:walkthroughs.resetTitle'),
+        translate('general:walkthroughs.resetMessage'),
         { duration: 3000 }
       );
     })();

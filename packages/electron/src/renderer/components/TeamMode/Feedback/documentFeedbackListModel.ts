@@ -11,6 +11,7 @@ import {
   type FeedbackListFilterId,
   type FeedbackListRowView,
 } from "./feedbackListModel";
+import { t as translate } from "@nimbalyst/runtime/i18n";
 
 export type UnifiedFeedbackRow = FeedbackListRowView & {
   target:
@@ -64,8 +65,8 @@ export function selectUnifiedFeedbackRows(input: {
       if (matches(filter.id)) counts[filter.id]++;
     const authorLabel =
       entry.sentBy === input.viewerUserId
-        ? "You"
-        : input.memberNames[entry.sentBy] ?? "Teammate";
+        ? translate("team:room.you")
+        : input.memberNames[entry.sentBy] ?? translate("team:feedback.author.teammate");
     if (
       !matches(input.filter) ||
       !`${entry.title} ${authorLabel}`
@@ -80,13 +81,13 @@ export function selectUnifiedFeedbackRows(input: {
       status,
       statusLabel:
         entry.availability === "blockRemoved"
-          ? "Question removed"
+          ? translate("team:feedback.status.questionRemoved")
           : entry.sealed
-          ? "Settled"
+          ? translate("team:feedback.status.settled")
           : status === "answered"
-          ? "Answered"
-          : "Open",
-      progressLabel: `${entry.answeredCount} of ${entry.recipientCount} answered`,
+          ? translate("team:feedback.status.answered")
+          : translate("team:feedback.status.open"),
+      progressLabel: translate("team:feedback.progress.answered", { answered: entry.answeredCount, total: entry.recipientCount }),
       awaitingFirstResponse: entry.answeredCount === 0,
       timeLabel: formatFeedbackAge(entry.updatedAt, input.now),
       needsViewerResponse: entry.needsMyResponse,

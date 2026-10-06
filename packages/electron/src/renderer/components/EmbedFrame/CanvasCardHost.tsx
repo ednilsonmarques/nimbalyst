@@ -48,6 +48,7 @@ import React, {
 } from "react";
 import { useAtomValue } from "jotai";
 import { basename } from "pathe";
+import { useTranslation } from "@nimbalyst/runtime/i18n/react";
 
 import type { CanvasCardRenderProps } from "@nimbalyst/runtime/canvas";
 import { resolveCanvasCardRevision } from "@nimbalyst/runtime/canvas";
@@ -100,6 +101,7 @@ const CanvasFileCard: React.FC<CanvasCardRenderProps> = ({
   label,
   detail,
 }) => {
+  const { t } = useTranslation("team");
   const path = reference.kind === "file" ? reference.path : "";
   const absolutePath = useMemo(() => workspaceAbsolutePath(path), [path]);
   const registration = useMemo(
@@ -265,7 +267,7 @@ const CanvasFileCard: React.FC<CanvasCardRenderProps> = ({
       <CardNotice
         title={label || path}
         detail={path}
-        note="No workspace is open."
+        note={t("embed.card.noWorkspace")}
       />
     );
   }
@@ -274,7 +276,7 @@ const CanvasFileCard: React.FC<CanvasCardRenderProps> = ({
       <CardNotice
         title={label || basename(absolutePath)}
         detail={path}
-        note={`No installed extension renders ${basename(absolutePath)}.`}
+        note={t("embed.card.noExtension", { name: basename(absolutePath) })}
       />
     );
   }
@@ -304,6 +306,7 @@ const CanvasDocCard: React.FC<CanvasCardRenderProps> = ({
   label,
   detail,
 }) => {
+  const { t } = useTranslation("team");
   const uri = reference.kind === "doc" ? reference.uri : "";
   const workspacePath = useAtomValue(activeWorkspacePathAtom);
   const activeOrgId = useAtomValue(activeTeamOrgIdAtom);
@@ -342,10 +345,10 @@ const CanvasDocCard: React.FC<CanvasCardRenderProps> = ({
         >;
       };
   const resolution = useMemo<DocResolution>(() => {
-    if (!parsed) return { error: "This card does not name a shared document." };
-    if (!workspacePath) return { error: "No workspace is open." };
+    if (!parsed) return { error: t("embed.card.noSharedDocument") };
+    if (!workspacePath) return { error: t("embed.card.noWorkspace") };
     if (activeOrgId !== null && parsed.orgId !== activeOrgId) {
-      return { error: "This card belongs to a different team." };
+      return { error: t("embed.card.differentTeam") };
     }
     const resolved = resolveCollaborativeEmbedRequest({
       orgId: parsed.orgId,
@@ -408,7 +411,7 @@ const CanvasDocCard: React.FC<CanvasCardRenderProps> = ({
         <CardNotice
           title={label || uri}
           detail={uri}
-          note="Pinned revisions are not available for markdown cards yet."
+          note={t("embed.card.noMarkdownRevisions")}
         />
       );
     }
@@ -436,7 +439,7 @@ const CanvasDocCard: React.FC<CanvasCardRenderProps> = ({
         <CardNotice
           title={label || uri}
           detail={uri}
-          note="Waiting for an available shared-card connection."
+          note={t("embed.card.waitingConnection")}
         />
       </div>
     );

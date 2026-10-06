@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { Trans, useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import type { PersonalAccountSummary } from '../../store/atoms/settingsDomains';
 
@@ -20,24 +21,25 @@ export interface AccountLoginFormProps {
   account?: PersonalAccountSummary;
 }
 
+// Values are i18n keys (workspace namespace), translated at render time.
 const COPY: Record<AccountLoginMode, { title: string; description: string }> = {
   'first-sign-in': {
-    title: 'Sign in to get started',
-    description: 'Sign in to sync sessions, drafts, and settings across your devices, and to collaborate with your team.',
+    title: 'accountLogin.copy.firstSignIn.title',
+    description: 'accountLogin.copy.firstSignIn.description',
   },
   // Deliberately not "sign in": the same two buttons create an account, and a
   // first-time user must not be told to sign in to one they do not have.
   'org-onboarding': {
-    title: 'Sign in, or create your account',
-    description: 'An organization belongs to a Nimbalyst account — either method works, new or existing.',
+    title: 'accountLogin.copy.orgOnboarding.title',
+    description: 'accountLogin.copy.orgOnboarding.description',
   },
   'add-account': {
-    title: 'Add another account',
-    description: "This account will be available on this device. It won't change your sync account or affect any workspace's team access.",
+    title: 'accountLogin.copy.addAccount.title',
+    description: 'accountLogin.copy.addAccount.description',
   },
   reauth: {
-    title: 'Reconnect this account',
-    description: 'Your other accounts stay signed in while this account reconnects.',
+    title: 'accountLogin.copy.reauth.title',
+    description: 'accountLogin.copy.reauth.description',
   },
 };
 
@@ -71,6 +73,7 @@ async function resolveFlowOptions(
 }
 
 export function AccountLoginForm({ mode, account }: AccountLoginFormProps) {
+  const { t } = useTranslation('workspace');
   /**
    * The org wizard renders this inside its own dialog, which already carries the
    * card, the product identity and its own scale. Standing alone the form is the
@@ -110,7 +113,7 @@ export function AccountLoginForm({ mode, account }: AccountLoginFormProps) {
         : await window.electronAPI.stytch.sendMagicLink(targetEmail, options);
       if (!result?.success) {
         setError(result?.error ?? (
-          method === 'google' ? 'Could not start sign-in.' : 'Could not send the sign-in link.'
+          method === 'google' ? t('accountLogin.errors.startSignIn') : t('accountLogin.errors.sendLink')
         ));
         return false;
       }
@@ -145,8 +148,8 @@ export function AccountLoginForm({ mode, account }: AccountLoginFormProps) {
     if (await beginSignIn(attempt.method, attempt.email)) {
       setResendNotice(
         attempt.method === 'magicLink'
-          ? `Another sign-in link is on its way to ${attempt.email}.`
-          : 'Sign-in reopened in your browser.',
+          ? t('accountLogin.resendNoticeLink', { email: attempt.email })
+          : t('accountLogin.resendNoticeBrowser'),
       );
     }
   };
@@ -183,7 +186,7 @@ export function AccountLoginForm({ mode, account }: AccountLoginFormProps) {
             {(account.email?.[0] ?? '?').toUpperCase()}
           </span>
           <p className="m-0 select-text text-xs text-[var(--nim-text-muted)]">
-            Signing back in for <strong className="text-[var(--nim-warning)]">{account.email}</strong>.
+            <Trans t={t} i18nKey="accountLogin.signingBackIn" values={{ email: account.email }} components={{ strong: <strong className="text-[var(--nim-warning)]" /> }} />
           </p>
         </div>
       )}
@@ -201,12 +204,9 @@ export function AccountLoginForm({ mode, account }: AccountLoginFormProps) {
             />
             <p className="m-0 select-text text-[12px] leading-relaxed text-[var(--nim-text)]">
               {attempt.method === 'magicLink' ? (
-                <>
-                  <strong>Check {attempt.email}</strong> — we sent a sign-in link. Open it on
-                  this device and you will come straight back here.
-                </>
+                <Trans t={t} i18nKey="accountLogin.waitingMagicLink" values={{ email: attempt.email }} components={{ strong: <strong /> }} />
               ) : (
-                <>Finish signing in with Google in your browser. You will come straight back here.</>
+                <>{t('accountLogin.waitingGoogle')}</>
               )}
             </p>
           </div>
@@ -218,10 +218,10 @@ export function AccountLoginForm({ mode, account }: AccountLoginFormProps) {
             />
             <span>
               <span className="block text-[13px] font-medium text-[var(--nim-text)]">
-                Waiting for you to finish…
+                {t('accountLogin.waitingTitle')}
               </span>
               <span className="block text-[11px] text-[var(--nim-text-muted)]">
-                This step continues on its own.
+                {t('accountLogin.waitingHint')}
               </span>
             </span>
           </div>
@@ -242,7 +242,7 @@ export function AccountLoginForm({ mode, account }: AccountLoginFormProps) {
               data-testid="account-login-restart"
               onClick={handleRestart}
             >
-              Use a different method
+              {t('accountLogin.useDifferentMethod')}
             </button>
             <button
               type="button"
@@ -251,19 +251,19 @@ export function AccountLoginForm({ mode, account }: AccountLoginFormProps) {
               data-testid="account-login-resend"
               onClick={() => void handleResend()}
             >
-              {attempt.method === 'magicLink' ? 'Resend link' : 'Open sign-in again'}
+              {attempt.method === 'magicLink' ? t('accountLogin.resendLink') : t('accountLogin.openSignInAgain')}
             </button>
           </div>
         </div>
       ) : (
         <>
-          <h2 className={`m-0 font-semibold ${embedded ? 'text-base' : 'text-lg'}`}>{copy.title}</h2>
+          <h2 className={`m-0 font-semibold ${embedded ? 'text-base' : 'text-lg'}`}>{t(copy.title)}</h2>
           <p
             className={`mt-1 leading-relaxed text-[var(--nim-text-muted)] ${
               embedded ? 'mb-4 text-[12px]' : 'mb-5 text-xs'
             }`}
           >
-            {copy.description}
+            {t(copy.description)}
           </p>
 
           <div className={`account-login-methods ${embedded ? 'max-w-[320px]' : ''}`}>
@@ -280,7 +280,7 @@ export function AccountLoginForm({ mode, account }: AccountLoginFormProps) {
                   onClick={() => void handleGoogle()}
                 >
                   <MaterialSymbol icon="login" size={embedded ? 16 : 18} />
-                  {mode === 'reauth' && account?.email ? `Continue as ${account.email}` : 'Continue with Google'}
+                  {mode === 'reauth' && account?.email ? t('accountLogin.continueAs', { email: account.email }) : t('accountLogin.continueWithGoogle')}
                 </button>
 
                 <div
@@ -288,7 +288,7 @@ export function AccountLoginForm({ mode, account }: AccountLoginFormProps) {
                     embedded ? 'mb-3' : 'mb-4'
                   }`}
                 >
-                  or
+                  {t('accountLogin.or')}
                 </div>
                 <form className="account-login-magic-link" onSubmit={handleMagicLink}>
                   <label
@@ -297,7 +297,7 @@ export function AccountLoginForm({ mode, account }: AccountLoginFormProps) {
                     }`}
                     htmlFor="account-login-email"
                   >
-                    Email
+                    {t('accountLogin.emailLabel')}
                   </label>
                   <input
                     id="account-login-email"
@@ -321,14 +321,14 @@ export function AccountLoginForm({ mode, account }: AccountLoginFormProps) {
                     }`}
                     disabled={loading || !email.trim()}
                   >
-                    {loading ? 'Sending…' : mode === 'reauth' ? `Send magic link to ${account?.email}` : 'Send magic link'}
+                    {loading ? t('accountLogin.sending') : mode === 'reauth' ? t('accountLogin.sendMagicLinkTo', { email: account?.email }) : t('accountLogin.sendMagicLink')}
                   </button>
                 </form>
               </>
             ) : (
               <div className="account-login-sent rounded-md border border-[var(--nim-success)] bg-[color-mix(in_srgb,var(--nim-success)_8%,transparent)] p-4 text-center">
                 <MaterialSymbol icon="mark_email_read" size={24} className="mx-auto text-[var(--nim-success)]" />
-                <p className="mb-0 mt-2 select-text text-sm">Check {attempt.email} for the sign-in link.</p>
+                <p className="mb-0 mt-2 select-text text-sm">{t('accountLogin.checkEmail', { email: attempt.email })}</p>
               </div>
             )}
           </div>
@@ -341,7 +341,7 @@ export function AccountLoginForm({ mode, account }: AccountLoginFormProps) {
       {!embedded && (
         <div className="account-login-security mt-5 flex items-start gap-2 text-[11px] leading-relaxed text-[var(--nim-text-faint)]">
           <MaterialSymbol icon="lock" size={14} className="shrink-0 text-[var(--nim-success)]" />
-          Personal sync is end-to-end encrypted with keys that never leave your devices.
+          {t('accountLogin.securityNote')}
         </div>
       )}
     </section>

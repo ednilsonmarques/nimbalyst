@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   categorizeTeamAnalyticsError,
   normalizeTeamAnalyticsCallerRole,
@@ -9,6 +10,7 @@ interface AccessGrant { userId: string; projectRole: string }
 interface Member { memberId: string; email: string; name: string; role: string }
 
 export function ProjectAccessEditor({ orgId, projectId }: { orgId: string; projectId: string }) {
+  const { t } = useTranslation('settings');
   const [members, setMembers] = useState<Member[]>([]);
   const [grants, setGrants] = useState<AccessGrant[]>([]);
   const [callerRole, setCallerRole] = useState('member');
@@ -32,7 +34,7 @@ export function ProjectAccessEditor({ orgId, projectId }: { orgId: string; proje
         const grant = grants.find((entry) => entry.userId === member.memberId);
         return (
           <div key={member.memberId} className="project-access-row flex items-center gap-3 rounded-lg border border-[var(--nim-border)] p-3" data-testid="project-access-row">
-            <div className="min-w-0 flex-1"><div className="truncate text-sm">{member.name || member.email}</div><div className="truncate text-xs text-[var(--nim-text-muted)]">{inherited ? `${member.role} · inherited project admin` : member.email}</div></div>
+            <div className="min-w-0 flex-1"><div className="truncate text-sm">{member.name || member.email}</div><div className="truncate text-xs text-[var(--nim-text-muted)]">{inherited ? t('projectAccess.inheritedAdmin', { role: member.role }) : member.email}</div></div>
             <select
               value={inherited ? 'project-admin' : grant?.projectRole ?? ''}
               disabled={!canAdminister || inherited}
@@ -63,15 +65,15 @@ export function ProjectAccessEditor({ orgId, projectId }: { orgId: string; proje
                 });
               }}
             >
-              <option value="">No project access</option>
-              <option value="project-viewer">Viewer</option>
-              <option value="project-editor">Editor</option>
-              <option value="project-admin">Project admin</option>
+              <option value="">{t('projectAccess.roles.none')}</option>
+              <option value="project-viewer">{t('projectAccess.roles.viewer')}</option>
+              <option value="project-editor">{t('projectAccess.roles.editor')}</option>
+              <option value="project-admin">{t('projectAccess.roles.admin')}</option>
             </select>
           </div>
         );
       })}
-      {!canAdminister && <p className="text-xs text-[var(--nim-text-faint)]">Read-only. An organization owner or admin manages project access.</p>}
+      {!canAdminister && <p className="text-xs text-[var(--nim-text-faint)]">{t('projectAccess.readOnly')}</p>}
     </div>
   );
 }

@@ -9,6 +9,7 @@
  */
 
 import type { FolderShareCandidate } from "./folderShareCandidates";
+import { t as translate } from "@nimbalyst/runtime/i18n";
 
 /**
  * Share the files that embed nothing in this batch first, so an embedder always
@@ -72,51 +73,49 @@ export function reportFolderShareOutcome(input: {
     ...input.skipped.map((file) => `${file.relativePath}: ${file.reason}`),
     ...input.warnings,
   ].join("\n");
-  const destination = input.sharedFolderPath || "the team root";
+  const destination = input.sharedFolderPath || translate("general:share.teamRoot");
 
   if (input.sharedCount === 0) {
     input.showError(
-      "Nothing was shared",
+      translate("general:share.nothingWasShared"),
       input.failures.length > 0
-        ? `No document in "${input.folderName}" could be shared.`
-        : `No file in "${input.folderName}" has a collaborative document type.`,
+        ? translate("general:share.noDocumentCouldBeShared", { folder: input.folderName })
+        : translate("general:share.noCollaborativeType", { folder: input.folderName }),
       { details: details || undefined, duration: 10000 }
     );
     return;
   }
 
-  const documentLabel = `${input.sharedCount} document${
-    input.sharedCount === 1 ? "" : "s"
-  }`;
+  const documentLabel = translate("general:share.documentCount", { count: input.sharedCount });
   const leftovers: string[] = [];
   if (input.failures.length > 0) {
     leftovers.push(
-      `${input.failures.length} failed to share`
+      translate("general:share.failedToShareCount", { count: input.failures.length })
     );
   }
   if (input.skippedCount > 0) {
     leftovers.push(
-      `${input.skippedCount} file${
-        input.skippedCount === 1 ? "" : "s"
-      } had no collaborative document type`
+      translate("general:share.skippedNoType", { count: input.skippedCount })
     );
   }
 
   if (leftovers.length === 0 && input.warnings.length === 0) {
     input.showInfo(
-      "Folder shared to team",
-      `Shared ${documentLabel} from "${input.folderName}" to ${destination}.`,
+      translate("general:share.folderSharedTitle"),
+      translate("general:share.folderShared", { documents: documentLabel, folder: input.folderName, destination }),
       { duration: 5000 }
     );
     return;
   }
 
   input.showWarning(
-    "Folder shared with exceptions",
-    `Shared ${documentLabel} from "${input.folderName}" to ${destination}. ${[
-      ...leftovers,
-      ...input.warnings,
-    ].join("; ")}.`,
+    translate("general:share.folderSharedWithExceptionsTitle"),
+    translate("general:share.folderSharedWithExceptions", {
+      documents: documentLabel,
+      folder: input.folderName,
+      destination,
+      exceptions: [...leftovers, ...input.warnings].join("; "),
+    }),
     { details: details || undefined, duration: 10000 }
   );
 }

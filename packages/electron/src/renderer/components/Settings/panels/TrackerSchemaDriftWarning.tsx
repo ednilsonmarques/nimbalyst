@@ -11,6 +11,8 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation, Trans } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 /** Mirror of SchemaDriftEntry from the main-process trackerTypeDefStore. */
 export type SchemaDriftStatus =
@@ -41,9 +43,9 @@ const DRIFT_WARNING_STATUSES: ReadonlySet<SchemaDriftStatus> = new Set([
 
 function describeDriftStatus(status: SchemaDriftStatus): string {
   switch (status) {
-    case 'drifted': return 'definition differs from file';
-    case 'yaml-only': return 'in file, not yet in database';
-    case 'db-only-orphan': return 'in database, file missing';
+    case 'drifted': return translate('settings:trackerSchemaDrift.status.drifted');
+    case 'yaml-only': return translate('settings:trackerSchemaDrift.status.yamlOnly');
+    case 'db-only-orphan': return translate('settings:trackerSchemaDrift.status.dbOnlyOrphan');
     default: return '';
   }
 }
@@ -51,6 +53,7 @@ function describeDriftStatus(status: SchemaDriftStatus): string {
 export function TrackerSchemaDriftWarning({ workspacePath }: { workspacePath?: string }) {
   const [drift, setDrift] = useState<WorkspaceSchemaDrift | null>(null);
   const [resyncing, setResyncing] = useState(false);
+  const { t } = useTranslation('settings');
 
   const refresh = useCallback(async () => {
     if (!workspacePath) {
@@ -102,10 +105,10 @@ export function TrackerSchemaDriftWarning({ workspacePath }: { workspacePath?: s
         <MaterialSymbol icon="sync_problem" size={14} className="text-[#f59e0b] shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
           <div className="text-[13px] font-medium text-[var(--nim-text)] mb-1">
-            Schema files are out of sync
+            {t('trackerSchemaDrift.title')}
           </div>
           <p className="text-[12px] text-[var(--nim-text-muted)] leading-relaxed mb-2">
-            The tracker schema files in <code className="text-[11px] text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 py-[1px] rounded">.nimbalyst/trackers</code> differ from the local database mirror.
+            <Trans t={t} i18nKey="trackerSchemaDrift.description" components={{ code: <code className="text-[11px] text-[var(--nim-code-text)] bg-[var(--nim-code-bg)] px-1 py-[1px] rounded" /> }} />
           </p>
           <ul className="text-[12px] text-[var(--nim-text-muted)] leading-relaxed mb-3 space-y-0.5">
             {warnings.map((e) => (
@@ -122,7 +125,7 @@ export function TrackerSchemaDriftWarning({ workspacePath }: { workspacePath?: s
             data-testid="tracker-schema-resync-button"
           >
             <MaterialSymbol icon="sync" size={12} />
-            {resyncing ? 'Resyncing...' : 'Resync from files'}
+            {resyncing ? t('trackerSchemaDrift.resyncing') : t('trackerSchemaDrift.resync')}
           </button>
         </div>
       </div>

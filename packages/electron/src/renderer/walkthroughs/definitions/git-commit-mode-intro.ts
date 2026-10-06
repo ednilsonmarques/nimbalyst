@@ -34,8 +34,8 @@ export const gitCommitModeIntro: WalkthroughDefinition = {
       target: {
         testId: 'git-commit-mode-toggle',
       },
-      title: gitCommitModeHelp.title,
-      body: gitCommitModeHelp.body,
+      title: 'walkthroughs.gitCommitMode.title',
+      body: 'walkthroughs.gitCommitMode.body',
       placement: 'left',
     },
   ],

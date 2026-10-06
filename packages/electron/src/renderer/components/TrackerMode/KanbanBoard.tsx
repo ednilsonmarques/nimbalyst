@@ -40,6 +40,7 @@ import {
   TrackerSurfaceMessage,
 } from '@nimbalyst/collab-client/trackers-ui';
 import { TrackerCardMilestoneChip } from './TrackerCardMilestoneChip';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface KanbanBoardProps {
   filterType: TrackerItemType | 'all';
@@ -115,6 +116,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onToggleFavorite,
   currentIdentity,
 }) => {
+  const { t } = useTranslation('tracker');
   // Items always come from the caller (TrackerMainView passes atom-sourced items).
   // KanbanBoard no longer loads its own data -- single source of truth via Jotai atoms.
   const allItems = useMemo(() => {
@@ -430,7 +432,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   if (allItems.length === 0) {
     return (
-      <TrackerSurfaceMessage icon="view_kanban" message="No items to display" />
+      <TrackerSurfaceMessage icon="view_kanban" message={t('kanban.noItems')} />
     );
   }
 
@@ -552,12 +554,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="px-3 py-1 text-[11px] text-nim-faint font-medium">
-            {selectedIds.size} item{selectedIds.size > 1 ? 's' : ''} selected
+            {t('kanban.itemsSelected', { count: selectedIds.size })}
           </div>
           <div className="border-b border-nim my-1" />
 
           {/* Set Status */}
-          <KanbanContextSubmenu label="Set Status" icon="swap_horiz">
+          <KanbanContextSubmenu label={t('kanban.setStatus')} icon="swap_horiz">
             {statusChoices.map(choice => (
               <button
                 key={`${choice.kind}:${choice.value}`}
@@ -578,7 +580,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </KanbanContextSubmenu>
 
           {/* Set Priority */}
-          <KanbanContextSubmenu label="Set Priority" icon="flag">
+          <KanbanContextSubmenu label={t('kanban.setPriority')} icon="flag">
             {(['critical', 'high', 'medium', 'low'] as const).map(p => (
               <button
                 key={p}
@@ -589,7 +591,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   className="w-2 h-2 rounded-full shrink-0"
                   style={{ backgroundColor: PRIORITY_COLORS[p] || NEUTRAL_SWATCH }}
                 />
-                {p.charAt(0).toUpperCase() + p.slice(1)}
+                {t(`priority.${p}`)}
               </button>
             ))}
           </KanbanContextSubmenu>
@@ -599,13 +601,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               <div className="border-b border-nim my-1" />
 
               {contextSessions.length > 0 && (
-                <KanbanContextSubmenu label={`Sessions (${contextSessions.length})`} icon="smart_toy">
+                <KanbanContextSubmenu label={t('kanban.sessions', { count: contextSessions.length })} icon="smart_toy">
                   {contextSessions.map(session => (
                     <button
                       key={session.id}
                       className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-nim hover:bg-nim-tertiary cursor-pointer"
                       data-testid="tracker-kanban-context-open-session"
-                      title={`Open session: ${session.title}`}
+                      title={t('kanban.openSession', { title: session.title })}
                       onClick={() => {
                         closeContextMenu();
                         onOpenSession?.(session.id);
@@ -633,7 +635,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   }}
                 >
                   <MaterialSymbol icon="add_circle" size={16} />
-                  Launch Session
+                  {t('actions.launchSession')}
                 </button>
               )}
 
@@ -647,7 +649,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   }}
                 >
                   <MaterialSymbol icon="account_tree" size={16} />
-                  Launch Worktree
+                  {t('actions.launchWorktree')}
                 </button>
               )}
             </>
@@ -666,7 +668,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               }}
             >
               <MaterialSymbol icon="article" size={16} />
-              Open document
+              {t('kanban.openDocument')}
             </button>
           )}
 
@@ -680,7 +682,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               }}
             >
               <MaterialSymbol icon="link" size={16} />
-              Copy Link
+              {t('kanban.copyLink')}
             </button>
           )}
 
@@ -694,7 +696,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               }}
             >
               <MaterialSymbol icon="archive" size={16} />
-              Archive
+              {t('actions.archive')}
             </button>
           )}
 
@@ -705,9 +707,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 closeContextMenu();
                 const ids = Array.from(selectedIds);
                 const approved = await requestConfirmation({
-                  title: ids.length > 1 ? 'Delete items?' : 'Delete item?',
-                  message: `Delete ${ids.length} item${ids.length > 1 ? 's' : ''}? This cannot be undone.`,
-                  confirmLabel: 'Delete',
+                  title: t('deleteItems.title', { count: ids.length }),
+                  message: t('deleteItems.message', { count: ids.length }),
+                  confirmLabel: t('common:delete'),
                   destructive: true,
                 });
                 if (approved) {
@@ -717,7 +719,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               }}
             >
               <MaterialSymbol icon="delete" size={16} />
-              Delete
+              {t('common:delete')}
             </button>
           )}
         </div>

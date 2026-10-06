@@ -46,6 +46,8 @@ import { useLocalFileSharedDocLink } from '../../hooks/useCollabLocalOrigin';
 import { sharedDocumentsAtom, pendingCollabDocumentAtom, activeCollabScopeAtom, activeTeamOrgIdAtom, buildSharedDocumentDeepLink } from '../../store/atoms/collabDocuments';
 import { setWindowModeAtom } from '../../store/atoms/windowMode';
 import { getCollabNodeName, getCollabParentPath, normalizeCollabPath } from '../CollabMode/collabTree';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 // Built-in tracker types that support full-document mode
 const TRACKER_TYPES: TrackerTypeInfo[] = [
@@ -158,6 +160,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
   showDocumentTypeAction = true,
   sharedDocumentLinkTarget,
 }) => {
+  const { t } = useTranslation('menu');
   const openHistoryDialog = useSetAtom(historyDialogFileAtom);
 
   // Dropdown states
@@ -411,7 +414,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
         console.log('[UnifiedHeaderBar] PDF exported successfully:', outputPath);
       } else {
         console.error('[UnifiedHeaderBar] PDF export failed:', result.error);
-        electronAPI.showErrorDialog('Export Failed', `Failed to export PDF: ${result.error}`);
+        electronAPI.showErrorDialog(translate('dialogs:tabEditor.exportPdfFailed.title'), translate('dialogs:tabEditor.exportPdfFailed.message', { error: result.error }));
       }
     } catch (error) {
       console.error('[UnifiedHeaderBar] Failed to export to PDF:', error);
@@ -532,10 +535,10 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return 'just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
+    if (minutes < 1) return t('contextMenu.documentSessions.justNow');
+    if (minutes < 60) return t('contextMenu.documentSessions.minutesAgo', { count: minutes });
+    if (hours < 24) return t('contextMenu.documentSessions.hoursAgo', { count: hours });
+    if (days < 7) return t('contextMenu.documentSessions.daysAgo', { count: days });
     return new Date(timestamp).toLocaleDateString();
   };
   const formatSharedTimestamp = (isoTimestamp: string): string => {
@@ -573,7 +576,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                 showTOC ? 'active bg-[var(--nim-bg-tertiary)] text-[var(--nim-text)]' : ''
               }`}
               onClick={() => setShowTOC(!showTOC)}
-              title="Table of Contents"
+              title={t('contextMenu.editorActions.tableOfContents')}
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="8" y1="6" x2="21" y2="6"/>
@@ -610,7 +613,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                     ))}
                   </ul>
                 ) : (
-                  <div className="toc-empty py-4 px-3 text-center text-[13px] text-[var(--nim-text-muted)]">No headings in document</div>
+                  <div className="toc-empty py-4 px-3 text-center text-[13px] text-[var(--nim-text-muted)]">{t('contextMenu.editorActions.noHeadings')}</div>
                 )}
               </div>
             )}
@@ -622,7 +625,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
           <button
             className="unified-header-button nim-btn-icon w-7 h-7 rounded border-none bg-transparent cursor-pointer flex items-center justify-center transition-all duration-150 text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text)]"
             onClick={handleShareLink}
-            title="Share Link"
+            title={t('contextMenu.editorActions.shareLinkTooltip')}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="18" cy="5" r="3"/>
@@ -646,7 +649,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                 sharedDocMenu.isOpen ? 'active bg-[var(--nim-bg-tertiary)]' : ''
               }`}
               onClick={() => sharedDocMenu.setIsOpen(!sharedDocMenu.isOpen)}
-              title="Linked to team shared document"
+              title={t('contextMenu.editorActions.linkedToSharedDoc')}
               {...sharedDocMenu.getReferenceProps()}
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -666,17 +669,17 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                 >
                   <div className="px-3 py-2 border-b border-[var(--nim-border)]">
                     <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nim-text-faint)]">
-                      Shared Document
+                      {t('contextMenu.editorActions.sharedDocument')}
                     </div>
                     <div className="mt-1 text-[13px] text-[var(--nim-text)]">
-                      Shared to team on {formatSharedTimestamp(sharedDocLink.binding.createdAt)}
+                      {t('contextMenu.editorActions.sharedOn', { date: formatSharedTimestamp(sharedDocLink.binding.createdAt) })}
                     </div>
                   </div>
                   {sharedDocNameAndFolder && (
                     <button
                       className="shared-doc-open-link dropdown-item w-full py-2 px-3 border-none bg-transparent text-[13px] text-left cursor-pointer flex items-start gap-2.5 transition-colors duration-150 text-[var(--nim-text)] hover:bg-[var(--nim-bg-hover)]"
                       onClick={handleOpenSharedDoc}
-                      title="Open shared document"
+                      title={t('contextMenu.editorActions.openSharedDoc')}
                     >
                       <svg className="w-4 h-4 mt-[2px] opacity-70 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -711,7 +714,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                       <polyline points="7 10 12 15 17 10" />
                       <line x1="12" y1="15" x2="12" y2="4" />
                     </svg>
-                    Pull from Shared Doc
+                    {t('contextMenu.editorActions.pullFromSharedDoc')}
                   </button>
                   <button
                     className="dropdown-item w-full py-2 px-3 border-none bg-transparent text-[13px] text-left cursor-pointer flex items-center gap-2.5 transition-colors duration-150 text-[var(--nim-text)] hover:bg-[var(--nim-bg-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -729,7 +732,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                       <polyline points="7 10 12 5 17 10" />
                       <line x1="12" y1="5" x2="12" y2="16" />
                     </svg>
-                    Re-upload to Shared Doc
+                    {t('contextMenu.editorActions.reuploadToSharedDoc')}
                   </button>
                 </div>
               </FloatingPortal>
@@ -745,7 +748,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
               showActionsMenu ? 'active bg-[var(--nim-bg-tertiary)] text-[var(--nim-text)]' : ''
             }`}
             onClick={() => setShowActionsMenu(!showActionsMenu)}
-            title="More actions"
+            title={t('contextMenu.editorActions.moreActions')}
             {...actionsMenu.getReferenceProps()}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -776,7 +779,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                     <polyline points="16 18 22 12 16 6"/>
                     <polyline points="8 6 2 12 8 18"/>
                   </svg>
-                  {isSourceModeActive ? 'Exit Source Mode' : 'Toggle Source Mode'}
+                  {isSourceModeActive ? t('contextMenu.editorActions.exitSourceMode') : t('contextMenu.editorActions.toggleSourceMode')}
                 </button>
               )}
 
@@ -793,7 +796,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                     <circle cx="12" cy="12" r="10"/>
                     <polyline points="12 6 12 12 16 14"/>
                   </svg>
-                  View History
+                  {t('contextMenu.editorActions.viewHistory')}
                 </button>
               )}
 
@@ -822,7 +825,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                         <polyline points="16 18 22 12 16 6"/>
                         <polyline points="8 6 2 12 8 18"/>
                       </svg>
-                      Toggle Markdown Mode
+                      {t('contextMenu.editorActions.toggleMarkdownMode')}
                     </button>
                   )}
 
@@ -836,7 +839,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                       </svg>
-                      Copy as Markdown
+                      {t('contextMenu.editorActions.copyAsMarkdown')}
                     </button>
                   )}
 
@@ -852,7 +855,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                         <path d="M12 18v-6"/>
                         <path d="M9 15l3 3 3-3"/>
                       </svg>
-                      Export to PDF...
+                      {t('contextMenu.editorActions.exportToPdf')}
                     </button>
                   )}
 
@@ -869,7 +872,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                         <line x1="16" y1="13" x2="8" y2="13"/>
                         <line x1="16" y1="17" x2="8" y2="17"/>
                       </svg>
-                      <span className="dropdown-item-label flex-1">Set Document Type</span>
+                      <span className="dropdown-item-label flex-1">{t('contextMenu.editorActions.setDocumentType')}</span>
                       <span className="dropdown-item-chevron ml-auto text-sm text-[var(--nim-text-faint)]">&#8250;</span>
 
                       {showDocTypeSubmenu && (
@@ -889,7 +892,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                               >
                                 {type.icon}
                               </span>
-                              <span>{type.displayName}</span>
+                              <span>{t(`editor:header.trackerType.${type.type}`, { defaultValue: type.displayName })}</span>
                               {currentDocumentType === type.type && (
                                 <span className="dropdown-checkmark ml-auto text-sm text-[var(--nim-primary)]">&#10003;</span>
                               )}
@@ -908,7 +911,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                                 <span className="material-symbols-outlined opacity-70" style={{ fontSize: '18px' }}>
                                   close
                                 </span>
-                                <span>Remove Type</span>
+                                <span>{t('contextMenu.editorActions.removeType')}</span>
                               </button>
                             </>
                           )}
@@ -981,7 +984,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                 <>
                   <div className="dropdown-divider h-px my-1 bg-[var(--nim-border)]" />
                   <div className="dropdown-section-label pt-1.5 pb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--nim-text-faint)]">
-                    {extensionId || 'Extension'}
+                    {extensionId || t('editor:header.extensionFallback')}
                   </div>
                   {extensionMenuItems.map((item, index) => (
                     <button
@@ -1017,7 +1020,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                       <circle cx="12" cy="12" r="3"/>
                       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                     </svg>
-                    Extension Settings
+                    {t('contextMenu.editorActions.extensionSettings')}
                   </button>
                 </>
               )}

@@ -76,6 +76,8 @@ import {
   registerSettingsChangeListener,
 } from './store/atoms/settingAtomFamily';
 import { registerGutterCustomizationListener } from './store/listeners/gutterCustomizationListeners';
+import { initUiLanguageListeners } from './store/listeners/uiLanguageListeners';
+import { I18nProvider } from '@nimbalyst/runtime/i18n/react';
 import { waitForMaterialSymbols } from './utils/materialSymbolsReady';
 
 // console.log('[RENDERER] Imports complete at', new Date().toISOString());
@@ -169,6 +171,10 @@ try {
   console.error('[renderer] settings:getAll failed at startup; refusing to mount React', err);
   throw err;
 }
+
+// Resolve the UI language from the hydrated `app.uiLanguage` setting before
+// React mounts, and follow live changes from any window.
+initUiLanguageListeners(store);
 
 // Initialize legacy app settings atoms from main process.
 // These still drive most settings UI today; the flat-key SettingsService above
@@ -335,9 +341,11 @@ root.render(
   <React.StrictMode>
     <ErrorBoundary>
       <JotaiProvider store={store}>
-        <PostHogProvider client={posthogClient}>
-          <App />
-        </PostHogProvider>
+        <I18nProvider>
+          <PostHogProvider client={posthogClient}>
+            <App />
+          </PostHogProvider>
+        </I18nProvider>
       </JotaiProvider>
     </ErrorBoundary>
   </React.StrictMode>

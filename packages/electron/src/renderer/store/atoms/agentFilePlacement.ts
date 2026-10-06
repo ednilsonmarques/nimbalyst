@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 import { store } from "@nimbalyst/runtime/store";
+import { t } from "@nimbalyst/runtime/i18n";
 
 export type AgentFilePlacement = "above" | "right";
 export const AGENT_FILE_PLACEMENT_KEY = "agentFilePlacement";
@@ -17,8 +18,8 @@ export const setAgentFilePlacementAtom = atom(
     set(
       agentFilePlacementNoticeAtom,
       placement === "right"
-        ? "Files open on the right in Agent mode"
-        : "Files open above the transcript in Agent mode"
+        ? t("general:filePlacement.right")
+        : t("general:filePlacement.above")
     );
     if (typeof window !== "undefined" && window.electronAPI) {
       void window.electronAPI
@@ -30,7 +31,7 @@ export const setAgentFilePlacementAtom = atom(
           );
           set(
             agentFilePlacementNoticeAtom,
-            "Could not save file placement. Your layout may reset when you reopen the app."
+            t("general:filePlacement.saveFailed")
           );
         });
     }

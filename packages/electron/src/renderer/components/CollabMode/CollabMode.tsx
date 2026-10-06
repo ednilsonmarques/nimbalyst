@@ -70,6 +70,8 @@ import { getTextSelection } from '../UnifiedAI/TextSelectionIndicator';
 import { getActiveEditorContextItems } from '../../stores/editorContextStore';
 import { categorizeTeamAnalyticsError, toStableAnalyticsCategory } from '../../../shared/analytics/teamAnalytics';
 import { trackTeamAnalyticsEvent } from '../../utils/teamAnalytics';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface CollabModeProps {
   workspacePath: string;
@@ -233,6 +235,7 @@ export const CollabModeInner = forwardRef<CollabModeRef, CollabModeInnerProps>(f
   onFileOpen,
   onPanelStateChange,
 }, ref) {
+  const { t, i18n } = useTranslation('team');
   const tabsActions = useTabsActions();
   usePublishPagesTabStrip(workspacePath, tabsActions);
   const { tabs, activeTabId } = useTabs();
@@ -263,6 +266,10 @@ export const CollabModeInner = forwardRef<CollabModeRef, CollabModeInnerProps>(f
     createPrimaryRef.current = menu?.onPrimary ?? null;
     setTitleBarCreateMenu('collab', menu);
   }, [setTitleBarCreateMenu]);
+  // The "+" menu labels are translated when composed; recompose on a language change.
+  useEffect(() => {
+    publishCreateMenu();
+  }, [i18n.language, publishCreateMenu]);
   const registerTeamCreateMenu = useCallback((menu: CollabSidebarCreateMenu | null) => {
     createMenusRef.current.team = menu;
     publishCreateMenu();
@@ -543,7 +550,7 @@ export const CollabModeInner = forwardRef<CollabModeRef, CollabModeInnerProps>(f
         error,
       });
       errorNotificationService.showError(
-        'Failed to open shared document',
+        translate('team:pages.openSharedDocFailed'),
         message,
         { details: doc.title || doc.documentId }
       );
@@ -828,7 +835,7 @@ export const CollabModeInner = forwardRef<CollabModeRef, CollabModeInnerProps>(f
             className="collab-mode-sidebar-resize-handle w-1 cursor-col-resize shrink-0 relative z-10 bg-nim-secondary"
             data-testid="collab-mode-sidebar-resize-handle"
             role="separator"
-            aria-label="Resize shared documents sidebar"
+            aria-label={t('pages.resizeSidebar')}
             aria-orientation="vertical"
           >
             <div className="w-0.5 h-full mx-auto bg-nim-border transition-colors duration-200 hover:bg-nim-accent" />
@@ -845,7 +852,7 @@ export const CollabModeInner = forwardRef<CollabModeRef, CollabModeInnerProps>(f
             className="pages-mode-empty flex-1 flex items-center justify-center text-sm text-nim-faint"
             data-testid="pages-mode-empty"
           >
-            Open a page, or right-click in the sidebar and choose New page
+            {t('pages.emptyHint')}
           </div>
         )}
         {hasTabs && (

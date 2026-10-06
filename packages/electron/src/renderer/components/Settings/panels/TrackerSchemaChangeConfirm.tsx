@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type {
   TrackerSchemaChangeGateVerdict,
   TrackerSchemaDestructiveConfirmCopy,
@@ -36,6 +37,7 @@ export function TrackerSchemaChangeConfirm({
 }) {
   const copy = preview?.copy;
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { t } = useTranslation('settings');
 
   useEffect(() => {
     setSelectedId(copy?.options[0]?.id ?? null);
@@ -70,8 +72,7 @@ export function TrackerSchemaChangeConfirm({
             className="tracker-schema-admin-required m-0 mb-5 text-sm text-nim leading-relaxed"
             data-testid="tracker-schema-admin-required"
           >
-            Only a team admin can remove or rename part of a tracker your team shares.
-            Adding fields, statuses and options stays open to everyone.
+            {t('trackerSchemaChange.adminRequired')}
           </p>
         ) : (
           <div className="tracker-schema-change-options flex flex-col gap-2 mb-5">
@@ -104,7 +105,7 @@ export function TrackerSchemaChangeConfirm({
 
         <div className="flex gap-3 justify-end">
           <button className="nim-btn-secondary" onClick={onCancel}>
-            {blockedOnAdmin ? 'Close' : 'Cancel'}
+            {blockedOnAdmin ? t('common:close') : t('common:cancel')}
           </button>
           {!blockedOnAdmin && (
             <button
@@ -113,7 +114,7 @@ export function TrackerSchemaChangeConfirm({
               disabled={pending || !selectedId}
               onClick={() => selectedId && onApply(selectedId)}
             >
-              {pending ? 'Working…' : copy.confirmLabel}
+              {pending ? t('trackerSchemaChange.working') : copy.confirmLabel}
             </button>
           )}
         </div>

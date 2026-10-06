@@ -1,5 +1,6 @@
 /** Engine-specific voice choices and preview availability. */
 
+import { t } from '@nimbalyst/runtime/i18n';
 import { liveVoicePreviews } from './liveVoicePreviews';
 import type { VoiceEngineId } from '../../store/atoms/voiceModeState';
 
@@ -52,7 +53,7 @@ export function voiceGroupsForEngine(engine: VoiceEngineId): Array<{ label: stri
   const voices = voicesForEngine(engine);
   return (['male', 'female', 'neutral'] as const)
     .map((gender) => ({
-      label: gender === 'male' ? 'Male' : gender === 'female' ? 'Female' : 'Neutral',
+      label: gender === 'male' ? t('settings:voiceEngine.groups.male') : gender === 'female' ? t('settings:voiceEngine.groups.female') : t('settings:voiceEngine.groups.neutral'),
       voices: voices.filter((v) => v.gender === gender),
     }))
     .filter((group) => group.voices.length > 0);
@@ -83,7 +84,7 @@ export function previewEligibility(engine: VoiceEngineId, voiceId: string): Voic
     return {
       canPreview: recorded,
       approximate: false,
-      note: recorded ? '' : 'No recording is available for this voice.',
+      note: recorded ? '' : t('settings:voiceEngine.notes.noRecording'),
     };
   }
   const standIn = TTS_STAND_INS[voiceId];
@@ -93,11 +94,11 @@ export function previewEligibility(engine: VoiceEngineId, voiceId: string): Voic
     return {
       canPreview: false,
       approximate: false,
-      note: 'Preview is unavailable for this voice -- the preview service has no matching voice, and playing a different one would be misleading.',
+      note: t('settings:voiceEngine.notes.unavailable'),
     };
   }
 
   return standIn
-    ? { canPreview: true, approximate: true, note: 'This voice has no preview equivalent; the sample uses a similar voice.' }
+    ? { canPreview: true, approximate: true, note: t('settings:voiceEngine.notes.standIn') }
     : { canPreview: true, approximate: false, note: '' };
 }

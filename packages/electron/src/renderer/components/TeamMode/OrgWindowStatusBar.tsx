@@ -10,6 +10,7 @@
 
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import { HelpTooltip } from '../../help';
 
@@ -18,6 +19,7 @@ export const ORG_WINDOW_BETA_STATUS =
 
 /** Fixed content, so it is memoized and never repaints with a navigation. */
 export const OrgWindowStatusBar = React.memo(function OrgWindowStatusBar() {
+  const { t } = useTranslation('team');
   return (
     <HelpTooltip testId="org-window-status-bar">
       <footer
@@ -26,7 +28,7 @@ export const OrgWindowStatusBar = React.memo(function OrgWindowStatusBar() {
         data-component="OrgWindowStatusBar"
       >
         <MaterialSymbol icon="info" size={12} className="shrink-0" />
-        <span className="min-w-0 truncate">{ORG_WINDOW_BETA_STATUS}</span>
+        <span className="min-w-0 truncate">{t('orgWindow.betaStatus')}</span>
       </footer>
     </HelpTooltip>
   );

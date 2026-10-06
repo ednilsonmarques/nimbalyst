@@ -12,6 +12,8 @@ import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
   prListAtom,
   prListLoadingAtom,
@@ -34,10 +36,10 @@ interface PullRequestListViewProps {
   isActive: boolean;
 }
 
-const SORT_OPTIONS: GithubListSortOption<PrSortKey>[] = [
-  { id: 'updated', label: 'Last activity' },
-  { id: 'created', label: 'Created' },
-  { id: 'number', label: 'Number' },
+const SORT_OPTION_KEYS: GithubListSortOption<PrSortKey>[] = [
+  { id: 'updated', label: 'sort.updated' },
+  { id: 'created', label: 'sort.created' },
+  { id: 'number', label: 'sort.number' },
 ];
 
 export function PullRequestListView({
@@ -45,6 +47,11 @@ export function PullRequestListView({
   remote,
   isActive,
 }: PullRequestListViewProps): JSX.Element {
+  const { t } = useTranslation('pullRequest');
+  const sortOptions = useMemo(
+    () => SORT_OPTION_KEYS.map((option) => ({ ...option, label: t(option.label) })),
+    [t],
+  );
   const layout = useAtomValue(prModeLayoutAtom);
   const setLayout = useSetAtom(setPrModeLayoutAtom);
   const ghStatus = useAtomValue(ghCliStatusAtom);
@@ -77,7 +84,7 @@ export function PullRequestListView({
       });
       setPrList(rows);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load pull requests');
+      setError(err instanceof Error ? err.message : translate('pullRequest:prList.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -138,8 +145,8 @@ export function PullRequestListView({
       <GithubListToolbar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search by title or number"
-        sortOptions={SORT_OPTIONS}
+        searchPlaceholder={t('prList.searchPlaceholder')}
+        sortOptions={sortOptions}
         sortKey={sortKey}
         onSortChange={(key) => setLayout({ sortKey: key })}
         onRefresh={() => void runFetch()}
@@ -157,19 +164,19 @@ export function PullRequestListView({
               className="mt-1 text-xs text-nim-link hover:text-nim-link-hover hover:underline"
               onClick={() => void runFetch()}
             >
-              Retry
+              {t('common.retry')}
             </button>
           </div>
         ) : loading && prList.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-10 text-nim-muted text-sm">
             <div className="spinner w-5 h-5 border-[3px] border-nim-secondary border-t-nim-primary rounded-full animate-spin" />
-            Loading pull requests…
+            {t('prList.loading')}
           </div>
         ) : visibleRows.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-[60px] px-5 text-nim-faint gap-2">
             <MaterialSymbol icon="inbox" size={40} className="opacity-50" />
             <span className="text-sm text-center">
-              {hasActiveNarrowing ? 'No pull requests match these filters' : 'No pull requests'}
+              {hasActiveNarrowing ? t('prList.noMatch') : t('prList.empty')}
             </span>
             {hasActiveNarrowing && (
               <button
@@ -179,7 +186,7 @@ export function PullRequestListView({
                   setLayout({ activeFilters: ['open'] });
                 }}
               >
-                Clear filters
+                {t('common.clearFilters')}
               </button>
             )}
           </div>

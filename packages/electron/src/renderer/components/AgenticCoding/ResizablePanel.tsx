@@ -1,5 +1,6 @@
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useResizeDragShield } from '../../hooks/useResizeDragShield';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface ResizablePanelProps {
   leftPanel: ReactNode;
@@ -20,6 +21,7 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
   onWidthChange,
   collapsed = false
 }) => {
+  const { t } = useTranslation('agent');
   const [isDragging, setIsDragging] = useState(false);
   const [currentWidth, setCurrentWidth] = useState(leftWidth);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -73,7 +75,7 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
             onPointerDown={handlePointerDown}
             role="separator"
             aria-orientation="vertical"
-            aria-label="Resize session history panel"
+            aria-label={t('sessionList.resizePanel')}
             aria-valuenow={currentWidth}
             aria-valuemin={minWidth}
             aria-valuemax={maxWidth}

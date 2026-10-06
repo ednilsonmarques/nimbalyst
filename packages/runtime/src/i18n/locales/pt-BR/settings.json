@@ -1,0 +1,2541 @@
+{
+  "advanced": {
+    "title": "Configurações avançadas",
+    "description": "Opções avançadas de configuração dos recursos de IA.",
+    "applicationMode": {
+      "title": "Modo do aplicativo",
+      "description": "Escolha entre uma experiência simplificada ou todos os recursos de desenvolvedor para este projeto."
+    },
+    "standardMode": {
+      "title": "Modo padrão",
+      "description": "Interface simplificada, focada em escrita, edição e assistência de IA"
+    },
+    "developerMode": {
+      "title": "Modo de desenvolvedor",
+      "description": "Ambiente de desenvolvimento completo, com git worktrees, acesso ao terminal e recursos específicos de desenvolvimento"
+    },
+    "featureAvailability": {
+      "title": "Disponibilidade de recursos",
+      "description": "Veja quais recursos estão disponíveis de acordo com as configurações do modo atual.",
+      "allFeatures": "Todos os recursos de desenvolvedor",
+      "allFeaturesDescription": "Ative ou desative todos os recursos de desenvolvedor de uma vez",
+      "available": "Disponível",
+      "hidden": "Oculto",
+      "developerModeOn": "Modo de desenvolvedor: ATIVADO",
+      "developerModeOff": "Modo de desenvolvedor: DESATIVADO"
+    },
+    "releaseChannel": {
+      "title": "Canal de versões",
+      "description": "Escolha de qual fluxo de versões o Nimbalyst baixa as atualizações automáticas. Ao trocar de canal, a versão instalada é mantida até que haja uma versão mais recente disponível. Para instalar uma versão mais antiga, é preciso baixá-la e instalá-la manualmente. Os recursos alfa e beta são configurados separadamente na página de configurações de cada recurso.",
+      "updateChannel": "Canal de atualização",
+      "channelsHint": "<bold>Estável:</bold> versões prontas para produção (recomendado para a maioria dos usuários).<br/><bold>Alfa:</bold> versões de desenvolvimento frequentes e ainda brutas. Espere bugs e mudanças incompatíveis entre as atualizações.",
+      "stable": "Estável",
+      "alpha": "Alfa (versões de desenvolvimento)",
+      "alphaWarning": "O canal alfa distribui versões de desenvolvimento ainda brutas, que podem ser instáveis ou conter trabalho inacabado. Volte para o canal Estável se encontrar problemas."
+    },
+    "analytics": {
+      "name": "Enviar dados de uso anônimos",
+      "description": "Ajude a melhorar o Nimbalyst enviando dados de uso anônimos. Nenhum prompt ou informação pessoal é coletado."
+    },
+    "chatProviders": {
+      "name": "Mostrar provedores de chat",
+      "description": "Mostra Claude Chat, OpenAI e LM Studio nas configurações de provedores e na seleção de modelo de novas sessões."
+    },
+    "featureGuides": {
+      "name": "Mostrar guias de recursos",
+      "description": "Guias passo a passo sobre novos recursos e dicas.",
+      "descriptionWithCount": "Guias passo a passo sobre novos recursos e dicas. ({{viewed}}/{{total}} vistos)",
+      "resetAll": "Redefinir todos os guias"
+    },
+    "trackerAutomation": {
+      "title": "Automação do rastreador",
+      "linkCommits": "Vincular commits a itens do rastreador",
+      "linkCommitsDescription": "Vincula commits do git a itens do rastreador por meio das relações de sessão e da leitura de chaves de issue (por exemplo, NIM-123 na mensagem de commit).",
+      "autoClose": "Fechar itens com Fixes/Closes/Resolves",
+      "autoCloseDescription": "Altera o status do item do rastreador para concluído quando a mensagem de commit usa uma palavra-chave de fechamento."
+    },
+    "tools": {
+      "title": "Ferramentas e ambiente"
+    },
+    "externalEditor": {
+      "name": "Editor externo",
+      "description": "Editor usado pela opção 'Abrir em...' do menu de contexto.",
+      "none": "Nenhum",
+      "vimTerminal": "Vim (terminal)",
+      "neovimTerminal": "Neovim (terminal)",
+      "custom": "Personalizado..."
+    },
+    "extensionDevTools": {
+      "name": "Ferramentas de desenvolvimento de extensões",
+      "description": "Ativa ferramentas MCP para criar, instalar e recarregar extensões em tempo real."
+    },
+    "maxHeap": {
+      "name": "Tamanho máximo do heap",
+      "description": "Limite de memória do V8. Aumente se ocorrerem falhas por falta de memória. Requer reinicialização."
+    },
+    "defaultOption": "{{value}} (padrão)",
+    "terminalShell": {
+      "name": "Shell preferido do terminal",
+      "description": "Escolha com qual shell do Windows detectado os novos terminais devem abrir. A opção Automático segue a prioridade interna.",
+      "auto": "Automático (recomendado)",
+      "detectedName": "Shells de terminal detectados",
+      "detectedDescription": "Resultados atuais da detecção de shells do Windows, usados na seleção e na restauração de terminais.",
+      "noneDetected": "Nenhum shell de terminal compatível detectado."
+    },
+    "historyRetention": {
+      "name": "Retenção do histórico",
+      "description": "Idade máxima dos snapshots do histórico de arquivos antes da limpeza automática.",
+      "days_zero": "{{count}} dias",
+      "days_one": "{{count}} dia",
+      "days_other": "{{count}} dias",
+      "oneYear": "1 ano"
+    },
+    "maxSnapshots": {
+      "name": "Máximo de snapshots por arquivo",
+      "description": "Os snapshots mais antigos além desse limite são excluídos."
+    },
+    "customPath": {
+      "name": "Diretórios personalizados do PATH",
+      "description": "Diretórios adicionais para instalação de servidores MCP, detecção de ferramentas de CLI e operações do SDK de agentes.",
+      "show": "Mostrar PATH atual",
+      "hide": "Ocultar PATH atual"
+    },
+    "multiProject": {
+      "name": "Modo multiprojeto",
+      "description": "Abre vários projetos em uma única janela por meio de uma barra de projetos. Quando desativado, cada projeto abre em sua própria janela.",
+      "confirmTitle": "Desativar o modo multiprojeto",
+      "confirmMessage": "Há {{projectCount}} projetos abertos na barra. Desativar o modo multiprojeto? Os outros projetos serão fechados (o trabalho não salvo deles permanece no disco).",
+      "confirmLabel": "Desativar e fechar projetos"
+    },
+    "unlimitedProjects": {
+      "name": "Permitir projetos ilimitados",
+      "description": "Abre mais de oito projetos por janela. Mais projetos podem usar mais memória e CPU. Desativar esta opção mantém abertos os projetos atuais e os restaurados.",
+      "saveError": "Não foi possível salvar esta configuração. Tente novamente."
+    },
+    "restoreProjects": {
+      "name": "Restaurar os projetos da última sessão ao iniciar",
+      "descriptionMulti": "Quando ativado, a barra de projetos é restaurada com todos os projetos que estavam abertos no último encerramento. Quando desativado, abre apenas o projeto escolhido na tela inicial.",
+      "descriptionSingle": "Só tem efeito quando o modo multiprojeto está ativado."
+    }
+  },
+  "general": {
+    "title": "Geral"
+  },
+  "language": {
+    "title": "Idioma",
+    "description": "Idioma da interface do Nimbalyst. As partes ainda não traduzidas aparecem em inglês.",
+    "system": "Sistema",
+    "english": "Inglês",
+    "portugueseBrazil": "Português (Brasil)"
+  },
+  "spellcheck": {
+    "title": "Corretor ortográfico",
+    "description": "Ativa o corretor ortográfico do sistema nos editores e campos de texto."
+  },
+  "sidebar": {
+    "groups": {
+      "application": "Aplicativo",
+      "agentProviders": "Provedores de agente",
+      "chatProviders": "Provedores de chat",
+      "extensions": "Extensões",
+      "account": "Conta",
+      "project": "Projeto"
+    },
+    "groupDescriptions": {
+      "agentProviders": "Agentes podem usar ferramentas e arquivos do projeto para trabalhos com várias etapas.",
+      "chatProviders": "Provedores de chat fazem chamadas diretas ao modelo para conversas focadas."
+    },
+    "aboutGroup": "Sobre {{group}}",
+    "routes": {
+      "notifications": "Notificações",
+      "themes": "Temas",
+      "voiceMode": "Modo de voz",
+      "agentFeatures": "Recursos do agente",
+      "cloudflareSandboxes": "Sandboxes do Cloudflare",
+      "advanced": "Avançado",
+      "database": "Banco de dados",
+      "betaFeatures": "Recursos beta",
+      "providerCredentials": "Chaves de API salvas",
+      "claudeCode": "Claude Agent",
+      "openaiCodex": "OpenAI Codex",
+      "opencode": "OpenCode",
+      "copilotCli": "GitHub Copilot",
+      "grokBuild": "Grok Build",
+      "cursorAgent": "Cursor Agent",
+      "antigravityGeminiAgent": "Gemini",
+      "claude": "Claude Chat",
+      "openai": "OpenAI",
+      "lmstudio": "LM Studio",
+      "marketplace": "Marketplace",
+      "installedExtensions": "Instaladas",
+      "privilegedExtensions": "Recursos privilegiados",
+      "claudePlugins": "Plugins do Claude",
+      "mcpServers": "Servidores MCP",
+      "toolsMcp": "Ferramentas e custo de tokens",
+      "account": "Contas",
+      "accountMobile": "Aplicativo móvel",
+      "accountDevices": "Dispositivos",
+      "accountSharedLinks": "Links compartilhados",
+      "projectSharing": "Compartilhamento",
+      "projectAgentPermissions": "Permissões do agente",
+      "projectTrackers": "Rastreadores",
+      "projectAiProviders": "Provedores de IA",
+      "projectMcpServers": "Servidores MCP",
+      "projectGithub": "GitHub",
+      "projectExtensions": "Extensões"
+    }
+  },
+  "settingsView": {
+    "title": "Configurações",
+    "scopes": {
+      "application": "Aplicativo",
+      "account": "Conta",
+      "project": "Projeto",
+      "projectDisabledTooltip": "Abra ou selecione um projeto para acessar as configurações do projeto"
+    },
+    "scopeHints": {
+      "application": "Estas configurações se aplicam a todos os projetos",
+      "account": "Contas, sincronização pessoal, dispositivos e links compartilhados",
+      "project": "Configurações de {{name}}"
+    },
+    "thisProject": "este projeto",
+    "fallbackProjectName": "Projeto",
+    "saveStatus": {
+      "saved": "Salvo",
+      "error": "Erro ao salvar"
+    },
+    "connectionTest": {
+      "connected": "Conectado",
+      "failed": "Falha na conexão"
+    },
+    "extensionProvider": {
+      "description": "Este provedor de agente vem de uma extensão instalada. Escolha os modelos dele no seletor de modelos da entrada do chat. Para configurar ou gerenciar a extensão, abra Extensões instaladas.",
+      "openInstalledExtensions": "Abrir Extensões instaladas"
+    },
+    "extensionRouteUnavailable": "Esta página de configurações da extensão não está mais disponível.",
+    "openLocalProject": {
+      "mcpServers": "Abra um projeto local para configurar servidores MCP.",
+      "agentPermissions": "Abra um projeto local para configurar as permissões do agente.",
+      "providerOverrides": "Abra um projeto local para configurar substituições de provedor."
+    },
+    "projectMcpIndicator": {
+      "title_zero": "Há {{count}} servidores MCP adicionais configurados apenas para este projeto.",
+      "title_one": "Há {{count}} servidor MCP adicional configurado apenas para este projeto.",
+      "title_other": "Há {{count}} servidores MCP adicionais configurados apenas para este projeto.",
+      "hint": "Mude para a aba Projeto acima para ver ou editar os servidores MCP específicos do projeto."
+    }
+  },
+  "projectSharing": {
+    "title": "Compartilhamento",
+    "description": "Vínculo com a organização e acesso ao projeto selecionado.",
+    "noProject": "Abra ou selecione um projeto para gerenciar o compartilhamento.",
+    "remoteProjectTitle": "Projeto remoto da organização",
+    "remoteProjectIds": "Organização {{orgId}} · Projeto {{projectId}}",
+    "peopleWithAccess": "Pessoas com acesso"
+  },
+  "trackerConfigUpgrade": {
+    "storageCopy": "A configuração local dos rastreadores fica em {{localLocation}}. A configuração compartilhada fica no banco de dados compartilhado de rastreadores hospedado no Cloudflare.",
+    "confirmTitle": "Compartilhar {{trackers}} com a equipe?",
+    "confirmMessage": "{{trackers}} usam atualmente a configuração YAML local de {{localLocation}}. Ao prosseguir, essa configuração será movida para o banco de dados compartilhado de rastreadores hospedado no Cloudflare. A configuração Kanban resultante manterá a união de todas as colunas já em uso, e todos os itens serão preservados. Depois, você pode usar seu agente para mover itens, consolidar colunas e excluir colunas extras.",
+    "confirmLabel": "Prosseguir"
+  },
+  "mcpServers": {
+    "title": "Servidores MCP",
+    "descriptionUser": "Configure servidores MCP globais, disponíveis em todos os projetos.",
+    "descriptionWorkspace": "Configure servidores MCP específicos do projeto (salvos em .mcp.json).",
+    "loading": "Carregando servidores MCP...",
+    "addNewServerAria": "Adicionar novo servidor MCP",
+    "deleteConfirmTitle": "Excluir servidor MCP",
+    "deleteConfirmMessage": "Excluir o servidor MCP \"{{name}}\"?",
+    "errors": {
+      "loadFailed": "Falha ao carregar os servidores MCP",
+      "unknown": "Ocorreu um erro desconhecido",
+      "withMessage": "Erro: {{error}}",
+      "saveFailed": "Falha ao salvar o servidor",
+      "saveError": "Erro ao salvar: {{error}}",
+      "deleteFailedTitle": "Falha ao excluir o servidor MCP",
+      "deleteFailedMessage": "Falha ao excluir: {{error}}",
+      "deleteFailed": "Falha ao excluir o servidor",
+      "toggleProvidersFailed": "Falha ao alterar os provedores do servidor",
+      "updateFailedTitle": "Falha ao atualizar o servidor MCP"
+    },
+    "categories": {
+      "development": "Desenvolvimento",
+      "productivity": "Produtividade e gestão de projetos",
+      "automation": "Automação e fluxos de trabalho",
+      "ai": "IA e raciocínio",
+      "commerce": "Comércio e pagamentos",
+      "data": "Dados e análises",
+      "search": "Busca",
+      "files": "Arquivos e armazenamento"
+    },
+    "templates": {
+      "linear": "Rastreamento de issues e gestão de projetos",
+      "github": "Gerenciamento de repositórios e colaboração em código",
+      "filesystem": "Acesso ao sistema de arquivos local (configure os diretórios permitidos)",
+      "braveSearch": "Recursos de busca na web",
+      "posthog": "Análise de produto, feature flags e rastreamento de erros",
+      "atlassian": "Acesso ao Jira e ao Confluence",
+      "notion": "Gerenciamento de espaços de trabalho e páginas",
+      "asana": "Gestão de tarefas e projetos",
+      "slack": "Conversas do espaço de trabalho e contexto dos canais",
+      "playwright": "Automação e testes de navegador",
+      "sentry": "Rastreamento de erros e monitoramento de desempenho",
+      "corridor": "Acesso e gerenciamento de infraestrutura",
+      "context7": "Documentação atualizada como contexto para LLMs",
+      "zapier": "Automação e integrações entre apps (requer a URL do MCP do Zapier)",
+      "aws": "Gerenciamento de nuvem da Amazon Web Services",
+      "stripe": "Processamento e gestão de pagamentos",
+      "snowflake": "Consultas ao data warehouse na nuvem",
+      "sequentialThinking": "Raciocínio passo a passo e resolução de problemas",
+      "shopify": "Documentação de desenvolvimento e schemas de API do Shopify",
+      "fetch": "Requisições HTTP e obtenção de conteúdo da web",
+      "chromeDevtools": "Depuração e inspeção do navegador",
+      "knowledgeGraphMemory": "Memória persistente com grafos de conhecimento",
+      "serena": "Busca semântica e edição de código em bases de código",
+      "figma": "Acesso e inspeção de arquivos de design"
+    },
+    "envVars": {
+      "githubPersonalAccessToken": {
+        "label": "Token de acesso pessoal do GitHub",
+        "help": "Crie um PAT com o escopo repo"
+      },
+      "braveApiKey": {
+        "label": "Chave de API do Brave Search",
+        "help": "Obtenha no painel da API do Brave Search"
+      },
+      "posthogPersonalApiKey": {
+        "label": "Chave de API pessoal do PostHog",
+        "help": "Obtenha em PostHog > Settings > Personal API Keys"
+      },
+      "corridorApiKey": {
+        "label": "Chave de API do Corridor",
+        "help": "Obtenha no painel do Corridor"
+      },
+      "awsAccessKeyId": {
+        "label": "ID da chave de acesso da AWS",
+        "help": "Obtenha no console do AWS IAM"
+      },
+      "awsSecretAccessKey": {
+        "label": "Chave de acesso secreta da AWS",
+        "help": "Obtenha no console do AWS IAM ao criar a chave de acesso"
+      },
+      "awsRegion": {
+        "label": "Região da AWS",
+        "help": "Região da AWS (padrão: us-east-1)"
+      },
+      "stripeSecretKey": {
+        "label": "Chave secreta do Stripe",
+        "help": "Obtenha em Stripe Dashboard > Developers > API keys"
+      },
+      "snowflakeAccount": {
+        "label": "Conta do Snowflake",
+        "help": "O identificador da sua conta do Snowflake"
+      },
+      "snowflakeUser": {
+        "label": "Nome de usuário do Snowflake",
+        "help": "Seu nome de usuário do Snowflake"
+      },
+      "snowflakePassword": {
+        "label": "Senha do Snowflake",
+        "help": "Sua senha do Snowflake"
+      },
+      "snowflakeWarehouse": {
+        "label": "Warehouse do Snowflake",
+        "help": "O warehouse a ser usado nas consultas"
+      },
+      "zapierMcpUrl": {
+        "label": "URL do MCP do Zapier",
+        "help": "Obtenha sua URL pessoal do MCP no painel do Zapier MCP"
+      },
+      "filesystemAllowedDir": {
+        "label": "Diretório permitido",
+        "help": "Caminho do diretório que o servidor tem permissão para acessar (ex.: /Users/you/projects)"
+      },
+      "figmaApiKey": {
+        "label": "Token de acesso pessoal do Figma",
+        "help": "Crie um token de acesso pessoal nas configurações da sua conta do Figma"
+      }
+    },
+    "authBadge": {
+      "apiKey": "Chave de API",
+      "noAuth": "Sem autenticação"
+    },
+    "templateSelection": {
+      "ariaLabel": "Seleção de modelo",
+      "backToServers": "← Voltar aos servidores",
+      "backToServersAria": "Voltar à lista de servidores",
+      "title": "Adicionar servidor MCP",
+      "description": "Escolha um modelo para começar rapidamente ou crie uma configuração personalizada.",
+      "searchPlaceholder": "Buscar modelos...",
+      "searchAria": "Buscar modelos de servidor MCP",
+      "clearSearch": "Limpar pesquisa",
+      "customConfiguration": "Configuração personalizada",
+      "startFromScratch": "+ Começar do zero",
+      "startFromScratchHint": "Configure todas as opções manualmente",
+      "startFromScratchAria": "Começar do zero - Configurar todas as opções manualmente",
+      "templateCardAria": "{{name}} - {{description}} - autenticação: {{auth}}",
+      "authTypeAria": "Tipo de autenticação: {{auth}}",
+      "noResults": "Nenhum modelo corresponde a \"{{query}}\""
+    },
+    "form": {
+      "ariaLabel": "Configuração do servidor MCP",
+      "backToTemplates": "← Voltar aos modelos",
+      "backToTemplatesAria": "Voltar à seleção de modelos",
+      "viewDocs": "Ver documentação",
+      "viewDocsAria": "Ver a documentação de {{name}}",
+      "serverName": "Nome do servidor",
+      "nextStep": "Próximo passo",
+      "nativeNextStep": "Este painel de configurações apenas salva a configuração do servidor. Abra uma sessão do Claude ou do Codex e use este servidor por lá para iniciar a autorização no navegador.",
+      "advancedConfiguration": "Configuração avançada",
+      "advancedHint": "Pré-configurado; normalmente não requer alterações",
+      "deleteAria": "Excluir o servidor {{name}}",
+      "addServer": "Adicionar servidor",
+      "saved": "Salvo",
+      "saveError": "Erro ao salvar",
+      "transportType": "Tipo de transporte",
+      "transport": {
+        "stdio": "stdio (executável local)",
+        "http": "HTTP (servidor remoto - Streamable HTTP)",
+        "sse": "SSE (servidor remoto - legado)"
+      },
+      "transportHint": {
+        "stdio": "Executa um programa local que se comunica via stdin/stdout",
+        "http": "Conecta-se a um servidor remoto usando Streamable HTTP (recomendado para servidores remotos)",
+        "sse": "Conecta-se a um servidor remoto via Server-Sent Events (legado)"
+      },
+      "command": "Comando",
+      "commandPlaceholder": "/caminho/para/servidor ou npx @modelcontextprotocol/server-name",
+      "arguments": "Argumentos",
+      "argumentPlaceholder": "argumento",
+      "addArgument": "+ Adicionar argumento",
+      "serverUrl": "URL do servidor",
+      "httpHeaders": "Cabeçalhos HTTP",
+      "valuePlaceholder": "valor",
+      "addHttpHeader": "+ Adicionar cabeçalho HTTP",
+      "oauthClientId": "ID do cliente OAuth",
+      "oauthClientIdPlaceholder": "Necessário apenas se o provedor tiver emitido um para você",
+      "oauthClientIdHint": "Deixe em branco, a menos que a autorização falhe porque o provedor não oferece suporte ao registro dinâmico de clientes. Nesse caso, cole o ID do cliente emitido pelo provedor.",
+      "environmentVariables": "Variáveis de ambiente",
+      "keyPlaceholder": "CHAVE",
+      "addEnvironmentVariable": "+ Adicionar variável de ambiente"
+    },
+    "credentials": {
+      "title": "Obrigatório: informe suas credenciais",
+      "hint": "Esses valores são necessários para que o servidor se conecte.",
+      "enterValue": "Informe: {{label}}",
+      "getOneHere": "Obtenha aqui"
+    },
+    "oauth": {
+      "sectionTitle": "Autorização OAuth",
+      "authorizationLabel": "Autorização:",
+      "statusLabel": "Status:",
+      "status": {
+        "managedByClient": "Gerenciado pelo Claude/Codex",
+        "checking": "Verificando...",
+        "authorized": "Autorizado",
+        "notAuthorized": "Não autorizado",
+        "notRequired": "Não necessário",
+        "unknown": "Desconhecido"
+      },
+      "authorize": "Autorizar",
+      "authorizing": "Autorizando...",
+      "authorizeAria": "Autorizar conexão OAuth",
+      "revoke": "Revogar",
+      "revoking": "Revogando...",
+      "revokeAria": "Revogar autorização OAuth",
+      "nativeHint": "Este servidor usa OAuth nativo do MCP. Inicie uma sessão do Claude ou do Codex e deixe o cliente abrir o fluxo de autorização no navegador.",
+      "authorizedHint": "Você está autorizado a usar este servidor.",
+      "notAdvertisedHint": "Este endpoint não anunciou suporte a OAuth. Use cabeçalhos ou variáveis de ambiente se o servidor exigir outro método de autenticação.",
+      "clickAuthorizeHint": "Clique em Autorizar para abrir uma janela do navegador e fazer login.",
+      "nativeCompletedHint": "O OAuth nativo do MCP é concluído pelo Claude ou pelo Codex na primeira vez que o servidor é usado.",
+      "clearCacheAria": "Limpar o cache de autenticação e tentar autorizar novamente",
+      "clearingCache": "Limpando...",
+      "clearCacheAndRetry": "Limpar cache de autenticação e tentar novamente",
+      "addClientId": "Adicionar um ID do cliente",
+      "addClientIdAria": "Ir para o campo de ID do cliente OAuth",
+      "nativeAuthorizeMessage": "Este servidor usa OAuth nativo do MCP. Inicie uma sessão do Claude ou do Codex e faça a autorização por lá, em vez de usar este botão.",
+      "authorizationFailedFallback": "Falha na autorização",
+      "authorizationFailed": "Falha na autorização: {{error}}",
+      "authorizationError": "Erro de autorização: {{error}}",
+      "nativeRevokeMessage": "Os tokens de OAuth nativo do MCP são gerenciados pelo cliente MCP. Remova o servidor do Claude ou do Codex se precisar autorizá-lo novamente.",
+      "revokeConfirmTitle": "Revogar autorização",
+      "revokeConfirmMessage": "Revogar a autorização? Você precisará autorizar novamente para usar este servidor.",
+      "revokeSuccess": "Autorização revogada com sucesso",
+      "revokeFailed": "Falha ao revogar a autorização",
+      "revokeError": "Erro ao revogar: {{error}}",
+      "nativeCacheMessage": "Este servidor usa OAuth nativo do MCP. As ferramentas de cache de autenticação só se aplicam a servidores baseados em mcp-remote.",
+      "cacheClearedRetrying": "Cache de autenticação limpo. Tentando autorizar novamente..."
+    },
+    "test": {
+      "testConnection": "Testar conexão",
+      "test": "Testar",
+      "testAria": "Testar conexão com o servidor",
+      "testing": "Testando...",
+      "connected": "Conectado",
+      "failed": "Falhou",
+      "installInstructions": "Instruções de instalação",
+      "commandRequired": "O comando é obrigatório",
+      "urlRequired": "A URL é obrigatória",
+      "nativeOAuthUnavailable": "O teste de conexão não está disponível para servidores com OAuth nativo do MCP. Abra uma sessão do Claude ou do Codex e use o servidor por lá para autorizá-lo.",
+      "nativeOAuthDisabled": "O teste de conexão está desativado para servidores com OAuth nativo do MCP. Salve a configuração e, em seguida, abra uma sessão do Claude ou do Codex e use o servidor por lá para autorizá-lo.",
+      "starting": "Iniciando...",
+      "success": "Conexão bem-sucedida",
+      "figmaOAuthUnsupported": "O Figma não permite MCP baseado em OAuth em determinados apps. Use o modelo do Figma na lista de servidores MCP, que usa um token de acesso pessoal.",
+      "connectionFailed": "Falha na conexão",
+      "testFailed": "Falha no teste"
+    },
+    "list": {
+      "ariaLabel": "Lista de servidores MCP",
+      "servers": "Servidores",
+      "allProviders": "Todos",
+      "allProvidersTooltip": "Todos os provedores",
+      "claudeScopeNote": "Desativar um servidor para o Claude também o desativa para a CLI <code>claude</code> neste projeto — o Nimbalyst grava a própria lista de servidores desativados do Claude Code em vez de sobrescrever a configuração dele.",
+      "empty": "Nenhum servidor MCP configurado",
+      "addFirstServer": "+ Adicionar seu primeiro servidor",
+      "addFirstServerAria": "Adicionar seu primeiro servidor MCP",
+      "serverItemAria": "Servidor {{name}} - {{state}} - {{target}}",
+      "stateEnabled": "ativado",
+      "stateDisabled": "desativado",
+      "noSelection": "Selecione um servidor ou clique em \"Adicionar\" para criar um novo"
+    },
+    "errorBoundary": {
+      "title": "Não foi possível carregar os servidores MCP",
+      "message": "Ocorreu um erro inesperado ao carregar o painel de servidores MCP. Tente recarregar o aplicativo.",
+      "reload": "Recarregar aplicativo"
+    }
+  },
+  "toolsMcp": {
+    "title": "Ferramentas e MCP",
+    "description": "Veja quanto as ferramentas do agente custam em tokens de contexto e controle quais grupos ele pode carregar.",
+    "groupDescriptions": {
+      "nimbalyst": "Integração essencial do app com o host (perguntas, proposta de commit, capturas de tela, metadados da sessão)",
+      "nimbalystHost": "Configurações do app, contexto da sessão e orquestração de sessões filhas",
+      "nimbalystTrackers": "Acompanhamento de bugs, tarefas, planos e decisões",
+      "nimbalystSituational": "Modo de voz, documentos colaborativos e feedback",
+      "nimbalystExtensionDev": "Desenvolvimento e depuração de extensões (modo desenvolvedor)"
+    },
+    "policy": {
+      "alwaysLoaded": "Sempre carregado",
+      "conditional": "Condicional",
+      "external": "Externo",
+      "onDemand": "Carrega sob demanda"
+    },
+    "tokenCostUnknown": "As definições das ferramentas ficam no servidor externo; o custo é desconhecido até que ele se conecte",
+    "tokenCostEstimated": "Tokens de contexto estimados quando as definições de ferramentas deste grupo são carregadas",
+    "loadFailed": "Falha ao carregar as informações das ferramentas",
+    "extensionToolsDescription_zero": "{{count}} ferramentas da extensão {{name}}",
+    "extensionToolsDescription_one": "{{count}} ferramenta da extensão {{name}}",
+    "extensionToolsDescription_other": "{{count}} ferramentas da extensão {{name}}",
+    "userServerDescription": "Servidor MCP adicionado pelo usuário",
+    "lockedTooltip": "Obrigatório — ferramentas do próprio app; não podem ser desativadas",
+    "thisWorkspace": "Este projeto",
+    "toolCount_zero": "{{count}} ferramentas",
+    "toolCount_one": "{{count}} ferramenta",
+    "toolCount_other": "{{count}} ferramentas",
+    "manage": "Gerenciar",
+    "baselineInfo": "Toda sessão começa apenas com as ferramentas Core carregadas (<tokens>{{tokens}} tokens</tokens>). Os demais grupos ficam fora da janela de contexto até que o agente realmente precise deles, então os custos abaixo só são pagos sob demanda. O detalhamento em tempo real de uma sessão em andamento fica no medidor de tokens do painel de IA.",
+    "builtInGroups": "Grupos de ferramentas integrados",
+    "extensionGroups": "Grupos de ferramentas de extensões",
+    "yourMcpServers": "Seus servidores MCP",
+    "footerNote": "As alterações se aplicam à sua próxima mensagem — não é preciso reiniciar."
+  },
+  "workspaceSharing": {
+    "roles": {
+      "owner": "Proprietário",
+      "admin": "Administrador",
+      "member": "Membro",
+      "viewer": "Visualizador",
+      "guest": "Convidado",
+      "unknown": "Desconhecido"
+    },
+    "pending": "Pendente",
+    "encryption": {
+      "title": "Criptografia e privacidade",
+      "description": "Os dados da organização (rastreadores e documentos) são criptografados em trânsito e em repouso e isolados por organização. Dependendo da configuração da sua organização, as chaves de criptografia ficam apenas nos dispositivos dos membros ou são gerenciadas pela Nimbalyst, para que a organização possa ser acessada pela web, pela CLI e por agentes na nuvem.",
+      "authorizedOnly": "Somente membros autorizados da organização podem acessar os dados compartilhados",
+      "personalSync": "A sincronização dos seus dispositivos pessoais (sessões, rascunhos, configurações) continua com conhecimento zero — as chaves nunca saem dos seus dispositivos",
+      "selfHosting": "Precisa de conhecimento zero de verdade para os dados da organização? A solução é a auto-hospedagem"
+    },
+    "noGitRemoteNotice": "Este espaço de trabalho não tem um remoto git. Você ainda pode compartilhá-lo, mas a cópia de um colega é associada a um projeto pelo remoto git — sem ele, apenas este computador se conecta ao projeto. Adicione um remoto (<code>git remote add origin …</code>) se outras pessoas também precisarem trabalhar nele.",
+    "connect": {
+      "title": "Conectar este projeto a uma organização",
+      "description": "Compartilhar coloca <name>{{projectName}}</name> em uma organização, para que os itens do rastreador e os documentos sejam sincronizados com as pessoas a quem você der acesso.",
+      "existingTitle": "Adicionar a uma organização existente",
+      "existingDescription": "Ele entra como um projeto próprio, compartilhando os membros e a criptografia da organização.",
+      "orgPickerLabel": "Organização",
+      "selectOrganization": "Selecione uma organização…",
+      "newTitle": "Criar uma nova organização",
+      "newDescriptionSeparate": "Crie uma organização separada, com membros e cobrança próprios.",
+      "newDescriptionFirst": "Você ainda não faz parte de nenhuma organização. Crie uma para começar a compartilhar este projeto.",
+      "creationUnavailable": "A criação de organizações está temporariamente indisponível enquanto este recurso é finalizado. Quando você for administrador de uma, poderá adicionar este projeto a ela aqui."
+    },
+    "confirm": {
+      "addTitle": "Adicionar {{projectName}} a {{orgName}}",
+      "createTitle": "Criar uma nova organização para {{projectName}}",
+      "existingAccess": "Todas as pessoas a quem você conceder acesso em {{orgName}} poderão abrir os itens do rastreador e os documentos compartilhados deste projeto.",
+      "newAccess": "Você será o proprietário, e ninguém mais terá acesso até que você convide outras pessoas.",
+      "cloneConnects": "Colegas que clonarem <remote>{{gitRemote}}</remote> se conectam a ele automaticamente.",
+      "noRemote": "Sem um remoto git, apenas este computador se conecta ao projeto — a cópia de um colega não tem como ser associada a ele.",
+      "nothingMoves": "Nada no seu disco é movido ou alterado.",
+      "adding": "Adicionando…",
+      "addProject": "Adicionar projeto",
+      "creating": "Criando…",
+      "createOrganization": "Criar organização"
+    },
+    "projectIdentity": "Identidade do projeto",
+    "attached": {
+      "noGitRemoteLinked": "Nenhum remoto git vinculado",
+      "unlink": "Desvincular",
+      "relink": "Vincular novamente",
+      "boundAccount": "conta vinculada",
+      "openOrganization": "Abrir organização",
+      "needsAttentionTitle": "O vínculo do projeto precisa de atenção",
+      "needsAttentionBody": "A organização é conhecida, mas este espaço de trabalho não foi associado a um id de projeto explícito. A edição de acesso fica desativada em vez de recorrer a outro projeto.",
+      "peopleWithAccess": "Pessoas com acesso",
+      "moveProject": "Mover projeto…",
+      "untitledProject": "Projeto sem título"
+    },
+    "invite": {
+      "body": "Você foi convidado para participar desta organização. Aceite para colaborar em itens de rastreador e documentos compartilhados e criptografados.",
+      "joining": "Entrando…",
+      "join": "Entrar na organização",
+      "identityDescription": "As organizações vinculam um projeto ao seu remoto git, para que qualquer membro que abrir um clone do mesmo repositório seja conectado automaticamente.",
+      "noGitRemoteDetected": "Nenhum remoto git detectado"
+    },
+    "errors": {
+      "addProject": "Falha ao adicionar o projeto à organização",
+      "sendInvite": "Falha ao enviar o convite",
+      "removeMember": "Falha ao remover o membro",
+      "joinOrganization": "Falha ao entrar na organização",
+      "linkProject": "Falha ao vincular o projeto",
+      "unlinkProject": "Falha ao desvincular o projeto",
+      "updateRole": "Falha ao atualizar a função",
+      "deleteOrganization": "Falha ao excluir a organização"
+    },
+    "removeDialog": {
+      "thisMember": "este membro",
+      "revokeTitle": "Revogar convite",
+      "removeTitle": "Remover membro",
+      "revokeMessage": "Revogar o convite pendente de {{label}}?",
+      "removeMessage": "Remover {{label}} de \"{{orgName}}\"? Essa pessoa perderá o acesso aos rastreadores e documentos compartilhados desta organização. Esta ação não pode ser desfeita (seria necessário convidá-la novamente).",
+      "revokeConfirm": "Revogar"
+    },
+    "unlinkDialog": {
+      "title": "Parar de sincronizar o projeto",
+      "message": "Parar de sincronizar este projeto com \"{{orgName}}\"? Os rastreadores e documentos dele deixarão de ser sincronizados com a equipe. Você pode vinculá-lo novamente depois.",
+      "confirm": "Parar de sincronizar"
+    },
+    "deleteDialog": {
+      "title": "Excluir organização",
+      "message": "Excluir permanentemente a organização \"{{orgName}}\"? Isso removerá todos os membros, documentos compartilhados e chaves de criptografia. Esta ação não pode ser desfeita."
+    },
+    "loadingData": "Carregando dados da organização…",
+    "header": {
+      "title": "Organização",
+      "description": "Crie uma organização para colaborar em itens de rastreador e documentos compartilhados e criptografados."
+    },
+    "signedOut": {
+      "body": "Para compartilhar este projeto, é preciso ter uma conta Nimbalyst. O primeiro passo é entrar ou criar uma.",
+      "button": "Entrar ou criar uma conta"
+    },
+    "signedInAs": "Conectado como <name>{{name}}</name>"
+  },
+  "moveProject": {
+    "thisProject": "este projeto",
+    "errors": {
+      "loadPreview": "Falha ao carregar a prévia da movimentação",
+      "moveFailed": "Falha ao mover"
+    },
+    "title": "Mover projeto para outra organização",
+    "description": "Mover <project>{{projectLabel}}</project> transfere seus rastreadores, documentos e acessos de membros para outra organização. Os originais são removidos desta organização.",
+    "noCandidates": "Você não é proprietário nem administrador de nenhuma outra organização para onde mover este projeto.",
+    "destinationLabel": "Organização de destino",
+    "loadingPreview": "Carregando prévia…",
+    "custodyBlockedTitle": "Atualização de criptografia necessária",
+    "custodyBlockedBody": "Esta movimentação exige que ambas as organizações usem criptografia gerenciada pelo servidor. Atualize a criptografia desta equipe (Segurança e criptografia) antes de mover o projeto.",
+    "movingTo": "Movendo para <dest>{{destName}}</dest>.",
+    "slugCollision": "Já existe um projeto com este nome em {{destName}}. Os dois vão coexistir; links diretos podem ficar ambíguos.",
+    "membersAndAccess": "Membros e acesso ({{total}})",
+    "noGrants": "Nenhuma permissão específica do projeto para transferir.",
+    "member": {
+      "uncheckToDrop": "Desmarque para remover este membro do destino",
+      "noEmailCannotTransfer": "Nenhum e-mail registrado — não é possível transferir",
+      "noEmail": "(nenhum e-mail registrado)",
+      "willBeInvited": "será convidado (nova licença)",
+      "alreadyMember": "já é membro",
+      "dropped": "removido"
+    },
+    "seatImpact_zero": "Impacto em licenças em {{destName}}: <delta>+{{count}}</delta> licenças.",
+    "seatImpact_one": "Impacto em licenças em {{destName}}: <delta>+{{count}}</delta> licença.",
+    "seatImpact_other": "Impacto em licenças em {{destName}}: <delta>+{{count}}</delta> licenças.",
+    "typeToConfirm": "Digite <dest>{{destName}}</dest> para confirmar esta movimentação:",
+    "running": "Movendo projeto… transferindo rastreadores, documentos e acessos.",
+    "doNotClose": "Não feche esta janela.",
+    "done": {
+      "title": "Projeto movido para {{destName}}",
+      "documentsRelocated_zero": "{{count}} documentos transferidos",
+      "documentsRelocated_one": "{{count}} documento transferido",
+      "documentsRelocated_other": "{{count}} documentos transferidos",
+      "grantsTransferred_zero": "{{count}} permissões de membros transferidas",
+      "grantsTransferred_one": "{{count}} permissão de membro transferida",
+      "grantsTransferred_other": "{{count}} permissões de membros transferidas",
+      "grantsPending_zero": "{{count}} convidados (a permissão é ativada ao aceitar)",
+      "grantsPending_one": "{{count}} convidado (a permissão é ativada ao aceitar)",
+      "grantsPending_other": "{{count}} convidados (a permissão é ativada ao aceitar)",
+      "grantsDropped_zero": "{{count}} removidos conforme sua seleção",
+      "grantsDropped_one": "{{count}} removido conforme sua seleção",
+      "grantsDropped_other": "{{count}} removidos conforme sua seleção",
+      "grantsSkipped_zero": "{{count}} ignorados (nenhum e-mail registrado)",
+      "grantsSkipped_one": "{{count}} ignorado (nenhum e-mail registrado)",
+      "grantsSkipped_other": "{{count}} ignorados (nenhum e-mail registrado)"
+    },
+    "moveButton": "Mover projeto",
+    "updateEncryption": "Atualizar criptografia"
+  },
+  "organization": {
+    "chooseOrganization": "Escolha uma organização.",
+    "title": "Configurações",
+    "description": "Configuração e status de segurança de toda a organização.",
+    "identity": {
+      "title": "Organização",
+      "saving": "Salvando…",
+      "rename": "Renomear",
+      "unnamed": "Organização sem nome",
+      "ownedBy": "Proprietário: {{email}}",
+      "renameFailed": "Não foi possível renomear a organização"
+    },
+    "messaging": {
+      "title": "Mensagens",
+      "description": "Salas e mensagens diretas podem ser desativadas em organizações que conversam em outro lugar. A Caixa de entrada e os comentários em documentos e rastreadores não são afetados.",
+      "readOnly": "Somente proprietários e administradores da organização podem alterar estas configurações.",
+      "loadError": "Não foi possível carregar as configurações: {{error}}",
+      "roomsName": "Salas",
+      "roomsDescription": "Salas da organização, incluindo #general, e o diretório de salas.",
+      "dmsName": "Mensagens diretas",
+      "dmsDescription": "Mensagens individuais e em pequenos grupos entre membros.",
+      "roomCreationLabel": "Quem pode criar salas",
+      "roomCreationMembers": "Qualquer membro",
+      "roomCreationAdmins": "Somente administradores da organização"
+    }
+  },
+  "orgMembers": {
+    "title": "Membros e funções",
+    "removeDialog": {
+      "thisMember": "este membro",
+      "revokeTitle": "Revogar convite",
+      "removeTitle": "Remover membro",
+      "revokeMessage": "Revogar o convite pendente de {{label}}?",
+      "removeMessage": "Remover {{label}} desta organização? Essa pessoa perderá o acesso aos documentos e rastreadores compartilhados e precisará ser convidada novamente.",
+      "revokeConfirm": "Revogar"
+    },
+    "errors": {
+      "removeMember": "Não foi possível remover o membro",
+      "updateRole": "Não foi possível atualizar a função do membro",
+      "projectGrantFailed": "Não foi possível conceder acesso ao projeto ({{id}})"
+    },
+    "roles": {
+      "viewer": "Visualizador",
+      "member": "Membro",
+      "admin": "Administrador",
+      "owner": "Proprietário"
+    },
+    "removeButton": {
+      "title": "Remover da organização",
+      "revokeAriaLabel": "Revogar convite de {{name}}",
+      "removeAriaLabel": "Remover {{name}} desta organização"
+    },
+    "inviteGuardReason": "É necessário ser proprietário ou administrador da organização para convidar membros.",
+    "invitePeople": "Convidar pessoas",
+    "yourTeam": "sua equipe",
+    "presence": {
+      "online": "online",
+      "away": "ausente",
+      "offline": "offline"
+    }
+  },
+  "mergeOrg": {
+    "errors": {
+      "mergeFailed": "Falha ao mesclar"
+    },
+    "title": "Mesclar organização com outra",
+    "description": "Move todos os projetos ({{projectCount}}) e membros ({{memberCount}}) de <org>{{orgName}}</org> para outra organização. Esta ação não pode ser desfeita.",
+    "noCandidates": "Você não é proprietário nem administrador de outra organização com a qual mesclar.",
+    "survivorLabel": "Mesclar com (organização que permanece)",
+    "deleteDrained": "Excluir <org>{{orgName}}</org> após a mesclagem (somente se ficar totalmente vazia)",
+    "typeToConfirm": "Digite <org>{{orgName}}</org> para confirmar:",
+    "running": "Mesclando… movendo projetos, transferindo acessos, unindo membros.",
+    "doNotClose": "Não feche esta janela.",
+    "done": {
+      "partialTitle": "Mesclagem concluída parcialmente",
+      "title": "Mesclada com {{survivorName}}",
+      "projectsMoved_zero": "{{count}} projetos movidos",
+      "projectsMoved_one": "{{count}} projeto movido",
+      "projectsMoved_other": "{{count}} projetos movidos",
+      "rolesElevated_zero": "{{count}} funções de membros elevadas",
+      "rolesElevated_one": "{{count}} função de membro elevada",
+      "rolesElevated_other": "{{count}} funções de membros elevadas",
+      "membersInvited_zero": "{{count}} membros convidados para a organização que permanece",
+      "membersInvited_one": "{{count}} membro convidado para a organização que permanece",
+      "membersInvited_other": "{{count}} membros convidados para a organização que permanece",
+      "drainedDeleted": "{{orgName}} foi excluída",
+      "drainedKept": "{{orgName}} foi mantida",
+      "stoppedAt": "Interrompido no projeto {{projectId}}: {{error}}"
+    },
+    "mergeButton": "Mesclar organização"
+  },
+  "orgOnboarding": {
+    "errors": {
+      "acceptInvitation": "Não foi possível aceitar o convite",
+      "destinationNotSaved": "Convite aceito, mas não foi possível salvar o destino da organização. Tente novamente."
+    },
+    "pendingInvitations": "Convites pendentes",
+    "invitedAccount": "Conta convidada: {{account}}",
+    "signedInAccount": "conta conectada",
+    "accept": "Aceitar",
+    "newOrganizationTitle": "Nova organização",
+    "newOrganizationDescription": "Dê um nome, convide sua equipe e escolha as salas iniciais.",
+    "createOrganization": "Criar organização"
+  },
+  "orgDangerZone": {
+    "title": "Zona de perigo",
+    "description": "Sair, transferir a propriedade, consolidar e excluir são ações que afetam toda a organização.",
+    "leave": {
+      "title": "Sair da organização",
+      "description": "Seu acesso a todos os projetos da organização será removido. As restrições de último proprietário são aplicadas pelo servidor.",
+      "disabledReason": "A saída está desativada até que o servidor de colaboração aplique as regras de último proprietário.",
+      "button": "Sair da organização"
+    },
+    "merge": {
+      "title": "Mesclar organização",
+      "description": "Mova todos os projetos e mescle a lista de membros com outra organização que você administra.",
+      "disabledReason": "É necessário ter a função de administrador nesta organização e outra organização de destino.",
+      "button": "Mesclar com outra organização…",
+      "finished": "Mesclagem da organização concluída."
+    },
+    "transfer": {
+      "title": "Transferir propriedade",
+      "description": "Escolha outro membro ativo antes de sair ou excluir uma organização da qual você é proprietário.",
+      "disabledReason": "A transferência de propriedade está desativada até que o servidor de colaboração aplique as regras de último proprietário.",
+      "button": "Transferir propriedade"
+    },
+    "delete": {
+      "title": "Excluir organização",
+      "description": "Digite o id da organização para confirmar. As restrições de propriedade e de dados do servidor são verificadas antes da exclusão.",
+      "disabledReason": "É necessário ser proprietário ou administrador da organização.",
+      "success": "Organização excluída.",
+      "failed": "Falha ao excluir"
+    }
+  },
+  "projectAccess": {
+    "inheritedAdmin": "{{role}} · administrador do projeto por herança",
+    "roles": {
+      "none": "Sem acesso ao projeto",
+      "viewer": "Visualizador",
+      "editor": "Editor",
+      "admin": "Administrador do projeto"
+    },
+    "readOnly": "Somente leitura. Um proprietário ou administrador da organização gerencia o acesso ao projeto."
+  },
+  "orgProjects": {
+    "addProjectHint": "Para adicionar um projeto, abra-o no Nimbalyst e acesse Configurações do projeto → Compartilhamento → Adicionar a uma organização existente.",
+    "errors": {
+      "load": "Não foi possível carregar os projetos"
+    },
+    "title": "Projetos",
+    "description": "Projetos desta organização, incluindo os que não têm um clone local.",
+    "space": {
+      "title": "Espaço da organização",
+      "description": "Reservado para documentos e rastreadores compartilhados da organização",
+      "comingLater": "Em breve"
+    },
+    "untitledProject": "Projeto sem título",
+    "gitLinked": "Projeto vinculado ao Git",
+    "noLocalWorkspace": "Nenhum espaço de trabalho local vinculado",
+    "manageAccess": "Gerenciar acesso",
+    "empty": "Nenhum projeto ainda."
+  },
+  "orgSecurity": {
+    "title": "Segurança",
+    "description": "Status da criptografia de colaboração da organização."
+  },
+  "orgBilling": {
+    "title": "Cobrança",
+    "placeholder": "Os controles de cobrança estão reservados para uma versão futura."
+  },
+  "securityEncryption": {
+    "title": "Criptografado pela Nimbalyst",
+    "description": "Os dados da equipe são criptografados em trânsito e em repouso com chaves gerenciadas pela Nimbalyst. Isso é separado da criptografia da sincronização pessoal, cujas chaves permanecem apenas nos seus dispositivos.",
+    "checking": "Verificando o status da criptografia…",
+    "unmigratedTitle": "Esta organização usa uma criptografia descontinuada",
+    "unmigratedBody": "Ela nunca foi migrada para a criptografia gerenciada pela Nimbalyst, que agora é o único modo compatível. Os documentos e rastreadores da equipe estão indisponíveis para ela. Crie uma nova organização e compartilhe novamente o conteúdo desta equipe.",
+    "unavailable": "O status da criptografia não está disponível no momento.",
+    "active": "Criptografia ativa"
+  },
+  "trackerConfig": {
+    "title": "Rastreadores",
+    "descriptionTeam": "Cada rastreador tem seus próprios campos, itens e numeração, e pertence a você ou à sua equipe.",
+    "descriptionSolo": "Cada rastreador tem seus próprios campos e itens. Tudo aqui fica nesta máquina.",
+    "openProjectFirst": "Abra um projeto antes de alterar o prefixo local dos rastreadores.",
+    "deleteType": {
+      "blockedTitle": "O tipo de rastreador ainda tem itens",
+      "blockedMessage_zero": "Não é possível excluir \"{{name}}\": ainda existem {{count}} itens deste tipo. Exclua esses itens primeiro.",
+      "blockedMessage_one": "Não é possível excluir \"{{name}}\": ainda existe {{count}} item deste tipo. Exclua esse item primeiro.",
+      "blockedMessage_other": "Não é possível excluir \"{{name}}\": ainda existem {{count}} itens deste tipo. Exclua esses itens primeiro.",
+      "confirmTitle": "Excluir tipo de rastreador?",
+      "confirmMessage": "Excluir o tipo de rastreador \"{{name}}\"? Esta ação não pode ser desfeita.",
+      "notFoundTitle": "Não foi possível excluir o tipo de rastreador",
+      "notFoundMessage": "Não foi possível encontrar o arquivo YAML de origem de \"{{name}}\" em .nimbalyst/trackers/. O tipo de rastreador não foi excluído.",
+      "buttonTitle": "Excluir tipo de rastreador \"{{name}}\""
+    },
+    "schemaOverride": {
+      "badgeTitle": "Substituição do espaço de trabalho",
+      "badge": "Substituição",
+      "editTitle": "Editar substituição do esquema de {{name}}",
+      "customizeTitle": "Personalizar {{name}}",
+      "resetTitle": "Restaurar {{name}} para o padrão",
+      "customizeErrorTitle": "Não foi possível personalizar o esquema",
+      "customizeErrorMessage": "Não foi possível personalizar {{name}}.",
+      "resetErrorTitle": "Não foi possível redefinir o esquema",
+      "resetErrorMessage": "Não foi possível redefinir {{name}}.",
+      "resetConfirmTitle": "Redefinir {{name}}?",
+      "resetConfirmMessage": "Excluir a substituição de esquema do espaço de trabalho para \"{{name}}\" e voltar ao padrão integrado?",
+      "resetConfirmLabel": "Restaurar padrão"
+    },
+    "sharing": {
+      "personal": "Somente nesta máquina",
+      "teamDrafts": "Compartilhado com a equipe; novos itens começam como rascunhos",
+      "team": "Compartilhado com a equipe",
+      "archived": "Arquivado — itens mantidos e pesquisáveis, somente leitura. {{base}}"
+    },
+    "lifecycle": {
+      "promoteFailed": "Não foi possível compartilhar este rastreador com sua equipe.",
+      "promotedTitle": "{{name}} agora pertence à sua equipe",
+      "promotedPendingMessage": "{{publishedCount}} item(ns) publicado(s). {{pendingKeyCount}} aguardando as chaves do servidor.",
+      "promotedMessage": "{{publishedCount}} item(ns) publicado(s), cada um com sua chave de issue.",
+      "updateFailed": "Não foi possível atualizar este rastreador.",
+      "archivedTitle": "{{name}} arquivado",
+      "unarchivedTitle": "{{name}} desarquivado",
+      "archivedMessage": "Todos os itens são mantidos e continuam pesquisáveis. A partir de agora, ficam somente leitura.",
+      "unarchivedMessage": "Seus itens podem ser editados novamente.",
+      "updateFailedTitle": "Falha ao atualizar o rastreador",
+      "promoteTitle": "Compartilhar este rastreador com sua equipe",
+      "unarchiveTitle": "Desarquivar este rastreador",
+      "archiveTitle": "Arquivar este rastreador — os itens são mantidos",
+      "working": "Processando…"
+    },
+    "groups": {
+      "trackers": "Rastreadores",
+      "myTrackers": "Meus rastreadores",
+      "teamDescription": "Todos na equipe veem os mesmos campos, itens e números. Alterar os campos deste rastreador altera-os para toda a equipe; o arquivo YAML em .nimbalyst/trackers é uma cópia local da definição da equipe.",
+      "personalDescription": "Estes rastreadores ficam nesta máquina. Eles nunca são sincronizados e ninguém da sua equipe pode vê-los.",
+      "soloDescription": "Cada rastreador mantém seus próprios campos e itens, definidos em .nimbalyst/trackers e armazenados nesta máquina."
+    },
+    "issueKeyPrefix": {
+      "title": "Prefixo da chave de issue da equipe",
+      "description": "Os itens de rastreador publicados usam este prefixo compartilhado (ex.: <code>{{prefix}}-42</code>).",
+      "invalid": "Deve ter de 2 a 5 letras maiúsculas",
+      "readOnlyHint": "Somente um administrador da equipe pode alterar o prefixo deste projeto.",
+      "changeHint": "Alterar o prefixo afeta apenas novos itens. Os itens existentes mantêm suas chaves atuais."
+    },
+    "agentAccess": {
+      "title": "Acesso do agente de IA",
+      "description": "Permite que agentes de IA leiam e atualizem rastreadores neste projeto. Quando desativado, as ferramentas de rastreadores são removidas completamente do agente. Aplica-se a novas sessões do agente."
+    },
+    "inlineNote": {
+      "admin": "Rastreadores inline (<code>#bug[...]</code>) são sempre locais, independentemente do compartilhamento do rastreador. Somente itens rastreados criados pelo painel participam da sincronização da equipe.",
+      "member": "Rastreadores inline (<code>#bug[...]</code>) nos seus documentos são sempre locais. Promova-os a itens rastreados para compartilhá-los com a equipe."
+    },
+    "promoteBanner": "<bold>Promova itens inline</bold> a itens rastreados para compartilhá-los com a equipe. Clique com o botão direito em qualquer rastreador inline e selecione \"Promover a item rastreado\"."
+  },
+  "trackerSchemaDrift": {
+    "title": "Os arquivos de esquema estão dessincronizados",
+    "description": "Os arquivos de esquema de rastreadores em <code>.nimbalyst/trackers</code> diferem do espelho do banco de dados local.",
+    "resync": "Ressincronizar a partir dos arquivos",
+    "resyncing": "Ressincronizando...",
+    "status": {
+      "drifted": "a definição difere do arquivo",
+      "yamlOnly": "no arquivo, ainda não no banco de dados",
+      "dbOnlyOrphan": "no banco de dados, arquivo ausente"
+    }
+  },
+  "trackerSchemaChange": {
+    "adminRequired": "Somente um administrador da equipe pode remover ou renomear parte de um rastreador compartilhado pela equipe. Adicionar campos, status e opções continua aberto a todos.",
+    "working": "Processando…"
+  },
+  "localKeyPrefix": {
+    "title": "Prefixo de número local",
+    "description": "Itens privados e rascunhos usam um ponto para que os agentes não os confundam com chaves compartilhadas (ex.: <code>{{prefix}}.42</code>).",
+    "invalid": "Deve ter de 2 a 5 letras maiúsculas",
+    "renameConfirmTitle": "Renomear números locais?",
+    "renameConfirmMessage": "Renomear os números locais existentes deste projeto de {{from}}. para {{to}}.?\n\nOs números em si continuam os mesmos. Qualquer referência existente a um número {{from}}. deixará de ser resolvida.",
+    "renameConfirmLabel": "Renomear",
+    "changeFailed": "Não foi possível alterar o prefixo local.",
+    "inputAriaLabel": "Prefixo de número local dos rastreadores",
+    "issuedHint": "Alterar isto renomeia os números que este projeto já emitiu, mantendo cada número. O prefixo da equipe é {{teamPrefix}}.",
+    "notAssigned": "não atribuído",
+    "notIssuedHint": "Este projeto ainda não emitiu nenhum número local, então alterar o prefixo não afeta nada. Outro projeto local não pode usar o mesmo prefixo."
+  },
+  "projectPermissions": {
+    "noWorkspace": "Abra um espaço de trabalho para configurar as permissões do agente.",
+    "loading": "Carregando permissões...",
+    "title": "Permissões do agente",
+    "description": "Gerencie quais comandos o agente de IA pode executar neste projeto. Os padrões aprovados são salvos em <code>.claude/settings.local.json</code> e compartilhados com o Claude Code CLI.",
+    "resetToDefaults": "Restaurar padrões",
+    "messages": {
+      "trusted": "Espaço de trabalho marcado como confiável para operações do agente",
+      "trustRevoked": "Confiança no espaço de trabalho revogada",
+      "patternRemoved": "Padrão removido",
+      "resetToDefaults": "Permissões restauradas para os padrões",
+      "directoryAdded": "Diretório adicionado",
+      "directoryRemoved": "Diretório removido",
+      "urlPatternAdded": "Padrão de URL adicionado",
+      "urlPatternRemoved": "Padrão de URL removido",
+      "allDomainsAllowed": "Todos os domínios agora estão permitidos",
+      "allDomainsRevoked": "Permissão para todos os domínios revogada"
+    },
+    "errors": {
+      "trust": "Falha ao marcar o espaço de trabalho como confiável",
+      "revokeTrust": "Falha ao revogar a confiança no espaço de trabalho",
+      "setMode": "Falha ao definir o modo de permissão",
+      "classifier": "Falha ao atualizar a opção do classificador",
+      "removePattern": "Falha ao remover o padrão",
+      "reset": "Falha ao restaurar as permissões",
+      "addDirectory": "Falha ao adicionar o diretório",
+      "removeDirectory": "Falha ao remover o diretório",
+      "addUrlPattern": "Falha ao adicionar o padrão de URL",
+      "removeUrlPattern": "Falha ao remover o padrão de URL",
+      "allowAllDomains": "Falha ao permitir todos os domínios",
+      "revokeAllDomains": "Falha ao revogar a permissão para todos os domínios",
+      "load": "Falha ao carregar as permissões do espaço de trabalho"
+    },
+    "trust": {
+      "title": "Confiança no espaço de trabalho",
+      "trusted": "Este espaço de trabalho é confiável",
+      "notTrusted": "Este espaço de trabalho não é confiável",
+      "trustedDescription": "O agente de IA pode executar comandos neste espaço de trabalho.",
+      "notTrustedDescription": "Confie neste espaço de trabalho para permitir que o agente de IA execute comandos.",
+      "trustedOn": "Confiável desde {{date}}",
+      "revoke": "Revogar confiança",
+      "trust": "Confiar no espaço de trabalho"
+    },
+    "mode": {
+      "title": "Modo de permissão",
+      "askEveryTime": "Perguntar sempre",
+      "allowEditsOnly": "Permitir somente edições",
+      "classifierCheckbox": "Pausar operações arriscadas, como deploys e comandos destrutivos, para confirmação com verificações feitas pelo agente."
+    },
+    "directories": {
+      "title": "Diretórios adicionais",
+      "description": "Permite que o agente acesse diretórios fora deste projeto.",
+      "empty": "Nenhum diretório adicional. O agente só pode acessar arquivos dentro deste projeto.",
+      "removeTitle": "Remover diretório",
+      "add": "Adicionar diretório",
+      "dialogTitle": "Selecionar diretório adicional",
+      "dialogButton": "Adicionar diretório"
+    },
+    "urls": {
+      "title": "Padrões de URL permitidos",
+      "description": "Permite que o agente faça fetch ou curl de domínios específicos. Use curingas como <code>*.github.com</code> para permitir todos os subdomínios.",
+      "allDomainsTitle": "Todos os domínios permitidos",
+      "allDomainsDescription": "O agente pode buscar de qualquer URL sem perguntar.",
+      "revoke": "Revogar",
+      "empty": "Nenhum padrão de URL permitido ainda. O agente perguntará antes de fazer requisições web.",
+      "removeTitle": "Remover padrão de URL",
+      "patternPlaceholder": "Padrão de URL (ex.: *.github.com)",
+      "descriptionPlaceholder": "Descrição (opcional)",
+      "add": "Adicionar padrão de URL",
+      "allowAll": "Permitir todos os domínios",
+      "allowFetchingFrom": "Permitir acesso a {{domain}}",
+      "allUrlsAllowed": "Todas as URLs permitidas"
+    },
+    "patterns": {
+      "title": "Padrões permitidos",
+      "empty": "Nenhum padrão permitido ainda. Quando você aprovar um comando, o padrão dele aparecerá aqui.",
+      "removeTitle": "Remover padrão"
+    }
+  },
+  "projectAiProviders": {
+    "loading": "Carregando configurações...",
+    "title": "Provedores de IA",
+    "description": "Substitua as configurações de provedores de IA para <bold>{{workspaceName}}</bold>. Ative as substituições para usar chaves de API ou modelos diferentes neste projeto.",
+    "providerSubtitles": {
+      "claude-code": "MCP via CLI",
+      "claude": "API da Anthropic",
+      "openai": "Modelos GPT",
+      "lmstudio": "Modelos locais"
+    },
+    "globalOn": "Global: ativado",
+    "globalOff": "Global: desativado",
+    "overridden": "Substituído",
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "overrideEnabled": "Substituição ativada - usando as configurações do projeto",
+    "usingGlobal": "Usando as configurações globais",
+    "enableForProject": "Ativar para este projeto",
+    "apiKey": {
+      "title": "Chave de API",
+      "hintWithGlobal": "Deixe em branco para usar a chave global ou informe uma chave específica do projeto",
+      "hintNoGlobal": "Informe uma chave de API para este projeto",
+      "placeholderGlobal": "Usando a chave global...",
+      "placeholder": "Informe a chave de API..."
+    },
+    "models": {
+      "title": "Modelos",
+      "selectAll": "Todos",
+      "selectNone": "Nenhum"
+    },
+    "noOverride": "Este projeto usa as configurações globais de {{provider}}.",
+    "noOverrideHint": "Ative a substituição para personalizar a chave de API ou os modelos deste projeto.",
+    "hasOverrides": "Este projeto tem configurações personalizadas de provedores de IA",
+    "trackerAutomation": {
+      "title": "Automação de rastreadores",
+      "inherit": "Herdar das configurações globais",
+      "enable": "Ativar para este projeto",
+      "disable": "Desativar para este projeto",
+      "description": "Substitui a configuração global de automação de rastreadores para este espaço de trabalho."
+    },
+    "saveChanges": "Salvar alterações",
+    "saved": "Salvo"
+  },
+  "providerOverride": {
+    "activeFor": "Substituição do projeto ativa para <bold>{{workspaceName}}</bold>",
+    "usingGlobal": "Usando as configurações globais de {{providerName}}",
+    "toggleLabel": "Substituir",
+    "hint": "Ative a substituição para personalizar as configurações de {{providerName}} somente para este projeto. As alterações não afetarão suas configurações globais."
+  },
+  "marketplace": {
+    "title": "Marketplace de extensões",
+    "description": "Descubra e instale extensões para aprimorar seu espaço de trabalho do Nimbalyst.",
+    "securityWarning": {
+      "title": "Aviso de segurança",
+      "intro": "As extensões são executadas com acesso ao seu sistema de arquivos local e podem executar código na sua máquina. Instalar extensões não confiáveis pode trazer riscos de segurança, incluindo:",
+      "riskFiles": "Ler ou modificar arquivos no seu computador",
+      "riskCode": "Executar código arbitrário no contexto do aplicativo",
+      "riskNetwork": "Acessar recursos de rede",
+      "riskExtensions": "Interagir com outras extensões instaladas",
+      "trustNotice": "Instale extensões apenas de fontes em que você confia. O Nimbalyst não revisa nem verifica extensões de terceiros instaladas a partir de URLs do GitHub. As extensões do Marketplace publicadas pelo Nimbalyst são revisadas quanto à segurança.",
+      "accept": "Entendo os riscos",
+      "resetHint": "Você pode redefinir isso em Configurações > Avançado"
+    },
+    "loadingMarketplace": "Carregando o Marketplace...",
+    "errorPrefix": "Erro: {{error}}",
+    "byAuthor": "por {{author}}",
+    "installsCount_zero": "{{formattedCount}} instalações",
+    "installsCount_one": "{{formattedCount}} instalação",
+    "installsCount_other": "{{formattedCount}} instalações",
+    "updating": "Atualizando...",
+    "updateToVersion": "Atualizar para v{{version}}",
+    "builtIn": "Integrada",
+    "installed": "Instalada",
+    "installing": "Instalando...",
+    "installExtension": "Instalar extensão",
+    "searchPlaceholder": "Pesquisar extensões...",
+    "allCategories": "Todas",
+    "featured": "Em destaque",
+    "noResults": "Nenhuma extensão corresponde a \"{{query}}\"",
+    "installFromGithub": "Instalar do GitHub",
+    "githubUrlHelp": "Cole a URL de um repositório do GitHub que contenha uma extensão do Nimbalyst (deve ter manifest.json).",
+    "viewInstalled": "Instaladas ({{count}})",
+    "updatesSuffix_zero": " • {{count}} atualizações",
+    "updatesSuffix_one": " • {{count}} atualização",
+    "updatesSuffix_other": " • {{count}} atualizações",
+    "details": {
+      "updateAvailable": "Atualização disponível: v{{currentVersion}} → v{{availableVersion}}",
+      "version": "Versão:",
+      "versionWithLatest": "{{currentVersion}} (mais recente: {{availableVersion}})",
+      "category": "Categoria:",
+      "fileTypes": "Tipos de arquivo:",
+      "permissions": "Permissões:",
+      "downloads": "Downloads:",
+      "repository": "Repositório:",
+      "viewOnGithub": "Ver no GitHub",
+      "changelog": "Registro de alterações"
+    },
+    "status": {
+      "notFound": "A extensão {{id}} não foi encontrada no Marketplace",
+      "reviewBeforeInstall": "Revise {{name}} antes de instalá-la pelo Marketplace",
+      "loadFailed": "Falha ao carregar o Marketplace",
+      "loadDataFailed": "Falha ao carregar os dados do Marketplace",
+      "installing": "Instalando {{name}}...",
+      "installed": "{{name}} instalada com sucesso",
+      "installFailed": "Falha na instalação",
+      "uninstalling": "Desinstalando {{name}}...",
+      "uninstalled": "{{name}} desinstalada",
+      "uninstallFailed": "Falha ao desinstalar",
+      "installingFromGithub": "Instalando do GitHub...",
+      "installedFromGithub": "Extensão instalada do GitHub",
+      "githubInstallFailed": "Falha na instalação pelo GitHub",
+      "updating": "Atualizando {{name}} para v{{version}}...",
+      "updated": "{{name}} atualizada para v{{version}}",
+      "updateFailed": "Falha na atualização",
+      "updatingMany_zero": "Atualizando {{count}} extensões...",
+      "updatingMany_one": "Atualizando {{count}} extensão...",
+      "updatingMany_other": "Atualizando {{count}} extensões..."
+    },
+    "progress": {
+      "installing": "Instalando {{id}}...",
+      "checkingRelease": "Procurando artefato de release...",
+      "downloadingRelease": "Baixando {{asset}} ({{tag}})...",
+      "installedFromRelease": "{{id}} instalado a partir da release {{tag}}",
+      "cloningSource": "Nenhum artefato de release encontrado, clonando o código-fonte...",
+      "installedFromSource": "{{id}} instalado a partir do código-fonte"
+    }
+  },
+  "installedExtensions": {
+    "title": "Extensões instaladas",
+    "loading": "Carregando extensões...",
+    "listHeader": "Extensões",
+    "updatesCount_zero": "{{count}} atualizações",
+    "updatesCount_one": "{{count}} atualização",
+    "updatesCount_other": "{{count}} atualizações",
+    "searchPlaceholder": "Pesquisar extensões...",
+    "searchAriaLabel": "Pesquisar extensões instaladas",
+    "clearSearch": "Limpar pesquisa",
+    "noResults": "Nenhuma extensão corresponde a “{{query}}”",
+    "unknownAuthor": "Desconhecido",
+    "byAuthor": "por {{author}}",
+    "noDescriptionProvided": "Nenhuma descrição fornecida",
+    "installedOn": "Instalada em {{date}}",
+    "updating": "Atualizando...",
+    "updateToVersion": "Atualizar para v{{version}}",
+    "repository": "Repositório",
+    "reveal": "Mostrar na pasta",
+    "source": {
+      "marketplace": "Marketplace",
+      "local": "Local",
+      "builtIn": "Integrada"
+    },
+    "empty": {
+      "title": "Nenhuma extensão instalada",
+      "description": "As extensões são instaladas na pasta de extensões. Consulte a documentação para obter instruções sobre como instalar extensões."
+    },
+    "noSelection": {
+      "title": "Nenhuma extensão selecionada",
+      "description": "Selecione uma extensão na lista para ver os detalhes"
+    },
+    "uninstallConfirm": {
+      "title": "Desinstalar extensão?",
+      "message": "Desinstalar esta extensão? Isso removerá os arquivos e as configurações dela."
+    },
+    "claudePlugin": {
+      "heading": "Plugin de agente do Claude",
+      "defaultName": "Plugin do Claude",
+      "noDescription": "Sem descrição",
+      "enableExtensionHint": "Ative a extensão para usar este plugin"
+    },
+    "agentWorkflows": {
+      "heading": "Fluxos de trabalho de agente",
+      "defaultName": "Fluxos de trabalho de agente",
+      "defaultDescription": "Fluxos de trabalho independentes de provedor, exportados para o Claude Code e o Codex.",
+      "enableExtensionHint": "Ative a extensão para usar estes fluxos de trabalho"
+    },
+    "info": {
+      "heading": "Informações da extensão",
+      "path": "Caminho"
+    },
+    "contributions": {
+      "heading": "Contribuições",
+      "aiTool": "Ferramenta de IA: {{name}}"
+    },
+    "permissions": {
+      "heading": "Permissões",
+      "filesystem": "Sistema de arquivos",
+      "ai": "Ferramentas de IA",
+      "network": "Rede"
+    },
+    "errors": {
+      "loadFailed": "Falha ao carregar as extensões",
+      "loadExtensionFailed": "Falha ao carregar a extensão {{id}}",
+      "enableFailed": "Falha ao ativar a extensão",
+      "disableFailed": "Falha ao desativar a extensão",
+      "enableClaudePluginFailed": "Falha ao ativar o plugin do Claude",
+      "disableClaudePluginFailed": "Falha ao desativar o plugin do Claude",
+      "enableAgentWorkflowsFailed": "Falha ao ativar os fluxos de trabalho de agente",
+      "disableAgentWorkflowsFailed": "Falha ao desativar os fluxos de trabalho de agente",
+      "updateFailed": "Falha na atualização",
+      "uninstallFailed": "Falha ao desinstalar"
+    }
+  },
+  "privilegedExtensions": {
+    "title": "Recursos privilegiados",
+    "description": "Extensões que receberam permissão para executar código fora do renderizador (por exemplo, iniciar processos ou abrir conexões de rede). Revogue tudo o que você não reconhecer.",
+    "loadFailed": "Falha ao carregar as extensões privilegiadas",
+    "apiNotLoaded": "A API de capacidades privilegiadas ainda não foi carregada. Reinicie o Nimbalyst para ver as extensões privilegiadas.",
+    "empty": "Nenhuma extensão possui permissões privilegiadas no momento.",
+    "calls": "Chamadas: <value>{{total}}</value>",
+    "denied": "negadas: {{total}}",
+    "revokeWorkspace": "Revogar (este espaço de trabalho)",
+    "revokeGlobal": "Revogar (todos os espaços de trabalho)",
+    "usageTooltip": "{{allowed}} permitidas, {{denied}} negadas",
+    "recentActivity": "Atividade recente",
+    "noRecentActivity": "Nenhuma chamada a capacidades privilegiadas registrada nesta sessão até agora."
+  },
+  "extensionConfig": {
+    "noSettings": "Esta extensão não tem configurações ajustáveis.",
+    "loading": "Carregando configuração...",
+    "unsupportedType": "O tipo \"{{type}}\" não é compatível com a interface"
+  },
+  "claudePlugins": {
+    "title": "Plugins do Claude Code",
+    "description": "Descubra e instale plugins para ampliar os recursos do Claude Code.",
+    "loading": "Carregando plugins do Claude Code...",
+    "errorPrefix": "Erro: {{error}}",
+    "tabs": {
+      "discover": "Descobrir",
+      "installed": "Instalados ({{count}})"
+    },
+    "discoverAriaLabel": "Descoberta de plugins",
+    "installedAriaLabel": "Plugins instalados",
+    "searchPlaceholder": "Pesquisar plugins...",
+    "searchAriaLabel": "Pesquisar plugins do Claude Code",
+    "clearSearch": "Limpar pesquisa",
+    "cardAriaLabel": "{{name}} por {{author}} - {{description}}",
+    "byAuthor": "por {{author}}",
+    "installed": "Instalado",
+    "installing": "Instalando...",
+    "installPlugin": "Instalar plugin",
+    "noResults": "Nenhum plugin corresponde a \"{{query}}\"",
+    "emptyInstalled": "Nenhum plugin instalado ainda",
+    "browsePlugins": "Explorar plugins",
+    "uninstallAriaLabel": "Desinstalar {{name}}",
+    "disabledTooltip": "Não está presente em enabledPlugins para este escopo",
+    "scope": {
+      "project": "Projeto",
+      "user": "Usuário",
+      "userTooltip": "Disponível em todos os espaços de trabalho"
+    },
+    "categories": {
+      "development": "Desenvolvimento",
+      "productivity": "Produtividade",
+      "database": "Banco de dados",
+      "testing": "Testes",
+      "security": "Segurança",
+      "learning": "Aprendizado",
+      "design": "Design",
+      "monitoring": "Monitoramento",
+      "deployment": "Implantação",
+      "external": "Externos / Comunidade"
+    },
+    "details": {
+      "category": "Categoria:",
+      "homepage": "Página inicial:",
+      "viewDocumentation": "Ver documentação"
+    },
+    "uninstallConfirm": {
+      "title": "Desinstalar plugin",
+      "message": "Desinstalar {{label}}?"
+    },
+    "status": {
+      "loadMarketplaceFailed": "Falha ao carregar o marketplace",
+      "loadDataFailed": "Falha ao carregar os dados dos plugins",
+      "installing": "Instalando {{name}}...",
+      "installed": "{{name}} instalado com sucesso",
+      "installFailed": "Falha na instalação",
+      "uninstalled": "{{label}} desinstalado",
+      "uninstallFailed": "Falha ao desinstalar"
+    },
+    "errorBoundary": {
+      "title": "Não foi possível carregar os plugins do Claude Code",
+      "message": "Ocorreu um erro inesperado ao carregar o painel de plugins. Tente recarregar o aplicativo.",
+      "reload": "Recarregar aplicativo"
+    }
+  },
+  "githubAccount": {
+    "title": "Conta do GitHub",
+    "descriptionProject": "Escolha qual conta da GitHub CLI a revisão de PRs usa neste projeto. Útil quando um projeto pertence a uma conta diferente da sua padrão (por exemplo, trabalho ou pessoal).",
+    "descriptionUser": "Escolha a conta padrão da GitHub CLI usada pela revisão de PRs. Cada projeto pode substituí-la nas configurações do projeto.",
+    "loadFailed": "Falha ao carregar as contas do GitHub",
+    "loading": "Carregando contas…",
+    "noAccounts": "Nenhuma conta da GitHub CLI encontrada. Execute <code>gh auth login</code> no terminal e depois recarregue.",
+    "accountForProject": "Conta para este projeto",
+    "defaultAccount": "Conta padrão",
+    "useDefault": "Usar a padrão",
+    "useDefaultWithAccount": "Usar a padrão ({{account}})",
+    "activeNoPreference": "Conta ativa do gh (sem preferência)",
+    "activeSuffix": " (ativa)",
+    "effectiveAccount": "Conta efetiva:",
+    "activeGhAccount": "conta ativa do gh"
+  },
+  "voiceMode": {
+    "title": "Modo de voz",
+    "description": "Use o Modo de Voz Avançado da OpenAI para controlar o Claude Code com a sua voz. Fale naturalmente para dar comandos e receba respostas faladas.",
+    "enableSection": "Ativar o modo de voz",
+    "apiKeyLabel": "Chave de API da OpenAI",
+    "apiKeyDescription": "Necessária para o modo de voz. Obtenha uma em platform.openai.com.",
+    "showButtonLabel": "Mostrar botão do modo de voz",
+    "showButtonDescription": "Exibe o botão de microfone na área de entrada da IA",
+    "mic": {
+      "title": "Acesso ao microfone não concedido",
+      "deniedMessage": "O modo de voz precisa de acesso ao microfone. Ative-o em {{settingsApp}} e verifique novamente abaixo.",
+      "restrictedMessage": "O acesso ao microfone está restrito neste dispositivo (por exemplo, por controle parental ou MDM). O modo de voz não consegue capturar áudio.",
+      "grantMessage": "O modo de voz precisa de acesso ao microfone. Abra {{settingsApp}} para concedê-lo.",
+      "windowsSettings": "Configurações do Windows",
+      "systemSettings": "Ajustes do Sistema",
+      "openWindowsSettings": "Abrir Configurações do Windows",
+      "openSystemSettings": "Abrir Ajustes do Sistema",
+      "recheck": "Verificar novamente"
+    },
+    "model": {
+      "label": "Modelo de voz",
+      "description": "O modelo com quem você conversa. Seu agente de código é configurado separadamente.",
+      "liveDefault": "gpt-live-1 (padrão)",
+      "changesApply": "As alterações valem a partir da próxima conexão de voz."
+    },
+    "reasoning": {
+      "label": "Esforço de raciocínio",
+      "description": "Mais alto = mais inteligente, porém mais lento e mais caro. Baixo é o recomendado para um intermediário de voz ágil. Aplica-se ao gpt-realtime-2.",
+      "minimal": "Mínimo (mais rápido)",
+      "low": "Baixo (recomendado)",
+      "medium": "Médio",
+      "high": "Alto",
+      "xhigh": "Muito alto (mais lento, mais inteligente)"
+    },
+    "voiceSettings": {
+      "title": "Configurações de voz",
+      "voiceLabel": "Voz",
+      "voiceDescription": "Escolha a voz do assistente. Cada voz tem personalidade e tom próprios.",
+      "stopPreview": "Parar prévia",
+      "previewVoice": "Ouvir prévia desta voz",
+      "stop": "Parar",
+      "preview": "Prévia",
+      "liveHint": "A prévia reproduz uma gravação desta voz do GPT Live.",
+      "realtimeHint": "A prévia reproduz uma amostra curta usando o serviço de conversão de texto em fala da OpenAI."
+    },
+    "turnDetection": {
+      "title": "Detecção de turno",
+      "description": "Controle como o assistente detecta quando você está falando e quando terminou.",
+      "inputMode": "Modo de entrada",
+      "inputModeDescription": "Escolha como a entrada de voz é capturada",
+      "vad": "Detecção de atividade de voz (automática)",
+      "pushToTalk": "Pressionar para falar (segurar o botão)",
+      "sensitivity": "Sensibilidade da detecção de voz",
+      "sensitivityDescription": "O quanto o microfone é sensível à sua voz. Mais baixo = mais sensível (capta fala baixa), mais alto = menos sensível (exige fala mais alta).",
+      "sensitive": "Sensível",
+      "lessSensitive": "Menos sensível",
+      "pause": "Pausa antes do processamento",
+      "pauseDescription": "Quanto tempo esperar depois que você para de falar antes de processar o pedido. Mais curto = resposta mais rápida, mais longo = mais tempo para pausas naturais.",
+      "faster": "Mais rápido",
+      "slower": "Mais lento",
+      "interruptions": "Permitir interrupções",
+      "interruptionsDescription": "Você pode interromper o assistente enquanto ele fala simplesmente começando a falar",
+      "listenWindow": "Duração da janela de escuta",
+      "listenWindowDescription": "Por quanto tempo continuar ouvindo depois que você para de falar. Após esse tempo, o microfone entra em repouso até o assistente responder ou você clicar no botão do microfone."
+    },
+    "submission": {
+      "title": "Envio de comandos",
+      "reviewDelay": "Tempo de revisão antes do envio",
+      "reviewDelayDescription": "Tempo para revisar e editar os comandos de voz antes de serem enviados ao agente de código. Defina 0 para envio imediato.",
+      "immediate": "Imediato",
+      "tenSeconds": "10 segundos"
+    },
+    "summary": {
+      "title": "Resumo do projeto",
+      "description": "O assistente de voz usa um resumo do seu projeto gerado por IA para entender o contexto. Salvo em <code>{{path}}</code>.",
+      "exists": "Resumo disponível",
+      "openFile": "Abrir arquivo do resumo",
+      "view": "Ver",
+      "regenerateTitle": "Gerar resumo novamente",
+      "regenerateDisabledTitle": "Configure um agente para poder gerar novamente",
+      "regenerate": "Gerar novamente",
+      "generate": "Gerar resumo do projeto",
+      "generateHint": "Inicia uma sessão de agente que lê o seu projeto e grava o arquivo de resumo. Você será levado à sessão para acompanhar o trabalho.",
+      "noAgent": "Nenhum agente configurado. <link>Configure um nas configurações de Modelos de IA</link> para ativar isto.",
+      "confirmTitle": "Gerar resumo do projeto?",
+      "confirmMessage": "Isso iniciará uma nova sessão de IA usando {{model}}. A sessão lerá os arquivos do seu projeto e gravará um resumo adequado para voz em {{path}}, que o modo de voz usa como contexto. Você será levado à sessão para acompanhar a execução.",
+      "confirmLabel": "Iniciar sessão",
+      "sessionTitle": "Modo de voz: resumo do projeto",
+      "createFailed": "Falha ao criar a sessão do agente",
+      "launchFailed": "Falha ao iniciar a sessão de resumo"
+    },
+    "pricing": {
+      "title": "Uso e preços",
+      "liveIntro": "O GPT-Live é cobrado por segundo de sessão conectada, não por token:",
+      "liveSession": "Sessão de voz: US$ 0,05 por minuto conectado",
+      "liveBilling": "A cobrança continua durante o silêncio e enquanto uma tarefa é executada; fechar a sessão encerra a cobrança",
+      "liveController": "O modelo controlador delegado é cobrado à parte, com as próprias tarifas",
+      "liveExample": "Exemplo: 10 minutos conectados custam US$ 0,50 de tempo de voz, sem contar os custos do controlador e do agente de código.",
+      "realtimeIntro": "O Realtime é cobrado por token, então o custo acompanha o quanto se fala:",
+      "realtimeInput": "Entrada de áudio: cerca de US$ 0,02 por minuto que você fala",
+      "realtimeOutput": "Saída de áudio: cerca de US$ 0,08 por minuto que o assistente fala",
+      "realtimeExtra": "Mais os tokens de transcrição e de texto/histórico",
+      "realtimeExample": "Exemplo: 10 minutos, com cada lado falando 5, custam cerca de US$ 0,50, sem contar os custos do agente de código."
+    },
+    "howItWorks": {
+      "title": "Como funciona",
+      "body": "O modo de voz usa o {{engine}} como uma interface de voz inteligente para o seu agente de código. Você faz seus pedidos de código falando naturalmente, e o assistente de voz os traduz em comandos para o agente.",
+      "summary": "Quando o Claude Code termina o trabalho, o assistente resume o que foi feito e conta para você em voz alta."
+    },
+    "prompts": {
+      "title": "Personalização do prompt de sistema",
+      "description": "Personalize o comportamento do agente de voz e do agente de código durante as sessões no modo de voz.",
+      "voiceAgent": "Instruções do agente de voz",
+      "voiceAgentDescription": "Personalize o assistente de voz (GPT-4 Realtime) que cuida da interação por fala.",
+      "prepend": "Adicionar antes das instruções",
+      "append": "Adicionar depois das instruções",
+      "voicePrependDescription": "Inserido antes das instruções padrão do assistente de voz",
+      "voiceAppendDescription": "Inserido depois das instruções padrão do assistente de voz",
+      "voicePrependPlaceholder": "ex.: Sempre responda em tom formal...",
+      "voiceAppendPlaceholder": "ex.: Ao falar de código, sempre mencione os nomes dos arquivos...",
+      "codingAgent": "Instruções do agente de código (modo de voz)",
+      "codingAgentDescription": "Personalize o agente de código (Claude) ao processar pedidos feitos no modo de voz. Estas instruções são adicionadas ao prompt de sistema apenas durante as sessões no modo de voz.",
+      "codingPrependDescription": "Inserido antes do contexto de modo de voz do agente de código",
+      "codingAppendDescription": "Inserido depois do contexto de modo de voz do agente de código",
+      "codingPrependPlaceholder": "ex.: Ao responder a pedidos por voz, priorize a brevidade...",
+      "codingAppendPlaceholder": "ex.: Sempre resuma o que você fez em 1 ou 2 frases no final..."
+    }
+  },
+  "voiceEngine": {
+    "groups": {
+      "male": "Masculinas",
+      "female": "Femininas",
+      "neutral": "Neutras"
+    },
+    "voiceDescriptions": {
+      "ash": "Clara e confiante",
+      "echo": "Suave e ressonante",
+      "verse": "Dinâmica e envolvente",
+      "cedar": "Grave e firme",
+      "coral": "Calorosa e simpática",
+      "sage": "Ponderada e calma",
+      "shimmer": "Viva e alegre",
+      "ballad": "Melódica e expressiva",
+      "marin": "Natural e conversacional",
+      "alloy": "Equilibrada e versátil"
+    },
+    "notes": {
+      "noRecording": "Não há gravação disponível para esta voz.",
+      "unavailable": "A prévia não está disponível para esta voz -- o serviço de prévia não tem uma voz correspondente, e reproduzir outra seria enganoso.",
+      "standIn": "Esta voz não tem equivalente para prévia; a amostra usa uma voz parecida.",
+      "playbackFailed": "Não foi possível reproduzir a prévia desta voz."
+    }
+  },
+  "agentFeatures": {
+    "title": "Recursos do agente",
+    "description": "Configurações que controlam o comportamento das sessões de agente.",
+    "autoCommit": {
+      "name": "Aprovar commits automaticamente",
+      "description": "Aprova automaticamente quando o Claude propõe commits no git."
+    },
+    "externalSessionFollow": {
+      "name": "Acompanhar sessões de agentes externos",
+      "description": "Acompanha automaticamente as sessões do Claude Code e do Codex CLI apenas nos espaços de trabalho abertos e em seus worktrees. Desativado por padrão."
+    },
+    "mcpSessionStatus": {
+      "name": "Mostrar status dos servidores MCP",
+      "description": "Mostra um indicador no cabeçalho da sessão listando os servidores MCP desta sessão, quais estão conectados e quais nunca chegaram a ela."
+    },
+    "preferredAgentLanguage": {
+      "name": "Idioma preferido do agente",
+      "description": "Idioma em que o agente escreve os nomes de sessão gerados por IA (ex.: \"japonês\", \"ja\", \"espanhol\"). Deixe em branco para o agente escolher com base na conversa. Não altera o idioma da interface.",
+      "placeholder": "ex.: ja"
+    },
+    "attachmentStaging": {
+      "title": "Diretório de preparação de anexos",
+      "description": "Escolha onde os arquivos são colocados antes de um agente lê-los. O armazenamento temporário do sistema mantém o comportamento atual; o armazenamento no espaço de trabalho evita regras amplas de bloqueio no AppData.",
+      "temp": "Diretório temporário do sistema",
+      "workspace": "nimbalyst-local/attachments/ em cada espaço de trabalho",
+      "custom": "Diretório absoluto personalizado",
+      "customPlaceholder": "C:\\Nimbalyst\\attachments ou /caminho/para/attachments",
+      "addGitignore": "Adicionar nimbalyst-local/attachments/ ao .gitignore deste espaço de trabalho",
+      "applyWorkspace": "Aplicar preparação no espaço de trabalho"
+    },
+    "experimental": {
+      "title": "Experimental",
+      "warning": "Estes recursos podem mudar, apresentar regressões ou ser removidos. Alguns exigem reiniciar para ter efeito completo."
+    },
+    "apiUpstream": {
+      "title": "Upstream personalizado da API do Claude",
+      "description": "Encaminhe o tráfego de API do Claude Code CLI por um proxy local (por exemplo, uma camada de compressão de tokens, um gateway ou um cache) antes de chegar à Anthropic. Deixe em branco para conectar diretamente. Um caminho base é respeitado — ex.: <code>http://127.0.0.1:8787/anthropic</code>.",
+      "loopbackWarning": "Este host recebe o seu token de assinatura e o conteúdo completo dos prompts, por isso somente endereços de loopback (<code>127.0.0.1</code>, <code>localhost</code>) são permitidos. Reinicie as sessões para aplicar.",
+      "saveFailed": "Falha ao salvar a URL de upstream"
+    },
+    "workflows": {
+      "title": "Compatibilidade de skills e comandos do agente",
+      "description": "Controle quais fontes de comandos e skills alimentam o seletor compartilhado e quais exportações de compatibilidade geradas são gravadas para o Claude Code e o Codex.",
+      "workspaceCompatibility": {
+        "name": "Compatibilidade com o Claude no espaço de trabalho",
+        "description": "Importa comandos e skills .claude do projeto e do usuário para o registro compartilhado de workflows."
+      },
+      "projectSources": {
+        "name": "Fontes .claude do projeto",
+        "description": "Inclui .claude/commands e .claude/skills do espaço de trabalho atual."
+      },
+      "userSources": {
+        "name": "Fontes .claude do usuário",
+        "description": "Inclui comandos e skills de ~/.claude quando você quiser compatibilidade no nível do usuário no seletor e nas exportações."
+      },
+      "extensionWorkflows": {
+        "name": "Workflows de extensões",
+        "description": "Carrega contribuições agentWorkflows independentes de provedor e workflows legados de plugins do Claude das extensões ativadas."
+      },
+      "codexExport": {
+        "name": "Skills geradas para o Codex",
+        "description": "Exporta os workflows do registro para .agents/skills/.nimbalyst-generated antes dos turnos do Codex."
+      },
+      "claudeExport": {
+        "name": "Workflows de extensões gerados para o Claude",
+        "description": "Gera shims de plugin do Claude para os agentWorkflows de extensões em .claude/plugins/.nimbalyst-generated."
+      }
+    },
+    "chatToolCalls": {
+      "name": "Mostrar chamadas de ferramentas no chat",
+      "description": "Exibe as linhas de chamadas de ferramentas na visualização do chat de IA. Desative para ocultar a atividade das ferramentas e ver apenas as mensagens da conversa."
+    },
+    "developer": {
+      "title": "Opções de desenvolvedor",
+      "description": "Disponível apenas no modo de desenvolvimento.",
+      "allToolCalls": {
+        "name": "Mostrar todas as chamadas de ferramentas",
+        "description": "Exibe todas as chamadas de ferramentas MCP na barra lateral do chat de IA, incluindo as chamadas Edit/applyDiff."
+      },
+      "debugLogging": {
+        "name": "Logs de depuração da IA",
+        "description": "Registra logs detalhados de todas as operações de edição da IA, incluindo requisições e respostas do LLM."
+      },
+      "promptAdditions": {
+        "name": "Mostrar acréscimos ao prompt",
+        "description": "Exibe os acréscimos ao prompt de sistema e o contexto que o Nimbalyst anexa às requisições do Claude Code."
+      }
+    },
+    "alpha": {
+      "superLoops": "Ativa os Super Loops para fluxos de trabalho iterativos de agentes em worktrees dedicadas.",
+      "blitz": "Executa o mesmo prompt em várias worktrees isoladas para fazer mais de uma tentativa em uma tarefa.",
+      "metaAgent": "Ativa sessões de meta-agente que orquestram e delegam trabalho para sessões filhas."
+    }
+  },
+  "themes": {
+    "loading": "Carregando temas...",
+    "title": "Temas",
+    "description": "Gerencie os temas de cores do editor",
+    "refreshTitle": "Atualizar lista de temas",
+    "fallbackBanner": "O tema <bold>{{missingId}}</bold> não está mais disponível. Mudamos para <bold>{{appliedId}}</bold>.",
+    "dismiss": "Dispensar",
+    "activeTheme": "Tema ativo",
+    "noThemeSelected": "Nenhum tema selecionado",
+    "noDescription": "Sem descrição",
+    "active": "Ativo",
+    "builtInThemes": "Temas integrados",
+    "apply": "Aplicar",
+    "userThemes": "Temas do usuário",
+    "uninstallTitle": "Desinstalar tema",
+    "extensionThemes": "Temas de extensões",
+    "contributedBy": "Fornecido por {{name}}",
+    "extensionTheme": "Tema de extensão",
+    "installedThemes": "Temas instalados",
+    "emptyTitle": "Nenhum tema de usuário ou de extensão instalado ainda",
+    "emptyDescription": "Instale temas a partir de arquivos, do marketplace ou por meio de extensões de tema",
+    "details": {
+      "version": "Versão:",
+      "author": "Autor:",
+      "type": "Tipo:",
+      "dark": "Escuro",
+      "light": "Claro",
+      "tags": "Tags:",
+      "license": "Licença:",
+      "colors": "Cores",
+      "moreColors_zero": "+{{count}} cores a mais",
+      "moreColors_one": "+{{count}} cor a mais",
+      "moreColors_other": "+{{count}} cores a mais"
+    },
+    "uninstallConfirm": {
+      "title": "Desinstalar tema?",
+      "message": "Tem certeza de que deseja desinstalar \"{{name}}\"?"
+    },
+    "errors": {
+      "loadFailed": "Falha ao carregar os temas",
+      "cannotUninstallBuiltIn": "Não é possível desinstalar temas integrados",
+      "uninstallFailed": "Falha ao desinstalar o tema",
+      "reloadFailed": "Falha ao recarregar os temas"
+    }
+  },
+  "cloudflareSandboxes": {
+    "title": "Sandboxes do Cloudflare",
+    "description": "Implante e gerencie um contêiner sandbox na sua própria conta do Cloudflare. O Nimbalyst faz login pelo Wrangler no seu navegador e usa os seus perfis do Wrangler — ele nunca pede um token de API. Conecte um nó de agente para iniciar sessões remotas a partir de um branch do git. O contêiner não guarda nada entre uma parada e outra.",
+    "prerequisites": {
+      "title": "Pré-requisitos",
+      "checking": "Verificando…",
+      "recheck": "Verificar novamente",
+      "wranglerNotInstalled": "O Wrangler não está instalado",
+      "wranglerNoProfiles": "O Wrangler {{version}} não oferece suporte a perfis",
+      "installWrangler": "Instale o Wrangler e verifique novamente.",
+      "checkingMachine": "Verificando a sua máquina…"
+    },
+    "profile": {
+      "title": "Login no Cloudflare",
+      "description": "Escolha um dos seus perfis do Wrangler ou faça login para criar um novo perfil nomeado. Com perfis, você mantém contas do Cloudflare separadas lado a lado.",
+      "loading": "Carregando perfis…",
+      "groupLabel": "Perfil do Wrangler",
+      "signedOut": "sessão encerrada",
+      "noProfiles": "Nenhum perfil do Wrangler ainda.",
+      "waitingForBrowser": "Aguardando o navegador…",
+      "signInAgain": "Entrar novamente como {{name}}",
+      "newProfilePlaceholder": "Nome do novo perfil",
+      "signIn": "Entrar com o Cloudflare",
+      "reservedName": "\"{{name}}\" é reservado pelo Wrangler. Em vez disso, faça login nele pela lista de perfis acima.",
+      "invalidName": "Nomes de perfil só podem conter letras, números, hifens e sublinhados."
+    },
+    "account": {
+      "title": "Conta do Cloudflare",
+      "description": "Escolha em qual conta este sandbox será implantado. Sua seleção fica salva para este projeto.",
+      "selectProfileFirst": "Selecione um perfil primeiro.",
+      "loading": "Carregando contas…",
+      "selectPlaceholder": "Selecione uma conta…",
+      "saveSelectionFailed": "Não foi possível salvar a seleção do Cloudflare. Selecione-a novamente.",
+      "loadSelectionFailed": "Não foi possível carregar a seleção do Cloudflare salva."
+    },
+    "deploy": {
+      "title": "Revisar e implantar",
+      "description": "Revise exatamente o que será criado na sua conta, e quanto custa, antes de implantar.",
+      "preparingReview": "Preparando a revisão…",
+      "reviewDeployment": "Revisar implantação",
+      "planTarget": "Implantando em <bold>{{account}}</bold> usando o perfil <bold>{{profile}}</bold>.",
+      "resourceCreate": "Criar {{kind}} <name>{{name}}</name>",
+      "resourceUpdate": "Atualizar {{kind}} <name>{{name}}</name>",
+      "resourceReuse": "Reutilizar {{kind}} <name>{{name}}</name>",
+      "containerSummary_zero": "Contêiner: {{instanceType}}, no máximo {{count}} instâncias, entrando em repouso após {{minutes}} minutos ocioso.",
+      "containerSummary_one": "Contêiner: {{instanceType}}, no máximo {{count}} instância, entrando em repouso após {{minutes}} minutos ocioso.",
+      "containerSummary_other": "Contêiner: {{instanceType}}, no máximo {{count}} instâncias, entrando em repouso após {{minutes}} minutos ocioso.",
+      "paidPlanRequired": "Isto exige um plano pago do Cloudflare em {{account}}.",
+      "acknowledge": "Entendo que estes recursos e cobranças se aplicam à minha conta do Cloudflare.",
+      "deploying": "Implantando…",
+      "deploySandbox": "Implantar sandbox"
+    },
+    "deploymentLoad": {
+      "refreshFailed": "Não foi possível atualizar o sandbox: {{message}} Exibindo o último estado conhecido.",
+      "readFailed": "Não foi possível ler o sandbox: {{message}}",
+      "retrying": "Tentando novamente…"
+    },
+    "errors": {
+      "unavailable": "O suporte a sandboxes do Cloudflare não está disponível nesta versão.",
+      "unexpected": "Erro inesperado"
+    }
+  },
+  "cloudflareSandboxNode": {
+    "title": "Nó de agente",
+    "description": "Ao conectar, um agente do Nimbalyst é instalado no sandbox e entra como um dos seus dispositivos. O login da sua assinatura do Claude Code é copiado para o sandbox para que o agente possa usá-lo. O sandbox descarta tudo o que há dentro dele sempre que entra em repouso; assim, tudo o que o agente não tiver enviado ao git é perdido e o nó precisa ser conectado novamente.",
+    "nodeLabel": "Nó",
+    "workingInLabel": "Trabalhando em",
+    "workingInValue": "{{project}} no branch {{branch}}",
+    "status": {
+      "notConnected": "Não conectado",
+      "runningSince": "Em execução desde {{time}}",
+      "running": "Em execução",
+      "stoppedWithCode": "Parado, código de saída {{code}}",
+      "stopped": "Parado"
+    },
+    "connecting": "Conectando…",
+    "connect": "Conectar nó",
+    "checking": "Verificando…",
+    "check": "Verificar nó",
+    "disconnect": "Desconectar nó",
+    "noWorkspace": "Abra um espaço de trabalho primeiro. O nó clona o repositório e o branch desse espaço de trabalho.",
+    "disconnectConfirm": "Ao desconectar, o agente é instruído a parar, encerrando qualquer sessão em execução, e a credencial de sincronização dele é revogada, de modo que uma reconexão emite uma nova. Tudo o que ele gravou e não enviou permanece no sandbox até o próximo repouso do sandbox e, então, é perdido.",
+    "disconnecting": "Desconectando…",
+    "disconnectAndDiscard": "Desconectar e descartar",
+    "refreshFailedSuffix": "{{message}} Não foi possível atualizar o status do sandbox. Atualize o sandbox antes de tentar novamente.",
+    "session": {
+      "title": "Iniciar uma sessão no sandbox",
+      "description": "O agente é executado no sandbox, em {{target}}. As sessões dele aparecem na sua lista de sessões, onde você pode acompanhar o progresso e enviar mais prompts.",
+      "branchInProject": "{{branch}} em {{project}}",
+      "connectedWorkspace": "o espaço de trabalho conectado",
+      "promptPlaceholder": "O que o agente do sandbox deve fazer?",
+      "starting": "Iniciando…",
+      "start": "Iniciar sessão remota",
+      "started": "Sessão {{id}} iniciada no sandbox.",
+      "open": "Abrir sessão"
+    }
+  },
+  "cloudflareSandboxStatus": {
+    "title": "Sandbox implantado",
+    "deploymentLabel": "Implantação",
+    "deploymentValue": "{{status}} — {{account}} (perfil {{profile}})",
+    "containerLabel": "Contêiner",
+    "accessLabel": "Acesso",
+    "asOf": "em {{time}}",
+    "privateAccess": "Privado — acessado por um binding de Worker, sem endpoint público.",
+    "deploymentStatus": {
+      "notDeployed": "Não implantado",
+      "deploying": "Implantando…",
+      "deployed": "Implantado",
+      "error": "Falha na implantação",
+      "deleting": "Excluindo…"
+    },
+    "containerStatus": {
+      "unknown": "Ainda não observado",
+      "stopped": "Parado",
+      "starting": "Iniciando…",
+      "running": "Em execução",
+      "stopping": "Parando…"
+    },
+    "waking": "Despertando…",
+    "wake": "Despertar sandbox",
+    "stop": "Parar sandbox",
+    "delete": "Excluir sandbox",
+    "stopConfirm": "Parar o contêiner encerra todos os processos em execução nele e descarta os arquivos gravados dentro dele. Nada no sandbox é mantido.",
+    "stopping": "Parando…",
+    "stopAndDiscard": "Parar e descartar",
+    "deleteConfirm": "Excluir este sandbox de <bold>{{account}}</bold> usando o perfil <bold>{{profile}}</bold>? O Worker implantado e o contêiner dele são removidos, junto com tudo o que houver dentro do contêiner.",
+    "deleting": "Excluindo…",
+    "deleteFrom": "Excluir de {{account}}"
+  },
+  "providers": {
+    "shared": {
+      "apiConfiguration": "Configuração da API",
+      "apiKey": "Chave de API",
+      "authentication": "Autenticação",
+      "availableModels": "Modelos disponíveis",
+      "checkAgain": "Verificar novamente",
+      "connected": "Conectado",
+      "connectedCheck": "✓ Conectado",
+      "deselectAll": "Desmarcar todos",
+      "enableProvider": "Ativar {{name}}",
+      "failed": "Falhou",
+      "failedCross": "✗ Falhou",
+      "fileTracking": "Rastreamento de arquivos",
+      "hideAll": "Ocultar todos",
+      "installed": "Instalado",
+      "installedVersion": "Instalado ({{version}})",
+      "loadingModels": "Carregando modelos...",
+      "noApiKeyRequired": "Nenhuma chave de API é necessária, e o Nimbalyst nunca lê uma do seu ambiente.",
+      "noModelsCheckKey": "Nenhum modelo disponível. Verifique sua chave de API e a conexão.",
+      "seeDocsInstallAuth": "Consulte a <link>{{label}}</link> para detalhes de instalação e autenticação.",
+      "selectAll": "Selecionar todos",
+      "selectModelsToEnable": "Selecione os modelos a ativar:",
+      "showAll": "Mostrar todos",
+      "showUsageIndicator": "Mostrar indicador de uso",
+      "test": "Testar",
+      "testing": "Testando...",
+      "tryRunningManually": "Tente executar manualmente: <code>{{command}}</code>",
+      "unknownError": "Erro desconhecido"
+    },
+    "claudeCode": {
+      "availableModels": "Modelos disponíveis",
+      "uncheckToHide": "Desmarque os modelos para ocultá-los do seletor:",
+      "uncheckedHint": "Os modelos desmarcados ficam ocultos no seletor de modelos da sessão. Novos modelos aparecem automaticamente.",
+      "noModels": "Nenhum modelo disponível.",
+      "saveEnvFailedTitle": "Falha ao salvar as variáveis de ambiente",
+      "saveEnvFailedMessage": "Falha ao salvar as variáveis de ambiente: {{error}}",
+      "selectExecutableTitle": "Selecionar executável do Claude Code",
+      "selectExecutableButton": "Selecionar",
+      "loginTitle": "Login no Claude Code",
+      "loginInitiated": "Login iniciado! Conclua a autenticação na janela do Terminal (talvez seja preciso digitar /login para concluir o processo) e depois clique em \"Atualizar status\" para verificar.",
+      "loginFailedTitle": "Falha no login",
+      "loginFailedMessage": "Falha no login: {{error}}",
+      "logoutTitle": "Logout do Claude Code",
+      "logoutInitiated": "Logout iniciado! Aguarde a janela do Terminal concluir e depois clique em \"Atualizar status\" para verificar.",
+      "logoutFailedTitle": "Falha ao sair",
+      "logoutFailedMessage": "Falha ao sair: {{error}}",
+      "description": "O modo agente usa o Claude Code SDK com algumas extensões que adicionam funcionalidades no Nimbalyst. Tem suporte completo a MCP, com acesso ao sistema de arquivos, operações em vários arquivos e persistência de sessão.",
+      "usageIndicatorDescription": "Exibe os limites de uso da API na barra de navegação lateral",
+      "customInstallation": "Instalação personalizada do Claude",
+      "customPathProjectHint": "Substitui o caminho do executável do Claude apenas para este projeto. Deixe em branco para herdar a configuração global.",
+      "customPathUserHint": "Substitui o caminho padrão do executável do Claude. Use para apontar para um wrapper personalizado da Claude CLI (por exemplo, para autenticação SSO corporativa).",
+      "inheritingPlaceholder": "Herdando: {{path}}",
+      "projectOverrideActive": "Caminho específico do projeto ativo. Limpe o campo para remover a substituição e herdar o valor global.",
+      "inheritingGlobalPath": "Herdando o caminho global: {{path}}. Digite um valor para substituí-lo apenas neste projeto.",
+      "noGlobalPath": "Nenhum caminho global definido. Digite um valor para usar um executável personalizado apenas neste projeto.",
+      "leaveEmptyBuiltIn": "Deixe em branco para usar o SDK integrado. As alterações entram em vigor na próxima sessão do agente.",
+      "planTracking": "Rastreamento de planos",
+      "planTrackingDescription": "Salva os planos em {{path}} com frontmatter de rastreamento. Quando desativado, os planos seguem o comportamento padrão do Claude Code.",
+      "agentTeams": "Equipes de agentes (experimental)",
+      "agentTeamsDescription": "Permite que o Claude coordene vários agentes trabalhando juntos como uma equipe. Usa mais tokens, mas possibilita trabalho em paralelo.",
+      "authMethod": "Método de autenticação",
+      "claudePlanRecommended": "Plano do Claude (recomendado)",
+      "authenticatedWithPlan": "Autenticado com o plano do Claude",
+      "logout": "Sair",
+      "switchAccount": "Precisa usar outra conta do Claude? Saia acima e entre novamente.",
+      "planPitch": "Autentique-se com sua assinatura Claude Pro ou Team. Não são necessários créditos de API.",
+      "openingLogin": "Abrindo login...",
+      "loginWithPlan": "Entrar com o plano do Claude",
+      "opensTerminal": "Abre o Terminal para autenticação OAuth. Talvez seja preciso digitar /login para concluir o processo.",
+      "apiKeyPitch": "Use uma chave de API da Anthropic. Pagamento por uso com créditos de API da sua conta Anthropic.",
+      "toolPermissions": "Permissões de ferramentas",
+      "toolPermissionsPerProject": "As permissões de ferramentas agora são gerenciadas por projeto. Quando o Claude Agent tentar usar uma ferramenta, você será solicitado a permitir ou negar a ação.",
+      "toolPermissionsWhere": "Para ver ou alterar as ferramentas permitidas em um projeto, acesse <bold>Configurações do projeto > Permissões</bold>.",
+      "envVars": "Variáveis de ambiente",
+      "envVarsDescription": "Configure variáveis de ambiente que serão definidas para todas as sessões do Claude Code. Elas ficam armazenadas em <code>{{path}}</code> e se aplicam a todos os projetos.",
+      "envValuePlaceholder": "valor",
+      "cliDescription": "Para quem prefere trabalhar diretamente na ferramenta de linha de comando <code>{{command}}</code>. Ela executa a CLI original em um terminal, em vez do agente acima. Você não precisa disso para usar sua assinatura do Claude: o Claude Agent já usa sua assinatura assim que você entra com seu plano do Claude. Ative ou desative este conjunto independentemente do SDK."
+    },
+    "claudeRuntimeStatus": {
+      "title": "Runtime do Claude Agent",
+      "loading": "Carregando runtime...",
+      "sourceCustom": "Origem: personalizada",
+      "sourceBundled": "Origem: runtime incluído no Nimbalyst",
+      "sdkVersion": "Versão do Agent SDK: {{version}}",
+      "projectRequired": "É necessário um projeto para resolver o runtime dele.",
+      "unableToResolve": "Não foi possível resolver o runtime do Claude."
+    },
+    "claude": {
+      "description": "O modo chat é uma ferramenta mais rápida e focada, limitada a ler e escrever o arquivo aberto no momento. Usa chamadas diretas à API com os arquivos anexados como contexto para respostas mais rápidas. Requer uma chave de API da Anthropic."
+    },
+    "openAi": {
+      "description": "Acesso ao GPT-5.4, GPT-5.3 Chat, GPT-5 mini/nano, GPT-4.1, GPT-4o e outros modelos atuais da OpenAI. Requer uma chave de API da OpenAI obtida em platform.openai.com."
+    },
+    "lmStudio": {
+      "description": "Conecte-se a LLMs locais executados no LM Studio na sua máquina. Inicie o LM Studio e carregue um modelo antes de ativar.",
+      "serverConfiguration": "Configuração do servidor",
+      "loadingModels": "Carregando modelos do LM Studio...",
+      "detectedModels": "Modelos detectados:",
+      "noModelsFound": "Nenhum modelo encontrado. Verifique se o LM Studio está em execução com um modelo carregado.",
+      "refreshModels": "Atualizar modelos"
+    },
+    "openAiCodex": {
+      "description": "Geração e complementação de código avançadas com os modelos OpenAI Codex. Oferece sugestões de código inteligentes e assistência automatizada à programação.",
+      "usageIndicatorDescription": "Exibe os limites de uso do Codex na barra de navegação lateral",
+      "acpTransport": "Transporte ACP",
+      "legacy": "(legado)",
+      "acpNotice": "<bold>{{acpName}}</bold> já está ativado nesta instalação, mas as novas sessões do Codex agora usam o transporte app-server por meio do provedor principal <bold>{{mainName}}</bold>.",
+      "enableAcp": "Ativar transporte ACP",
+      "enableAcpDescription": "Mantém disponível o provedor legado separado '{{name}}'",
+      "signInTitle": "Entrar",
+      "signedInChatGpt": "Conectado com o ChatGPT",
+      "signedInApiKey": "Conectado com chave de API",
+      "signedIn": "Conectado",
+      "signingOut": "Saindo…",
+      "signOut": "Sair",
+      "chatGptRecommended": "ChatGPT (recomendado)",
+      "chatGptPitch": "Autentique-se com sua assinatura ChatGPT Pro, Plus ou Team. Não são necessários créditos de API.",
+      "openingBrowser": "Abrindo o navegador…",
+      "signInChatGpt": "Entrar com o ChatGPT",
+      "opensBrowserHint": "Abre o seu navegador padrão. Conclua o login na OpenAI; o Nimbalyst é atualizado automaticamente quando você voltar.",
+      "apiKeyPitch": "Use uma chave de API da OpenAI. Pagamento por uso com créditos de API — mais caro do que usar a assinatura do ChatGPT.",
+      "saving": "Salvando…",
+      "storedByCodex": "Armazenada pelo Codex em <code>{{path}}</code>, não nas configurações do Nimbalyst.",
+      "checkStatusFailed": "Falha ao verificar o status de autenticação do Codex",
+      "loginFailed": "Falha no login",
+      "logoutFailed": "Falha ao sair",
+      "enterApiKeyFirst": "Insira uma chave de API primeiro",
+      "cliUnavailable": "O Codex CLI não está disponível."
+    },
+    "codexWindowsSandbox": {
+      "title": "Sandbox do Windows",
+      "description": "Permite que o Codex edite seu projeto com permissões do espaço de trabalho. A configuração recomendada pode pedir aprovação de administrador do Windows.",
+      "checking": "Verificando ou configurando o sandbox do Windows…",
+      "configured": "Sandbox configurado.",
+      "updateRequired": "É necessário atualizar o sandbox.",
+      "setupRequired": "É necessário configurar o sandbox.",
+      "openProject": "Abra um projeto para configurar o sandbox dele.",
+      "setupRecommended": "Configurar sandbox (recomendado)",
+      "setupUnelevated": "Configurar sem acesso de administrador",
+      "checkStatus": "Verificar status"
+    },
+    "headlessCli": {
+      "checking": "Procurando a CLI do {{command}}...",
+      "installedSignedIn": "Instalado e conectado",
+      "installedSignedInVersion": "Instalado e conectado ({{version}})",
+      "signedOut": "Instalado, mas não conectado",
+      "signedOutVersion": "Instalado ({{version}}), mas não conectado",
+      "runLoginThenCheck": "Execute <code>{{command}}</code> no seu terminal e depois verifique novamente.",
+      "notInstalled": "A CLI do {{command}} é necessária para executar este agente. O Nimbalyst não a instala para você — execute o instalador do fornecedor no seu terminal:",
+      "onByDefault": "Ativado por padrão porque a CLI do {{command}} está instalada e conectada. Se você desativar aqui, a escolha será lembrada.",
+      "authUsesOwnLogin": "O {{title}} usa o próprio login da CLI. Execute <code>{{command}}</code> no seu terminal para se autenticar.",
+      "allowEditsRequired": "Este agente não consegue pausar um turno para pedir permissão para uma ferramenta específica, por isso a sessão exige o modo de permissão “Permitir edições” no espaço de trabalho.",
+      "fidelity": {
+        "structured": "Informa diretamente cada arquivo que altera, incluindo o conteúdo do arquivo antes da edição. A revisão de diff e a lista de arquivos editados são exatas.",
+        "toolArgs": "Informa os arquivos que edita, mas não os que exclui ou renomeia — essas operações passam por comandos de shell. O Nimbalyst monitora a pasta do projeto para detectá-las, por isso um diff pode ocasionalmente ser atribuído ao turno errado.",
+        "none": "Não informa os arquivos que altera. O Nimbalyst os deduz monitorando a pasta do projeto, por isso a revisão de diff é aproximada."
+      }
+    },
+    "grokBuild": {
+      "description": "O agente de programação Grok Build, da xAI, executado em modo headless no seu projeto. Usa o login existente da Grok CLI.",
+      "docsLabel": "documentação da Grok Build CLI"
+    },
+    "cursorAgent": {
+      "description": "O agente de programação do Cursor, executado em modo headless no seu projeto. Usa o login existente da Cursor CLI.",
+      "docsLabel": "documentação da Cursor CLI"
+    },
+    "gemini": {
+      "description": "Modelos Gemini do Google, executados pelo servidor de linguagem incluído no Antigravity. Usa a conta com a qual você já está conectado nele.",
+      "lookingFor": "Procurando o Antigravity...",
+      "notFound": "Não encontrado",
+      "installHint": "Instale o Antigravity e entre uma vez. O Nimbalyst não o instala para você, e ele não precisa ficar aberto — apenas o servidor de linguagem dentro dele é usado.",
+      "seeForDownloads": "Acesse <link>{{site}}</link> para downloads e login.",
+      "onByDefault": "Ativado por padrão porque o Antigravity está instalado. Se você desativar aqui, a escolha será lembrada.",
+      "authSignInInside": "Entre pelo Antigravity. O servidor de linguagem usa esse login, então não há nada para preencher aqui.",
+      "fileTrackingBody": "O próprio Nimbalyst realiza as gravações deste agente, então cada edição registra o conteúdo exato do arquivo antes da alteração e a revisão de diff é precisa. Exclusões e renomeações passam por comandos de shell; o Nimbalyst monitora a pasta do projeto para detectá-las, por isso uma delas pode ocasionalmente ser atribuída ao turno errado.",
+      "contextUsage": "Uso de contexto",
+      "contextUsageBody": "O Antigravity não informa contagens de tokens, então o Nimbalyst não mostra um medidor de contexto para o Gemini em vez de exibir um inventado. A cota restante é mostrada no indicador de uso."
+    },
+    "copilotCli": {
+      "description": "Agente de programação do GitHub Copilot pelo modo servidor ACP (Agent Communication Protocol). Usa o login existente da Copilot CLI para autenticação.",
+      "checking": "Procurando a Copilot CLI...",
+      "required": "A GitHub Copilot CLI é necessária para executar o agente. Instale-a com:",
+      "install": "Instalar a Copilot CLI",
+      "installing": "Instalando a Copilot CLI...",
+      "docsLabel": "documentação da Copilot CLI",
+      "authBody": "O GitHub Copilot usa o seu login existente para autenticação. Execute <code>{{command}}</code> e use o comando <code>{{loginCommand}}</code> para se autenticar.",
+      "modelSelection": "A seleção de modelos é gerenciada pelo Copilot. Nenhuma chave de API adicional é necessária."
+    },
+    "openCode": {
+      "description": "Agente de programação de código aberto com suporte a vários modelos. Funciona com Claude, OpenAI, Gemini e modelos locais por meio de uma interface unificada.",
+      "checking": "Procurando a OpenCode CLI...",
+      "required": "A OpenCode CLI é necessária para executar o agente.",
+      "install": "Instalar a OpenCode CLI",
+      "installing": "Instalando a OpenCode CLI...",
+      "seeDocs": "Consulte a <link>documentação do OpenCode</link> para mais detalhes.",
+      "readConfigFailed": "Falha ao ler a configuração do OpenCode",
+      "updateConfigFailed": "Falha ao atualizar a configuração do OpenCode",
+      "lmStudioConfigured_zero": "{{count}} modelos do LM Studio configurados. Use \"Descobrir modelos\" acima para adicioná-los ao seletor.",
+      "lmStudioConfigured_one": "{{count}} modelo do LM Studio configurado. Use \"Descobrir modelos\" acima para adicioná-lo ao seletor.",
+      "lmStudioConfigured_other": "{{count}} modelos do LM Studio configurados. Use \"Descobrir modelos\" acima para adicioná-los ao seletor.",
+      "lmStudioConfigureFailed": "Falha ao configurar a ponte com o LM Studio",
+      "lmStudioRemoveFailed": "Falha ao remover a ponte com o LM Studio",
+      "lmStudioTitle": "Integração com o LM Studio",
+      "lmStudioBody": "Aponte para um servidor do LM Studio em execução e o Nimbalyst consultará <code>{{endpoint}}</code> e, em seguida, gravará um bloco <code>{{block}}</code> no seu <code>{{file}}</code>. Não é preciso ativar o LM Studio como um provedor de chat separado no Nimbalyst.",
+      "configuring": "Configurando...",
+      "bridgeActive_zero": "Ponte ativa com {{count}} modelos. Selecione um acima para usá-lo como padrão.",
+      "bridgeActive_one": "Ponte ativa com {{count}} modelo. Selecione-o acima para usá-lo como padrão.",
+      "bridgeActive_other": "Ponte ativa com {{count}} modelos. Selecione um acima para usá-lo como padrão.",
+      "updates": "Atualizações",
+      "disableAutoUpdate": "Desativar a atualização automática do OpenCode",
+      "autoUpdateHint": "Quando ativado, o OpenCode não se atualiza automaticamente entre sessões. Útil se você quiser estabilidade de versão durante a depuração.",
+      "optional": "(opcional)",
+      "apiConfigBody": "O OpenCode lê as chaves de API dos provedores da própria configuração e de variáveis de ambiente. Definir uma chave aqui é opcional e ela só é usada no teste de conexão do Nimbalyst.",
+      "apiKeyPlaceholder": "Chave de API (opcional)"
+    },
+    "openCodeModels": {
+      "coldHeadline": "Modelos ainda não descobertos",
+      "coldDetail": "Esta é a lista padrão integrada. O Nimbalyst ainda não perguntou ao OpenCode em quais provedores você está conectado, então os provedores que você configurou por conta própria não aparecem. Atualize para descobri-los.",
+      "identityChangedHeadline": "Sua configuração do OpenCode mudou",
+      "identityChangedDetail": "O binário do OpenCode ou suas credenciais mudaram desde que esta lista foi descoberta, por isso a lista padrão é exibida. Atualize para redescobrir seus provedores.",
+      "staleHeadline": "A lista descoberta pode estar desatualizada",
+      "staleDetail": "Última descoberta: {{time}}. Atualize para incluir provedores ou modelos adicionados desde então.",
+      "connectedProviders_zero": "{{count}} provedores conectados",
+      "connectedProviders_one": "{{count}} provedor conectado",
+      "connectedProviders_other": "{{count}} provedores conectados",
+      "freshDetail": "Descoberta em {{time}} a partir dos provedores em que o OpenCode está autenticado.",
+      "never": "nunca",
+      "title": "Modelos",
+      "discovering": "Descobrindo...",
+      "discover": "Descobrir modelos",
+      "startsBriefly": "Inicia o OpenCode brevemente para ler seus provedores",
+      "openProject": "Abra um projeto para descobrir modelos",
+      "discoveryFailed": "Falha na descoberta: {{error}}",
+      "defaultModel": "Modelo padrão",
+      "defaultModelHint": "Gravado no campo <code>{{field}}</code> do seu <code>{{file}}</code> e usado quando uma sessão não escolhe o próprio modelo.",
+      "openCodeDefault": "Padrão do OpenCode",
+      "filterPlaceholder": "Filtrar modelos",
+      "providerNotConnected": "provedor não conectado",
+      "noMatch": "Nenhum modelo corresponde a esse filtro.",
+      "uncheckedHint": "Os modelos desmarcados ficam ocultos no seletor de modelos da sessão. Modelos recém-descobertos aparecem automaticamente.",
+      "noModelsYet": "Ainda não há modelos. Entre em um provedor com <code>{{command}}</code> e depois descubra os modelos.",
+      "optionProviderNotConnected": "{{name}} (provedor não conectado)",
+      "optionNotDiscovered": "{{id}} (não descoberto)",
+      "contextTokens": "{{tokens}} de contexto",
+      "costPerMtok": "${{input}} entrada / ${{output}} saída por Mtok"
+    },
+    "credentials": {
+      "clearedOpenAi": "Removida deste dispositivo. A remoção no celular foi solicitada e será tentada novamente quando os dispositivos se reconectarem.",
+      "cleared": "Chave de API removida.",
+      "savedKey": "Chave de API salva",
+      "savedKeys": "Chaves de API salvas",
+      "manageDescription": "Gerencie as chaves de provedores ativados, desativados e removidos. Remover uma chave global da OpenAI também afeta o recurso de voz e a cópia no celular; reconecte os dispositivos móveis para receber a alteração.",
+      "retrySecureStorage": "Tentar novamente o armazenamento seguro",
+      "keySaved": "{{name}} — chave de API salva",
+      "workspaceKey": "{{path}} · Remover restaura a herança da chave global",
+      "globalKey": "Chave global",
+      "clearing": "Removendo…",
+      "clearKey": "Remover chave",
+      "noKeys": "Nenhuma chave de API salva."
+    }
+  },
+  "betaFeatures": {
+    "title": "Recursos beta",
+    "description": "Experimente novos recursos antes de serem lançados para todos. Os recursos beta podem não estar totalmente completos ou refinados e podem ser removidos no futuro.",
+    "enableAll": "Ativar todos os recursos beta",
+    "enableAllDescription": "Ativa automaticamente todos os recursos beta atuais e futuros.",
+    "restartNote": "Alguns recursos beta podem exigir reiniciar o Nimbalyst para entrar em vigor."
+  },
+  "sync": {
+    "heading": {
+      "accountsTitle": "Contas",
+      "accountsDescription": "Gerencie as contas pessoais conectadas e escolha a que será usada na sincronização pessoal/móvel.",
+      "devicesTitle": "Dispositivos",
+      "devicesDescription": "Veja os dispositivos pareados com a conta de sincronização pessoal ativa.",
+      "mobileTitle": "Aplicativo móvel",
+      "mobileDescription": "Pareie seu celular e escolha quais projetos ele pode acessar. A sincronização pessoal continua com criptografia de conhecimento zero."
+    },
+    "profiles": {
+      "title": "Projetos por conta pessoal",
+      "activeSyncAccount": "Conta de sincronização ativa",
+      "profileRetained": "Perfil mantido",
+      "noMobileProjects": "Nenhum projeto móvel selecionado"
+    },
+    "accounts": {
+      "loadingDirectory": "Carregando contas e organizações…",
+      "listTitleSingle": "Conta e organizações",
+      "listTitleMultiple": "Contas e organizações",
+      "refreshing": "Atualizando…",
+      "signedInAs": "<muted>Conectado como </muted><email>{{email}}</email>",
+      "usedForSync": "Usada na sincronização",
+      "sessionExpired": "Sessão expirada",
+      "reconnect": "Reconectar",
+      "setAsSyncAccount": "Definir como conta de sincronização",
+      "signOut": "Sair",
+      "addAnotherAccount": "Adicionar outra conta",
+      "addAccount": "Adicionar conta",
+      "restartToEnableAuth": "Reinicie o aplicativo para ativar a autenticação."
+    },
+    "signOutPurge": {
+      "title": "Excluir trabalho offline não sincronizado?",
+      "message_zero": "Você tem edições ou anexos offline não sincronizados em {{count}} documentos. Ao sair, esse trabalho local será excluído permanentemente.",
+      "message_one": "Você tem edições ou anexos offline não sincronizados em {{count}} documento. Ao sair, esse trabalho local será excluído permanentemente.",
+      "message_other": "Você tem edições ou anexos offline não sincronizados em {{count}} documentos. Ao sair, esse trabalho local será excluído permanentemente.",
+      "confirm": "Sair e excluir"
+    },
+    "removePurge": {
+      "title": "Remover a conta e excluir o trabalho não sincronizado?",
+      "message_zero": "Esta conta tem edições ou anexos offline não sincronizados em {{count}} documentos. Ao removê-la, esse trabalho local será excluído permanentemente.",
+      "message_one": "Esta conta tem edições ou anexos offline não sincronizados em {{count}} documento. Ao removê-la, esse trabalho local será excluído permanentemente.",
+      "message_other": "Esta conta tem edições ou anexos offline não sincronizados em {{count}} documentos. Ao removê-la, esse trabalho local será excluído permanentemente.",
+      "confirm": "Remover e excluir"
+    },
+    "mobile": {
+      "pairTitle": "Parear um dispositivo",
+      "iosAppName": "Nimbalyst para iOS",
+      "iosAppDescription": "Veja e responda às sessões de IA pelo celular",
+      "enableProjectBeforePairing": "Ative a sincronização de pelo menos um projeto antes de parear seu dispositivo.",
+      "pairDevice": "Parear dispositivo"
+    },
+    "preventSleep": {
+      "title": "Impedir suspensão durante a sincronização",
+      "description": "Mantém o computador ativo para que você possa enviar prompts pelo celular. A tela ainda pode desligar.",
+      "off": "Desativado",
+      "always": "Sempre",
+      "pluggedIn": "Quando conectado à energia",
+      "offWarning": "Seu computador pode entrar em suspensão e se desconectar da sincronização. Ative o impedimento de suspensão para manter a conexão ativa."
+    },
+    "projects": {
+      "title": "Projetos acessíveis no celular",
+      "deselectAll": "Desmarcar todos",
+      "selectAll": "Selecionar todos",
+      "noneSelected": "Nenhum projeto selecionado.",
+      "selectedCount": "{{selected}} de {{total}} selecionados.",
+      "docsHint": "A opção Docs também sincroniza os arquivos .md de cada projeto.",
+      "empty": "Nenhum projeto ainda. Abra um projeto para disponibilizá-lo no celular.",
+      "syncToMobileAria": "Sincronizar {{name}} com o celular",
+      "pushDelay": "Atraso das notificações push",
+      "minutes": "{{minutes}} min"
+    },
+    "docSync": {
+      "enableFailed": "Falha ao ativar a sincronização de documentos: {{error}}",
+      "didNotConnect": "A sincronização de documentos não conectou. Verifique sua conexão e ative novamente ou reinicie o aplicativo.",
+      "startingTitle": "Iniciando a sincronização de documentos",
+      "syncing": "Sincronizando...",
+      "error": "Erro",
+      "connectedTitle": "Sincronização de documentos conectada ({{fileCount}} arquivos)",
+      "docCount": "{{fileCount}} docs",
+      "notConnectedTitle": "A sincronização de documentos está ativada, mas não conectada",
+      "notConnected": "Não conectado",
+      "checkboxTitle": "Sincronizar arquivos .md com o celular",
+      "checkboxAria": "Sincronizar documentos em {{name}}",
+      "docsLabel": "Docs"
+    },
+    "encryption": {
+      "title": "Criptografia de ponta a ponta",
+      "description": "O QR code transfere sua chave de criptografia com segurança, diretamente entre os dispositivos.",
+      "keysNeverTouchServers": "Suas chaves de criptografia nunca passam pelos nossos servidores",
+      "onlyYourDevices": "Somente seus dispositivos podem descriptografar seus dados",
+      "sameAccount": "Entre com a mesma conta nos dois dispositivos"
+    },
+    "deleteAccount": {
+      "dangerZone": "Zona de perigo",
+      "button": "Excluir conta",
+      "warning": "Isso excluirá permanentemente a conta pessoal selecionada e seus dados sincronizados, incluindo sessões, links compartilhados e pareamentos de dispositivos. Os dados de organizações de equipe são separados. Esta ação não pode ser desfeita.",
+      "warningWithId": "Isso excluirá permanentemente a conta pessoal selecionada ({{personalOrgId}}) e seus dados sincronizados, incluindo sessões, links compartilhados e pareamentos de dispositivos. Os dados de organizações de equipe são separados. Esta ação não pode ser desfeita.",
+      "typeToConfirm": "Digite <bold>DELETE</bold> para confirmar:",
+      "deleting": "Excluindo...",
+      "failed": "Falha ao excluir a conta"
+    }
+  },
+  "qrPairing": {
+    "title": "Parear dispositivo móvel",
+    "serverUrlRequired": "A URL do servidor é obrigatória",
+    "generateFailed": "Falha ao gerar o QR code",
+    "localDev": {
+      "title": "Servidor de desenvolvimento local",
+      "description": "Seu celular precisa se conectar pelo IP da sua rede local em vez de localhost.",
+      "useLanIp": "Usar IP da rede local: <code>{{ip}}</code>",
+      "serverUrlInQr": "URL do servidor no QR: <code>{{url}}</code>"
+    },
+    "tryAgain": "Tentar novamente",
+    "qrAlt": "QR code para pareamento móvel",
+    "copyPayloadHint": "Cmd+clique para copiar o payload",
+    "steps": {
+      "openApp": "1. Abra o Nimbalyst no seu dispositivo móvel",
+      "goToSettings": "2. Acesse as Configurações e toque em \"Scan QR Code\"",
+      "pointCamera": "3. Aponte a câmera para este QR code",
+      "signIn": "4. Entre com a mesma conta usada no desktop"
+    },
+    "encrypted": {
+      "title": "Criptografia de ponta a ponta",
+      "description": "Este QR code transfere sua chave de criptografia com segurança. Suas chaves nunca passam pelos nossos servidores - somente seus dispositivos podem descriptografar seus dados."
+    },
+    "ownDeviceWarning": "Escaneie somente com seu próprio dispositivo. Isso compartilha sua chave de criptografia.",
+    "regenerate": "Gerar novo QR code",
+    "copied": "Copiado!",
+    "copyPairingData": "Copiar dados de pareamento",
+    "cantScan": "Não consegue escanear? Cole isto em Manual Setup no aplicativo móvel",
+    "generating": "Gerando QR code..."
+  },
+  "accountOrgs": {
+    "roles": {
+      "owner": "proprietário",
+      "admin": "administrador",
+      "member": "membro",
+      "guest": "convidado"
+    },
+    "saveDestinationFailed": "Não foi possível salvar onde abrir as mensagens desta organização.",
+    "acceptedButDestinationFailed": "Convite aceito, mas não foi possível salvar o destino da organização. Tente novamente.",
+    "acceptFailed": "Não foi possível aceitar o convite",
+    "invitePending": "Convite pendente",
+    "acceptToJoin": "Aceite para entrar nesta organização",
+    "activeMember": "Membro ativo",
+    "projectCount_zero": "{{count}} projetos",
+    "projectCount_one": "{{count}} projeto",
+    "projectCount_other": "{{count}} projetos",
+    "alsoSignedInAs": "também conectado como {{emails}}",
+    "accepting": "Aceitando…",
+    "accept": "Aceitar",
+    "open": "Abrir",
+    "manage": "Gerenciar",
+    "noOrganizations": "Nenhuma organização",
+    "loadingOrganizations": "Carregando organizações…",
+    "newOrganization": "Nova organização"
+  },
+  "sharedLinks": {
+    "title": "Links compartilhados",
+    "description": "Gerencie os links que você compartilhou de arquivos e sessões. Qualquer pessoa com o link pode ver o conteúdo.",
+    "loadFailed": "Falha ao carregar os compartilhamentos",
+    "loading": "Carregando links compartilhados...",
+    "signInPrompt": "Entre para compartilhar arquivos e sessões.",
+    "signInHint": "Acesse Conta e sincronização para configurar sua conta.",
+    "empty": "Nenhum link compartilhado ainda.",
+    "emptyHint": "Clique com o botão direito em um arquivo ou sessão e selecione \"Compartilhar link\" para criar um.",
+    "untitled": "Sem título",
+    "kind": {
+      "file": "Arquivo",
+      "session": "Sessão"
+    },
+    "viewCount_zero": "{{count}} visualizações",
+    "viewCount_one": "{{count}} visualização",
+    "viewCount_other": "{{count}} visualizações",
+    "createdBy": "Criado por {{email}}",
+    "unknownAccount": "conta desconhecida",
+    "expiry": {
+      "never": "Sem expiração",
+      "expired": "Expirado",
+      "tomorrow": "Expira amanhã",
+      "inDays": "Expira em {{days}} d"
+    },
+    "copyLink": "Copiar link",
+    "deleteLink": "Excluir link compartilhado"
+  },
+  "devices": {
+    "title": "Dispositivos pareados",
+    "hideSelected": "Ocultar selecionados",
+    "description": "Computadores offline sem histórico neste projeto saem automaticamente do seletor de execução. Ocultar um computador mantém suas sessões e credenciais. As sessões mais antigas continuam associadas a esse computador; ocultá-lo não move sessões nem repara chaves de sincronização. Ele reaparece se se reconectar. Restaurar os dados do aplicativo de um backup ou movê-los para outro volume registra um novo computador.",
+    "syncDisabled": "Ative a sincronização pessoal para ver os dispositivos pareados.",
+    "empty": "Nenhum dispositivo pareado.",
+    "serverUpdateRequired": "Alterações no inventário exigem um servidor de sincronização atualizado.",
+    "updateFailed": "Não foi possível atualizar os dispositivos",
+    "unknown": "Desconhecido",
+    "selectAria": "Selecionar {{name}}",
+    "nameAria": "Nome de {{name}}",
+    "online": "Online",
+    "hiddenOffline": "Oculto · Offline",
+    "offline": "Offline",
+    "lastSeen": "Visto pela última vez em {{time}}",
+    "saveName": "Salvar nome",
+    "restore": "Restaurar",
+    "hide": "Ocultar"
+  },
+  "database": {
+    "title": "Armazenamento do banco de dados",
+    "description": "Mecanismo de armazenamento local para sessões, rastreadores e histórico de documentos. Novas instalações começam no SQLite. Instalações que já têm um banco de dados PGLite continuam nele: a migração automática está desativada enquanto a migração é reformulada, então nada é movido a menos que você a inicie neste painel.",
+    "restartRequired": "A troca de banco de dados exige reinicialização. O Nimbalyst verificará o banco de dados na próxima inicialização.",
+    "restartButton": "Reiniciar o Nimbalyst",
+    "backend": {
+      "title": "Backend ativo",
+      "pgliteCurrent": "PGLite (atual)",
+      "sqliteNew": "SQLite (novo)",
+      "statusError": "Falha ao ler o status: {{error}}",
+      "bothDirs": "pglite-db/ e sqlite-db/ existem no disco.",
+      "pgliteDirOnly": "pglite-db/ está no disco; sqlite-db/ ainda não foi criado.",
+      "sqliteDirOnly": "sqlite-db/ está no disco; o pglite-db/ legado não existe.",
+      "noDirs": "Ainda não há nenhum diretório de banco de dados."
+    },
+    "dryRun": {
+      "title": "Testar a migração para SQLite (simulação)",
+      "description": "Copia seus dados para um banco de dados SQLite descartável ao lado do banco em uso, informa a contagem de linhas e a integridade e, em seguida, mantém a cópia bem-sucedida para a troca. Seu banco de dados PGLite real nunca é alterado. Disponível apenas enquanto o PGLite estiver ativo.",
+      "running": "Executando simulação...",
+      "run": "Executar simulação da migração",
+      "cancelling": "Cancelando após a leitura atual...",
+      "cancel": "Cancelar simulação",
+      "cancelledError": "Simulação cancelada: {{error}}",
+      "failedError": "A simulação falhou: {{error}}"
+    },
+    "adoptConfirm": {
+      "title": "Mudar para SQLite",
+      "lessThanAnHour": "menos de uma hora",
+      "aboutHours_zero": "cerca de {{count}} horas",
+      "aboutHours_one": "cerca de {{count}} hora",
+      "aboutHours_other": "cerca de {{count}} horas",
+      "message": "Mudar para a cópia SQLite da simulação?\n\nO Nimbalyst vai:\n  1. Fechar o banco de dados PGLite atual\n  2. Copiar tudo o que for novo desde a simulação (há {{age}})\n  3. Tornar o SQLite o backend ativo\n  4. Preservar o PGLite antigo para reversão\n\nÉ necessário reiniciar após a troca.",
+      "confirmLabel": "Mudar para SQLite"
+    },
+    "rollbackConfirm": {
+      "title": "Restaurar o banco de dados PGLite",
+      "message": "Restaurar o banco de dados PGLite preservado? Você perderá todos os dados criados desde a migração. Requer reinicialização.",
+      "confirmLabel": "Restaurar PGLite",
+      "failedTitle": "Falha na reversão",
+      "failedMessage": "Falha na reversão: {{error}}",
+      "restoredTitle": "Banco de dados restaurado",
+      "restoredMessage": "Restaurado a partir de {{restoredFrom}}. Reinicie o Nimbalyst."
+    },
+    "migrate": {
+      "title": "Migrar para SQLite",
+      "description": "Move todos os seus dados do PGLite para o SQLite. O diretório original do PGLite é preservado em <code>{{dir}}</code> e pode ser restaurado por este painel.",
+      "button": "Migrar para SQLite"
+    },
+    "migrated": {
+      "title": "Migrado para SQLite",
+      "description": "Seus dados já estão armazenados no backend SQLite, que é mais rápido. Nenhuma outra migração é necessária."
+    },
+    "restore": {
+      "title": "Restaurar o banco de dados PGLite anterior",
+      "description": "Coloca a cópia preservada mais recente do PGLite de volta em uso pelo aplicativo. Os dados criados desde a migração não estarão nela. As cópias estão listadas abaixo.",
+      "button": "Restaurar do PGLite preservado"
+    },
+    "modal": {
+      "description": "O processo é executado de uma só vez, sem interrupções, e preserva o diretório original do PGLite para reversão.",
+      "preflightFailed": "A verificação prévia falhou: {{error}}",
+      "preflight": "Verificação prévia",
+      "diskSpaceOk": "Espaço em disco: {{free}} livres / {{required}} necessários OK",
+      "diskSpaceFail": "Espaço em disco: {{free}} livres / {{required}} necessários FALHA",
+      "pgliteSize": "Tamanho do PGLite: {{size}}",
+      "startMigration": "Iniciar migração",
+      "switching": "Mudando para o novo banco de dados",
+      "verifying": "Verificando a migração",
+      "migrating": "Migrando seus dados",
+      "cutoverDetail": "Preservando o diretório anterior do PGLite e trocando o backend ativo.",
+      "phase": "Fase: {{phase}}",
+      "rowsAndElapsed": "Linhas transferidas: {{rows}} · Tempo decorrido: {{elapsed}}",
+      "complete": "Migração concluída",
+      "rowsTransferred": "Linhas transferidas",
+      "tablesMigrated": "Tabelas migradas",
+      "failed": "A migração não foi concluída",
+      "copyDiagnostic": "Copiar informações de diagnóstico",
+      "continueWithPglite": "Continuar usando o PGLite"
+    }
+  },
+  "recovery": {
+    "title": "Bancos de dados separados neste computador",
+    "description": "Versões anteriores do Nimbalyst separavam um banco de dados quando não conseguiam abri-lo. Essas cópias são mantidas indefinidamente e nunca são removidas automaticamente. A presença de uma cópia aqui não significa que o banco de dados que você está usando agora esteja danificado.",
+    "verdicts": {
+      "worthReviewing": "Vale a pena revisar",
+      "needsDecision": "Precisa da sua decisão",
+      "nothingToDo": "Nada a fazer",
+      "couldNotAssess": "Não foi possível avaliar"
+    },
+    "reasons": {
+      "candidateMissing": "Esta cópia não está mais no disco.",
+      "alreadyResolved": "Você já tratou desta cópia.",
+      "candidateEmpty": "Esta cópia não contém dados.",
+      "candidateInvalid": "Esta cópia não é um banco de dados que o Nimbalyst consiga ler.",
+      "candidateNotMateriallyRicher": "Esta cópia não parece conter nada que falte no banco de dados atual.",
+      "candidateUnreadable": "O Nimbalyst não conseguiu ler esta cópia bem o suficiente para descrevê-la.",
+      "liveUnreadable": "O Nimbalyst não conseguiu ler o banco de dados atual, então não pode comparar os dois.",
+      "factsChangedWhileReading": "Os arquivos mudaram enquanto o Nimbalyst os lia, então ele parou em vez de comparar algo em movimento.",
+      "bothDatabasesHaveContent": "Esta cópia e o banco de dados atual contêm dados. O Nimbalyst não consegue saber qual deles você quer.",
+      "liveEmptyButInstallLooksNew": "O banco de dados atual está vazio, e este computador não tem histórico de projetos para comparação.",
+      "liveEmptyOnEstablishedInstall": "O banco de dados atual está vazio, mas este computador tem configurações de projetos que você já usou, e esta cópia contém dados.",
+      "unknown": "O Nimbalyst não tem uma descrição para este resultado."
+    },
+    "offer": {
+      "title": "Uma destas cópias pode conter dados que o seu banco de dados atual não tem",
+      "reviewBelow": "{{reason}} Revise-a abaixo antes de decidir qualquer coisa."
+    },
+    "result": {
+      "restored": "Restaurado a partir de {{name}}. O banco de dados que estava em uso antes e a cópia usada na restauração continuam no disco. Reinicie o Nimbalyst para usar o banco de dados restaurado.",
+      "nothingRestored": "Nada foi restaurado.",
+      "rolledBack": "O banco de dados que você estava usando foi recolocado, e todas as cópias continuam no disco.",
+      "notChanged": "O banco de dados que você estava usando não foi alterado, e todas as cópias continuam no disco."
+    },
+    "candidate": {
+      "setAside": "Separado em {{date}} · {{size}} ({{bucket}})",
+      "cannotRestore": "Esta versão não consegue restaurar uma cópia PGLite sobre um banco de dados SQLite. Você ainda pode abrir a cópia no Finder e mantê-la.",
+      "review": "Revisar a restauração desta cópia",
+      "showInFinder": "Mostrar no Finder",
+      "keep": "Manter e parar de perguntar"
+    },
+    "confirm": {
+      "title": "Restaurar a partir de um banco de dados separado",
+      "description": "Leia o que acontece com cada cópia. O Nimbalyst não exclui nenhuma delas, nem agora nem depois.",
+      "copyToRestore": "Cópia a ser restaurada",
+      "replaces": "Banco de dados que será substituído",
+      "liveDetails": "{{size}} ({{bucket}}) · ativo atualmente no {{backend}}",
+      "keptAfterwards": "Mantido depois",
+      "keptCopy": "A cópia acima, sem alterações. A restauração apenas a lê; ela nunca é modificada.",
+      "keptSnapshot": "Um snapshot do banco de dados que você está usando agora, criado e verificado antes de qualquer movimentação, salvo ao lado dele com <code>pre-restore</code> e um carimbo de data/hora no nome.",
+      "keptDisplaced": "O banco de dados que você está usando agora, movido para o lado com <code>displaced</code> e um carimbo de data/hora no nome.",
+      "verificationNote": "A cópia é verificada antes de substituir qualquer coisa. Se a verificação ou qualquer etapa posterior falhar, o banco de dados que você está usando agora permanece no lugar e todas as cópias continuam no disco. Em qualquer caso, o Nimbalyst precisa ser reiniciado depois.",
+      "acknowledge": "Li qual banco de dados será substituído e quais cópias serão mantidas.",
+      "showCopyInFinder": "Mostrar a cópia no Finder",
+      "restoring": "Restaurando...",
+      "restoreFromCopy": "Restaurar a partir desta cópia"
+    }
+  },
+  "migration": {
+    "blocked": {
+      "title": "A migração automática está suspensa neste computador",
+      "reasons": {
+        "backupDwarfsLive": "Um banco de dados separado neste computador é muito maior que o que está em uso, então o Nimbalyst não copiará o banco em uso sem que você verifique antes.",
+        "projectsWithoutSessions": "Este computador tem configurações de projetos que você já abriu, mas o banco de dados de origem da cópia não contém nenhuma sessão.",
+        "sourceUnreadable": "O Nimbalyst não conseguiu ler o banco de dados de origem da cópia, e um banco ilegível não é tratado como vazio.",
+        "sourceMissing": "O banco de dados de origem da cópia não está no disco.",
+        "insufficientDisk": "Não há espaço livre em disco suficiente para manter os dois bancos de dados durante a cópia.",
+        "unknown": "O Nimbalyst registrou um motivo que não consegue descrever nesta versão."
+      },
+      "recorded": "Registrado em {{date}}. O Nimbalyst verifica isso novamente por conta própria se o que ele mede mudar. Nada foi copiado, movido ou excluído.",
+      "clearExplanation": "Limpar isto permite que uma próxima inicialização avalie a migração novamente. Isso não inicia uma migração nem altera nenhum dado, mas remove a verificação que impediu o Nimbalyst de copiar um banco de dados que ele não conseguiu confirmar ser o que contém o seu trabalho. Verifique antes as cópias separadas.",
+      "clearing": "Limpando...",
+      "clearButton": "Limpar e verificar novamente na próxima inicialização",
+      "clearError": "Não foi possível limpar: {{error}}"
+    },
+    "copies": {
+      "title": "Cópias do PGLite mantidas após uma migração",
+      "description": "Uma migração mantém o banco de dados PGLite de origem. Essas cópias ficam até você removê-las; o Nimbalyst não as exclui automaticamente.",
+      "rollbackSource": "Esta é a cópia que \"Restaurar do PGLite preservado\" usaria.",
+      "notRollbackSource": "Mantida no disco. Não é a cópia que uma reversão usaria.",
+      "showInFinder": "Mostrar no Finder",
+      "delete": "Excluir esta cópia",
+      "deleteError": "Nada foi excluído: {{error}}"
+    },
+    "deleteConfirm": {
+      "title": "Excluir uma cópia preservada",
+      "permanentlyRemoves": "Esta ação remove permanentemente {{size}} — o banco de dados PGLite como estava em {{date}}, antes de ser migrado. Sessões e históricos de documentos que existem apenas nesta cópia não poderão ser recuperados depois.",
+      "rollbackWarning": "Esta é a cópia usada para reversão. Depois que ela for excluída, esta instalação não poderá voltar para o PGLite.",
+      "notTouched": "O banco de dados que você está usando agora não é alterado.",
+      "acknowledge": "Entendo que esta cópia não poderá ser recuperada depois de excluída.",
+      "deletePermanently": "Excluir permanentemente"
+    },
+    "dryRunResult": {
+      "rowsCopied": "Linhas copiadas",
+      "tables": "Tabelas",
+      "duration": "Duração",
+      "fkViolations": "Violações de FK",
+      "integrity": "Integridade",
+      "onDisk": "Em disco",
+      "onDiskValue": "{{sqliteSize}} vs. {{pgliteSize}} ({{change}}%)",
+      "perTableBreakdown": "Detalhamento por tabela ({{tableCount}} tabelas)",
+      "table": "Tabela"
+    },
+    "progress": {
+      "tables": "Tabelas {{completed}} / {{total}}",
+      "rows": "Linhas {{copied}}",
+      "rowsWithExpected": "Linhas {{copied}} / {{expected}}",
+      "elapsed": "Tempo decorrido {{elapsed}}",
+      "thisTable": "Esta tabela: {{copied}} / {{expected}}"
+    },
+    "phases": {
+      "preparing": "Preparando",
+      "copying": "Copiando dados",
+      "rebuildingFts": "Reconstruindo o índice de busca de texto completo",
+      "verifyingCounts": "Verificando a contagem de linhas",
+      "verifyingSpotCheck": "Verificando amostras das linhas copiadas",
+      "verifyingIntegrity": "Verificando a integridade do banco de dados",
+      "verifyingForeignKeys": "Verificando chaves estrangeiras",
+      "finalizing": "Finalizando"
+    },
+    "adopt": {
+      "title": "Mudar para a sua cópia SQLite da simulação",
+      "lessThanAnHourAgo": "há menos de uma hora",
+      "hoursAgo_zero": "há {{count}} horas",
+      "hoursAgo_one": "há {{count}} hora",
+      "hoursAgo_other": "há {{count}} horas",
+      "daysAgo_zero": "há {{count}} dias",
+      "daysAgo_one": "há {{count}} dia",
+      "daysAgo_other": "há {{count}} dias",
+      "description": "Uma simulação bem-sucedida feita {{age}} está salva no disco ({{rows}} linhas). O Nimbalyst pode promovê-la a banco de dados ativo — ele copiará tudo o que for novo desde a simulação e depois trocará o indicador de backend. O diretório atual do PGLite é preservado para reversão.",
+      "switching": "Mudando...",
+      "switchButton": "Mudar para esta cópia SQLite",
+      "switchFailed": "Falha na troca: {{error}}",
+      "switched_zero": "Mudança para o SQLite concluída. {{rows}} novas linhas sincronizadas em {{duration}}. Reinicie o Nimbalyst para que a alteração tenha efeito.",
+      "switched_one": "Mudança para o SQLite concluída. {{rows}} nova linha sincronizada em {{duration}}. Reinicie o Nimbalyst para que a alteração tenha efeito.",
+      "switched_other": "Mudança para o SQLite concluída. {{rows}} novas linhas sincronizadas em {{duration}}. Reinicie o Nimbalyst para que a alteração tenha efeito."
+    },
+    "historyWarning_zero": "A migração foi concluída com {{formattedCount}} entradas do histórico de documentos omitidas. Essas entradas não estão disponíveis no histórico, mas seus dados originais são mantidos em um registro de recuperação local. O banco de dados PGLite original também é mantido. Nenhuma sessão ou mensagem foi ignorada.",
+    "historyWarning_one": "A migração foi concluída com {{formattedCount}} entrada do histórico de documentos omitida. Essas entradas não estão disponíveis no histórico, mas seus dados originais são mantidos em um registro de recuperação local. O banco de dados PGLite original também é mantido. Nenhuma sessão ou mensagem foi ignorada.",
+    "historyWarning_other": "A migração foi concluída com {{formattedCount}} entradas do histórico de documentos omitidas. Essas entradas não estão disponíveis no histórico, mas seus dados originais são mantidos em um registro de recuperação local. O banco de dados PGLite original também é mantido. Nenhuma sessão ou mensagem foi ignorada."
+  },
+  "dbFormat": {
+    "noDateRecorded": "nenhuma data registrada no nome",
+    "sizeBuckets": {
+      "empty": "vazio",
+      "under32Mib": "menos de 32 MiB",
+      "under256Mib": "de 32 MiB a 256 MiB",
+      "under1Gib": "de 256 MiB a 1 GiB",
+      "under3Gib": "de 1 GiB a 3 GiB",
+      "over3Gib": "mais de 3 GiB"
+    }
+  },
+  "notifications": {
+    "title": "Notificações",
+    "description": "Configure notificações sonoras e visuais para as interações com a IA.",
+    "completionSounds": {
+      "title": "Sons de conclusão",
+      "description": "Toca um som quando a IA ou o agente conclui um turno e está pronto para receber mais instruções.",
+      "enable": "Ativar sons de conclusão",
+      "enableDescription": "Toca uma notificação sonora quando o chat de IA ou o agente conclui uma resposta.",
+      "soundType": "Tipo de som",
+      "soundTypeDescription": "Escolha o som que será tocado quando uma resposta for concluída.",
+      "sounds": {
+        "chime": "carrilhão",
+        "bell": "sino",
+        "pop": "pop",
+        "custom": "personalizado"
+      },
+      "selected": "Selecionado: {{fileName}}",
+      "noCustomSound": "Nenhum som personalizado selecionado ainda.",
+      "changeFile": "Trocar arquivo...",
+      "chooseFile": "Escolher arquivo...",
+      "supportedFormats": "Compatível com MP3, WAV, OGG, M4A, AAC e FLAC.",
+      "volume": "Volume",
+      "volumeDescription": "Volume de reprodução como porcentagem do volume do sistema.",
+      "volumeAriaLabel": "Volume do som de conclusão",
+      "playing": "Tocando...",
+      "testSound": "Testar som"
+    },
+    "customSound": {
+      "tooLarge": "Esse arquivo é grande demais (máximo de {{maxMb}} MB).",
+      "invalid": "Esse arquivo não parece ser um arquivo de áudio compatível.",
+      "copyFailed": "Não foi possível salvar esse arquivo. Tente outro.",
+      "unreadable": "Não foi possível ler esse arquivo.",
+      "generic": "Não foi possível usar esse arquivo.",
+      "undecodable": "Não foi possível decodificar esse arquivo de áudio. Escolha outro arquivo."
+    },
+    "osNotifications": {
+      "title": "Notificações do sistema",
+      "description": "Mostra notificações do sistema quando as respostas da IA são concluídas enquanto o aplicativo está em segundo plano.",
+      "enable": "Ativar notificações do sistema",
+      "enableDescription": "Notificações nativas do sistema quando a IA conclui uma resposta. Respeita o modo Não perturbe.",
+      "notifyWhenFocused": "Notificar mesmo com o aplicativo em foco",
+      "notifyWhenFocusedDescription": "Mostra notificações mesmo quando o aplicativo está em foco, exceto se você estiver vendo a sessão em questão.",
+      "permissionHint": "O Electron não oferece aqui um estado confiável de permissão de notificações que funcione em todas as plataformas. Use uma notificação de teste para acionar a solicitação do sistema ou confirmar a entrega.",
+      "sendTest": "Enviar notificação de teste",
+      "openSystemSettings": "Abrir configurações de notificação do sistema",
+      "testSent": "Uma notificação de teste foi enviada. Se ela não aparecer, abra as configurações de notificação do sistema e permita as notificações do Nimbalyst.",
+      "testFailed": "Falha ao mostrar uma notificação de teste.",
+      "openSettingsFailed": "Falha ao abrir as configurações de notificação do sistema."
+    },
+    "sessionBlocked": {
+      "title": "Notificações de sessão bloqueada",
+      "description": "Mostra notificações do sistema quando uma sessão de IA precisa da sua resposta.",
+      "name": "Notificar quando uma sessão precisar de atenção",
+      "nameDescription": "Notifica quando uma sessão está aguardando sua resposta (permissões, perguntas, revisões de plano, commits)."
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 /**
  * Initial-loading skeleton, shown until the first personal-index page arrives.
@@ -6,8 +7,9 @@ import React from 'react';
  * does not reflow when the rows land.
  */
 export function InboxSkeleton({ rows = 6 }: { rows?: number }) {
+  const { t } = useTranslation('team');
   return (
-    <div className="inbox-skeleton" data-testid="inbox-skeleton" data-component="InboxSkeleton" aria-busy="true" aria-label="Loading inbox">
+    <div className="inbox-skeleton" data-testid="inbox-skeleton" data-component="InboxSkeleton" aria-busy="true" aria-label={t('inbox.loading')}>
       {Array.from({ length: rows }, (_, index) => (
         <div key={index} className="inbox-skeleton-row flex items-start gap-3 border-b border-[var(--nim-border)] px-4 py-3 last:border-b-0">
           <span className="mt-2 size-2 shrink-0 rounded-full bg-[var(--nim-bg-active)]" />

@@ -14,6 +14,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface FolderNode {
   name: string;
@@ -38,6 +39,7 @@ function FolderRow({
   selected: string[];
   onToggle: (folderPath: string) => void;
 }) {
+  const { t } = useTranslation('team');
   const [expanded, setExpanded] = useState(false);
   const [children, setChildren] = useState<FolderNode[] | null>(null);
 
@@ -58,7 +60,7 @@ function FolderRow({
         <button
           type="button"
           className="grid size-4 shrink-0 place-items-center border-0 bg-transparent p-0 text-[var(--nim-text-faint)]"
-          aria-label={expanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
+          aria-label={expanded ? t('invite.folderPicker.collapse', { name: node.name }) : t('invite.folderPicker.expand', { name: node.name })}
           onClick={() => setExpanded(current => !current)}
         >
           <MaterialSymbol icon={expanded ? 'expand_more' : 'chevron_right'} size={16} />
@@ -95,6 +97,7 @@ export function WorkspaceFolderPicker({
   selected: string[];
   onToggle: (folderPath: string) => void;
 }) {
+  const { t } = useTranslation('team');
   const [roots, setRoots] = useState<FolderNode[] | null>(null);
 
   const load = useCallback(async () => {
@@ -109,10 +112,10 @@ export function WorkspaceFolderPicker({
 
   return (
     <div className="workspace-folder-picker max-h-[13rem] overflow-y-auto rounded border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] px-2 py-1">
-      {roots === null && <p className="m-0 p-2 text-xs text-[var(--nim-text-faint)]">Reading the workspace…</p>}
+      {roots === null && <p className="m-0 p-2 text-xs text-[var(--nim-text-faint)]">{t('invite.folderPicker.reading')}</p>}
       {roots?.length === 0 && (
         <p className="m-0 p-2 text-xs text-[var(--nim-text-faint)]">
-          This workspace has no folders to publish.
+          {t('invite.folderPicker.empty')}
         </p>
       )}
       {roots?.map(node => (

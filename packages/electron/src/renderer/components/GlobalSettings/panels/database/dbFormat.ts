@@ -8,6 +8,7 @@
  */
 
 import type { RecoverySizeBucket } from '../../../../store/atoms/dbMigration';
+import { t } from '@nimbalyst/runtime/i18n';
 
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -26,16 +27,16 @@ export function formatDuration(ms: number): string {
 
 /** Binary units, matching the cohort ceilings the rollout is defined in. */
 const BUCKET_LABELS: Record<RecoverySizeBucket, string> = {
-  'empty': 'empty',
-  'under-32mb': 'under 32 MiB',
-  'under-256mb': '32 MiB to 256 MiB',
-  'under-1gb': '256 MiB to 1 GiB',
-  'under-3gb': '1 GiB to 3 GiB',
-  'over-3gb': 'over 3 GiB',
+  'empty': 'settings:dbFormat.sizeBuckets.empty',
+  'under-32mb': 'settings:dbFormat.sizeBuckets.under32Mib',
+  'under-256mb': 'settings:dbFormat.sizeBuckets.under256Mib',
+  'under-1gb': 'settings:dbFormat.sizeBuckets.under1Gib',
+  'under-3gb': 'settings:dbFormat.sizeBuckets.under3Gib',
+  'over-3gb': 'settings:dbFormat.sizeBuckets.over3Gib',
 };
 
 export function sizeBucketLabel(bucket: RecoverySizeBucket): string {
-  return BUCKET_LABELS[bucket] ?? String(bucket);
+  return BUCKET_LABELS[bucket] ? t(BUCKET_LABELS[bucket]) : String(bucket);
 }
 
 /**
@@ -43,8 +44,8 @@ export function sizeBucketLabel(bucket: RecoverySizeBucket): string {
  * unparseable one says so rather than falling back to something invented.
  */
 export function formatArtifactDate(iso: string | null): string {
-  if (!iso) return 'no date recorded in the name';
+  if (!iso) return t('settings:dbFormat.noDateRecorded');
   const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) return 'no date recorded in the name';
+  if (Number.isNaN(parsed.getTime())) return t('settings:dbFormat.noDateRecorded');
   return parsed.toLocaleString();
 }

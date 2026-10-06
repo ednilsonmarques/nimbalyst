@@ -1,0 +1,531 @@
+{
+  "workspaceWelcome": {
+    "subtitle": "Files are saved automatically as you work",
+    "newFile": {
+      "ariaLabel": "Create a new file",
+      "title": "New file",
+      "description": "Create a Markdown doc, mockup, diagram, spreadsheet, or code file.",
+      "markdown": "Markdown",
+      "mockup": "Mockup",
+      "diagram": "Diagram"
+    },
+    "agent": {
+      "ariaLabel": "Focus the agent chat",
+      "title": "Ask the agent",
+      "description": "Type into the chat on the right — it can read, edit, and create files for you.",
+      "summarizeProject": "Summarize this project",
+      "draftPlan": "Draft a plan for…"
+    }
+  },
+  "unifiedOnboarding": {
+    "roles": {
+      "noAnswer": "No Answer",
+      "developer": "Software Developer",
+      "productManager": "Product Manager",
+      "designer": "Designer",
+      "writer": "Writer / Content",
+      "researcher": "Researcher",
+      "marketing": "Marketing",
+      "sales": "Sales",
+      "finance": "Finance",
+      "student": "Student",
+      "hobbyist": "Hobbyist / Personal Use",
+      "other": "Other"
+    },
+    "referral": {
+      "noAnswer": "No Answer",
+      "search": "Search",
+      "social": "Social",
+      "friend": "Friend",
+      "ai": "AI",
+      "ad": "Ad",
+      "youtube": "YouTube",
+      "github": "GitHub",
+      "courseTraining": "Course/Training",
+      "podcast": "Podcast",
+      "newsletterArticle": "Newsletter/Article",
+      "other": "Other"
+    },
+    "socialOther": "Other",
+    "emailInvalid": "Please enter a valid email address",
+    "title": "Welcome to Nimbalyst",
+    "chooseMode": "Choose Your Mode",
+    "standardMode": "Standard Mode",
+    "standardModeDescription": "Simplified interface focused on writing, editing, and AI assistance",
+    "developerMode": "Developer Mode",
+    "developerModeDescription": "Full development environment with git worktrees, terminal access, development specific features",
+    "roleLabel": "What best describes your role?",
+    "customRolePlaceholder": "e.g. Designer, Writer, Student",
+    "referralLabel": "How did you hear about Nimbalyst?",
+    "customReferralPlaceholder": "e.g. Podcast, Blog, Conference",
+    "aiDetailPlaceholder": "What model and prompt did you use?",
+    "searchDetail": "What did you search for?",
+    "emailLabel": "Email address",
+    "emailHelp": "Receive occasional product updates and tips",
+    "platformLabel": "Which platform?",
+    "selectOne": "Select one",
+    "disclaimer": "We collect usage data to improve Nimbalyst. No prompts or content is ever collected. You can opt out of analytics any time in Settings.",
+    "getStarted": "Get started…",
+    "startTutorial": "Start tutorial",
+    "legal": "By continuing, you agree to our <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>."
+  },
+  "worktreeOnboarding": {
+    "title": "What is a Worktree?",
+    "description": "Worktrees create a git branch in an <strong>isolated directory</strong>, separate from your main repository. This gives you a safe place to make changes without affecting the rest of your code.",
+    "safeTitle": "Safe experimentation",
+    "safeDescription": "AI changes stay in a separate branch",
+    "reviewTitle": "Easy review",
+    "reviewDescription": "Review and merge changes when ready",
+    "parallelTitle": "Parallel work",
+    "parallelDescription": "Run multiple experiments simultaneously",
+    "create": "Create Worktree"
+  },
+  "walkthroughs": {
+    "callout": {
+      "dismiss": "Dismiss",
+      "done": "Done",
+      "progress": "{{current}} of {{total}}"
+    },
+    "agentMode": {
+      "title": "Agent Mode",
+      "body": "A focused coding agent management interface. Manage many running AI agent sessions, track their execution, control their commits and organize them with a Kanban board. Pick your agent, give instructions, and the AI agent will write code, run commands, and make changes across your project."
+    },
+    "filesMode": {
+      "title": "Files Mode",
+      "body": "Browse and edit your project files. Open markdown documents, code files, and more. The AI assistant sidebar is available here too."
+    },
+    "agentWelcome": {
+      "title": "Start Your First Session",
+      "body": "Create an AI coding session. Describe what you want to build, and the agent will help you."
+    },
+    "attachFiles": {
+      "title": "Attach Files & Images",
+      "body": "Drag and drop files or paste images directly into the chat. You can also use @ to mention files from your project."
+    },
+    "contextIndicator": {
+      "title": "Context Window",
+      "body": "Shows how much of the AI context window is used. Includes files, conversation history, and tools."
+    },
+    "diffKeepAll": {
+      "title": "Keep All Changes",
+      "body": "Accept all pending AI changes throughout the document."
+    },
+    "diffRevertAll": {
+      "title": "Revert All Changes",
+      "body": "Reject all pending AI changes and restore the original document."
+    },
+    "documentSessionControl": {
+      "title": "AI Sessions for This Document",
+      "body": "Jump straight back into the last session on this document, or use the arrow to pick another session or start a new one."
+    },
+    "fileTreeFilter": {
+      "title": "Filter Your File Tree",
+      "body": "Show only markdown files, uncommitted git changes, or files the AI has read or written in this session."
+    },
+    "fileTreeQuickOpen": {
+      "title": "Quick Open Files",
+      "body": "Search for any file in your project by name. Recently opened files appear at the top."
+    },
+    "filesScope": {
+      "title": "File Scope Modes",
+      "body": "Control which files are shown. View AI edits from this session, only uncommitted changes, or all files in the workspace. In workstreams, filter by individual session or see all sessions combined."
+    },
+    "gitCommitMode": {
+      "title": "Commit Modes",
+      "body": "Choose how to commit your changes. Manual lets you write your own message. Smart uses AI to analyze changes and propose a commit message."
+    },
+    "layoutControls": {
+      "title": "Session Layout Modes",
+      "body": "View your AI session and files edited together:\n\n**Files**: Show only the file editor tabs. Available when you open an edited file in an AI Session.\n\n**Split**: Show both transcript and editor stacked vertically. Drag the divider to adjust.\n\n**Agent**: Show only the conversation transcript."
+    },
+    "modelPicker": {
+      "title": "Select AI Model",
+      "body": "Choose which AI model to use. Different models have different capabilities and speeds."
+    },
+    "planModeToggle": {
+      "title": "Plan vs Agent Mode",
+      "body": "Toggle between Plan and Agent modes. Plan mode creates structured plans before the AI writes code. Agent mode executes changes directly."
+    },
+    "prReviewMode": {
+      "title": "GitHub",
+      "body": "Work this project's GitHub without leaving the app: browse pull requests and issues, read diffs and conversation, and hand either to an agent."
+    },
+    "sessionKanban": {
+      "title": "Kanban Board",
+      "body": "Switch to a kanban board view of your sessions organized by phase: Backlog, Planning, Implementing, Validating, and Complete. Drag sessions between columns to update their status."
+    },
+    "sessionQuickSearch": {
+      "title": "Search Sessions",
+      "body": "Quickly find any AI session by name. Type **@** to search by file edited -- find every session that touched a specific file. Press **Tab** to switch to prompt search and find sessions by what you asked."
+    }
+  },
+  "tips": {
+    "ui": {
+      "overline": "Tip",
+      "dismiss": "Dismiss tip",
+      "next": "Next",
+      "nextTip": "Next tip",
+      "showAllTips": "Show all tips",
+      "allTips": "All tips",
+      "allTipsTitle": "All Tips",
+      "show": "Show"
+    },
+    "content": {
+      "tip-action-prompts": {
+        "title": "Save reusable prompts as actions",
+        "body": "Create **nimbalyst-local/ai-actions.md** to define one-click prompts. They show up in the composer's Actions dropdown -- great for recurring workflows like \"review this diff\" or \"write release notes\"."
+      },
+      "tip-agent-diagram": {
+        "title": "Let the agent draw the diagram",
+        "body": "The agent has never drawn a diagram for you. Ask it to sketch an architecture or a flow and it will build the Excalidraw diagram directly through its tools.",
+        "action": "Ask the agent to diagram"
+      },
+      "tip-animation-discover": {
+        "title": "Animate the part that only makes sense moving",
+        "body": "Create an **.anim.json** file to build an explainer that plays: a request crossing a cache, a queue draining, a retry after a timeout.\n\nYou write steps, not keyframes, so the agent can author and edit the whole thing as plain JSON.",
+        "action": "Ask the agent to animate"
+      },
+      "tip-auto-commit": {
+        "title": "Auto-commit after every AI turn",
+        "body": "Enable auto-commit in the Claude Code panel and every turn ends with a checkpoint commit. Easy to revert, hard to lose work to a runaway agent.",
+        "action": "Open Claude Code Settings"
+      },
+      "tip-canvas-discover": {
+        "title": "Lay your real files out on one board",
+        "body": "A **.canvas** board holds cards that mount the actual editor for the file they point at -- the mockup renders, the spreadsheet shows real numbers, the document is editable in place.\n\nDescribe the board you want and the agent arranges it, wired with edges.",
+        "action": "Ask the agent for a board"
+      },
+      "tip-claude-md": {
+        "title": "Set standing instructions in CLAUDE.md",
+        "body": "Drop a **CLAUDE.md** at the workspace root with your coding conventions, preferred tools, and tone. Every session loads it automatically -- you only have to write it once."
+      },
+      "tip-content-search": {
+        "title": "Cmd+Shift+F searches inside files",
+        "body": "Hit **Cmd+Shift+F** for cross-file regex search across the workspace. Results group by file with one-click jump-to-line."
+      },
+      "tip-datamodel-discover": {
+        "title": "Design schemas visually with DataModelLM",
+        "body": "A **.datamodel** file is a Prisma-style schema with a live ER diagram. The agent can edit it like any source file, and you get the diagram for free."
+      },
+      "tip-doc-history": {
+        "title": "Cmd+Y to scrub document history",
+        "body": "Every save snapshots the file. **Cmd+Y** opens the history dialog with diffs against any earlier version -- click to restore. Hidden safety net for big edits."
+      },
+      "tip-document-shared": {
+        "title": "Share documents with one link",
+        "body": "Right-click a file and pick **Share** to publish an end-to-end-encrypted link. Recipients open it in a browser -- no Nimbalyst account needed.",
+        "action": "Manage Shared Links"
+      },
+      "tip-excalidraw-discover": {
+        "title": "Sketch architecture in Excalidraw",
+        "body": "Create a **.excalidraw** file to draw boxes, arrows, and freeform diagrams. The agent can read and modify those drawings via tools -- great for system architecture and flow sketches."
+      },
+      "tip-files-agent-context": {
+        "title": "The agent understands your open file",
+        "body": "Open a file, then ask the agent to **explain, revise, or extend it**. The active file is included as context automatically."
+      },
+      "tip-files-visual-editors": {
+        "title": "Preview mockups and diagrams instantly",
+        "body": "Files like **.mockup.html**, **.excalidraw**, and **.mindmap** open in visual editors. Ask the agent to create one and it renders live as it writes.",
+        "action": "Try it"
+      },
+      "tip-keyboard-shortcuts": {
+        "title": "Learn the shortcuts that matter",
+        "body": "You have used the app for a while, but have not triggered any tracked keyboard shortcuts yet. The shortcuts dialog is a fast way to find the ones you will actually use.",
+        "action": "Open Shortcuts"
+      },
+      "tip-lightning-interrupt": {
+        "title": "Lightning button stops a runaway",
+        "body": "If the agent is heading the wrong way, hit the **lightning bolt** next to the composer to interrupt it. Type a redirect into the composer and it resumes from there -- no need to wait the turn out."
+      },
+      "tip-mobile-keep-awake": {
+        "title": "Keep your computer awake for mobile prompts",
+        "body": "Your computer going to sleep will disconnect mobile sync. Enable keep-awake while plugged in to prevent this.",
+        "action": "Enable Keep-Awake",
+        "secondaryAction": "Sync Settings"
+      },
+      "tip-mobile-paired": {
+        "title": "Drive sessions from your phone",
+        "body": "Pair the iOS app and prompt your desktop agents from anywhere. The desktop runs the heavy work; you steer it from the couch or the road.",
+        "action": "Open Sync Settings"
+      },
+      "tip-mockup-discover": {
+        "title": "Plan UI in a .mockup.html file",
+        "body": "Files ending in **.mockup.html** render as live, annotatable wireframes alongside source. Ask the agent to \"create a mockup for X\" to get a starting point you can edit visually."
+      },
+      "tip-nimbalyst-coach": {
+        "title": "Find out what you are missing",
+        "body": "Your agent can read this project and your recent sessions and tell you what would make them go better -- **extensions** that match your files, features you have not touched, and **instructions** worth adding so every future session starts smarter.",
+        "action": "Show me"
+      },
+      "tip-quick-open": {
+        "title": "Cmd+O fuzzy-opens any file",
+        "body": "Skip the file tree. **Cmd+O** opens a fuzzy finder over every file in the workspace -- type a fragment of the path and hit enter."
+      },
+      "tip-session-cleanup": {
+        "title": "Let your agent tidy the Sessions board",
+        "body": "Your Sessions board is filling up. Your agent can **clean it up** -- fixing each session's phase, marking finished work **complete**, and flagging old sessions to archive.",
+        "action": "Clean up my sessions"
+      },
+      "tip-session-launch-shortcut": {
+        "title": "Start sessions without losing your place",
+        "body": "Press **Cmd+Shift+N** anywhere in Nimbalyst to open the session launcher. Submit your prompt and the session starts in the background, so you stay right where you are."
+      },
+      "tip-session-shared": {
+        "title": "Share a session, not a screenshot",
+        "body": "Sessions can be published as **end-to-end-encrypted links** with 1, 7, or 30 day expiry. Use the share button on a session to send the full transcript to a teammate.",
+        "action": "Manage Shared Links"
+      },
+      "tip-spreadsheet-discover": {
+        "title": "CSV files open as spreadsheets",
+        "body": "Drop a **.csv** in the workspace and it opens with sorting, formulas, and AI tooling -- no need to flip to source view to make edits."
+      },
+      "tip-teams-multiplayer": {
+        "title": "Make this workspace multiplayer",
+        "body": "With **Teams**, your docs, mockups, diagrams, and trackers can be shared. Teammates edit the same files live or asynch, and each teammate's local agent works on those same shared artifacts. Promote any local file to shared in a click or create a new shared file. See how Teams works https://nimbalyst.com/teams",
+        "action": "Create an Organization",
+        "secondaryAction": "See how Teams works"
+      },
+      "tip-theme-explore": {
+        "title": "Try a different theme",
+        "body": "You have been back a few times without changing the look of the app. **Themes** are already built in, and the settings panel shows the full set at once.",
+        "action": "Open Themes"
+      },
+      "tip-tracker-mode": {
+        "title": "Track work alongside your sessions",
+        "body": "You have been using AI sessions heavily, but **Tracker Mode** gives you a durable place to manage bugs, tasks, and decisions across those sessions.",
+        "action": "Open Tracker"
+      },
+      "tip-wakeup": {
+        "title": "Let the agent page itself later",
+        "body": "Ask the agent to **schedule a wakeup** (\"check the build in 5 minutes\", \"poll the PR every 30s\") and it self-resumes -- no need to babysit a long-running task."
+      },
+      "tip-worktree-session": {
+        "title": "Isolate risky work in a worktree",
+        "body": "You are deep into agent sessions on a git repo, but have not created a **worktree session** yet. Worktrees give experiments their own branch and working directory without disturbing the main checkout.",
+        "action": "New Worktree Session"
+      }
+    }
+  },
+  "prompts": {
+    "remindLater": "Remind Me Later",
+    "dontShowAgain": "Don't Show Again"
+  },
+  "rosetta": {
+    "title": "Running via Rosetta Translation",
+    "description": "You're running the Intel (x64) build on an Apple Silicon Mac. Download the native Apple Silicon build for significantly better performance.",
+    "download": "Download Apple Silicon Build"
+  },
+  "discord": {
+    "title": "Join the Community",
+    "description": "Get faster help, share feedback with the team, and stay up to date on new releases.",
+    "join": "Join Discord",
+    "follow": "Follow Nimbalyst"
+  },
+  "extensionIntro": {
+    "title": "Build with Extensions",
+    "description": "Extensions add custom editors, AI tools, commands, panels, and more. Nimbalyst loads your extension live while you develop.",
+    "capabilities": {
+      "editors": "Custom editors for any file type, with native look and feel",
+      "panels": "Side panels and workspace views for dashboards and live status",
+      "aiTools": "AI tools that Claude can use while working in your project",
+      "devLoop": "In-app dev loop — build, install, and reload without leaving Nimbalyst"
+    },
+    "agentHint": "Describe what you want to the agent, and it will scaffold, build, and install the extension for you."
+  },
+  "themeToggle": {
+    "ariaLabel": "Change theme",
+    "menuLabel": "Theme selection"
+  },
+  "traySessions": {
+    "states": {
+      "attention": "Needs attention",
+      "running": "Running",
+      "stalled": "Not responding",
+      "unread": "Unread"
+    },
+    "status": {
+      "error": "Session error",
+      "pendingPrompt": "Waiting for your response",
+      "stalled": "Running, but silent",
+      "running": "Running",
+      "unread": "Unread response"
+    },
+    "markAllRead": "Mark all as read"
+  },
+  "trayPanel": {
+    "title": "Sessions",
+    "nothingRunning": "Nothing running",
+    "summary": {
+      "attention_zero": "{{count}} need attention",
+      "attention_one": "{{count}} need attention",
+      "attention_other": "{{count}} need attention",
+      "running_zero": "{{count}} running",
+      "running_one": "{{count}} running",
+      "running_other": "{{count}} running",
+      "stalled_zero": "{{count}} not responding",
+      "stalled_one": "{{count}} not responding",
+      "stalled_other": "{{count}} not responding",
+      "unread_zero": "{{count}} unread",
+      "unread_one": "{{count}} unread",
+      "unread_other": "{{count}} unread"
+    },
+    "newSession": "New Session",
+    "empty": "Nothing running. Start a session to get going.",
+    "showAll": "Show all {{count}}",
+    "openApp": "Open Nimbalyst"
+  },
+  "island": {
+    "openSession": "Open {{title}}",
+    "nothingRunning": "Nothing running.",
+    "lastSession": "Last session {{time}}.",
+    "noSessions": "No sessions yet.",
+    "recent": "Recent",
+    "backToSessions": "Back to sessions",
+    "settingsButton": "Menu bar settings",
+    "sessions": "Sessions",
+    "settings": {
+      "style": "Menu bar style",
+      "styleIslandHint": "The floating pill. Replaces the menu bar icon.",
+      "styleImageHint": "A status item on the right of the menu bar.",
+      "styleIsland": "Island",
+      "styleIcon": "Icon",
+      "showFleetStatus": "Show fleet status",
+      "showFleetStatusHint": "Off leaves just the menu bar icon.",
+      "notifications": "System notifications",
+      "notificationsHint": "Banners when a session finishes or needs you.",
+      "preventSleep": "Prevent sleep",
+      "preventSleepOff": "Off",
+      "preventSleepPluggedIn": "Plugged in",
+      "preventSleepAlways": "Always"
+    }
+  },
+  "databaseMaintenance": {
+    "ariaLabel": "Database switch",
+    "readyTitle": "Restart to verify the database",
+    "finishingTitle": "Finishing the database switch",
+    "readyRollback": "Restart Nimbalyst to reopen the database after rollback. The SQLite copy has been retained.",
+    "readyMigration": "Nimbalyst will reopen and verify the database on the next startup. The pre-migration copy has been retained.",
+    "pausedRollback": "The database is paused while the pre-migration copy is restored. Keep Nimbalyst open until this step finishes.",
+    "pausedMigration": "The database is paused while the final changes are copied. Keep Nimbalyst open until this step finishes.",
+    "restart": "Restart Nimbalyst"
+  },
+  "feedback": {
+    "title": "Feedback request",
+    "lifecycle": {
+      "open": "Open",
+      "closed": "Closed",
+      "expired": "Expired",
+      "cancelled": "Cancelled",
+      "answered": "Answered"
+    },
+    "results": {
+      "openArtifact": "Open {{label}}",
+      "leading": "Leading",
+      "positionTitle": "{{voters}} put it {{position}} of {{total}}",
+      "noWrittenAnswers": "No written answers yet.",
+      "anonymous": "Anonymous",
+      "noRatings": "No ratings yet.",
+      "ratingSummary_zero": "Average {{mean}} of {{max}} · lowest {{lowest}}, highest {{highest}} · {{count}} ratings",
+      "ratingSummary_one": "Average {{mean}} of {{max}} · lowest {{lowest}}, highest {{highest}} · {{count}} rating",
+      "ratingSummary_other": "Average {{mean}} of {{max}} · lowest {{lowest}}, highest {{highest}} · {{count}} ratings",
+      "rankedHint_zero": "ranked · consolidated from {{count}} orderings",
+      "rankedHint_one": "ranked · consolidated from {{count}} ordering",
+      "rankedHint_other": "ranked · consolidated from {{count}} orderings",
+      "answeredHint": "{{answered}} of {{assigned}} assigned answered",
+      "askTag": "Q{{index}} · {{label}}",
+      "moreActions": "More request actions",
+      "cancelRequest": "Cancel request",
+      "cancelHint": "Cancelling drops the answers already in. Closing keeps them.",
+      "actionFailed": "That did not go through.",
+      "loading": "Loading this request…",
+      "wakeEnded": {
+        "closed": "This request is closed. The session has been woken with what came in.",
+        "expired": "This request is expired. The session has been woken with what came in.",
+        "cancelled": "This request is cancelled. The session has been woken with what came in."
+      },
+      "wakeQuorum": "Quorum is in, so the session has been woken with these answers.",
+      "wakeWaiting": "The session wakes when {{required}} of {{total}} have answered, when you close this request, or when you nudge someone. Nothing has been sent to it yet.",
+      "sent": "Sent {{when}}",
+      "due": "Due {{when}}",
+      "responded": "{{answered}} of {{total}} responded",
+      "closing": "Closing…",
+      "closeRequest": "Close request",
+      "waitingOn": "Waiting on",
+      "people_zero": "{{count}} people",
+      "people_one": "{{count}} person",
+      "people_other": "{{count}} people",
+      "peopleHidden_zero": "{{count}} people · names stay hidden",
+      "peopleHidden_one": "{{count}} person · names stay hidden",
+      "peopleHidden_other": "{{count}} people · names stay hidden",
+      "answersAnonymous": "answers stay anonymous on this request",
+      "everyoneAnswered": "Everyone has answered.",
+      "nudging": "Nudging…",
+      "nudge": "Nudge",
+      "anonymousOutstanding": "Answers on this request are anonymous, so who is still outstanding stays hidden here too — naming them would identify the answers already in. Nudging goes to everyone who has not answered.",
+      "nudgeAll": "Nudge everyone outstanding",
+      "nudged": "Nudged {{when}}",
+      "anonymousNote": "You asked for this one hidden until answered, so the tally is anonymous — for you as well, and it stays that way after everyone has answered.",
+      "observerNote": "You are not the author of this request, so closing and nudging are not yours to do here.",
+      "offlineNote": "Closing and nudging are not available in this session yet.",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "ranked": {
+      "noOne": "No one ranked this",
+      "contested": "Contested — {{top}} of {{total}} put it near the top, {{bottom}} near the bottom",
+      "first": "Ranked first by {{first}} of {{total}}",
+      "last": "Ranked last by {{last}} of {{total}}",
+      "average": "Average position {{mean}}"
+    },
+    "backlinks": {
+      "heading": "Feedback",
+      "buttonTitle": "Feedback about this document ({{total}})",
+      "progress": "{{answered}}/{{total}} responded",
+      "askedByYou": "Asked by you",
+      "askedBy": "Asked by {{name}}",
+      "authorSessionFallback": "the session that asked"
+    },
+    "artifacts": {
+      "noProject": {
+        "document": "This document is unavailable because no team project is active.",
+        "tracker": "This tracker item is unavailable because no team project is active."
+      },
+      "otherOrg": {
+        "document": "This document belongs to another organization.",
+        "tracker": "This tracker item belongs to another organization."
+      },
+      "otherProject": {
+        "document": "Open the project that owns this document to view it.",
+        "tracker": "Open the project that owns this tracker item to view it."
+      },
+      "trackerNotSynced": "This tracker item is not available in the synced project.",
+      "selectWorkstream": "Select a workstream in this project to open this tracker item."
+    },
+    "preview": {
+      "notOnMachine": "This file is not on this machine, so there is nothing to preview."
+    },
+    "tab": {
+      "invalid": "This tab does not point at a feedback request any more."
+    },
+    "discussion": {
+      "empty": "No discussion yet."
+    },
+    "errors": {
+      "noTeam": "This workspace has no team to send the request to.",
+      "noWorkspace": "This session has no workspace to send from.",
+      "folderNotCreated": "The {{folder}} folder could not be created.",
+      "questionNotSent": "The question could not be sent.",
+      "answersNotSent": "Your answers could not be sent.",
+      "nudgeNotSent": "The nudge could not be sent.",
+      "notCancelled": "The request could not be cancelled.",
+      "notClosed": "The request could not be closed.",
+      "sessionNotPublishable": "A session cannot be published, so a teammate cannot be asked to review one.",
+      "documentNotShared": "That document is not in your team files, so it cannot be shared from here.",
+      "kindNotPublishable": "Nimbalyst cannot publish this {{kind}} for you yet. Share it with your team first, then send the request.",
+      "notPublished": "{{id}} could not be published.",
+      "trackerPersonal": "This tracker item is still personal because its tracker type is personal-scoped. Change the tracker type sharing policy, then retry.",
+      "sharingCancelled": "Sharing {{file}} was cancelled, so nothing was published. Share it or take it out of the request, then send again."
+    }
+  }
+}

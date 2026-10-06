@@ -40,6 +40,7 @@ import { trackerDataLoadedAtom, trackerItemsMapAtom } from '@nimbalyst/runtime/p
 import type { store as runtimeStore } from '@nimbalyst/runtime/store';
 import { serializeSharedSavedView, type TrackerSavedViewRecord } from '@nimbalyst/collab-client/trackers';
 import { allTrackerSavedViewsAtom } from '../../store/atoms/trackers';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 type JotaiStore = typeof runtimeStore;
 
@@ -84,7 +85,7 @@ function refusal(result: unknown): string | null {
   if (answer.success !== false) return null;
   // A batch answers per item; the first refused item says why.
   const error = answer.results?.find((entry) => entry.success === false)?.error ?? answer.error;
-  return typeof error === 'string' && error ? error : 'The change was not saved';
+  return typeof error === 'string' && error ? error : translate('team:embed.changeNotSaved');
 }
 
 /** Board order is never item content, so it stays in the store even for a file-backed item. */

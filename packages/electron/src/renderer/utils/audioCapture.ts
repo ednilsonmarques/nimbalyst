@@ -1,4 +1,5 @@
 import type { VoiceStartupTiming } from '../../shared/voiceStartupTiming';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 /**
  * Audio capture utility for Voice Mode
@@ -178,7 +179,7 @@ export function normalizeAudioCaptureError(error: unknown): Error {
     && error.name === 'NotFoundError'
   ) {
     return new Error(
-      'No usable microphone was found. Connect or enable a microphone, check your system microphone settings, and try again.',
+      translate('general:audio.noMicrophone'),
     );
   }
 

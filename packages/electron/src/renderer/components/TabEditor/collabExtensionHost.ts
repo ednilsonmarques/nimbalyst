@@ -19,6 +19,7 @@
 
 import type { Awareness } from 'y-protocols/awareness';
 import { pickCursorColor } from './collabCursorColor';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import type { DocumentSyncStatus } from '@nimbalyst/runtime/sync';
 import type { DocumentSyncProvider } from '@nimbalyst/runtime/sync';
 import type {
@@ -117,8 +118,8 @@ export function createCollaborationContext(args: {
       if (outcome.ok) return;
       const detail = outcome.error instanceof Error ? outcome.error.message : String(outcome.error ?? '');
       errorNotificationService.showWarning(
-        'Shared document seed not confirmed',
-        'The initial shared content was not confirmed by the server. Re-upload the local source before teammates rely on this document.',
+        translate('editor:collab.seedNotConfirmed.title'),
+        translate('editor:collab.seedNotConfirmed.message'),
         { details: detail || undefined, duration: 10000 },
       );
     },

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type { NewFileType, ExtensionFileType } from './NewFileMenu';
 
 interface FileTypeOption {
@@ -41,6 +42,7 @@ export const NewFileDialog: React.FC<NewFileDialogProps> = ({
   onDirectoryChange,
   initialFileType = 'markdown',
 }) => {
+  const { t } = useTranslation('dialogs');
   const [fileName, setFileName] = useState('');
   const [error, setError] = useState('');
   const [selectedFileType, setSelectedFileType] = useState<NewFileType>('markdown');
@@ -84,10 +86,10 @@ export const NewFileDialog: React.FC<NewFileDialogProps> = ({
     });
 
     // Add "Other" option for any file type
-    options.push({ id: 'any', label: 'Other', icon: 'note_add', extension: '' });
+    options.push({ id: 'any', label: t('newFile.types.other'), icon: 'note_add', extension: '' });
 
     return options;
-  }, [extensionFileTypes]);
+  }, [extensionFileTypes, t]);
 
   // Get the currently selected file type option
   const currentFileType = useMemo(() => {
@@ -135,13 +137,13 @@ export const NewFileDialog: React.FC<NewFileDialogProps> = ({
     e.preventDefault();
 
     if (!fileName.trim()) {
-      setError('Please enter a file name');
+      setError(t('newFile.errors.nameRequired'));
       return;
     }
 
     // Check for invalid characters
     if (fileName.includes('/') || fileName.includes('\\')) {
-      setError('File name cannot contain / or \\');
+      setError(t('newFile.errors.invalidCharacters'));
       return;
     }
 
@@ -208,7 +210,7 @@ export const NewFileDialog: React.FC<NewFileDialogProps> = ({
     ? currentDirectory.slice(workspacePath.length + 1) || '/'
     : currentDirectory;
 
-  const workspaceName = workspacePath.split('/').pop() || 'workspace';
+  const workspaceName = workspacePath.split('/').pop() || t('newFile.defaultWorkspaceName');
 
   return (
     <div className="new-file-dialog-overlay nim-overlay" onClick={onClose}>
@@ -217,7 +219,7 @@ export const NewFileDialog: React.FC<NewFileDialogProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="m-0 mb-5 text-lg font-semibold text-nim">
-          New File
+          {t('newFile.title')}
         </h2>
 
         {/* File Type Selector */}
@@ -226,7 +228,7 @@ export const NewFileDialog: React.FC<NewFileDialogProps> = ({
             htmlFor="new-file-type"
             className="block mb-1.5 text-[13px] font-medium text-nim-muted"
           >
-            Type
+            {t('newFile.typeLabel')}
           </label>
           <div className="new-file-type-select-wrapper relative">
             <select
@@ -257,7 +259,7 @@ export const NewFileDialog: React.FC<NewFileDialogProps> = ({
         {/* Location Selector */}
         <div className="new-file-field mb-4">
           <label className="block mb-1.5 text-[13px] font-medium text-nim-muted">
-            Location
+            {t('newFile.locationLabel')}
           </label>
           <div className="new-file-location-picker relative" ref={folderPickerRef}>
             <button
@@ -286,7 +288,7 @@ export const NewFileDialog: React.FC<NewFileDialogProps> = ({
                     size={16}
                     className={currentDirectory === workspacePath ? 'text-nim-on-primary' : 'text-nim-muted'}
                   />
-                  <span>{workspaceName} (root)</span>
+                  <span>{t('newFile.rootFolder', { name: workspaceName })}</span>
                 </div>
                 {renderFolderTree(fileTree)}
               </div>
@@ -298,7 +300,7 @@ export const NewFileDialog: React.FC<NewFileDialogProps> = ({
         <form onSubmit={handleSubmit}>
           <div className="new-file-field mb-4">
             <label className="block mb-1.5 text-[13px] font-medium text-nim-muted">
-              Name
+              {t('newFile.nameLabel')}
             </label>
             <div className="new-file-input-wrapper flex items-center overflow-hidden rounded bg-nim-secondary border border-nim focus-within:border-nim-focus">
               <input
@@ -310,7 +312,7 @@ export const NewFileDialog: React.FC<NewFileDialogProps> = ({
                   setError('');
                 }}
                 onKeyDown={handleKeyDown}
-                placeholder={selectedFileType === 'any' ? 'document.txt' : 'document'}
+                placeholder={selectedFileType === 'any' ? t('newFile.placeholderWithExtension') : t('newFile.placeholder')}
                 className="new-file-input flex-1 py-2 px-3 text-sm bg-transparent border-none focus:outline-none text-nim placeholder:text-nim-faint"
               />
               {extensionSuffix && (
@@ -329,13 +331,13 @@ export const NewFileDialog: React.FC<NewFileDialogProps> = ({
               onClick={onClose}
               className="py-1.5 px-4 text-[13px] rounded cursor-pointer transition-colors duration-200 bg-nim-secondary border border-nim text-nim hover:bg-nim-hover"
             >
-              Cancel
+              {t('common:cancel')}
             </button>
             <button
               type="submit"
               className="py-1.5 px-4 text-[13px] rounded cursor-pointer transition-colors duration-200 bg-nim-primary border border-nim-primary text-nim-on-primary hover:bg-nim-primary-hover"
             >
-              Create
+              {t('newFile.create')}
             </button>
           </div>
         </form>

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { diffLines, diffWords, Change } from 'diff';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface DiffPreviewProps {
   original: string;
@@ -10,6 +11,7 @@ interface DiffPreviewProps {
 }
 
 export function DiffPreview({ original, modified, onAccept, onReject, title }: DiffPreviewProps) {
+  const { t } = useTranslation('editor');
   const changes = useMemo(() => {
     // Use line diff for longer content, word diff for shorter
     if (original.length > 500 || modified.length > 500) {
@@ -37,7 +39,7 @@ export function DiffPreview({ original, modified, onAccept, onReject, title }: D
   return (
     <div className="diff-preview nim-panel my-3">
       <div className="diff-header nim-panel-header">
-        <h3 className="m-0 text-sm font-semibold text-[var(--nim-text)]">{title || 'Proposed Changes'}</h3>
+        <h3 className="m-0 text-sm font-semibold text-[var(--nim-text)]">{title || t('diff.proposedChanges')}</h3>
         <div className="diff-stats flex gap-3 text-xs font-mono">
           <span className="diff-stat-added text-green-500">+{stats.added}</span>
           <span className="diff-stat-removed text-red-500">-{stats.removed}</span>
@@ -73,13 +75,13 @@ export function DiffPreview({ original, modified, onAccept, onReject, title }: D
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M13 4L6 11L3 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          Accept Changes
+          {t('diff.acceptChanges')}
         </button>
         <button className="diff-action-reject flex items-center gap-1.5 px-4 py-2 rounded-md text-[13px] font-medium cursor-pointer transition-all duration-200 bg-transparent text-[var(--nim-text-muted)] border border-[var(--nim-border)] hover:bg-[var(--nim-bg-tertiary)] hover:text-[var(--nim-text)]" onClick={onReject}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
           </svg>
-          Reject
+          {t('diff.reject')}
         </button>
       </div>
     </div>

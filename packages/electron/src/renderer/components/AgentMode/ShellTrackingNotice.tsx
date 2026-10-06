@@ -2,9 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { atom, useAtomValue } from 'jotai';
 import { shellCoverageDetails, type ShellCoverageSummary } from '@nimbalyst/runtime/ai/shellTrackingCoverage';
 import { shellTrackingRevisionAtom } from '../../store/atoms/shellTracking';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 /** Requeries on persisted link/coverage updates; old requests cannot replace a new scope. */
 export function ShellTrackingNotice({ sessionIds }: { sessionIds: string[] }) {
+  const { t } = useTranslation('agent');
   const key = [...new Set(sessionIds)].sort().join(',');
   const revisionAtom = useMemo(() => atom(get =>
     (key ? key.split(',') : []).reduce((sum, id) => sum + get(shellTrackingRevisionAtom(id)), 0)
@@ -48,9 +50,9 @@ export function ShellTrackingNotice({ sessionIds }: { sessionIds: string[] }) {
       data-testid="shell-tracking-notice"
     >
       <summary className="cursor-pointer">
-        {failed ? 'File tracking status unavailable' : recovering ? 'File tracking interrupted' : historical ? 'Earlier file tracking gaps' : 'File tracking incomplete'}
+        {failed ? t('shellTracking.unavailable') : recovering ? t('shellTracking.interrupted') : historical ? t('shellTracking.earlierGaps') : t('shellTracking.incomplete')}
       </summary>
-      <p className="mt-2">{historical ? 'Tracking has resumed. Earlier edits may be missing from this list.' : 'Some edits may be missing from this list.'} Review your changes before committing.</p>
+      <p className="mt-2">{historical ? t('shellTracking.resumedBody') : t('shellTracking.incompleteBody')}</p>
       {details.length > 0 && (
         <ul className="mt-1 list-disc pl-4">
           {details.map((detail) => (

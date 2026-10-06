@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { NEUTRAL_SWATCH, TYPE_COLORS } from '@nimbalyst/collab-client/trackers-ui';
 import { globalRegistry } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 /** Inline editor for adding/removing secondary type tags */
 export const TypeTagsEditor: React.FC<{
@@ -13,6 +14,7 @@ export const TypeTagsEditor: React.FC<{
   primaryType: string;
   onUpdate: (tags: string[]) => void;
 }> = ({ typeTags, primaryType, onUpdate }) => {
+  const { t: translate } = useTranslation('tracker');
   const [isOpen, setIsOpen] = useState(false);
   const allModels = globalRegistry.getListed().filter(m => m.primaryCapable !== false && m.creatable !== false);
   const secondaryTags = typeTags.filter(t => t !== primaryType);
@@ -21,12 +23,12 @@ export const TypeTagsEditor: React.FC<{
   return (
     <div className="tracker-type-tags-editor space-y-1">
       <div className="flex items-center gap-2">
-        <span className="text-[10px] text-nim-faint font-medium uppercase tracking-wider">Type Tags</span>
+        <span className="text-[10px] text-nim-faint font-medium uppercase tracking-wider">{translate('typeTags.title')}</span>
         <button
           className="text-[10px] text-nim-muted hover:text-nim px-1 py-0.5 rounded hover:bg-nim-tertiary"
           onClick={() => setIsOpen(!isOpen)}
         >
-          {isOpen ? 'Done' : '+ Add'}
+          {isOpen ? translate('common:done') : translate('typeTags.add')}
         </button>
       </div>
       {secondaryTags.length > 0 && (
@@ -40,7 +42,7 @@ export const TypeTagsEditor: React.FC<{
                 className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded cursor-pointer group"
                 style={{ color: tagColor, backgroundColor: `${tagColor}15`, border: `1px solid ${tagColor}30` }}
                 onClick={() => onUpdate(typeTags.filter(t => t !== tag))}
-                title={`Remove ${tagModel?.displayName || tag} tag`}
+                title={translate('typeTags.remove', { tag: tagModel?.displayName || tag })}
               >
                 {tagModel?.displayName || tag}
                 <span className="opacity-0 group-hover:opacity-100 text-[9px]">&times;</span>

@@ -12,6 +12,7 @@
 import type { JSX } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation, Trans } from '@nimbalyst/runtime/i18n/react';
 import type { SettingsScope } from '../SettingsView';
 import { getPullRequestService } from '../../../services/RendererPullRequestService';
 
@@ -27,6 +28,7 @@ interface GhAccount {
 }
 
 export function GitHubAccountPanel({ scope, workspacePath }: GitHubAccountPanelProps): JSX.Element {
+  const { t } = useTranslation('settings');
   const [accounts, setAccounts] = useState<GhAccount[]>([]);
   const [defaultAccount, setDefaultAccount] = useState<string | null>(null);
   const [override, setOverride] = useState<string | null>(null);
@@ -48,7 +50,7 @@ export function GitHubAccountPanel({ scope, workspacePath }: GitHubAccountPanelP
       setDefaultAccount(config.defaultAccount);
       setOverride(config.override);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load GitHub accounts');
+      setError(err instanceof Error ? err.message : t('githubAccount.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -81,38 +83,38 @@ export function GitHubAccountPanel({ scope, workspacePath }: GitHubAccountPanelP
     <div className="github-account-panel provider-panel flex flex-col" data-testid="github-account-panel">
       <div className="provider-panel-header mb-5 pb-4 border-b border-[var(--nim-border)]">
         <h3 className="provider-panel-title text-xl font-semibold leading-tight mb-1.5 text-[var(--nim-text)]">
-          GitHub Account
+          {t('githubAccount.title')}
         </h3>
         <p className="provider-panel-description text-[13px] leading-relaxed text-[var(--nim-text-muted)]">
           {isProject
-            ? 'Choose which GitHub CLI account PR review uses for this project. Useful when a project belongs to a different account than your default (e.g. work vs personal).'
-            : 'Choose the default GitHub CLI account PR review uses. Each project can override this from its Project settings.'}
+            ? t('githubAccount.descriptionProject')
+            : t('githubAccount.descriptionUser')}
         </p>
       </div>
 
       {loading ? (
         <div className="flex items-center gap-2 py-6 text-[var(--nim-text-muted)] text-sm">
           <div className="spinner w-4 h-4 border-[2px] border-[var(--nim-bg-secondary)] border-t-[var(--nim-primary)] rounded-full animate-spin" />
-          Loading accounts…
+          {t('githubAccount.loading')}
         </div>
       ) : error ? (
         <div className="flex flex-col items-start gap-2 py-4 text-[var(--nim-error)] text-sm">
           <span>{error}</span>
           <button className="text-xs text-[var(--nim-primary)] hover:underline" onClick={() => void reload()}>
-            Retry
+            {t('common:retry')}
           </button>
         </div>
       ) : noAccounts ? (
         <div className="flex items-start gap-2.5 p-3 bg-[rgba(96,165,250,0.08)] border border-[rgba(96,165,250,0.2)] rounded-lg text-[13px] text-[var(--nim-text-muted)]">
           <MaterialSymbol icon="info" size={16} className="text-[var(--nim-primary)] shrink-0 mt-0.5" />
           <div>
-            No GitHub CLI accounts found. Run <code className="text-[11px] bg-[var(--nim-code-bg)] px-1 py-[1px] rounded">gh auth login</code> in your terminal, then reload.
+            <Trans t={t} i18nKey="githubAccount.noAccounts" components={{ code: <code className="text-[11px] bg-[var(--nim-code-bg)] px-1 py-[1px] rounded" /> }} />
           </div>
         </div>
       ) : (
         <div className="provider-panel-section py-2">
           <label className="block text-[13px] font-medium text-[var(--nim-text)] mb-2">
-            {isProject ? 'Account for this project' : 'Default account'}
+            {isProject ? t('githubAccount.accountForProject') : t('githubAccount.defaultAccount')}
           </label>
           <select
             data-testid="github-account-select"
@@ -126,23 +128,23 @@ export function GitHubAccountPanel({ scope, workspacePath }: GitHubAccountPanelP
           >
             <option value="">
               {isProject
-                ? `Use default${defaultAccount ? ` (${defaultAccount})` : ''}`
-                : 'Active gh account (no preference)'}
+                ? (defaultAccount ? t('githubAccount.useDefaultWithAccount', { account: defaultAccount }) : t('githubAccount.useDefault'))
+                : t('githubAccount.activeNoPreference')}
             </option>
             {accounts.map((acc) => (
               <option key={`${acc.host}:${acc.login}`} value={acc.login}>
                 {acc.login}
                 {acc.host !== 'github.com' ? ` — ${acc.host}` : ''}
-                {acc.active ? ' (active)' : ''}
+                {acc.active ? t('githubAccount.activeSuffix') : ''}
               </option>
             ))}
           </select>
 
           {isProject && (
             <p className="text-[11px] text-[var(--nim-text-faint)] mt-2">
-              Effective account:{' '}
+              {t('githubAccount.effectiveAccount')}{' '}
               <strong className="text-[var(--nim-text-muted)]">
-                {override ?? defaultAccount ?? 'active gh account'}
+                {override ?? defaultAccount ?? t('githubAccount.activeGhAccount')}
               </strong>
             </p>
           )}

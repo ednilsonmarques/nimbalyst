@@ -23,6 +23,7 @@ import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type { TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import { globalRegistry } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
 import { getRecordTitle } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
@@ -102,6 +103,7 @@ function AdoptAction({
   issue: GithubIssueRow;
   onAdopted: (adoptedItemId: string) => void;
 }): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const types = useAdoptableTypes(workspaceId);
   const [primaryType, setPrimaryType] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -131,9 +133,7 @@ function AdoptAction({
   return (
     <div className="space-y-2">
       <p className="text-[11.5px] leading-relaxed text-nim-muted">
-        Adopting copies this issue&apos;s title, body and labels into a real tracker item that joins
-        the normal workflow. It is the only local copy of GitHub content, so keep it for work we are
-        actually going to do — triage state above needs no copy. This cannot be undone from here.
+        {t('issues.adoption.description')}
       </p>
       <div className="flex items-center gap-2">
         <button
@@ -145,7 +145,7 @@ function AdoptAction({
           onClick={() => typeMenu.setIsOpen(!typeMenu.isOpen)}
           className="flex items-center gap-1.5 rounded-md border border-nim bg-nim px-2.5 py-1.5 text-xs text-nim-muted hover:text-nim transition-colors disabled:opacity-60"
         >
-          Adopt as {typeLabel(selectedType)}
+          {t('issues.adoption.adoptAs', { type: typeLabel(selectedType) })}
           <MaterialSymbol icon="arrow_drop_down" size={14} />
         </button>
         {typeMenu.isOpen && (
@@ -186,7 +186,7 @@ function AdoptAction({
           className="flex items-center gap-1.5 rounded-md bg-nim-primary px-2.5 py-1.5 text-xs text-nim-on-primary hover:bg-nim-primary-hover transition-colors disabled:opacity-60"
         >
           <MaterialSymbol icon="move_to_inbox" size={14} />
-          {busy ? 'Adopting…' : 'Adopt'}
+          {busy ? t('issues.adoption.adopting') : t('issues.adoption.adopt')}
         </button>
         {confirm.isOpen && (
           <FloatingPortal>
@@ -198,11 +198,10 @@ function AdoptAction({
               data-testid="issue-adopt-confirm"
             >
               <div className="text-xs text-nim">
-                Adopt #{issue.number} as a {typeLabel(selectedType)}?
+                {t('issues.adoption.confirmQuestion', { number: issue.number, type: typeLabel(selectedType) })}
               </div>
               <div className="text-[11px] text-nim-muted leading-relaxed">
-                A tracker item is created with a copy of the issue body, and this issue is marked
-                adopted. Escalation is one-way.
+                {t('issues.adoption.confirmDetail')}
               </div>
               <div className="flex justify-end gap-2">
                 <button
@@ -210,7 +209,7 @@ function AdoptAction({
                   className="rounded px-2 py-1 text-[11px] text-nim-muted hover:text-nim"
                   onClick={() => confirm.setIsOpen(false)}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="button"
@@ -218,7 +217,7 @@ function AdoptAction({
                   className="rounded bg-nim-primary px-2 py-1 text-[11px] text-nim-on-primary hover:bg-nim-primary-hover"
                   onClick={() => void adopt()}
                 >
-                  Adopt
+                  {t('issues.adoption.adopt')}
                 </button>
               </div>
             </div>
@@ -236,6 +235,7 @@ export function IssueAdoptionPanel({
   issue,
   overlay,
 }: IssueAdoptionPanelProps): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const itemsById = useAtomValue(trackerItemsMapAtom);
   // The adoption result is held only until the tracker store catches up with
   // the write the main process already made.
@@ -270,8 +270,8 @@ export function IssueAdoptionPanel({
   return (
     <>
       <IssueLocalSection
-        heading={adoptedId ? 'Adopted' : 'Adopt into the tracker'}
-        note={adoptedId ? 'one-way' : undefined}
+        heading={adoptedId ? t('issues.adoption.adopted') : t('issues.adoption.adoptIntoTracker')}
+        note={adoptedId ? t('issues.adoption.oneWay') : undefined}
         testId="issue-adoption"
       >
         {adoptedId ? (
@@ -282,7 +282,7 @@ export function IssueAdoptionPanel({
                 data-testid="issue-adopted-item"
                 className="font-mono text-[11px] text-nim-muted hover:text-nim hover:underline transition-colors truncate"
                 onClick={() => navigateToTrackerItem(adoptedId)}
-                title="Open the adopted item in the tracker"
+                title={t('issues.adoption.openAdopted')}
               >
                 {itemDisplayKey(adoptedRecord, adoptedId)}
               </button>
@@ -291,8 +291,7 @@ export function IssueAdoptionPanel({
               )}
             </div>
             <div className="text-[11px] text-nim-faint">
-              This issue is tracked locally as a real item. GitHub still owns the issue itself; the
-              local copy is refreshed only when you re-snapshot it.
+              {t('issues.adoption.trackedLocally')}
             </div>
           </div>
         ) : (

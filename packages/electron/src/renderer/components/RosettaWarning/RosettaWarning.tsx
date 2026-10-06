@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export interface RosettaWarningProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export const RosettaWarning: React.FC<RosettaWarningProps> = ({
   onDismiss,
   onDownload,
 }) => {
+  const { t } = useTranslation('onboarding');
   if (!isOpen) return null;
 
   const handleDownload = () => {
@@ -58,7 +60,7 @@ export const RosettaWarning: React.FC<RosettaWarningProps> = ({
         <button
           className="absolute top-4 right-4 bg-transparent border-none text-[28px] cursor-pointer p-0 w-8 h-8 flex items-center justify-center leading-none z-[1] rounded-md transition-all duration-200 hover:scale-110 text-nim-muted hover:text-nim hover:bg-nim-hover"
           onClick={handleRemindLater}
-          aria-label="Close"
+          aria-label={t('common:close')}
         >
           &times;
         </button>
@@ -69,12 +71,11 @@ export const RosettaWarning: React.FC<RosettaWarningProps> = ({
           </div>
 
           <h2 className="m-0 mb-3 text-2xl font-bold tracking-tight text-nim">
-            Running via Rosetta Translation
+            {t('rosetta.title')}
           </h2>
 
           <p className="mb-8 text-[15px] leading-relaxed max-w-[380px] mx-auto text-nim-muted">
-            You're running the Intel (x64) build on an Apple Silicon Mac.
-            Download the native Apple Silicon build for significantly better performance.
+            {t('rosetta.description')}
           </p>
 
           <div className="flex justify-center mb-6">
@@ -82,7 +83,7 @@ export const RosettaWarning: React.FC<RosettaWarningProps> = ({
               className="py-3.5 px-8 rounded-lg border-none text-base font-semibold cursor-pointer whitespace-nowrap flex items-center gap-2.5 text-white transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 bg-gradient-to-br from-amber-500 to-amber-600 shadow-[0_4px_12px_rgba(245,158,11,0.4)] hover:shadow-[0_6px_16px_rgba(245,158,11,0.5)]"
               onClick={handleDownload}
             >
-              Download Apple Silicon Build
+              {t('rosetta.download')}
             </button>
           </div>
 
@@ -91,7 +92,7 @@ export const RosettaWarning: React.FC<RosettaWarningProps> = ({
               className="bg-transparent border-none text-[13px] cursor-pointer py-1 px-2 no-underline transition-colors duration-200 hover:underline text-nim-muted hover:text-nim"
               onClick={handleRemindLater}
             >
-              Remind Me Later
+              {t('prompts.remindLater')}
             </button>
             <span className="text-[13px] select-none text-nim-faint">
               &bull;
@@ -100,7 +101,7 @@ export const RosettaWarning: React.FC<RosettaWarningProps> = ({
               className="bg-transparent border-none text-[13px] cursor-pointer py-1 px-2 no-underline transition-colors duration-200 hover:underline text-nim-muted hover:text-nim"
               onClick={handleDontRemind}
             >
-              Don't Show Again
+              {t('prompts.dontShowAgain')}
             </button>
           </div>
         </div>

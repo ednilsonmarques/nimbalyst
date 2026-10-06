@@ -16,6 +16,7 @@ import {
   type OrgWizardState,
   type PendingOrgInvitation,
 } from './orgWizardModel';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 export interface OrgWizardApi {
   findPendingInvitation(email: string): Promise<PendingOrgInvitation | null>;
@@ -45,7 +46,7 @@ export async function runCreateOrganization(
 ): Promise<OrgWizardState> {
   if (state.createdOrgId) return { ...state, error: null };
   const name = state.orgName.trim();
-  if (!name) return { ...state, error: 'Enter a name for the organization.' };
+  if (!name) return { ...state, error: translate('team:wizard.errors.nameRequired') };
   try {
     const { orgId } = await api.createOrganization({
       name,
@@ -68,7 +69,7 @@ export async function runSendInvites(
   api: OrgWizardApi,
 ): Promise<OrgWizardState> {
   const orgId = state.createdOrgId;
-  if (!orgId) return { ...state, error: 'The organization has not been created yet.' };
+  if (!orgId) return { ...state, error: translate('team:wizard.errors.notCreated') };
   let next = state;
   const inviteFailures: string[] = [];
   for (const email of pendingInvites(state)) {
@@ -104,8 +105,8 @@ export async function runSendInvites(
   }
 
   const problems = [
-    ...(inviteFailures.length > 0 ? [`Some invitations failed — ${inviteFailures.join('; ')}`] : []),
-    ...(publishFailures.length > 0 ? [`Some folders were not published — ${publishFailures.join('; ')}`] : []),
+    ...(inviteFailures.length > 0 ? [translate('team:wizard.errors.invitesFailed', { details: inviteFailures.join('; ') })] : []),
+    ...(publishFailures.length > 0 ? [translate('team:wizard.errors.publishFailed', { details: publishFailures.join('; ') })] : []),
   ];
   return { ...next, error: problems.length > 0 ? problems.join('. ') : null };
 }

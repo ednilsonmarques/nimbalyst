@@ -48,6 +48,7 @@ import {
   trackerViewedAtByItemIdAtom,
 } from '../../store/atoms/trackerPersonalState';
 import { requestConfirmation } from '../../dialogs/requestConfirmation';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 // Ensure built-in trackers are loaded
 loadBuiltinTrackers();
@@ -266,9 +267,9 @@ export const TrackerMode: React.FC<TrackerModeProps> = ({
     // Deleting a shared view removes it for the whole team and can't be undone,
     // so make the team-wide consequence explicit before acting.
     if (view.shared && !(await requestConfirmation({
-      title: 'Delete shared view?',
-      message: `Delete “${view.name}” for the whole team? This can't be undone.`,
-      confirmLabel: 'Delete',
+      title: translate('tracker:savedViews.deleteSharedTitle'),
+      message: translate('tracker:savedViews.deleteSharedMessage', { name: view.name }),
+      confirmLabel: translate('common:delete'),
       destructive: true,
     }))) {
       return;

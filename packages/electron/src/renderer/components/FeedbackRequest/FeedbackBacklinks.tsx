@@ -17,6 +17,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useAtomValue } from 'jotai';
 import type { FeedbackRequestIndexEntry } from '@nimbalyst/collab-protocol';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { store } from '@nimbalyst/runtime/store';
 import type { TeamMemberId } from '@nimbalyst/runtime/auth/jwtScopes';
 
@@ -165,6 +166,7 @@ export const FeedbackBacklinkSection: React.FC<FeedbackBacklinkSectionProps> = (
   subject,
   className,
 }) => {
+  const { t } = useTranslation('onboarding');
   const { entries, teamMemberId, open } = useFeedbackBacklinks(subject);
   if (entries.length === 0) return null;
 
@@ -172,7 +174,7 @@ export const FeedbackBacklinkSection: React.FC<FeedbackBacklinkSectionProps> = (
     <div className={`feedback-backlink-section space-y-2 ${className ?? ''}`}>
       <div className="feedback-backlink-header flex items-center gap-1.5">
         <h4 className="text-xs font-medium text-nim-muted uppercase tracking-wide">
-          Feedback
+          {t('feedback.backlinks.heading')}
         </h4>
         <span className="feedback-backlink-count rounded bg-[var(--nim-bg-tertiary)] px-1 text-[10px] text-[var(--nim-text-faint)]">
           {entries.length}
@@ -191,6 +193,7 @@ export const FeedbackBacklinkSection: React.FC<FeedbackBacklinkSectionProps> = (
 export const FeedbackBacklinkHeaderButton: React.FC<FeedbackBacklinkSectionProps> = ({
   subject,
 }) => {
+  const { t } = useTranslation('onboarding');
   const { entries, teamMemberId, open } = useFeedbackBacklinks(subject);
   const menu = useFloatingMenu({ placement: 'bottom-end' });
 
@@ -209,7 +212,7 @@ export const FeedbackBacklinkHeaderButton: React.FC<FeedbackBacklinkSectionProps
           menu.isOpen ? 'active bg-[var(--nim-bg-tertiary)] text-[var(--nim-text)]' : ''
         }`}
         onClick={() => menu.setIsOpen(!menu.isOpen)}
-        title={`Feedback about this document (${entries.length})`}
+        title={t('feedback.backlinks.buttonTitle', { total: entries.length })}
         {...menu.getReferenceProps()}
       >
         <MaterialSymbol icon="reviews" size={16} />
@@ -225,7 +228,7 @@ export const FeedbackBacklinkHeaderButton: React.FC<FeedbackBacklinkSectionProps
           >
             <div className="feedback-backlink-header mb-1 flex items-center gap-1.5 px-1">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nim-text-faint)]">
-                Feedback
+                {t('feedback.backlinks.heading')}
               </span>
               <span className="feedback-backlink-count rounded bg-[var(--nim-bg-tertiary)] px-1 text-[10px] text-[var(--nim-text-faint)]">
                 {entries.length}

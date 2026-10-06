@@ -2,6 +2,7 @@ import React, { memo, useState, useRef, useEffect, useCallback } from 'react';
 import { useAtomValue } from 'jotai';
 import { getFileIcon } from '@nimbalyst/runtime/ui/icons/fileIcons';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   fileGitStatusAtom,
   directoryGitStatusAtom,
@@ -11,6 +12,7 @@ import {
 
 /**
  * Helper to convert atom git status to display string.
+ * `title` is an i18n key (workspace namespace), translated at render time.
  */
 function getStatusDisplay(status: FileGitStatus | undefined): { code: string; className: string; title: string } | null {
   if (!status) return null;
@@ -20,13 +22,13 @@ function getStatusDisplay(status: FileGitStatus | undefined): { code: string; cl
 
   switch (code) {
     case 'M':
-      return { code: 'M', className: 'modified', title: 'Modified - Changes not staged for commit' };
+      return { code: 'M', className: 'modified', title: 'fileTree.gitStatus.modified' };
     case 'A':
-      return { code: 'S', className: 'staged', title: 'Staged - Changes ready to commit' };
+      return { code: 'S', className: 'staged', title: 'fileTree.gitStatus.staged' };
     case '?':
-      return { code: '?', className: 'untracked', title: 'Untracked - New file not yet added to git' };
+      return { code: '?', className: 'untracked', title: 'fileTree.gitStatus.untracked' };
     case 'D':
-      return { code: 'D', className: 'deleted', title: 'Deleted - File removed' };
+      return { code: 'D', className: 'deleted', title: 'fileTree.gitStatus.deleted' };
     default:
       return null;
   }
@@ -37,6 +39,7 @@ function getStatusDisplay(status: FileGitStatus | undefined): { code: string; cl
  * Each instance subscribes only to its own file's git status atom.
  */
 const FileGitStatusIndicator = memo<{ filePath: string }>(({ filePath }) => {
+  const { t } = useTranslation('workspace');
   const status = useAtomValue(fileGitStatusAtom(filePath));
   const display = getStatusDisplay(status);
 
@@ -45,7 +48,7 @@ const FileGitStatusIndicator = memo<{ filePath: string }>(({ filePath }) => {
   return (
     <span
       className={`file-tree-git-status file-tree-git-status--${display.className}`}
-      title={display.title}
+      title={t(display.title)}
     >
       {display.code}
     </span>
@@ -57,6 +60,7 @@ const FileGitStatusIndicator = memo<{ filePath: string }>(({ filePath }) => {
  * Shows aggregate status of all files within the directory.
  */
 const DirectoryGitStatusIndicator = memo<{ dirPath: string }>(({ dirPath }) => {
+  const { t } = useTranslation('workspace');
   const status = useAtomValue(directoryGitStatusAtom(dirPath));
   const display = getStatusDisplay(status);
 
@@ -66,10 +70,10 @@ const DirectoryGitStatusIndicator = memo<{ dirPath: string }>(({ dirPath }) => {
     <span
       className={`file-tree-git-status file-tree-git-status--${display.className} file-tree-git-status--inherited`}
       title={
-        display.className === 'modified' ? 'Contains modified files' :
-        display.className === 'staged' ? 'Contains staged files' :
-        display.className === 'untracked' ? 'Contains untracked files' :
-        display.className === 'deleted' ? 'Contains deleted files' : ''
+        display.className === 'modified' ? t('fileTree.gitStatus.containsModified') :
+        display.className === 'staged' ? t('fileTree.gitStatus.containsStaged') :
+        display.className === 'untracked' ? t('fileTree.gitStatus.containsUntracked') :
+        display.className === 'deleted' ? t('fileTree.gitStatus.containsDeleted') : ''
       }
     >
       {display.code}
@@ -180,6 +184,7 @@ export const FileTreeRow = memo<FileTreeRowProps>(({
   onRenameConfirm,
   onRenameCancel,
 }) => {
+  const { t } = useTranslation('workspace');
   const indent = node.depth * 16 + 8;
 
   if (node.type === 'directory') {
@@ -228,7 +233,7 @@ export const FileTreeRow = memo<FileTreeRowProps>(({
           <>
             <span className="file-tree-name">
               {node.name}
-              {node.isDragOver && isCopyDrag && <span style={{ marginLeft: '4px', fontSize: '10px', opacity: 0.7 }}>(copy)</span>}
+              {node.isDragOver && isCopyDrag && <span style={{ marginLeft: '4px', fontSize: '10px', opacity: 0.7 }}>{t('fileTree.copySuffix')}</span>}
             </span>
             <DirectoryGitStatusIndicator dirPath={node.path} />
           </>

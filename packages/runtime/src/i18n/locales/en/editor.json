@@ -1,0 +1,188 @@
+{
+  "sourceMode": {
+    "label": "Source Mode",
+    "editor": "Editor",
+    "richText": "Rich Text"
+  },
+  "tabEditor": {
+    "noCustomEditor": "No custom editor found for file type: {{fileExt}}"
+  },
+  "header": {
+    "trackerType": {
+      "plan": "Plan",
+      "decision": "Decision"
+    },
+    "extensionFallback": "Extension"
+  },
+  "tabBar": {
+    "openAiAssistantTooltip": "Open AI Assistant ({{shortcut}})",
+    "closeAiAssistantTooltip": "Close AI Assistant ({{shortcut}})",
+    "openAiAssistant": "Open AI Assistant",
+    "closeAiAssistant": "Close AI Assistant"
+  },
+  "editorMode": {
+    "resizeSidebar": "Resize file sidebar",
+    "welcomeFallback": "Open a file to get started"
+  },
+  "diff": {
+    "fileFallback": "file",
+    "aiChangesTo": "AI changes to {{fileName}}",
+    "aiEdited": "AI edited {{fileName}}",
+    "sessionEdited": "edited {{fileName}}",
+    "editedAgo": "edited {{time}}",
+    "openSessionTooltip": "Open \"{{title}}\" session",
+    "goToSession": "Go to Session",
+    "goToSessionTooltip": "Open the AI session that made these changes",
+    "viewHistory": "View History",
+    "viewHistoryTooltip": "View changes in history",
+    "readOnlyTooltip": "This file is read-only while you review AI changes. Keep or Revert to edit it again.",
+    "readOnlyNote": "Read-only while reviewing. Keep or Revert to edit.",
+    "previousChange": "Previous change",
+    "nextChange": "Next change",
+    "position": "{{current}} of {{total}}",
+    "changeCount_zero": "{{count}} changes",
+    "changeCount_one": "{{count}} changes",
+    "changeCount_other": "{{count}} changes",
+    "revert": "Revert",
+    "revertAll": "Revert All",
+    "revertTooltip": "Revert this change",
+    "keep": "Keep",
+    "keepAll": "Keep All",
+    "keepTooltip": "Keep this change",
+    "rejectAll": "Reject All",
+    "acceptAll": "Accept All",
+    "proposedChanges": "Proposed Changes",
+    "acceptChanges": "Accept Changes",
+    "reject": "Reject",
+    "relativeTime": {
+      "justNow": "just now",
+      "minutesAgo_zero": "{{count}} minutes ago",
+      "minutesAgo_one": "{{count}} minute ago",
+      "minutesAgo_other": "{{count}} minutes ago",
+      "hoursAgo_zero": "{{count}} hours ago",
+      "hoursAgo_one": "{{count}} hour ago",
+      "hoursAgo_other": "{{count}} hours ago",
+      "daysAgo_zero": "{{count}} days ago",
+      "daysAgo_one": "{{count}} day ago",
+      "daysAgo_other": "{{count}} days ago"
+    },
+    "fallbackSessionTitle": "AI Session"
+  },
+  "errorBoundary": {
+    "title": "Unable to Load Editor",
+    "message": "An error occurred while loading \"{{fileName}}\".",
+    "otherTabs": "Other tabs should continue to work normally.",
+    "tryAgain": "Try Again",
+    "closeTab": "Close Tab"
+  },
+  "customEditor": {
+    "renderLoopTitle": "Render Loop Detected",
+    "errorTitle": "Custom Editor Error",
+    "extensionLabel": "Extension:",
+    "componentLabel": "/ Component:",
+    "renderLoopMessage": "The custom editor is rendering too rapidly, which may indicate an infinite loop. This has been stopped to prevent freezing.",
+    "unexpectedError": "An unexpected error occurred while rendering the custom editor.",
+    "errorDetails": "Error Details",
+    "commonCauses": "Common causes:",
+    "causeEffectDependencies": "State updates in useEffect without proper dependencies",
+    "causeRecreatedCallbacks": "Callback props recreated on every render",
+    "causeChangingReferences": "Object/array references changing on every render",
+    "tryAgain": "Try Again"
+  },
+  "mockupProject": {
+    "title": "Legacy Mockup Project",
+    "sharedReadOnly": "This shared project is open read-only for compatibility. Its shared document remains unchanged.",
+    "localReadOnly": "This file is open read-only. Convert it to Project Canvas to keep working; the original file remains unchanged.",
+    "converting": "Converting...",
+    "convert": "Convert to canvas",
+    "created": "Created {{path}}. The original project was not changed.",
+    "conversionTarget": "Conversion target: {{path}}",
+    "loadingPreview": "Loading project preview...",
+    "conversionFailed": "Conversion failed: {{detail}}. The original mockup project was not modified.",
+    "errors": {
+      "invalidSourcePath": "Only .mockupproject files can be converted.",
+      "suspectConversion": "The converted canvas did not preserve every mockup and connection.",
+      "sourceMissing": "The original mockup project could not be read. It was not modified.",
+      "targetExists": "A canvas already exists at {{path}}. Neither file was changed.",
+      "verificationFailed": "The new canvas could not be verified. The original mockup project was not modified."
+    }
+  },
+  "imageViewer": {
+    "missing": "Image file no longer exists",
+    "loadFailed": "Failed to load image"
+  },
+  "sharedLink": {
+    "openInBrowser": "Open in browser",
+    "copyLink": "Copy link"
+  },
+  "collab": {
+    "syncStatus": "Sync status: {{status}}",
+    "copyCurrentDocument": "Copy current document",
+    "discardLocalCopy": "Discard local copy",
+    "connecting": "Connecting to document...",
+    "loadingFromServer": "Loading from server…",
+    "reuploadNotConfirmed": {
+      "title": "Re-upload not confirmed",
+      "message": "The push was sent but the server did not confirm persisting it. Check your connection and retry."
+    },
+    "sharedDocUpdated": {
+      "title": "Shared document updated",
+      "message": "Pushed the current local file into the shared document."
+    },
+    "saveCopyFailed": {
+      "title": "Could not save a copy",
+      "exporterUnavailable": "The collaborative code exporter is unavailable.",
+      "exportFailed": "The file could not be exported."
+    },
+    "actions": {
+      "saveCopy": "Save a Copy",
+      "openLocal": "Open Local",
+      "relinkLocalSource": "Relink Local Source",
+      "linkLocalSource": "Link Local Source",
+      "clearLocalSource": "Clear Local Source"
+    },
+    "documentCopied": {
+      "title": "Current document copied",
+      "message": "The complete current document was copied so the unsent edits can be preserved."
+    },
+    "copyFailed": "Could not copy current document",
+    "discardConfirm": {
+      "title": "Discard local copy?",
+      "message": "This permanently deletes the local replica and its unuploaded edits, then closes the document. This cannot be undone.",
+      "confirm": "Discard and close",
+      "cancel": "Keep local copy"
+    },
+    "discardFailed": "Could not discard local copy",
+    "seedNotConfirmed": {
+      "title": "Shared document seed not confirmed",
+      "message": "The initial shared content was not confirmed by the server. Re-upload the local source before teammates rely on this document."
+    },
+    "missingEditor": {
+      "noEditor": "No editor available for document type: {{documentType}}",
+      "notInstalled": "{{name}} isn't installed",
+      "cannotOpenShared": "{{name}} can't open shared documents",
+      "unrecognizedEditor": "This document was shared from an editor this copy of Nimbalyst does not recognize.",
+      "needsExtension": "This shared document needs that extension to open.",
+      "updateExtension": "Update the extension to a version that supports collaborative editing.",
+      "install": "Install {{name}}",
+      "update": "Update {{name}}",
+      "openMarketplace": "Open Extension Marketplace"
+    }
+  },
+  "comments": {
+    "panelLabel": "Document comments",
+    "emptyCanComment": "No comments yet. Add one from the editor to start a thread.",
+    "empty": "No comments yet.",
+    "notices": {
+      "noTarget": "That comment is no longer in this document. It may have been deleted.",
+      "orphaned": "What this comment pointed at is no longer in the document, so there is nothing to jump to. The conversation is kept.",
+      "unsupported": "This comment points at something this editor does not understand, so it cannot be shown in place. The conversation is kept.",
+      "unavailable": "This editor could not bring that comment into view."
+    },
+    "refusal": {
+      "resolve": "Could not resolve this comment",
+      "replyTo": "Could not reply to this comment",
+      "delete": "Could not delete this comment"
+    }
+  }
+}

@@ -2,6 +2,7 @@ import { dialog, BrowserWindow, clipboard } from 'electron';
 import { safeHandle } from '../utils/ipcRegistry';
 import { writeFile } from 'fs/promises';
 import { logger } from '../utils/logger';
+import { t } from '@nimbalyst/runtime/i18n';
 import { AnalyticsService } from '../services/analytics/AnalyticsService';
 import { AISessionsRepository } from '@nimbalyst/runtime';
 import type { SessionData } from '@nimbalyst/runtime/ai/server/types';
@@ -31,9 +32,9 @@ export function registerExportHandlers() {
     ): Promise<string | null> => {
       const window = BrowserWindow.fromWebContents(event.sender);
       const dialogOptions: Electron.SaveDialogOptions = {
-        title: 'Export to PDF',
-        buttonLabel: 'Export',
-        filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
+        title: t('dialogs:export.pdf.title'),
+        buttonLabel: t('dialogs:export.exportButton'),
+        filters: [{ name: t('dialogs:export.pdf.filterName'), extensions: ['pdf'] }],
         defaultPath: getDialogDefaultPath({ window, explicitPath: options?.defaultPath }),
       };
 
@@ -256,9 +257,9 @@ export function registerExportHandlers() {
         // Show save dialog
         const window = BrowserWindow.fromWebContents(event.sender);
         const dialogOptions: Electron.SaveDialogOptions = {
-          title: 'Export Session as HTML',
-          buttonLabel: 'Export',
-          filters: [{ name: 'HTML Files', extensions: ['html'] }],
+          title: t('dialogs:export.sessionHtml.title'),
+          buttonLabel: t('dialogs:export.exportButton'),
+          filters: [{ name: t('dialogs:export.sessionHtml.filterName'), extensions: ['html'] }],
           defaultPath: getDialogDefaultPath({ window, explicitPath: defaultFilename }),
         };
 

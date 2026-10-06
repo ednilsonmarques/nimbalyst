@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface UpdateReadyToastProps {
   version: string;
@@ -17,6 +18,7 @@ export function UpdateReadyToast({
   onDoItLater,
   onDismiss,
 }: UpdateReadyToastProps): React.ReactElement {
+  const { t } = useTranslation('dialogs');
   if (waitingForSessions) {
     return (
       <div
@@ -27,8 +29,8 @@ export function UpdateReadyToast({
         <button
           className="update-toast-dismiss absolute top-3 right-3 w-6 h-6 border-none bg-transparent cursor-pointer rounded flex items-center justify-center p-0 text-[var(--nim-text-faint)] transition-colors duration-200 hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text-muted)] [&>svg]:w-3.5 [&>svg]:h-3.5"
           onClick={onDismiss}
-          title="Dismiss"
-          aria-label="Dismiss"
+          title={t('updateToast.dismiss')}
+          aria-label={t('updateToast.dismiss')}
           data-testid="update-toast-dismiss"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -38,12 +40,12 @@ export function UpdateReadyToast({
 
         {/* Header */}
         <div className="update-toast-title text-sm font-semibold text-[var(--nim-text)] mb-1 pr-7">
-          Update ready
+          {t('updateToast.ready.waitingTitle')}
         </div>
         <div className="flex items-center gap-2 mb-4">
           <div className="w-4 h-4 border-2 border-[var(--nim-bg-tertiary)] border-t-[var(--nim-primary)] rounded-full animate-spin shrink-0" />
           <div className="update-toast-subtitle text-xs text-[var(--nim-text-muted)] leading-normal">
-            Update will apply when all AI sessions are finished
+            {t('updateToast.ready.waitingMessage')}
           </div>
         </div>
 
@@ -54,14 +56,14 @@ export function UpdateReadyToast({
             onClick={onForceRestart}
             data-testid="force-restart-btn"
           >
-            Restart Now
+            {t('updateToast.ready.restartNow')}
           </button>
           <button
             className="update-toast-btn update-toast-btn-secondary py-2 px-3.5 border border-[var(--nim-border)] rounded-md text-[13px] font-medium cursor-pointer transition-all duration-200 font-[inherit] whitespace-nowrap bg-[var(--nim-bg-tertiary)] text-[var(--nim-text)] hover:bg-[var(--nim-bg-hover)]"
             onClick={onDoItLater}
             data-testid="do-it-later-btn"
           >
-            Later
+            {t('updateToast.ready.later')}
           </button>
         </div>
       </div>
@@ -77,8 +79,8 @@ export function UpdateReadyToast({
       <button
         className="update-toast-dismiss absolute top-3 right-3 w-6 h-6 border-none bg-transparent cursor-pointer rounded flex items-center justify-center p-0 text-[var(--nim-text-faint)] transition-colors duration-200 hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text-muted)] [&>svg]:w-3.5 [&>svg]:h-3.5"
         onClick={onDismiss}
-        title="Dismiss"
-        aria-label="Dismiss"
+        title={t('updateToast.dismiss')}
+        aria-label={t('updateToast.dismiss')}
         data-testid="update-toast-dismiss"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -88,10 +90,10 @@ export function UpdateReadyToast({
 
       {/* Header */}
       <div className="update-toast-title text-sm font-semibold text-[var(--nim-text)] mb-1 pr-7">
-        Nimbalyst update is ready
+        {t('updateToast.ready.title')}
       </div>
       <div className="update-toast-subtitle text-xs text-[var(--nim-text-muted)] leading-normal mb-4">
-        The app needs to be restarted to apply the update
+        {t('updateToast.ready.message')}
       </div>
 
       {/* Action buttons */}
@@ -101,14 +103,14 @@ export function UpdateReadyToast({
           onClick={onRelaunch}
           data-testid="relaunch-btn"
         >
-          Relaunch
+          {t('updateToast.ready.relaunch')}
         </button>
         <button
           className="update-toast-btn update-toast-btn-secondary py-2 px-3.5 border border-[var(--nim-border)] rounded-md text-[13px] font-medium cursor-pointer transition-all duration-200 font-[inherit] whitespace-nowrap bg-[var(--nim-bg-tertiary)] text-[var(--nim-text)] hover:bg-[var(--nim-bg-hover)]"
           onClick={onDoItLater}
           data-testid="do-it-later-btn"
         >
-          Later
+          {t('updateToast.ready.later')}
         </button>
       </div>
     </div>

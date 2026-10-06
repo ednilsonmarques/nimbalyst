@@ -6,6 +6,8 @@ export interface FileSaveResult {
   errorCode?: string;
 }
 
+import { t } from '@nimbalyst/runtime/i18n';
+
 export class FileSaveRejectedError extends Error {
   readonly errorType: string;
   readonly code: string;
@@ -26,26 +28,26 @@ export function getSaveFailureMessage(
   errorType: string,
   source: 'auto' | 'manual',
 ): string {
-  const prefix = source === 'auto' ? 'Autosave is blocked' : 'Save failed';
+  const scope = source === 'auto' ? 'auto' : 'manual';
   switch (errorType) {
     case 'permission':
-      return `${prefix} because Nimbalyst does not have permission to write this file. Your edits remain unsaved.`;
+      return t(`errors:save.${scope}.permission`);
     case 'disk_full':
-      return `${prefix} because the disk is full. Your edits remain unsaved.`;
+      return t(`errors:save.${scope}.diskFull`);
     case 'not_found':
-      return `${prefix} because the file is no longer available. Your edits remain unsaved.`;
+      return t(`errors:save.${scope}.notFound`);
     case 'is_directory':
     case 'invalid_path':
-      return `${prefix} because the file location is not writable. Your edits remain unsaved.`;
+      return t(`errors:save.${scope}.notWritable`);
     case 'resource_limit':
     case 'io':
-      return `${prefix} because the operating system could not write the file. Your edits remain unsaved.`;
+      return t(`errors:save.${scope}.osWrite`);
     case 'conflict':
-      return `${prefix} because the file changed on disk. Your edits remain unsaved.`;
+      return t(`errors:save.${scope}.conflict`);
     case 'empty_write_blocked':
-      return `${prefix} because it would have emptied a file that still has content. Your edits remain unsaved — save manually if you meant to clear the file.`;
+      return t(`errors:save.${scope}.emptyWrite`);
     default:
-      return `${prefix}. Your edits remain unsaved.`;
+      return t(`errors:save.${scope}.generic`);
   }
 }
 

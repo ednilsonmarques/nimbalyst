@@ -64,6 +64,7 @@ import {
   clearFileSystemServiceFor,
 } from '@nimbalyst/runtime';
 import { logger } from '../utils/logger';
+import { t } from '@nimbalyst/runtime/i18n';
 import { notifyWorkspaceUsageChanged, pruneUnusedGitWatchers, releaseWhenWorkspaceUnused } from '../file/GitWatcherLifecycle';
 
 // Re-uses the same Maps that WindowManager populates. WindowManager exports
@@ -339,14 +340,13 @@ export function registerMultiProjectRailHandlers(): void {
             // drag-drop / command routes never open a picker at all.
             const consent = await dialog.showMessageBox(window, {
                 type: 'question',
-                buttons: ['Attach Folder', 'Cancel'],
+                buttons: [t('dialogs:projectRail.attachFolder.confirm'), t('common:cancel')],
                 defaultId: 0,
                 cancelId: 1,
-                title: 'Attach Folder to Workspace',
-                message: `Attach "${basename(folderPath)}" to "${basename(workspacePath)}"?`,
+                title: t('dialogs:projectRail.attachFolder.title'),
+                message: t('dialogs:projectRail.attachFolder.message', { folder: basename(folderPath), workspace: basename(workspacePath) }),
                 detail:
-                    'The attached folder becomes part of this project and inherits its agent '
-                    + 'trust level. Agents in this project will be able to read and write it.',
+                    t('dialogs:projectRail.attachFolder.detail'),
             });
             if (consent.response !== 0) {
                 return { success: false, reason: 'declined', error: undefined };
@@ -359,10 +359,10 @@ export function registerMultiProjectRailHandlers(): void {
                     reason: result.reason,
                     error:
                         result.reason === 'cap-reached'
-                            ? `A workspace can hold at most ${MAX_ATTACHED_FOLDERS} attached folders`
+                            ? t('dialogs:projectRail.attachError.capReached', { max: MAX_ATTACHED_FOLDERS })
                             : result.reason === 'already-attached'
-                              ? 'Folder is already attached'
-                              : 'Folder is already this workspace',
+                              ? t('dialogs:projectRail.attachError.alreadyAttached')
+                              : t('dialogs:projectRail.attachError.isWorkspace'),
                     folders: [workspacePath, ...result.attachedFolders],
                 };
             }

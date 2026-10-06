@@ -3,6 +3,7 @@ import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import type { EffortLevel } from '../../utils/modelUtils';
 import { EFFORT_LEVELS, DEFAULT_EFFORT_LEVEL, clampEffortLevel, getAvailableEffortLevels } from '../../utils/modelUtils';
 import { FloatingPortal, useFloatingMenu } from '../../hooks/useFloatingMenu';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface EffortLevelSelectorProps {
   open?: boolean;
@@ -20,6 +21,7 @@ interface EffortLevelSelectorProps {
 }
 
 export function EffortLevelSelector({ open, onOpenChange, level, onLevelChange, disabled = false, disabledTitle, modelId }: EffortLevelSelectorProps) {
+  const { t } = useTranslation('ai');
   const menu = useFloatingMenu({ placement: 'top-start', offsetPx: 4, open, onOpenChange });
   const { isOpen, setIsOpen } = menu;
 
@@ -60,12 +62,12 @@ export function EffortLevelSelector({ open, onOpenChange, level, onLevelChange, 
         onClick={() => {
           if (!disabled) setIsOpen(!isOpen);
         }}
-        aria-label={`Effort level: ${currentLevel.label}`}
+        aria-label={t('effort.ariaLabel', { level: t(`effort.levels.${currentLevel.key}`, { defaultValue: currentLevel.label }) })}
         disabled={disabled}
         title={disabled ? disabledTitle : undefined}
       >
         <MaterialSymbol icon="psychology" size={12} />
-        <span>{currentLevel.label}</span>
+        <span>{t(`effort.levels.${currentLevel.key}`, { defaultValue: currentLevel.label })}</span>
         <MaterialSymbol icon="expand_more" size={14} className={`transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
@@ -91,7 +93,7 @@ export function EffortLevelSelector({ open, onOpenChange, level, onLevelChange, 
                   setIsOpen(false);
                 }}
               >
-                <span>{l.label}</span>
+                <span>{t(`effort.levels.${l.key}`, { defaultValue: l.label })}</span>
                 {l.key === effectiveLevel && <MaterialSymbol icon="check" size={14} />}
               </button>
             ))}

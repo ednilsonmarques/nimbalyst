@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useAtomValue } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { sessionPendingReviewFilesAtom } from '../../store/atoms/sessionFiles';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface PendingReviewBannerProps {
   workspacePath?: string;
@@ -9,6 +10,7 @@ interface PendingReviewBannerProps {
 }
 
 export function PendingReviewBanner({ workspacePath, sessionId }: PendingReviewBannerProps) {
+  const { t } = useTranslation('ai');
   const effectiveSessionId = sessionId || '__no_session__';
   const pendingReviewFiles = useAtomValue(sessionPendingReviewFilesAtom(effectiveSessionId));
   const pendingCount = sessionId ? pendingReviewFiles.size : 0;
@@ -41,17 +43,17 @@ export function PendingReviewBanner({ workspacePath, sessionId }: PendingReviewB
         <MaterialSymbol icon="rate_review" size={16} className="pending-review-banner__icon text-nim-warning" />
         <span className="pending-review-banner__text text-xs text-nim-warning font-medium">
           <span className="pending-review-banner__count font-semibold">{pendingCount}</span>
-          {' '}file{pendingCount !== 1 ? 's' : ''} pending review
+          {' '}{t('pendingReview.filesPending', { count: pendingCount })}
         </span>
       </div>
       <button
         className="pending-review-banner__clear-btn flex items-center gap-1 px-2.5 py-1 bg-transparent border border-nim-warning rounded text-nim-warning text-[11px] font-medium cursor-pointer transition-all duration-200 font-inherit hover:enabled:bg-amber-400/15 disabled:opacity-50 disabled:cursor-not-allowed"
         onClick={handleClearAll}
         disabled={isClearing}
-        title="Accept all pending AI changes"
+        title={t('pendingReview.keepAllTitle')}
       >
         <MaterialSymbol icon="check_circle" size={14} />
-        {isClearing ? 'Keeping...' : 'Keep All'}
+        {isClearing ? t('pendingReview.keeping') : t('pendingReview.keepAll')}
       </button>
     </div>
   );

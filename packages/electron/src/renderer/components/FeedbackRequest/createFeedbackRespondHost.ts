@@ -22,6 +22,7 @@ import type {
   FeedbackRespondHost,
   FeedbackRespondSubmitResult,
 } from './FeedbackRequestRespond';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 type Invoke = (channel: string, request: unknown) => Promise<unknown>;
 
@@ -61,7 +62,7 @@ export function createFeedbackRespondHost(
             success: false,
             error: error instanceof Error
               ? error.message
-              : 'Your answers could not be sent.',
+              : translate('onboarding:feedback.errors.answersNotSent'),
           };
         }
       }

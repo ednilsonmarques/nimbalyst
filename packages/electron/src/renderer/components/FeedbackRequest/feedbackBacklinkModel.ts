@@ -9,6 +9,7 @@
 
 import type { FeedbackRequestIndexEntry } from '@nimbalyst/collab-protocol';
 import type { TeamMemberId } from '@nimbalyst/runtime/auth/jwtScopes';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 export type FeedbackBacklinkTone = 'open' | 'answered' | 'closed';
 
@@ -28,14 +29,14 @@ export function feedbackBacklinkStatus(
   switch (entry.lifecycle.status) {
     case 'open':
       return entry.progress.quorumReached
-        ? { label: 'Answered', tone: 'answered' }
-        : { label: 'Open', tone: 'open' };
+        ? { label: translate('onboarding:feedback.lifecycle.answered'), tone: 'answered' }
+        : { label: translate('onboarding:feedback.lifecycle.open'), tone: 'open' };
     case 'closed':
-      return { label: 'Closed', tone: 'closed' };
+      return { label: translate('onboarding:feedback.lifecycle.closed'), tone: 'closed' };
     case 'expired':
-      return { label: 'Expired', tone: 'closed' };
+      return { label: translate('onboarding:feedback.lifecycle.expired'), tone: 'closed' };
     case 'cancelled':
-      return { label: 'Cancelled', tone: 'closed' };
+      return { label: translate('onboarding:feedback.lifecycle.cancelled'), tone: 'closed' };
   }
 }
 
@@ -43,7 +44,10 @@ export function feedbackBacklinkProgressLabel(
   entry: Pick<FeedbackRequestIndexEntry, 'progress'>,
 ): string {
   const { answeredRecipientCount, totalRecipientCount } = entry.progress;
-  return `${answeredRecipientCount}/${totalRecipientCount} responded`;
+  return translate('onboarding:feedback.backlinks.progress', {
+    answered: answeredRecipientCount,
+    total: totalRecipientCount,
+  });
 }
 
 /**
@@ -57,10 +61,10 @@ export function feedbackBacklinkAuthorLabel(
   teamMemberId: TeamMemberId | '',
 ): string | null {
   if (teamMemberId && entry.author.onBehalfOfUserId === teamMemberId) {
-    return 'Asked by you';
+    return translate('onboarding:feedback.backlinks.askedByYou');
   }
   if (entry.author.kind === 'agent' && entry.author.sessionName) {
-    return `Asked by ${entry.author.sessionName}`;
+    return translate('onboarding:feedback.backlinks.askedBy', { name: entry.author.sessionName });
   }
   return null;
 }
@@ -90,7 +94,7 @@ export function feedbackAuthorSession(
   if (entry.author.kind !== 'agent' || !entry.author.sessionId) return null;
   return {
     sessionId: entry.author.sessionId,
-    label: entry.author.sessionName || 'the session that asked',
+    label: entry.author.sessionName || translate('onboarding:feedback.backlinks.authorSessionFallback'),
   };
 }
 

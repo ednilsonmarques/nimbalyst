@@ -19,6 +19,7 @@
 import type { JSX } from 'react';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   prRemoteAtom,
   prModeLayoutAtom,
@@ -53,6 +54,7 @@ export const PullRequestMode = forwardRef<PullRequestModeRef, PullRequestModePro
   onFileOpen,
   onPanelStateChange,
 }, ref): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const remote = useAtomValue(prRemoteAtom);
   const layout = useAtomValue(prModeLayoutAtom);
   const setLayout = useSetAtom(setPrModeLayoutAtom);
@@ -115,7 +117,7 @@ export const PullRequestMode = forwardRef<PullRequestModeRef, PullRequestModePro
         onPanelStateChange={onPanelStateChange}
         placeholder={
           <div className="pr-review-placeholder flex flex-1 items-center justify-center text-nim-muted text-sm">
-            No GitHub remote detected for {workspaceName}.
+            {t('shell.noRemote', { workspaceName })}
           </div>
         }
       />

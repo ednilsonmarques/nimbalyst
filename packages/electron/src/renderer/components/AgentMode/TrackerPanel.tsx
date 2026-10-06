@@ -9,6 +9,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { trackerItemByIdAtom } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerDataAtoms';
 import {
   defaultTrackerTypeColor,
@@ -30,6 +31,7 @@ interface TrackerPanelProps {
 export const TrackerPanel: React.FC<TrackerPanelProps> = React.memo(({
   workstreamId,
 }) => {
+  const { t } = useTranslation('agent');
   const isCollapsed = useAtomValue(trackerPanelCollapsedAtom);
   const toggleCollapsed = useSetAtom(toggleTrackerPanelCollapsedAtom);
   const setWindowMode = useSetAtom(setWindowModeAtom);
@@ -99,7 +101,7 @@ export const TrackerPanel: React.FC<TrackerPanelProps> = React.memo(({
           className="text-[var(--nim-text-muted)] shrink-0"
         />
         <span className="tracker-panel-title text-xs font-medium text-[var(--nim-text)]">
-          Trackers
+          {t('panels.trackers')}
         </span>
         <span className="tracker-panel-count ml-auto text-[11px] text-[var(--nim-text-muted)] font-mono">
           {linkedItemIds.length}
@@ -132,6 +134,7 @@ interface TrackerItemRowProps {
 }
 
 const TrackerItemRow: React.FC<TrackerItemRowProps> = React.memo(({ itemId, onNavigate }) => {
+  const { t } = useTranslation('agent');
   const item = useAtomValue(trackerItemByIdAtom(itemId));
   const prRemote = useAtomValue(prRemoteAtom);
 
@@ -153,7 +156,7 @@ const TrackerItemRow: React.FC<TrackerItemRowProps> = React.memo(({ itemId, onNa
   // and `feature` a different accent in the two surfaces.
   const color = defaultTrackerTypeColor(item.primaryType);
   const icon = defaultTrackerTypeIcon(item.primaryType);
-  const title = (item.fields.title as string) || 'Untitled';
+  const title = (item.fields.title as string) || t('panels.untitledItem');
   const status = item.fields.status as string;
 
   return (
@@ -177,7 +180,7 @@ const TrackerItemRow: React.FC<TrackerItemRowProps> = React.memo(({ itemId, onNa
           role="button"
           tabIndex={-1}
           className="shrink-0 inline-flex items-center text-[var(--nim-text-muted)] hover:text-[var(--nim-text)]"
-          title={`Open #${prReference.number} in the PRs view`}
+          title={t('panels.openPr', { number: prReference.number })}
           data-testid="tracker-item-open-pr"
           onClick={(e) => {
             e.stopPropagation();

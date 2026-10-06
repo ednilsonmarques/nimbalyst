@@ -24,6 +24,7 @@ import { atomFamily } from '../debug/atomFamilyRegistry';
 import { resolveProviderFromModel } from '../../utils/modelUtils';
 import type { SessionLaunchSource } from '../../../shared/analytics/sessionLaunch';
 import { errorNotificationService } from '../../services/ErrorNotificationService';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
   store,
   addSessionFullAtom,
@@ -316,11 +317,11 @@ export const deleteSessionActionAtom = atom(null, async (get, set, sessionId: st
       }
     } else {
       console.error('[sessionHistoryActions] Failed to delete session:', result.error);
-      errorNotificationService.showError('Failed to delete session', result.error || 'Unknown error');
+      errorNotificationService.showError(translate('general:sessions.deleteFailed'), result.error || translate('general:sessions.unknownError'));
     }
   } catch (err) {
     console.error('[sessionHistoryActions] Error deleting session:', err);
-    errorNotificationService.showError('Failed to delete session', String(err));
+    errorNotificationService.showError(translate('general:sessions.deleteFailed'), String(err));
   }
 });
 
@@ -398,11 +399,11 @@ export const branchSessionActionAtom = atom(null, async (get, set, sessionId: st
       await set(openSessionInTabActionAtom, result.session.id);
     } else {
       console.error('[sessionHistoryActions] Failed to branch session:', result.error);
-      errorNotificationService.showError('Failed to branch conversation', result.error || 'Unknown error');
+      errorNotificationService.showError(translate('general:sessions.branchFailed'), result.error || translate('general:sessions.unknownError'));
     }
   } catch (err) {
     console.error('[sessionHistoryActions] Error branching session:', err);
-    errorNotificationService.showError('Failed to branch conversation', String(err));
+    errorNotificationService.showError(translate('general:sessions.branchFailed'), String(err));
   }
 });
 
@@ -436,7 +437,7 @@ export const createNewSessionActionAtom = atom(
       set(machineSessionSelectionsAtom(workspacePath), previous => ({...previous, [host]: id}));
       if (options.selectSession !== false) window.dispatchEvent(new CustomEvent('open-ai-session', {detail: {sessionId: id, workspacePath}}));
       return id;
-      } catch (error) { errorNotificationService.showError("Could not create remote session", String(error)); return undefined; }
+      } catch (error) { errorNotificationService.showError(translate('general:sessions.remoteCreateFailed'), String(error)); return undefined; }
     }
 
 
@@ -518,7 +519,7 @@ export const createNewWorktreeSessionActionAtom = atom(
     if (!workspacePath || typeof window === 'undefined' || !window.electronAPI) return undefined;
 
     if (get(selectedMachineAtom(workspacePath))) {
-      errorNotificationService.showError("Remote worktree unavailable", "Worktrees are not supported by this remote host yet.");
+      errorNotificationService.showError(translate('general:sessions.remoteWorktreeUnavailable'), translate('general:sessions.remoteWorktreeUnsupported'));
       return undefined;
     }
     if (!get(worktreesFeatureAvailableAtom)) return undefined;
@@ -676,8 +677,8 @@ export const addSessionToWorktreeActionAtom = atom(null, async (_get, set, workt
     await set(createWorktreeSessionCoreActionAtom, worktreeId);
   } catch (error) {
     errorNotificationService.showError(
-      'Failed to Create Session',
-      error instanceof Error ? error.message : 'An unexpected error occurred while adding a session to the worktree.',
+      translate('general:sessions.createFailed'),
+      error instanceof Error ? error.message : translate('general:sessions.worktreeAddUnexpected'),
       { duration: 5000 },
     );
   }

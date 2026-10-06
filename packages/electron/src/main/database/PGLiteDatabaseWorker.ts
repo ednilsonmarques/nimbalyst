@@ -6,6 +6,7 @@
 import * as fs from 'fs';
 import { Worker } from 'worker_threads';
 import { app, dialog } from 'electron';
+import { t } from '@nimbalyst/runtime/i18n';
 import path from 'path';
 import { getPackageRoot } from '../utils/appPaths';
 import { logger } from '../utils/logger';
@@ -241,7 +242,7 @@ export class PGLiteDatabaseWorker {
       title: `Nimbalyst - ${title}`,
       message,
       detail,
-      buttons: ['Quit']
+      buttons: [t('dialogs:database.buttons.quit')]
     }).then(() => app.quit()).catch((err) => {
       logger.main.error('[PGLite Worker] Dialog error:', err);
       app.quit();
@@ -257,7 +258,7 @@ export class PGLiteDatabaseWorker {
       title: `Nimbalyst - ${title}`,
       message,
       detail,
-      buttons: ['OK']
+      buttons: [t('dialogs:database.buttons.ok')]
     }).catch(() => {});
   }
 
@@ -268,10 +269,10 @@ export class PGLiteDatabaseWorker {
   private async showStartFreshConfirmation(): Promise<boolean> {
     const response = await dialog.showMessageBox({
       type: 'warning',
-      title: 'Nimbalyst - Start Fresh?',
-      message: 'This will clear your AI chat sessions.',
-      detail: 'Your files will not be affected, but all AI chat history will be permanently deleted.\n\nAre you sure you want to continue?',
-      buttons: ['Cancel', 'Yes, Start Fresh'],
+      title: t('dialogs:database.startFresh.title'),
+      message: t('dialogs:database.startFresh.message'),
+      detail: t('dialogs:database.startFresh.detail'),
+      buttons: [t('common:cancel'), t('dialogs:database.startFresh.confirm')],
       defaultId: 0,
       cancelId: 0
     });
@@ -450,7 +451,7 @@ export class PGLiteDatabaseWorker {
               logger.main.info('[PGLite Worker] Recreating worker thread after restore...');
               await this.recreateWorkerAndReinit();
 
-              this.showInfoDialog('Database Restored', `Your database has been successfully restored from the ${restoreResult.source} backup.`);
+              this.showInfoDialog(t('dialogs:database.restored.title'), t('dialogs:database.restored.successMessage', { source: String(restoreResult.source) }));
             } else {
               logger.main.error('[PGLite Worker] Failed to restore from backup:', restoreResult.error);
               this.analytics.sendEvent('database_corruption_restore_result', {
@@ -458,7 +459,7 @@ export class PGLiteDatabaseWorker {
                 errorType: restoreResult.error?.includes('verification') ? 'verification_failed' : 'restore_failed'
               });
 
-              this.showInfoDialog('Restore Failed', 'Failed to restore from backup. Starting with a fresh database.', restoreResult.error);
+              this.showInfoDialog(t('dialogs:database.restoreFailed.title'), t('dialogs:database.restoreFailed.startingFreshMessage'), restoreResult.error);
             }
           } else {
             // User clicked "Start Fresh" - show confirmation dialog
@@ -496,7 +497,7 @@ export class PGLiteDatabaseWorker {
                 logger.main.info('[PGLite Worker] Recreating worker thread after restore...');
                 await this.recreateWorkerAndReinit();
 
-                this.showInfoDialog('Database Restored', `Your database has been successfully restored from the ${restoreResult.source} backup.`);
+                this.showInfoDialog(t('dialogs:database.restored.title'), t('dialogs:database.restored.successMessage', { source: String(restoreResult.source) }));
               } else {
                 logger.main.error('[PGLite Worker] Failed to restore from backup:', restoreResult.error);
                 this.analytics.sendEvent('database_corruption_restore_result', {
@@ -505,7 +506,7 @@ export class PGLiteDatabaseWorker {
                   trigger: 'cancel_start_fresh'
                 });
 
-                this.showInfoDialog('Restore Failed', 'Failed to restore from backup. Starting with a fresh database.', restoreResult.error);
+                this.showInfoDialog(t('dialogs:database.restoreFailed.title'), t('dialogs:database.restoreFailed.startingFreshMessage'), restoreResult.error);
               }
             }
           }
@@ -519,10 +520,10 @@ export class PGLiteDatabaseWorker {
 
           dialog.showMessageBox({
             type: 'warning',
-            title: 'Nimbalyst - Database Recovered',
-            message: 'The application database was corrupted and has been automatically repaired.',
-            detail: `A fresh database has been created. Your old data has been backed up to:\n\n${initResult.dataDir}.backup-[timestamp]\n\nYour document files have not been lost - they are still on disk. Only the internal application database (AI chat sessions and document history) needs to be rebuilt.`,
-            buttons: ['OK']
+            title: t('dialogs:database.recovered.title'),
+            message: t('dialogs:database.recovered.message'),
+            detail: t('dialogs:database.recovered.detail', { dataDir: String(initResult.dataDir) }),
+            buttons: [t('dialogs:database.buttons.ok')]
           }).catch(() => {});
         }
       }
@@ -572,18 +573,10 @@ export class PGLiteDatabaseWorker {
         const lockFilePath = (error as any).lockFilePath as string | undefined;
         const response = await dialog.showMessageBox({
           type: 'question',
-          title: 'Nimbalyst - Database Locked (Ambiguous)',
-          message: 'Cannot tell whether another Nimbalyst is already running.',
-          detail:
-            `Nimbalyst found a database lock from a few seconds ago and cannot confirm whether ` +
-            `the process holding it (PID ${lockPid}, host ${lockHostname}, acquired ${lockTimestamp}) ` +
-            `is still alive. Two scenarios are equally likely:\n\n` +
-            `  1. Another Nimbalyst window is open under a different user account or privilege level. ` +
-            `Opening anyway will run two instances against the same database and may corrupt data.\n\n` +
-            `  2. A previous Nimbalyst crashed less than a minute ago and the OS has already reused ` +
-            `the original PID for a system process. In this case the lock is safe to clear.\n\n` +
-            `If unsure, choose Cancel and look for another Nimbalyst window before retrying.`,
-          buttons: ['Cancel', 'Open Anyway (clear lock)'],
+          title: t('dialogs:database.lockAmbiguous.title'),
+          message: t('dialogs:database.lockAmbiguous.message'),
+          detail: t('dialogs:database.lockAmbiguous.detail', { lockPid: String(lockPid), lockHostname: String(lockHostname), lockTimestamp: String(lockTimestamp) }),
+          buttons: [t('common:cancel'), t('dialogs:database.lockAmbiguous.openAnyway')],
           defaultId: 0,
           cancelId: 0,
         }).catch(() => ({ response: 0 } as Electron.MessageBoxReturnValue));
@@ -601,10 +594,9 @@ export class PGLiteDatabaseWorker {
           } catch (unlockErr) {
             logger.main.error('[PGLite Worker] Force-unlock failed:', unlockErr);
             this.showErrorAndQuit(
-              'Database Locked',
-              'Could not clear the database lock.',
-              `Removing the lock file failed: ${this.formatError(unlockErr)}\n\n` +
-              `If another Nimbalyst window is open, close it manually before retrying.`
+              t('dialogs:database.locked.title'),
+              t('dialogs:database.locked.unlockFailedMessage'),
+              t('dialogs:database.locked.unlockFailedDetail', { error: this.formatError(unlockErr) })
             );
             throw new HandledError('DATABASE_LOCKED_AMBIGUOUS_UNLOCK_FAILED');
           }
@@ -613,9 +605,9 @@ export class PGLiteDatabaseWorker {
         // User cancelled - quit cleanly without removing the lock.
         this.analytics.sendEvent('database_lock_ambiguous_cancel', { lockPid });
         this.showErrorAndQuit(
-          'Database Locked',
-          'Nimbalyst cannot start while the database lock state is uncertain.',
-          'Close any other Nimbalyst windows you have open and try again. If you are sure no other Nimbalyst is running, restart this machine to clear any stale system locks.'
+          t('dialogs:database.locked.title'),
+          t('dialogs:database.locked.uncertainMessage'),
+          t('dialogs:database.locked.uncertainDetail')
         );
         throw new HandledError('DATABASE_LOCKED_AMBIGUOUS');
       }
@@ -629,9 +621,9 @@ export class PGLiteDatabaseWorker {
           process.exit(1);
         }
         this.showErrorAndQuit(
-          'Database Locked',
-          'Another instance of Nimbalyst is already running.',
-          'The database is locked by another process. Please close the other instance before starting a new one.\n\nRunning multiple instances simultaneously can cause data corruption.'
+          t('dialogs:database.locked.title'),
+          t('dialogs:database.locked.otherInstanceMessage'),
+          t('dialogs:database.locked.otherInstanceDetail')
         );
         // Throw to prevent downstream code from continuing while quit dialog is pending.
         // HandledError signals to index.ts that a user-facing dialog was already shown.
@@ -669,16 +661,16 @@ export class PGLiteDatabaseWorker {
                 await this.recreateWorkerAndReinit();
               } catch (reinitError) {
                 logger.main.error('[PGLite Worker] Re-initialization after restore failed:', reinitError);
-                this.showErrorAndQuit('Initialization Failed', 'Database was restored but failed to initialize.', this.formatError(reinitError));
+                this.showErrorAndQuit(t('dialogs:database.initFailed.title'), t('dialogs:database.initFailed.afterRestoreMessage'), this.formatError(reinitError));
                 return;
               }
 
-              this.showInfoDialog('Database Restored', `Your database has been restored from the ${restoreResult.source} backup.`);
+              this.showInfoDialog(t('dialogs:database.restored.title'), t('dialogs:database.restored.message', { source: String(restoreResult.source) }));
               this.initialized = true;
               return;
             } else {
               logger.main.error('[PGLite Worker] Restore failed:', restoreResult.error);
-              this.showErrorAndQuit('Restore Failed', 'Failed to restore from backup.', restoreResult.error || 'Unknown error');
+              this.showErrorAndQuit(t('dialogs:database.restoreFailed.title'), t('dialogs:database.restoreFailed.message'), restoreResult.error || t('errors:database.unknownError'));
               return;
             }
           } else if (response.response === 1) {
@@ -712,17 +704,17 @@ export class PGLiteDatabaseWorker {
                 await this.recreateWorkerAndReinit();
               } catch (reinitError) {
                 logger.main.error('[PGLite Worker] Re-initialization after delete failed:', reinitError);
-                this.showErrorAndQuit('Initialization Failed', 'Failed to initialize fresh database.', this.formatError(reinitError));
+                this.showErrorAndQuit(t('dialogs:database.initFailed.title'), t('dialogs:database.initFailed.freshMessage'), this.formatError(reinitError));
                 return;
               }
 
-              this.showInfoDialog('Database Reset', 'A fresh database has been created.', 'Your previous AI chat sessions could not be recovered, but your document files are safe.');
+              this.showInfoDialog(t('dialogs:database.reset.title'), t('dialogs:database.reset.message'), t('dialogs:database.reset.detail'));
 
               this.initialized = true;
               return;
             } catch (deleteError) {
               logger.main.error('[PGLite Worker] Failed to delete database directory:', deleteError);
-              this.showErrorAndQuit('Delete Failed', 'Failed to delete corrupted database.', this.formatError(deleteError));
+              this.showErrorAndQuit(t('dialogs:database.deleteFailed.title'), t('dialogs:database.deleteFailed.message'), this.formatError(deleteError));
               return;
             }
           } else {
@@ -1072,16 +1064,16 @@ export class PGLiteDatabaseWorker {
     }
 
     const buttons = includeQuit
-      ? ['Restore (Recommended)', 'Start Fresh', 'Quit']
-      : ['Restore (Recommended)', 'Start Fresh'];
+      ? [t('dialogs:database.restoreData.restore'), t('dialogs:database.restoreData.startFresh'), t('dialogs:database.buttons.quit')]
+      : [t('dialogs:database.restoreData.restore'), t('dialogs:database.restoreData.startFresh')];
 
     return {
       type: 'info',
-      title: 'Nimbalyst - Restore Your Data',
-      message: 'No file data has been lost.',
+      title: t('dialogs:database.restoreData.title'),
+      message: t('dialogs:database.restoreData.message'),
       detail: backupDateStr
-        ? `Your files are safe, but your chat history will need to be restored from a backup dated ${backupDateStr}.`
-        : `Your files are safe and your AI chat sessions can be restored from a recent backup.`,
+        ? t('dialogs:database.restoreData.detailWithDate', { date: backupDateStr })
+        : t('dialogs:database.restoreData.detail'),
       buttons,
       defaultId: 0,
       cancelId: includeQuit ? 2 : 1
@@ -1094,7 +1086,7 @@ export class PGLiteDatabaseWorker {
    */
   async showRecoveryDialog(): Promise<void> {
     if (!this.backupService || !this.backupService.hasBackups()) {
-      this.showInfoDialog('No Backups Available', 'No backups are available to test the recovery dialog.');
+      this.showInfoDialog(t('dialogs:database.noBackups.title'), t('dialogs:database.noBackups.message'));
       return;
     }
 

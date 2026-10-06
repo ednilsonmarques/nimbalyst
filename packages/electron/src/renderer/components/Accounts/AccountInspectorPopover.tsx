@@ -12,6 +12,7 @@ import {
   useRole,
 } from '@floating-ui/react';
 import { windowControlsClearance } from '@nimbalyst/runtime/ui/floating/windowControlsClearance';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import { resolveAccountOrgRow } from '../../../shared/orgProjectWalk';
 import type { PersonalAccountSummary } from '../../store/atoms/settingsDomains';
@@ -90,6 +91,7 @@ export function AccountInspectorPopover({
   sync = null,
   onOpenSyncSettings,
 }: AccountInspectorPopoverProps) {
+  const { t } = useTranslation('menu');
   const { refs, floatingStyles, context } = useFloating({
     open: true,
     onOpenChange: (open) => { if (!open) onClose(); },
@@ -130,7 +132,7 @@ export function AccountInspectorPopover({
           onClick={onOpenApplicationSettings}
         >
           <MaterialSymbol icon="settings" size={20} className="shrink-0 text-[var(--nim-text-muted)]" />
-          <span className="min-w-0 flex-1 truncate text-sm font-medium">Application Settings</span>
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">{t('accountMenu.applicationSettings')}</span>
           <MaterialSymbol icon="chevron_right" size={18} className="text-[var(--nim-text-faint)]" />
         </button>
         <button
@@ -140,7 +142,7 @@ export function AccountInspectorPopover({
           onClick={onOpenProjectSettings}
         >
           <MaterialSymbol icon="tune" size={20} className="shrink-0 text-[var(--nim-text-muted)]" />
-          <span className="min-w-0 flex-1 truncate text-sm font-medium">Project Settings</span>
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">{t('accountMenu.projectSettings')}</span>
           <MaterialSymbol icon="chevron_right" size={18} className="text-[var(--nim-text-faint)]" />
         </button>
 
@@ -156,13 +158,13 @@ export function AccountInspectorPopover({
             data-testid="account-inspector-messages-row"
             aria-label={
               messagesUnreadCount > 0
-                ? `Messages, ${messagesUnreadCount} unread`
-                : 'Messages'
+                ? t('accountMenu.messagesUnreadAriaLabel', { count: messagesUnreadCount })
+                : t('accountMenu.messages')
             }
             onClick={() => onOpenMessages(projectOrg.orgId)}
           >
             <MaterialSymbol icon="forum" size={20} className="shrink-0 text-[var(--nim-text-muted)]" />
-            <span className="min-w-0 flex-1 truncate text-sm font-medium">Messages</span>
+            <span className="min-w-0 flex-1 truncate text-sm font-medium">{t('accountMenu.messages')}</span>
             {messagesUnreadCount > 0 && (
               <span
                 className="shrink-0 rounded-full bg-[var(--nim-error)] px-1.5 text-[10px] font-bold leading-[18px] text-white"
@@ -192,7 +194,7 @@ export function AccountInspectorPopover({
             data-testid="account-inspector-organization-loading"
           >
             <MaterialSymbol icon="corporate_fare" size={20} className="shrink-0 text-[var(--nim-text-faint)]" />
-            <span className="min-w-0 flex-1 truncate text-sm text-[var(--nim-text-muted)]">Loading organization…</span>
+            <span className="min-w-0 flex-1 truncate text-sm text-[var(--nim-text-muted)]">{t('accountMenu.loadingOrganization')}</span>
           </div>
         ) : orgRow.kind === 'organization' ? (
           <button
@@ -215,7 +217,7 @@ export function AccountInspectorPopover({
             onClick={() => (onAddProjectToOrganization ?? onOpenProjectSettings)()}
           >
             <MaterialSymbol icon="corporate_fare" size={20} className="shrink-0 text-[var(--nim-text-muted)]" />
-            <span className="min-w-0 flex-1 truncate text-sm">Add this project to an organization</span>
+            <span className="min-w-0 flex-1 truncate text-sm">{t('accountMenu.addProjectToOrganization')}</span>
             <MaterialSymbol icon="chevron_right" size={18} className="text-[var(--nim-text-faint)]" />
           </button>
         )}
@@ -241,7 +243,7 @@ export function AccountInspectorPopover({
               className={`shrink-0 ${SYNC_TONE_CLASS[sync.tone]}`}
             />
             <span className="min-w-0 flex-1 text-sm font-medium">
-              Mobile Sync
+              {t('accountMenu.mobileSync')}
               {sync.notice && <span className="mt-1 block text-xs font-normal text-[var(--nim-text-muted)]">{sync.notice}</span>}
             </span>
             <span className={`min-w-0 shrink truncate text-xs ${SYNC_TONE_CLASS[sync.tone]}`}>
@@ -262,10 +264,10 @@ export function AccountInspectorPopover({
             {email ? (email[0] ?? '?').toUpperCase() : <MaterialSymbol icon="person" size={18} />}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--nim-text-faint)]">Account</span>
-            <span className="block truncate text-sm font-medium">{email ?? 'Sign in'}</span>
+            <span className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--nim-text-faint)]">{t('accountMenu.account')}</span>
+            <span className="block truncate text-sm font-medium">{email ?? t('accountMenu.signIn')}</span>
             <span className={`block text-[11px] ${expired ? 'text-[var(--nim-warning)]' : 'text-[var(--nim-text-muted)]'}`}>
-              {email ? (expired ? 'Session expired — reconnect' : 'Manage account & sign-in') : 'Sign in to sync and collaborate'}
+              {email ? (expired ? t('accountMenu.sessionExpired') : t('accountMenu.manageAccount')) : t('accountMenu.signInHint')}
             </span>
           </span>
           <MaterialSymbol icon="chevron_right" size={18} className="text-[var(--nim-text-faint)]" />

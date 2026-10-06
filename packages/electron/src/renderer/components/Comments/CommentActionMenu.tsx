@@ -1,14 +1,15 @@
 import React from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 import { FloatingPortal, useFloatingMenu } from '../../hooks/useFloatingMenu';
 import type { CommentActionKind, CommentView } from './commentTypes';
 
 const ACTION_META: Record<CommentActionKind, { label: string; icon: string; testId: string; danger?: boolean }> = {
-  reply: { label: 'Reply', icon: 'reply', testId: 'comment-action-reply' },
-  edit: { label: 'Edit message', icon: 'edit', testId: 'comment-action-edit' },
-  copyLink: { label: 'Copy link to message', icon: 'link', testId: 'comment-action-copy-link' },
-  delete: { label: 'Delete message', icon: 'delete', testId: 'comment-action-delete', danger: true },
+  reply: { label: 'comments.actions.reply', icon: 'reply', testId: 'comment-action-reply' },
+  edit: { label: 'comments.actions.edit', icon: 'edit', testId: 'comment-action-edit' },
+  copyLink: { label: 'comments.actions.copyLink', icon: 'link', testId: 'comment-action-copy-link' },
+  delete: { label: 'comments.actions.delete', icon: 'delete', testId: 'comment-action-delete', danger: true },
 };
 
 /** Menu order, independent of the order capabilities resolved in. */
@@ -30,6 +31,7 @@ export function CommentActionMenu({
   view: CommentView;
   onAction: (action: CommentActionKind, view: CommentView) => void;
 }) {
+  const { t } = useTranslation('team');
   const menu = useFloatingMenu({ placement: 'bottom-end' });
   const items = ORDER.filter((action) => view.actions.includes(action));
   if (items.length === 0) return null;
@@ -41,9 +43,9 @@ export function CommentActionMenu({
         {...menu.getReferenceProps()}
         type="button"
         data-testid="comment-action-trigger"
-        aria-label="Message actions"
+        aria-label={t('comments.actions.menu')}
         aria-expanded={menu.isOpen}
-        title="Message actions"
+        title={t('comments.actions.menu')}
         onClick={() => menu.setIsOpen(!menu.isOpen)}
         className={`comment-action-trigger flex size-6 items-center justify-center rounded border text-[var(--nim-text-muted)] ${
           menu.isOpen
@@ -79,7 +81,7 @@ export function CommentActionMenu({
                   }}
                 >
                   <MaterialSymbol icon={meta.icon} size={16} />
-                  {meta.label}
+                  {t(meta.label)}
                 </button>
               );
             })}

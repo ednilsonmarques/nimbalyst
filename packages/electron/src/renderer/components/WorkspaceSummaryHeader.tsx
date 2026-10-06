@@ -3,6 +3,7 @@ import {useAtomValue} from 'jotai';
 import {selectedMachineAtom} from '../store/atoms/remoteMachines';
 import {RemoteMachineSelector} from './RemoteMachineSelector';
 import { getFileName } from '../utils/pathUtils';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export function generateWorkspaceAccentColor(path: string): string {
   let hash = 0;
@@ -36,8 +37,9 @@ export function WorkspaceSummaryHeader({
   headerClassName = '',
   actionsClassName = '',
 }: WorkspaceSummaryHeaderProps) {
+  const { t } = useTranslation('workspace');
   const remoteHost = useAtomValue(selectedMachineAtom(workspacePath));
-  const displayName = workspaceName || getFileName(workspacePath) || 'Workspace';
+  const displayName = workspaceName || getFileName(workspacePath) || t('summaryHeader.workspaceFallback');
 
   return (
     <>
@@ -72,7 +74,7 @@ export function WorkspaceSummaryHeader({
           className="workspace-summary-header-path mt-0.5 text-[11px] text-[var(--nim-text-muted)] overflow-hidden text-ellipsis whitespace-nowrap opacity-75 font-normal"
           title={workspacePath}
         >
-          {showMachineSelector && remoteHost ? "Remote workspace" : workspacePath}
+          {showMachineSelector && remoteHost ? t('summaryHeader.remoteWorkspace') : workspacePath}
         </div>
       </div>
     </>

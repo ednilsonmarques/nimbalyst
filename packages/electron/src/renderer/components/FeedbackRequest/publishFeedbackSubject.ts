@@ -32,6 +32,7 @@
 import type { ResourceRef } from '@nimbalyst/collab-protocol';
 
 import { getFileName, joinPath, normalizePath } from '../../utils/pathUtils';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 // The share-to-team flow drags the collaborative editor graph behind it. This
 // module is reached from the transcript on every send, and most sends publish
@@ -84,15 +85,15 @@ export function isPublishableSubjectKind(kind: ResourceRef['kind']): boolean {
 
 export function unpublishableSubjectMessage(ref: ResourceRef): string {
   if (ref.kind === 'session') {
-    return 'A session cannot be published, so a teammate cannot be asked to review one.';
+    return translate('onboarding:feedback.errors.sessionNotPublishable');
   }
   if (ref.kind === 'document') {
     // An unshared `document` is not a local document waiting to be promoted --
     // it is an id the team's shared index does not have, so there is nothing to
     // publish. A file is the thing that becomes a shared document.
-    return 'That document is not in your team files, so it cannot be shared from here.';
+    return translate('onboarding:feedback.errors.documentNotShared');
   }
-  return `Nimbalyst cannot publish this ${ref.kind} for you yet. Share it with your team first, then send the request.`;
+  return translate('onboarding:feedback.errors.kindNotPublishable', { kind: ref.kind });
 }
 
 async function publishTrackerSubject(ref: ResourceRef): Promise<FeedbackPublishOutcome> {
@@ -101,7 +102,7 @@ async function publishTrackerSubject(ref: ResourceRef): Promise<FeedbackPublishO
     published: true,
   });
   if (!result?.success) {
-    return { success: false, error: result?.error || `${ref.sourceId} could not be published.` };
+    return { success: false, error: result?.error || translate('onboarding:feedback.errors.notPublished', { id: ref.sourceId }) };
   }
   // Publishing an item under a personal-scoped tracker type sets the item's
   // bit and changes nothing anyone else can see, so main reports the effective
@@ -109,8 +110,7 @@ async function publishTrackerSubject(ref: ResourceRef): Promise<FeedbackPublishO
   if (result.teamVisible !== true) {
     return {
       success: false,
-      error: 'This tracker item is still personal because its tracker type is personal-scoped. '
-        + 'Change the tracker type sharing policy, then retry.',
+      error: translate('onboarding:feedback.errors.trackerPersonal'),
     };
   }
   return { success: true };
@@ -176,8 +176,7 @@ async function prepareFileSubject(
   if (ask.status === 'cancelled') {
     return {
       status: 'blocked',
-      error: `Sharing ${fileName} was cancelled, so nothing was published. `
-        + 'Share it or take it out of the request, then send again.',
+      error: translate('onboarding:feedback.errors.sharingCancelled', { file: fileName }),
     };
   }
 

@@ -23,6 +23,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation, Trans } from '@nimbalyst/runtime/i18n/react';
 import {
   dbMigrationOperationAtom,
   dbMigrationFailureAtom,
@@ -71,6 +72,7 @@ interface PreflightResult {
 }
 
 export function DatabasePanel(): React.ReactElement {
+  const { t } = useTranslation('settings');
   const [operation] = useAtom(dbMigrationOperationAtom);
   const [status, setStatus] = useState<MigrationStatus | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
@@ -190,18 +192,12 @@ export function DatabasePanel(): React.ReactElement {
       ? (Date.now() - new Date(dryRunAvailable.completedAt).getTime()) / 3_600_000
       : 0;
     const ageBlurb = ageHrs < 1
-      ? 'less than an hour'
-      : `about ${Math.round(ageHrs)} hour${ageHrs >= 1.5 ? 's' : ''}`;
+      ? t('database.adoptConfirm.lessThanAnHour')
+      : t('database.adoptConfirm.aboutHours', { count: Math.round(ageHrs) });
     const ok = await requestConfirmation({
-      title: 'Switch to SQLite',
-      message: `Switch to the dry-run SQLite copy?\n\n`
-        + `Nimbalyst will:\n`
-        + `  1. Close the current PGLite database\n`
-        + `  2. Copy anything new since the dry-run (${ageBlurb} ago)\n`
-        + `  3. Make SQLite the active backend\n`
-        + `  4. Preserve the old PGLite for rollback\n\n`
-        + `A relaunch is required after switching.`,
-      confirmLabel: 'Switch to SQLite',
+      title: t('database.adoptConfirm.title'),
+      message: t('database.adoptConfirm.message', { age: ageBlurb }),
+      confirmLabel: t('database.adoptConfirm.confirmLabel'),
     });
     if (!ok) return;
     setAdoptRunning(true);
@@ -230,14 +226,14 @@ export function DatabasePanel(): React.ReactElement {
       setAdoptRunning(false);
       void loadStatus();
     }
-  }, [adoptRunning, dryRunAvailable, loadStatus]);
+  }, [adoptRunning, dryRunAvailable, loadStatus, t]);
 
   const rollback = useCallback(async () => {
     if (!window.electronAPI) return;
     const ok = await requestConfirmation({
-      title: 'Restore PGLite database',
-      message: 'Restore the preserved PGLite database? You will lose any data created since the migration. Requires a relaunch.',
-      confirmLabel: 'Restore PGLite',
+      title: t('database.rollbackConfirm.title'),
+      message: t('database.rollbackConfirm.message'),
+      confirmLabel: t('database.rollbackConfirm.confirmLabel'),
       destructive: true,
     });
     if (!ok) return;
@@ -245,16 +241,16 @@ export function DatabasePanel(): React.ReactElement {
       | { success: true; restoredFrom: string }
       | { success: false; error: string };
     if (!resp.success) {
-      errorNotificationService.showError('Rollback failed', `Rollback failed: ${resp.error}`);
+      errorNotificationService.showError(t('database.rollbackConfirm.failedTitle'), t('database.rollbackConfirm.failedMessage', { error: resp.error }));
     } else {
       errorNotificationService.showInfo(
-        'Database restored',
-        `Restored from ${resp.restoredFrom}. Please relaunch Nimbalyst.`,
+        t('database.rollbackConfirm.restoredTitle'),
+        t('database.rollbackConfirm.restoredMessage', { restoredFrom: resp.restoredFrom }),
         { duration: 0 },
       );
     }
     void loadStatus();
-  }, [loadStatus]);
+  }, [loadStatus, t]);
 
   const openMigrationModal = useCallback(async () => {
     if (!window.electronAPI) return;
@@ -316,38 +312,35 @@ export function DatabasePanel(): React.ReactElement {
   }, [migrationFailure, phase, preflight, progress]);
 
   const backendLabel = useMemo(() => {
-    if (!status) return 'Loading...';
-    return status.activeBackend === 'pglite' ? 'PGLite (current)' : 'SQLite (new)';
-  }, [status]);
+    if (!status) return t('common:loading');
+    return status.activeBackend === 'pglite' ? t('database.backend.pgliteCurrent') : t('database.backend.sqliteNew');
+  }, [status, t]);
 
   return (
     <div className="provider-panel flex flex-col">
       {operation?.status === 'awaiting-restart' && (
         <div role="status" className="p-3 mb-4 border rounded-md">
-          Database switch requires a restart. Nimbalyst will verify the database on the next startup.
-          <button type="button" className="setting-button ml-2" onClick={() => { void window.electronAPI?.invoke('db:migration:restart'); }}>Restart Nimbalyst</button>
+          {t('database.restartRequired')}
+          <button type="button" className="setting-button ml-2" onClick={() => { void window.electronAPI?.invoke('db:migration:restart'); }}>{t('database.restartButton')}</button>
         </div>
       )}
       <div className="provider-panel-header mb-6 pb-4 border-b border-[var(--nim-border)]">
         <h3 className="provider-panel-title text-xl font-semibold leading-tight mb-2 text-[var(--nim-text)]">
-          Database Storage
+          {t('database.title')}
         </h3>
         <p className="provider-panel-description text-sm leading-relaxed text-[var(--nim-text-muted)]">
-          Local storage engine for sessions, trackers, and document history.
-          New installs start on SQLite. Installs that already have a PGLite database
-          stay on it: automatic migration is turned off while the migration is being
-          reworked, so nothing moves unless you start it from this panel.
+          {t('database.description')}
         </p>
       </div>
 
       {/* Current backend section ----------------------------------------- */}
       <div className="provider-panel-section mb-6">
         <h4 className="provider-panel-section-title text-base font-semibold mb-2 text-[var(--nim-text)]">
-          Active backend
+          {t('database.backend.title')}
         </h4>
         {statusError ? (
           <div className="p-3 rounded-md bg-[rgba(220,38,38,0.1)] border border-[rgba(220,38,38,0.3)] text-sm text-[var(--nim-text)]">
-            Failed to read status: {statusError}
+            {t('database.backend.statusError', { error: statusError })}
           </div>
         ) : (
           <div className="setting-item py-2 flex items-center justify-between gap-4 nim-database-status">
@@ -357,12 +350,12 @@ export function DatabasePanel(): React.ReactElement {
               </span>
               <span className="setting-description text-xs leading-snug text-[var(--nim-text-muted)]">
                 {status?.pgliteDirExists && status?.sqliteDirExists
-                  ? 'Both pglite-db/ and sqlite-db/ exist on disk.'
+                  ? t('database.backend.bothDirs')
                   : status?.pgliteDirExists
-                    ? 'pglite-db/ on disk; sqlite-db/ not yet created.'
+                    ? t('database.backend.pgliteDirOnly')
                     : status?.sqliteDirExists
-                      ? 'sqlite-db/ on disk; legacy pglite-db/ absent.'
-                      : 'No database directory present yet.'}
+                      ? t('database.backend.sqliteDirOnly')
+                      : t('database.backend.noDirs')}
               </span>
             </div>
           </div>
@@ -377,12 +370,10 @@ export function DatabasePanel(): React.ReactElement {
       {status?.activeBackend === 'pglite' && (
         <div className="provider-panel-section mb-6">
           <h4 className="provider-panel-section-title text-base font-semibold mb-2 text-[var(--nim-text)]">
-            Test the SQLite migration (dry run)
+            {t('database.dryRun.title')}
           </h4>
           <p className="provider-panel-hint text-sm text-[var(--nim-text-muted)] mb-3">
-            Copies your data into a throwaway SQLite database alongside the live one,
-            reports row counts and integrity, then keeps the successful copy for switching.
-            Your real PGLite database is never touched. Available only while PGLite is active.
+            {t('database.dryRun.description')}
           </p>
 
           <button
@@ -392,13 +383,13 @@ export function DatabasePanel(): React.ReactElement {
             className="nim-database-dry-run-button setting-button inline-flex items-center gap-2 py-1.5 px-3 rounded-md text-sm font-medium bg-[var(--nim-primary)] text-white border-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--nim-primary-hover)]"
           >
             <MaterialSymbol icon={dryRunRunning ? 'sync' : 'play_arrow'} size={16} />
-            {dryRunRunning ? 'Running dry run...' : 'Run dry-run migration'}
+            {dryRunRunning ? t('database.dryRun.running') : t('database.dryRun.run')}
           </button>
 
           {dryRunRunning && operation?.kind === 'dry-run' && (
             <button type="button" className="setting-button ml-2" disabled={operation.status === 'cancelling'}
               onClick={() => { void window.electronAPI?.invoke('db:migration:cancel-dry-run', operation.id); }}>
-              {operation.status === 'cancelling' ? 'Cancelling after the current read...' : 'Cancel dry run'}
+              {operation.status === 'cancelling' ? t('database.dryRun.cancelling') : t('database.dryRun.cancel')}
             </button>
           )}
 
@@ -408,7 +399,7 @@ export function DatabasePanel(): React.ReactElement {
 
           {dryRunError && (
             <div className="mt-3 p-3 rounded-md bg-[rgba(220,38,38,0.1)] border border-[rgba(220,38,38,0.3)] text-sm text-[var(--nim-text)] nim-database-dry-run-error">
-              {operation?.status === 'cancelled' ? 'Dry run cancelled: ' : 'Dry run failed: '}{dryRunError}
+              {operation?.status === 'cancelled' ? t('database.dryRun.cancelledError', { error: dryRunError }) : t('database.dryRun.failedError', { error: dryRunError })}
             </div>
           )}
 
@@ -436,12 +427,10 @@ export function DatabasePanel(): React.ReactElement {
       {status?.activeBackend === 'pglite' && (
         <div className="provider-panel-section mb-6">
           <h4 className="provider-panel-section-title text-base font-semibold mb-2 text-[var(--nim-text)]">
-            Migrate to SQLite
+            {t('database.migrate.title')}
           </h4>
           <p className="provider-panel-hint text-sm text-[var(--nim-text-muted)] mb-3">
-            Moves all your data from PGLite to SQLite. The original PGLite directory
-            is preserved at <code className="px-1 py-0.5 rounded bg-[var(--nim-bg-tertiary)] text-xs">pglite-db.migrated-&lt;timestamp&gt;/</code> and
-            can be restored from this panel.
+            <Trans t={t} i18nKey="database.migrate.description" values={{ dir: 'pglite-db.migrated-<timestamp>/' }} components={{ code: <code className="px-1 py-0.5 rounded bg-[var(--nim-bg-tertiary)] text-xs" /> }} />
           </p>
 
           <button
@@ -450,7 +439,7 @@ export function DatabasePanel(): React.ReactElement {
             className="setting-button inline-flex items-center gap-2 py-1.5 px-3 rounded-md text-sm font-medium bg-[var(--nim-primary)] text-white border-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--nim-primary-hover)]"
           >
             <MaterialSymbol icon="upgrade" size={16} />
-            Migrate to SQLite
+            {t('database.migrate.button')}
           </button>
         </div>
       )}
@@ -459,13 +448,12 @@ export function DatabasePanel(): React.ReactElement {
       {status?.activeBackend === 'sqlite' && (
         <div className="provider-panel-section mb-6 nim-database-already-migrated">
           <h4 className="provider-panel-section-title text-base font-semibold mb-2 text-[var(--nim-text)]">
-            Migrated to SQLite
+            {t('database.migrated.title')}
           </h4>
           <p className="provider-panel-hint text-sm text-[var(--nim-text-muted)] flex items-start gap-2">
             <MaterialSymbol icon="check_circle" size={16} />
             <span>
-              Your data is already stored in the faster SQLite backend. No further
-              migration is needed.
+              {t('database.migrated.description')}
             </span>
           </p>
         </div>
@@ -475,12 +463,10 @@ export function DatabasePanel(): React.ReactElement {
       {status && status.migratedDirs.length > 0 && (
         <div className="provider-panel-section mb-6">
           <h4 className="provider-panel-section-title text-base font-semibold mb-2 text-[var(--nim-text)]">
-            Restore previous PGLite database
+            {t('database.restore.title')}
           </h4>
           <p className="provider-panel-hint text-sm text-[var(--nim-text-muted)] mb-3">
-            Puts the most recent preserved PGLite copy back in front of the app. Data
-            created since the migration will not be in it. The copies themselves are
-            listed below.
+            {t('database.restore.description')}
           </p>
           <button
             type="button"
@@ -488,7 +474,7 @@ export function DatabasePanel(): React.ReactElement {
             className="setting-button inline-flex items-center gap-2 py-1.5 px-3 rounded-md text-sm font-medium bg-[var(--nim-bg-secondary)] text-[var(--nim-text)] border border-[var(--nim-border)] cursor-pointer hover:bg-[var(--nim-hover)]"
           >
             <MaterialSymbol icon="restore" size={16} />
-            Restore from preserved PGLite
+            {t('database.restore.button')}
           </button>
         </div>
       )}
@@ -530,7 +516,8 @@ function MigrationModal(props: {
   onCopyDiagnostic: () => void;
 }): React.ReactElement {
   const { preflight, preflightError, phase, progress, running, summary, failure, onClose, onStart, onCopyDiagnostic } = props;
-  const currentTable = progress?.currentTable ?? progress?.table ?? 'Preparing';
+  const { t } = useTranslation('settings');
+  const currentTable = progress?.currentTable ?? progress?.table ?? t('migration.phases.preparing');
   const isVerifying = phase?.phase?.startsWith('verifying') ?? false;
   const isCutover = phase?.phase === 'finalizing';
 
@@ -539,9 +526,9 @@ function MigrationModal(props: {
       <div className="w-full max-w-2xl rounded-xl border border-[var(--nim-border)] bg-[var(--nim-bg-primary)] p-6 shadow-2xl">
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <h4 className="text-lg font-semibold text-[var(--nim-text)]">Migrate to SQLite</h4>
+            <h4 className="text-lg font-semibold text-[var(--nim-text)]">{t('database.migrate.title')}</h4>
             <p className="mt-1 text-sm text-[var(--nim-text-muted)]">
-              This runs in one uninterrupted flow and preserves the original PGLite directory for rollback.
+              {t('database.modal.description')}
             </p>
           </div>
           <button
@@ -550,29 +537,29 @@ function MigrationModal(props: {
             disabled={running}
             className="rounded-md px-2 py-1 text-sm text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-secondary)] disabled:opacity-40"
           >
-            Close
+            {t('common:close')}
           </button>
         </div>
 
         {preflightError && (
           <div className="rounded-md border border-[rgba(220,38,38,0.3)] bg-[rgba(220,38,38,0.1)] p-3 text-sm text-[var(--nim-text)]">
-            Pre-flight failed: {preflightError}
+            {t('database.modal.preflightFailed', { error: preflightError })}
           </div>
         )}
 
         {!running && !summary && !failure && preflight && (
           <div className="space-y-4">
             <div className="rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] p-4 text-sm">
-              <div className="mb-2 font-medium text-[var(--nim-text)]">Pre-flight</div>
+              <div className="mb-2 font-medium text-[var(--nim-text)]">{t('database.modal.preflight')}</div>
               <div className="space-y-2 text-[var(--nim-text-muted)]">
-                <div>Disk space: {formatBytes(preflight.freeBytes)} free / {formatBytes(preflight.requiredBytes)} required {preflight.ok ? 'OK' : 'FAIL'}</div>
-                <div>PGLite size: {formatBytes(preflight.pgliteDirBytes)}</div>
+                <div>{preflight.ok ? t('database.modal.diskSpaceOk', { free: formatBytes(preflight.freeBytes), required: formatBytes(preflight.requiredBytes) }) : t('database.modal.diskSpaceFail', { free: formatBytes(preflight.freeBytes), required: formatBytes(preflight.requiredBytes) })}</div>
+                <div>{t('database.modal.pgliteSize', { size: formatBytes(preflight.pgliteDirBytes) })}</div>
                 {!preflight.ok && preflight.reason && <div className="text-[var(--nim-error)]">{preflight.reason}</div>}
               </div>
             </div>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={onClose} className="rounded-md border border-[var(--nim-border)] px-3 py-2 text-sm text-[var(--nim-text)]">
-                Cancel
+                {t('common:cancel')}
               </button>
               <button
                 type="button"
@@ -580,7 +567,7 @@ function MigrationModal(props: {
                 disabled={!preflight.ok}
                 className="rounded-md bg-[var(--nim-primary)] px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
-                Start migration
+                {t('database.modal.startMigration')}
               </button>
             </div>
           </div>
@@ -590,10 +577,10 @@ function MigrationModal(props: {
           <div className="space-y-4">
             <div>
               <div className="text-sm font-medium text-[var(--nim-text)]">
-                {isCutover ? 'Switching to the new database' : isVerifying ? 'Verifying the migration' : 'Migrating your data'}
+                {isCutover ? t('database.modal.switching') : isVerifying ? t('database.modal.verifying') : t('database.modal.migrating')}
               </div>
               <div className="mt-1 text-sm text-[var(--nim-text-muted)]">
-                {isCutover ? 'Preserving the previous PGLite directory and flipping the active backend.' : isVerifying ? `Phase: ${phase?.phase}` : `${currentTable}: ${progress?.tableRowsCopied ?? 0} / ${progress?.tableRowsExpected ?? 0}`}
+                {isCutover ? t('database.modal.cutoverDetail') : isVerifying ? t('database.modal.phase', { phase: phase?.phase }) : `${currentTable}: ${progress?.tableRowsCopied ?? 0} / ${progress?.tableRowsExpected ?? 0}`}
               </div>
             </div>
             <div className="space-y-2">
@@ -601,11 +588,11 @@ function MigrationModal(props: {
                 <div className="h-full bg-[var(--nim-primary)]" style={{ width: `${progress?.percentOfTotal ?? 0}%` }} />
               </div>
               <div className="flex justify-between text-xs text-[var(--nim-text-muted)]">
-                <span>Tables {progress?.tablesCompleted ?? 0} / {progress?.tablesTotal ?? 0}</span>
+                <span>{t('migration.progress.tables', { completed: progress?.tablesCompleted ?? 0, total: progress?.tablesTotal ?? 0 })}</span>
                 <span>{Math.round(progress?.percentOfTotal ?? 0)}%</span>
               </div>
               <div className="text-xs text-[var(--nim-text-muted)]">
-                Rows transferred: {(progress?.totalRowsCopied ?? 0).toLocaleString()} · Elapsed: {formatDuration(progress?.elapsedMs ?? 0)}
+                {t('database.modal.rowsAndElapsed', { rows: (progress?.totalRowsCopied ?? 0).toLocaleString(), elapsed: formatDuration(progress?.elapsedMs ?? 0) })}
               </div>
             </div>
           </div>
@@ -614,18 +601,18 @@ function MigrationModal(props: {
         {summary && (
           <div className="space-y-4">
             <div className="rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] p-4">
-              <div className="text-sm font-medium text-[var(--nim-text)]">Migration complete</div>
+              <div className="text-sm font-medium text-[var(--nim-text)]">{t('database.modal.complete')}</div>
               <HistoryMigrationWarning count={summary.historyRowsQuarantined} />
               <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
-                <Stat label="Rows transferred" value={summary.totalRowsCopied.toLocaleString()} />
-                <Stat label="Tables migrated" value={String(summary.tablesCopied.length)} />
-                <Stat label="Duration" value={formatDuration(summary.durationMs)} />
-                <Stat label="Integrity" value={summary.integrityCheck} ok={summary.integrityCheck === 'ok'} />
+                <Stat label={t('database.modal.rowsTransferred')} value={summary.totalRowsCopied.toLocaleString()} />
+                <Stat label={t('database.modal.tablesMigrated')} value={String(summary.tablesCopied.length)} />
+                <Stat label={t('migration.dryRunResult.duration')} value={formatDuration(summary.durationMs)} />
+                <Stat label={t('migration.dryRunResult.integrity')} value={summary.integrityCheck} ok={summary.integrityCheck === 'ok'} />
               </div>
             </div>
             <div className="flex justify-end">
               <button type="button" onClick={onClose} className="rounded-md bg-[var(--nim-primary)] px-3 py-2 text-sm font-medium text-white">
-                Continue
+                {t('common:continue')}
               </button>
             </div>
           </div>
@@ -634,16 +621,16 @@ function MigrationModal(props: {
         {failure && (
           <div className="space-y-4">
             <div className="rounded-md border border-[rgba(220,38,38,0.3)] bg-[rgba(220,38,38,0.1)] p-4 text-sm text-[var(--nim-text)]">
-              <div className="font-medium">Migration didn&apos;t complete</div>
-              <div className="mt-2">Phase: {failure.phase}</div>
+              <div className="font-medium">{t('database.modal.failed')}</div>
+              <div className="mt-2">{t('database.modal.phase', { phase: failure.phase })}</div>
               <div className="mt-1">{failure.message}</div>
             </div>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={onCopyDiagnostic} className="rounded-md border border-[var(--nim-border)] px-3 py-2 text-sm text-[var(--nim-text)]">
-                Copy diagnostic info
+                {t('database.modal.copyDiagnostic')}
               </button>
               <button type="button" onClick={onClose} className="rounded-md bg-[var(--nim-primary)] px-3 py-2 text-sm font-medium text-white">
-                Continue using PGLite
+                {t('database.modal.continueWithPglite')}
               </button>
             </div>
           </div>
