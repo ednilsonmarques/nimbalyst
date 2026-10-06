@@ -3,6 +3,7 @@ import React, {
   type ReactNode,
   type RefObject,
 } from "react";
+import { useTranslation } from "@nimbalyst/runtime/i18n/react";
 import type { AgentFilePlacement } from "../../store/atoms/agentFilePlacement";
 import type { WorkstreamLayoutMode } from "../../store/atoms/workstreamState";
 
@@ -30,6 +31,7 @@ interface Props {
 
 /** One stable DOM parent for the editor: changing grid cells must never remount its host. */
 export function AgentWorkstreamLayout(props: Props) {
+  const { t } = useTranslation("agent");
   const { layoutMode, placement, sidebarVisible, editorVisible } = props;
   const editorOnRight = placement === "right" && layoutMode !== "editor";
   const splitAbove = !editorOnRight && editorVisible && layoutMode === "split";
@@ -83,7 +85,7 @@ export function AgentWorkstreamLayout(props: Props) {
         style={{ display: splitAbove ? "block" : "none", gridArea: "3 / 1" }}
         data-testid="agent-workstream-vertical-resize-handle"
         role="separator"
-        aria-label="Resize workstream editor area"
+        aria-label={t("workstreamPanel.resizeEditor")}
         aria-orientation="horizontal"
         onPointerDown={props.onVerticalResize}
       />
@@ -104,7 +106,7 @@ export function AgentWorkstreamLayout(props: Props) {
         }}
         data-testid="agent-files-sidebar-resize-handle"
         role="separator"
-        aria-label="Resize Agent right panel"
+        aria-label={t("workstreamPanel.resizeRightPanel")}
         aria-orientation="vertical"
         onPointerDown={props.onSidebarResize}
       />

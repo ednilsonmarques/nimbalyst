@@ -15,6 +15,8 @@
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
   teammatePanelCollapsedAtom, toggleTeammatePanelCollapsedAtom,
   agentPanelCollapsedAtom, toggleAgentPanelCollapsedAtom,
@@ -111,6 +113,7 @@ const TeammateSection: React.FC<TeammateSectionProps> = React.memo(({
   onToggle,
   onTeammateClick,
 }) => {
+  const { t } = useTranslation('agent');
   const runningCount = entries.filter(t => t.status === 'running' || t.status === 'idle').length;
 
   return (
@@ -125,7 +128,7 @@ const TeammateSection: React.FC<TeammateSectionProps> = React.memo(({
           className="text-[var(--nim-text-muted)] shrink-0"
         />
         <MaterialSymbol icon="group" size={16} className="text-[var(--nim-text-muted)] shrink-0" />
-        <span className="text-xs font-medium text-[var(--nim-text)]">Teammates</span>
+        <span className="text-xs font-medium text-[var(--nim-text)]">{t('teammates.title')}</span>
         <span className="ml-auto text-[11px] text-[var(--nim-text-muted)] font-mono">
           {runningCount}/{entries.length}
         </span>
@@ -161,6 +164,7 @@ const TaskSection: React.FC<TaskSectionProps> = React.memo(({
   onToggle,
   className,
 }) => {
+  const { t } = useTranslation('agent');
   const runningCount = tasks.filter(t => t.status === 'running').length;
 
   return (
@@ -175,7 +179,7 @@ const TaskSection: React.FC<TaskSectionProps> = React.memo(({
           className="text-[var(--nim-text-muted)] shrink-0"
         />
         <MaterialSymbol icon="swap_horiz" size={16} className="text-[var(--nim-text-muted)] shrink-0" />
-        <span className="text-xs font-medium text-[var(--nim-text)]">Sub-agents</span>
+        <span className="text-xs font-medium text-[var(--nim-text)]">{t('teammates.subAgents')}</span>
         <span className="ml-auto text-[11px] text-[var(--nim-text-muted)] font-mono">
           {runningCount}/{tasks.length}
         </span>
@@ -211,12 +215,12 @@ function formatElapsed(ms: number): string {
 
 function formatAgo(ms: number): string {
   const seconds = Math.floor(ms / 1000);
-  if (seconds < 5) return 'just now';
-  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 5) return translate('agent:teammates.justNow');
+  if (seconds < 60) return translate('agent:mcpStatus.secondsAgo', { count: seconds });
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return translate('agent:mcpStatus.minutesAgo', { count: minutes });
   const hours = Math.floor(minutes / 60);
-  return `${hours}h ago`;
+  return translate('agent:mcpStatus.hoursAgo', { count: hours });
 }
 
 // ─── Live clock hook ──────────────────────────────────────────────────────
@@ -239,6 +243,7 @@ interface TaskItemProps {
 }
 
 const TaskItem: React.FC<TaskItemProps> = React.memo(({ task }) => {
+  const { t } = useTranslation('agent');
   const isRunning = task.status === 'running';
   const now = useNow(isRunning);
   const isDone = task.status === 'completed' || task.status === 'failed' || task.status === 'stopped';
@@ -251,7 +256,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ task }) => {
     stats.push(formatElapsed(now - task.startedAt));
   }
   if (task.toolCount > 0) {
-    stats.push(`${task.toolCount} tool${task.toolCount !== 1 ? 's' : ''}`);
+    stats.push(t('mcpStatus.toolCount', { count: task.toolCount }));
   }
   if (task.lastToolName && isRunning) {
     stats.push(task.lastToolName);
@@ -301,6 +306,7 @@ interface TeammateItemProps {
 }
 
 const TeammateItem: React.FC<TeammateItemProps> = React.memo(({ teammate, onClick }) => {
+  const { t } = useTranslation('agent');
   const isActive = teammate.status === 'running' || teammate.status === 'idle';
   const now = useNow(isActive);
 
@@ -325,7 +331,7 @@ const TeammateItem: React.FC<TeammateItemProps> = React.memo(({ teammate, onClic
     stats.push(formatAgo(now - teammate.lastActiveAt));
   }
   if (typeof teammate.toolCallCount === 'number' && teammate.toolCallCount > 0) {
-    stats.push(`${teammate.toolCallCount} tool${teammate.toolCallCount !== 1 ? 's' : ''}`);
+    stats.push(t('mcpStatus.toolCount', { count: teammate.toolCallCount }));
   }
 
   return (
@@ -362,7 +368,7 @@ const TeammateItem: React.FC<TeammateItemProps> = React.memo(({ teammate, onClic
           {teammate.name}
         </div>
         <div className="text-[10px] text-[var(--nim-text-faint)] truncate">
-          {teammate.agentType}{teammate.status === 'idle' ? ' (idle)' : ''}
+          {teammate.agentType}{teammate.status === 'idle' ? t('teammates.idleSuffix') : ''}
         </div>
         {stats.length > 0 && (
           <div className="text-[10px] text-[var(--nim-text-faint)] truncate font-mono">

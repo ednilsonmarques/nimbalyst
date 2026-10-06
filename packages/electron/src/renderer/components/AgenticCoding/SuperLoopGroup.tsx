@@ -12,6 +12,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from '
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { ProviderIcon } from '@nimbalyst/runtime/ui/icons/ProviderIcons';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   superRunnerStateAtom,
   superIterationsAtom,
@@ -51,6 +52,7 @@ interface SuperLoopGroupProps {
  * Hidden when running (the spinning sync icon indicates running state).
  */
 const SuperStatusBadge: React.FC<{ status: SuperLoopStatus }> = memo(({ status }) => {
+  const { t } = useTranslation('agent');
   if (status === 'running') return null;
   const { label } = getSuperStatusInfo(status);
   const colorMap: Record<string, string> = {
@@ -62,7 +64,7 @@ const SuperStatusBadge: React.FC<{ status: SuperLoopStatus }> = memo(({ status }
   };
   return (
     <span className={`text-[0.5625rem] px-1.5 py-[0.0625rem] rounded-[0.625rem] font-medium ${colorMap[status] || ''}`}>
-      {label}
+      {t(`superLoop.status.${status}`, { defaultValue: label })}
     </span>
   );
 });
@@ -76,25 +78,26 @@ const SuperGroupStatus: React.FC<{ sessionIds: string[]; loopStatus: SuperLoopSt
   // When iteration session IDs are available, use the standard group status atom
   const sessionIdsKey = useMemo(() => JSON.stringify([...sessionIds].sort()), [sessionIds]);
   const groupStatus = useAtomValue(groupSessionStatusAtom(sessionIdsKey));
+  const { t } = useTranslation('agent');
 
   if (sessionIds.length > 0) {
     if (groupStatus.hasProcessing) {
       return (
-        <div className="flex items-center justify-center text-[var(--nim-primary)]" title="Processing">
+        <div className="flex items-center justify-center text-[var(--nim-primary)]" title={t('sessionItem.processingShort')}>
           <MaterialSymbol icon="progress_activity" size={12} className="animate-spin" />
         </div>
       );
     }
     if (groupStatus.hasPendingPrompt) {
       return (
-        <div className="flex items-center justify-center text-[var(--nim-warning)] animate-pulse" title="Waiting for your response">
+        <div className="flex items-center justify-center text-[var(--nim-warning)] animate-pulse" title={t('sessionItem.waitingForResponse')}>
           <MaterialSymbol icon="help" size={12} />
         </div>
       );
     }
     if (groupStatus.hasUnread) {
       return (
-        <div className="flex items-center justify-center text-[var(--nim-primary)]" title="Unread response">
+        <div className="flex items-center justify-center text-[var(--nim-primary)]" title={t('sessionItem.unread')}>
           <MaterialSymbol icon="circle" size={6} fill />
         </div>
       );
@@ -105,14 +108,14 @@ const SuperGroupStatus: React.FC<{ sessionIds: string[]; loopStatus: SuperLoopSt
   // Fallback: derive from loop status when iterations not loaded
   if (loopStatus === 'running') {
     return (
-      <div className="flex items-center justify-center text-[var(--nim-primary)]" title="Running">
+      <div className="flex items-center justify-center text-[var(--nim-primary)]" title={t('superLoop.status.running')}>
         <MaterialSymbol icon="progress_activity" size={12} className="animate-spin" />
       </div>
     );
   }
   if (loopStatus === 'blocked') {
     return (
-      <div className="flex items-center justify-center text-[var(--nim-warning)] animate-pulse" title="Blocked">
+      <div className="flex items-center justify-center text-[var(--nim-warning)] animate-pulse" title={t('superLoop.status.blocked')}>
         <MaterialSymbol icon="help" size={12} />
       </div>
     );
@@ -128,11 +131,12 @@ const SuperIterationStatus: React.FC<{ sessionId: string }> = memo(({ sessionId 
   const isProcessing = useAtomValue(sessionProcessingAtom(sessionId));
   const hasPendingPrompt = useAtomValue(sessionPendingPromptAtom(sessionId));
   const hasAgentWakePending = useAtomValue(sessionAgentWakePendingAtom(sessionId));
+  const { t } = useTranslation('agent');
   const hasUnread = useAtomValue(sessionUnreadAtom(sessionId));
 
   if (isProcessing) {
     return (
-      <div className="flex items-center justify-center text-[var(--nim-primary)] animate-spin" title="Processing...">
+      <div className="flex items-center justify-center text-[var(--nim-primary)] animate-spin" title={t('sessionItem.processing')}>
         <MaterialSymbol icon="progress_activity" size={12} />
       </div>
     );
@@ -142,14 +146,14 @@ const SuperIterationStatus: React.FC<{ sessionId: string }> = memo(({ sessionId 
   }
   if (hasPendingPrompt) {
     return (
-      <div className="flex items-center justify-center text-[var(--nim-warning)]" title="Waiting for your response">
+      <div className="flex items-center justify-center text-[var(--nim-warning)]" title={t('sessionItem.waitingForResponse')}>
         <MaterialSymbol icon="help" size={12} />
       </div>
     );
   }
   if (hasUnread) {
     return (
-      <div className="flex items-center justify-center text-[var(--nim-primary)]" title="Unread response">
+      <div className="flex items-center justify-center text-[var(--nim-primary)]" title={t('sessionItem.unread')}>
         <MaterialSymbol icon="circle" size={6} fill />
       </div>
     );
@@ -165,7 +169,9 @@ const SuperIterationRow: React.FC<{
   learning?: SuperLearning;
   isActive: boolean;
   onSelect: (e: Pick<React.MouseEvent, 'metaKey' | 'ctrlKey' | 'shiftKey'>) => void;
-}> = memo(({ iteration, learning, isActive, onSelect }) => (
+}> = memo(({ iteration, learning, isActive, onSelect }) => {
+  const { t } = useTranslation('agent');
+  return (
   <div
     className={`super-loop-iteration-item flex items-center gap-2 py-1.5 px-3 mr-2 mb-0.5 cursor-pointer rounded transition-colors duration-150 select-none ${
       isActive ? 'bg-[var(--nim-bg-selected)]' : 'hover:bg-[var(--nim-bg-hover)]'
@@ -174,7 +180,7 @@ const SuperIterationRow: React.FC<{
     role="button"
     tabIndex={0}
     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(e); } }}
-    aria-label={`Iteration ${iteration.iterationNumber}`}
+    aria-label={t('superLoop.iteration', { number: iteration.iterationNumber })}
     aria-current={isActive ? 'page' : undefined}
   >
     <div className={`shrink-0 flex items-center justify-center ${
@@ -185,7 +191,7 @@ const SuperIterationRow: React.FC<{
     <span className={`flex-1 text-xs text-[var(--nim-text)] whitespace-nowrap overflow-hidden text-ellipsis ${
       isActive ? 'font-medium' : ''
     }`}>
-      {learning?.summary || iteration.exitReason || `Iteration ${iteration.iterationNumber}`}
+      {learning?.summary || iteration.exitReason || t('superLoop.iteration', { number: iteration.iterationNumber })}
     </span>
     <span className="shrink-0 text-[0.6875rem] text-[var(--nim-text-faint)] ml-2">
       {getRelativeTimeString(iteration.createdAt)}
@@ -194,12 +200,14 @@ const SuperIterationRow: React.FC<{
       <SuperIterationStatus sessionId={iteration.sessionId} />
     </div>
   </div>
-));
+  );
+});
 
 /**
  * Blocked continue UI - textarea and button for providing feedback to overcome a blocker.
  */
 const SuperBlockedContinueUI: React.FC<{ loopId: string }> = memo(({ loopId }) => {
+  const { t } = useTranslation('agent');
   const [input, setInput] = useState('');
   const [isContinuing, setIsContinuing] = useState(false);
 
@@ -224,7 +232,7 @@ const SuperBlockedContinueUI: React.FC<{ loopId: string }> = memo(({ loopId }) =
       <textarea
         className="w-full px-2 py-1 text-xs bg-[var(--nim-bg)] border border-[var(--nim-border)] rounded resize-none text-[var(--nim-text)] placeholder:text-[var(--nim-text-muted)]"
         rows={3}
-        placeholder="Provide additional context or guidance to help overcome the blocker..."
+        placeholder={t('superLoop.blockedPlaceholder')}
         value={input}
         onChange={(e) => setInput(e.target.value)}
         disabled={isContinuing}
@@ -234,7 +242,7 @@ const SuperBlockedContinueUI: React.FC<{ loopId: string }> = memo(({ loopId }) =
         onClick={handleContinue}
         disabled={isContinuing || !input.trim()}
       >
-        {isContinuing ? 'Continuing...' : 'Continue Loop'}
+        {isContinuing ? t('superLoop.continuing') : t('superLoop.continueLoop')}
       </button>
     </div>
   );
@@ -255,6 +263,7 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
   onRename,
   onPinToggle,
 }) => {
+  const { t } = useTranslation('agent');
   const runnerState = useAtomValue(superRunnerStateAtom(loopId));
   const iterations = useAtomValue(superIterationsAtom(loopId));
   const setIterations = useSetAtom(setSuperIterationsAtom);
@@ -497,7 +506,7 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
           className="flex items-center justify-center w-6 h-full min-h-[2.5rem] p-0 bg-transparent border-none cursor-pointer text-[var(--nim-text-faint)] shrink-0 rounded-l-md hover:bg-[var(--nim-bg-secondary)] focus:outline-none focus-visible:outline-2 focus-visible:outline-[var(--nim-border-focus)] focus-visible:outline-offset-[-2px]"
           onClick={handleChevronClick}
           aria-expanded={isExpanded}
-          aria-label={`${isExpanded ? 'Collapse' : 'Expand'} Super Loop`}
+          aria-label={isExpanded ? t('superLoop.collapse') : t('superLoop.expand')}
         >
           <MaterialSymbol
             icon="chevron_right"
@@ -518,7 +527,7 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
               handleHeaderClick(e as unknown as React.MouseEvent);
             }
           }}
-          aria-label={`Super Loop: ${displayTitle}`}
+          aria-label={t('superLoop.aria', { title: displayTitle })}
         >
           {/* Sync icon */}
           <div className={`shrink-0 w-[1.125rem] h-[1.125rem] mt-[0.0625rem] flex items-center justify-center ${
@@ -555,7 +564,7 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
                     <MaterialSymbol icon="push_pin" size={12} className="shrink-0 text-[var(--nim-text-faint)] opacity-70" />
                   )}
                   {loop.isArchived && (
-                    <span className="text-[0.5625rem] px-1.5 py-[0.0625rem] rounded-[0.625rem] font-medium bg-[rgba(156,163,175,0.15)] text-[var(--nim-text-faint)]">archived</span>
+                    <span className="text-[0.5625rem] px-1.5 py-[0.0625rem] rounded-[0.625rem] font-medium bg-[rgba(156,163,175,0.15)] text-[var(--nim-text-faint)]">{t('workstream.archivedBadge')}</span>
                   )}
                 </>
               )}
@@ -565,7 +574,7 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
             {/* Subtitle line */}
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="shrink-0 text-[0.6875rem] text-[var(--nim-text-faint)]">
-                {currentIteration}/{loop.maxIterations} iterations
+                {t('superLoop.iterationsProgress', { current: currentIteration, max: loop.maxIterations })}
               </span>
               <span className="shrink-0 text-[0.6875rem] text-[var(--nim-text-faint)]">
                 {getRelativeTimeString(loop.updatedAt)}
@@ -581,7 +590,7 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
                   <button
                     onClick={handlePause}
                     className="p-1 rounded hover:bg-[var(--nim-bg-secondary)] text-[var(--nim-text-faint)] hover:text-[var(--nim-warning)] transition-colors"
-                    title="Pause"
+                    title={t('superLoop.pause')}
                   >
                     <MaterialSymbol icon="pause" size={14} />
                   </button>
@@ -589,7 +598,7 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
                   <button
                     onClick={handleStart}
                     className="p-1 rounded hover:bg-[var(--nim-bg-secondary)] text-[var(--nim-text-faint)] hover:text-green-500 transition-colors"
-                    title="Resume"
+                    title={t('superLoop.resume')}
                   >
                     <MaterialSymbol icon="play_arrow" size={14} />
                   </button>
@@ -597,7 +606,7 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
                 <button
                   onClick={handleStop}
                   className="p-1 rounded hover:bg-[var(--nim-bg-secondary)] text-[var(--nim-text-faint)] hover:text-[var(--nim-error)] transition-colors"
-                  title="Stop"
+                  title={t('superLoop.stop')}
                 >
                   <MaterialSymbol icon="stop" size={14} />
                 </button>
@@ -607,7 +616,7 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
               <button
                 onClick={handleStart}
                 className="p-1 rounded hover:bg-[var(--nim-bg-secondary)] text-[var(--nim-text-faint)] hover:text-green-500 transition-colors"
-                title="Start"
+                title={t('superLoop.start')}
               >
                 <MaterialSymbol icon="play_arrow" size={14} />
               </button>
@@ -617,7 +626,7 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowForceResumeMenu(prev => !prev); }}
                   className="p-1 rounded hover:bg-[var(--nim-bg-secondary)] text-[var(--nim-text-faint)] hover:text-green-500 transition-colors"
-                  title="Resume loop"
+                  title={t('superLoop.resumeLoop')}
                 >
                   <MaterialSymbol icon="replay" size={14} />
                 </button>
@@ -627,12 +636,12 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
                     className="absolute right-0 top-full mt-1 z-50 min-w-[160px] bg-[var(--nim-bg-secondary)] border border-[var(--nim-border)] rounded-md shadow-lg py-1"
                     onMouseLeave={() => setShowForceResumeMenu(false)}
                   >
-                    <div className="px-3 py-1.5 text-[10px] text-[var(--nim-text-muted)] font-semibold uppercase tracking-wide">Resume with</div>
+                    <div className="px-3 py-1.5 text-[10px] text-[var(--nim-text-muted)] font-semibold uppercase tracking-wide">{t('superLoop.resumeWith')}</div>
                     {[
-                      { label: 'No extra iterations', bump: 0 },
-                      { label: '+5 iterations', bump: 5 },
-                      { label: '+10 iterations', bump: 10 },
-                      { label: '+20 iterations', bump: 20 },
+                      { label: t('superLoop.noExtraIterations'), bump: 0 },
+                      { label: t('superLoop.extraIterations', { count: 5 }), bump: 5 },
+                      { label: t('superLoop.extraIterations', { count: 10 }), bump: 10 },
+                      { label: t('superLoop.extraIterations', { count: 20 }), bump: 20 },
                     ].map(opt => (
                       <button
                         key={opt.bump}
@@ -659,7 +668,7 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
             </div>
           ) : iterations.length === 0 ? (
             <div className="text-center py-3 text-xs text-[var(--nim-text-muted)]">
-              No iterations yet
+              {t('superLoop.noIterations')}
             </div>
           ) : (
             iterations.map((iteration) => {
@@ -700,7 +709,7 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
               onClick={handleRenameClick}
             >
               <MaterialSymbol icon="edit" size={14} />
-              Rename
+              {t('sessionMenu.rename')}
             </button>
           )}
           {onPinToggle && (
@@ -709,7 +718,7 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
               onClick={handlePinToggle}
             >
               <MaterialSymbol icon="push_pin" size={14} />
-              {loop.isPinned ? 'Unpin' : 'Pin'}
+              {loop.isPinned ? t('sessionMenu.unpin') : t('sessionMenu.pin')}
             </button>
           )}
           {(onArchive || onUnarchive) && (
@@ -720,7 +729,7 @@ export const SuperLoopGroup: React.FC<SuperLoopGroupProps> = memo(({
                 onClick={handleArchiveToggle}
               >
                 <MaterialSymbol icon={loop.isArchived ? "unarchive" : "archive"} size={14} />
-                {loop.isArchived ? 'Unarchive' : 'Archive'}
+                {loop.isArchived ? t('sessionList.bulk.unarchive') : t('sessionList.bulk.archive')}
               </button>
             </>
           )}

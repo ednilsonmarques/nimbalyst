@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { getClaudeCodeModelLabel } from '../../utils/modelUtils';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export interface AgentModelOption {
   id: string;
@@ -37,6 +38,7 @@ export function AgentModelPicker({
   isLoading = false,
   disabled = false,
 }: AgentModelPickerProps) {
+  const { t } = useTranslation('agent');
   const groupedModels = useMemo(() => {
     return models.reduce((acc, model) => {
       const key = model.provider || 'unknown';
@@ -54,7 +56,7 @@ export function AgentModelPicker({
     <div className="merge-conflict-dialog-model flex flex-col gap-2 p-3 mb-4 rounded-lg bg-[var(--nim-bg-secondary)]">
       <div className="flex items-center gap-2 text-[13px] font-medium text-[var(--nim-text)]">
         <MaterialSymbol icon="memory" size={16} />
-        <span>Model</span>
+        <span>{t('modelPicker.model')}</span>
       </div>
       <select
         className="w-full border border-[var(--nim-border)] rounded bg-[var(--nim-bg)] text-[var(--nim-text)] text-xs px-2 py-1.5 focus:outline-none focus:border-[var(--nim-primary)]"
@@ -63,10 +65,10 @@ export function AgentModelPicker({
         disabled={isDisabled}
       >
         {isLoading && (
-          <option value={selectValue}>Loading models...</option>
+          <option value={selectValue}>{t('modelPicker.loading')}</option>
         )}
         {!isLoading && !hasModels && (
-          <option value="">No agent models available</option>
+          <option value="">{t('modelPicker.noModels')}</option>
         )}
         {!isLoading && hasModels && Object.entries(groupedModels).map(([provider, providerModels]) => (
           <optgroup key={provider} label={providerLabels[provider] || provider}>

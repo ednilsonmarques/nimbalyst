@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { Trans, useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { AgentModelPicker, type AgentModelOption } from './AgentModelPicker';
 
 interface MergeConflictDialogProps {
@@ -25,6 +26,7 @@ export function MergeConflictDialog({
   resolveDisabled = false,
   onCancel,
 }: MergeConflictDialogProps) {
+  const { t } = useTranslation('agent');
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Close on escape key
@@ -55,18 +57,18 @@ export function MergeConflictDialog({
       >
         <div className="merge-conflict-dialog-header shrink-0 flex items-center gap-3 px-6 pt-5 pb-4 text-[var(--nim-text)]">
           <MaterialSymbol icon="warning" size={24} className="merge-conflict-dialog-icon-warning text-[var(--nim-warning)]" />
-          <h2 className="m-0 text-lg font-semibold">Merge Conflict Detected</h2>
+          <h2 className="m-0 text-lg font-semibold">{t('gitDialogs.mergeConflict.title')}</h2>
         </div>
 
         <div className="merge-conflict-dialog-body flex-1 min-h-0 overflow-y-auto px-6 pb-5">
           <p className="m-0 mb-4 text-sm leading-relaxed text-[var(--nim-text-muted)]">
-            Cannot merge worktree to <strong className="text-[var(--nim-text)] font-medium">{projectName}</strong> because there are unresolved merge conflicts in the main repository.
+            <Trans t={t} i18nKey="gitDialogs.mergeConflict.message" values={{ project: projectName }} components={{ strong: <strong className="text-[var(--nim-text)] font-medium" /> }} />
           </p>
 
           <div className="merge-conflict-dialog-files mb-4 p-3 rounded-lg bg-[var(--nim-bg-secondary)]">
             <div className="merge-conflict-dialog-files-header flex items-center gap-2 mb-2.5 text-[13px] font-medium text-[var(--nim-text)]">
               <MaterialSymbol icon="description" size={16} />
-              <span>Conflicted Files:</span>
+              <span>{t('gitDialogs.conflictedFiles')}</span>
             </div>
             <ul className="merge-conflict-dialog-files-list list-none m-0 p-0 flex flex-col gap-1.5">
               {conflictedFiles.map((file) => (
@@ -81,14 +83,14 @@ export function MergeConflictDialog({
           <div className="merge-conflict-dialog-info flex items-start gap-2.5 p-3 mb-4 rounded-lg bg-[var(--nim-info-light)] text-[var(--nim-info)] text-[13px] leading-snug">
             <MaterialSymbol icon="info" size={16} />
             <p className="m-0 text-[var(--nim-info)]">
-              You must resolve these conflicts in the main repository before the worktree can be merged.
+              {t('gitDialogs.mergeConflict.info')}
             </p>
           </div>
 
           <div className="merge-conflict-dialog-suggestion flex items-start gap-2.5 p-3 mb-4 rounded-lg bg-[var(--nim-success-light)] text-[var(--nim-success)] text-[13px] leading-snug">
             <MaterialSymbol icon="smart_toy" size={16} />
             <p className="m-0 text-[var(--nim-success)]">
-              An AI agent can help you resolve these conflicts automatically, or you can resolve them manually.
+              {t('gitDialogs.agentCanResolveConflicts')}
             </p>
           </div>
 
@@ -102,7 +104,7 @@ export function MergeConflictDialog({
           <div className="merge-conflict-dialog-manual flex flex-col gap-2 p-3 rounded-lg bg-[var(--nim-bg-secondary)] text-[13px]">
             <p className="m-0 flex items-center gap-2 text-[var(--nim-text-muted)]">
               <MaterialSymbol icon="terminal" size={16} />
-              Main repository location:
+              {t('gitDialogs.mainRepoLocation')}
             </p>
             <code className="merge-conflict-dialog-path block font-[var(--nim-font-mono)] text-xs text-[var(--nim-text)] bg-[var(--nim-bg-tertiary)] px-2 py-1.5 rounded break-all">{workspacePath}</code>
           </div>
@@ -114,7 +116,7 @@ export function MergeConflictDialog({
             className="merge-conflict-dialog-button merge-conflict-dialog-button--secondary nim-btn-secondary"
             onClick={onCancel}
           >
-            Close
+            {t('gitDialogs.close')}
           </button>
           <button
             type="button"
@@ -123,7 +125,7 @@ export function MergeConflictDialog({
             disabled={resolveDisabled}
           >
             <MaterialSymbol icon="smart_toy" size={16} />
-            <span>Resolve with Agent</span>
+            <span>{t('gitDialogs.resolveWithAgent')}</span>
           </button>
         </div>
       </div>

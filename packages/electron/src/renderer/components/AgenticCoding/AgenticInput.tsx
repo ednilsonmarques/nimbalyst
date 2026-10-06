@@ -5,6 +5,8 @@ import { buildSlashCommandOptions, fetchSlashCommandEntries, type SlashCommandEn
 import type { ChatAttachment } from '@nimbalyst/runtime';
 import { AttachmentPreviewList } from './AttachmentPreviewList';
 import { errorNotificationService } from '../../services/ErrorNotificationService';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 interface AgenticInputProps {
   value: string;
@@ -36,7 +38,7 @@ export function AgenticInput({
   onCancel,
   disabled,
   isLoading,
-  placeholder = "Type your message... (Enter to send, Shift+Enter for new line, @ for files, @@ for sessions, / for commands)",
+  placeholder,
   workspacePath,
   sessionId,
   provider,
@@ -47,6 +49,7 @@ export function AgenticInput({
   onAttachmentAdd,
   onAttachmentRemove
 }: AgenticInputProps) {
+  const { t } = useTranslation('agent');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lastSlashValueRef = useRef<string | null>(null);
   const [typeaheadMatch, setTypeaheadMatch] = useState<TriggerMatch | null>(null);
@@ -289,7 +292,7 @@ export function AgenticInput({
 
       if (!validation.valid) {
         console.error('[AgenticInput] File validation failed:', validation.error);
-        errorNotificationService.showError('Attachment Rejected', validation.error || 'Invalid file');
+        errorNotificationService.showError(translate('agent:input.attachmentRejected'), validation.error || translate('agent:input.invalidFile'));
         return;
       }
 
@@ -319,13 +322,13 @@ export function AgenticInput({
         onChange(value + (value ? ' ' : '') + reference);
       } else {
         console.error('[AgenticInput] Failed to save attachment:', result.error);
-        errorNotificationService.showError('Attachment Failed', result.error || 'Failed to save attachment');
+        errorNotificationService.showError(translate('agent:input.attachmentFailed'), result.error || translate('agent:input.saveAttachmentFailed'));
       }
     } catch (error) {
       // Remove from processing state on error
       setProcessingAttachments(prev => prev.filter(p => p.id !== processingId));
       console.error('[AgenticInput] Error handling file attachment:', error);
-      errorNotificationService.showError('Attachment Failed', 'Failed to attach file');
+      errorNotificationService.showError(translate('agent:input.attachmentFailed'), translate('agent:input.attachFileFailed'));
     }
   }, [onAttachmentAdd, sessionId, value, onChange]);
 
@@ -417,7 +420,7 @@ export function AgenticInput({
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          placeholder={placeholder}
+          placeholder={placeholder ?? t('input.placeholder')}
           disabled={disabled}
           rows={1}
         />
@@ -425,8 +428,8 @@ export function AgenticInput({
           <button
             className="ai-chat-cancel-button w-9 h-9 flex items-center justify-center bg-[var(--nim-error)] border-none rounded-md text-white cursor-pointer transition-all duration-200 animate-pulse hover:opacity-90 hover:scale-105 hover:animate-none"
             onClick={onCancel}
-            title="Cancel request (Esc)"
-            aria-label="Cancel request"
+            title={t('input.cancelTooltip')}
+            aria-label={t('input.cancelAria')}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -437,8 +440,8 @@ export function AgenticInput({
             className="ai-chat-send-button w-9 h-9 flex items-center justify-center bg-[var(--nim-primary)] border-none rounded-md text-white cursor-pointer transition-all duration-200 shrink-0 hover:enabled:bg-[var(--nim-primary-hover)] hover:enabled:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
             onClick={onSend}
             disabled={disabled || !value.trim()}
-            title="Send message (Enter)"
-            aria-label="Send message"
+            title={t('input.sendTooltip')}
+            aria-label={t('input.sendAria')}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M2 8L14 2L11 14L8 9L2 8Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

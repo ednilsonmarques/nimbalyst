@@ -52,6 +52,8 @@ import { LayoutControls } from '../UnifiedAI/LayoutControls';
 import { ActiveSessionMcpStatusChip } from '../AgenticCoding/McpSessionStatusChip';
 import { WorktreeIcon } from '../common/WorktreeIcon';
 import { toggleWorkstreamHeaderPin } from './workstreamHeaderPin';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
   worktreeRecordAtom,
   setWorktreeRecordAtom,
@@ -198,6 +200,7 @@ const TAG_PILL_CLASS = "group flex items-center gap-0.5 text-[10px] font-medium 
 const TAG_OVERFLOW_PILL_CLASS = "flex items-center gap-0.5 text-[10px] font-medium leading-none px-1.5 py-0.5 rounded-full whitespace-nowrap cursor-pointer text-nim-faint bg-[color-mix(in_srgb,var(--nim-text)_8%,transparent)] hover:bg-[color-mix(in_srgb,var(--nim-text)_14%,transparent)] border-none";
 
 const WorkstreamHeaderTagsRow: React.FC<{ workstreamId: string }> = ({ workstreamId }) => {
+  const { t } = useTranslation('agent');
   const tags = useAtomValue(workstreamTagsAtom(workstreamId));
   const allTags = useAtomValue(sessionKanbanTagsAtom);
   const registry = useAtomValue(sessionRegistryAtom);
@@ -342,7 +345,7 @@ const WorkstreamHeaderTagsRow: React.FC<{ workstreamId: string }> = ({ workstrea
           ref={tagInputRef}
           type="text"
           className="text-[10px] leading-none py-0.5 px-1.5 rounded-full border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] text-[var(--nim-text)] outline-none w-[80px]"
-          placeholder="add tag..."
+          placeholder={t('workstreamHeader.addTagPlaceholder')}
           value={tagInput}
           onChange={(e) => setTagInput(e.target.value)}
           onKeyDown={handleTagInputKeyDown}
@@ -374,7 +377,7 @@ const WorkstreamHeaderTagsRow: React.FC<{ workstreamId: string }> = ({ workstrea
       <button
         className="flex items-center justify-center w-4 h-4 rounded-full border border-dashed border-[var(--nim-border)] bg-transparent cursor-pointer text-[var(--nim-text-faint)] hover:border-[var(--nim-text-faint)] hover:text-[var(--nim-text-muted)] transition-colors duration-100"
         onClick={() => setIsEditingTags(true)}
-        title="Add tag"
+        title={t('workstreamHeader.addTag')}
       >
         <MaterialSymbol icon="add" size={10} />
       </button>
@@ -422,7 +425,7 @@ const WorkstreamHeaderTagsRow: React.FC<{ workstreamId: string }> = ({ workstrea
           <button
             className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-3 h-3 rounded-full border-none bg-transparent cursor-pointer text-[var(--nim-text-faint)] hover:text-[var(--nim-text)] transition-opacity duration-100"
             onClick={() => handleRemoveTag(tag)}
-            title={`Remove tag "${tag}"`}
+            title={t('workstreamHeader.removeTag', { tag })}
           >
             <MaterialSymbol icon="close" size={10} />
           </button>
@@ -435,7 +438,7 @@ const WorkstreamHeaderTagsRow: React.FC<{ workstreamId: string }> = ({ workstrea
             ref={overflowRefs.setReference}
             {...getOverflowReferenceProps()}
             className={TAG_OVERFLOW_PILL_CLASS}
-            title={`Show ${hiddenTags.length} more tag${hiddenTags.length === 1 ? '' : 's'}`}
+            title={t('workstreamHeader.moreTags', { count: hiddenTags.length })}
           >
             +{hiddenTags.length}
           </button>
@@ -456,7 +459,7 @@ const WorkstreamHeaderTagsRow: React.FC<{ workstreamId: string }> = ({ workstrea
                     <button
                       className="flex items-center justify-center w-4 h-4 rounded-full opacity-0 group-hover:opacity-100 text-[var(--nim-text-faint)] hover:text-[var(--nim-text)] bg-transparent border-none cursor-pointer"
                       onClick={() => handleRemoveTag(tag)}
-                      title={`Remove tag "${tag}"`}
+                      title={t('workstreamHeader.removeTag', { tag })}
                     >
                       <MaterialSymbol icon="close" size={10} />
                     </button>
@@ -500,6 +503,7 @@ const WorkstreamHeader: React.FC<{
   onCreateNewTerminal?: () => void;
   onShowArchiveDialog?: () => void;
 }> = React.memo(({ workstreamId, workspacePath, activeSessionId, worktreeId, worktreePath, onArchiveStatusChange, onOpenTerminal, onCreateNewTerminal, onShowArchiveDialog }) => {
+  const { t } = useTranslation('agent');
   const title = useAtomValue(workstreamTitleAtom(workstreamId));
   const isProcessing = useAtomValue(workstreamProcessingAtom(workstreamId));
   const sessionData = useAtomValue(sessionStoreAtom(workstreamId));
@@ -615,11 +619,11 @@ const WorkstreamHeader: React.FC<{
     setLayoutMode({ workstreamId, mode });
   }, [workstreamId, setLayoutMode]);
 
-  // Determine session type label for archive and pin buttons
-  const getSessionTypeLabel = useCallback(() => {
-    if (worktreeId) return 'Worktree';
-    if (hasChildren) return 'Workstream';
-    return 'Session';
+  // Determine session type for the archive and pin button labels
+  const getSessionType = useCallback((): 'worktree' | 'workstream' | 'session' => {
+    if (worktreeId) return 'worktree';
+    if (hasChildren) return 'workstream';
+    return 'session';
   }, [worktreeId, hasChildren]);
 
   // The header title stays the session title, so the chip shows the worktree's
@@ -683,7 +687,7 @@ const WorkstreamHeader: React.FC<{
   return (
     <div className="workstream-header shrink-0 h-14 px-4 border-b border-[var(--nim-border)] bg-[var(--nim-bg)]">
       <div className="workstream-header-main flex items-center gap-3 h-full">
-        <div className="workstream-header-icon shrink-0 text-[var(--nim-text-muted)]" title={getSessionTypeLabel()}>
+        <div className="workstream-header-icon shrink-0 text-[var(--nim-text-muted)]" title={t(`workstreamHeader.type.${getSessionType()}`)}>
           {worktreeId ? (
             <WorktreeIcon size={20} />
           ) : hasChildren ? (
@@ -708,7 +712,7 @@ const WorkstreamHeader: React.FC<{
             <h2
               className="workstream-header-title max-w-full m-0 text-sm font-semibold text-[var(--nim-text)] whitespace-nowrap overflow-hidden text-ellipsis leading-tight cursor-pointer py-0.5 px-1 rounded transition-colors duration-150 hover:bg-[var(--nim-bg-hover)]"
               onClick={handleTitleClick}
-              title="Click to rename"
+              title={t('workstreamHeader.clickToRename')}
             >
               {title}
             </h2>
@@ -717,7 +721,7 @@ const WorkstreamHeader: React.FC<{
             {worktreeChipName && (
               <span
                 className="workstream-header-worktree-chip shrink-0 flex items-center gap-1 max-w-[14rem] px-1.5 py-px rounded text-[0.625rem] font-medium text-[var(--nim-text-muted)] bg-[var(--nim-bg-secondary)] whitespace-nowrap overflow-hidden text-ellipsis"
-                title={worktreePath ? `Worktree: ${worktreeChipName}\n${worktreePath}` : `Worktree: ${worktreeChipName}`}
+                title={worktreePath ? t('workstreamHeader.worktreeChipWithPath', { name: worktreeChipName, path: worktreePath }) : t('workstreamHeader.worktreeChip', { name: worktreeChipName })}
               >
                 <WorktreeIcon size={10} />
                 {worktreeChipName}
@@ -744,7 +748,7 @@ const WorkstreamHeader: React.FC<{
             className="workstream-terminal-btn w-8 h-8 flex items-center justify-center rounded text-[var(--nim-text-faint)] cursor-pointer border-none bg-transparent hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text-muted)] mr-2"
             onClick={onOpenTerminal}
             onContextMenu={handleTerminalContextMenu}
-            title="Open terminal in worktree"
+            title={t('workstreamHeader.openTerminal')}
           >
             <MaterialSymbol icon="terminal" size={20} />
           </button>
@@ -767,7 +771,7 @@ const WorkstreamHeader: React.FC<{
               onClick={handleNewTerminalClick}
             >
               <MaterialSymbol icon="add" size={18} />
-              <span>New Terminal</span>
+              <span>{t('workstreamHeader.newTerminal')}</span>
             </div>
           </div>
         )}
@@ -784,7 +788,7 @@ const WorkstreamHeader: React.FC<{
           }`}
           onClick={handlePinToggle}
           aria-pressed={isPinned}
-          title={`${isPinned ? 'Unpin' : 'Pin'} ${getSessionTypeLabel().toLowerCase()}`}
+          title={isPinned ? t(`workstreamHeader.unpin.${getSessionType()}`) : t(`workstreamHeader.pin.${getSessionType()}`)}
         >
           <MaterialSymbol icon="push_pin" size={18} fill={isPinned} />
         </button>
@@ -793,10 +797,10 @@ const WorkstreamHeader: React.FC<{
         <button
           className="workstream-archive-button flex items-center gap-1.5 h-8 px-2 rounded text-[var(--nim-text-faint)] text-[11px] font-medium cursor-pointer border-none bg-transparent hover:bg-[var(--nim-bg-hover)] hover:text-[var(--nim-text-muted)]"
           onClick={isArchived ? handleUnarchive : handleArchive}
-          title={isArchived ? `Unarchive ${getSessionTypeLabel().toLowerCase()}` : `Archive ${getSessionTypeLabel().toLowerCase()}`}
+          title={isArchived ? t(`workstreamHeader.unarchiveTooltip.${getSessionType()}`) : t(`workstreamHeader.archiveTooltip.${getSessionType()}`)}
         >
           <MaterialSymbol icon={isArchived ? 'unarchive' : 'archive'} size={18} />
-          <span>{isArchived ? `Unarchive ${getSessionTypeLabel()}` : `Archive ${getSessionTypeLabel()}`}</span>
+          <span>{isArchived ? t(`workstreamHeader.unarchiveLabel.${getSessionType()}`) : t(`workstreamHeader.archiveLabel.${getSessionType()}`)}</span>
         </button>
 
       </div>
@@ -824,6 +828,7 @@ export const AgentWorkstreamPanel = React.memo(React.forwardRef<AgentWorkstreamP
   onSwitchToAgentMode,
   onOpenSessionInChat,
 }, ref) => {
+  const { t } = useTranslation('agent');
   // Ref to the workstream editor tabs for opening files
   const editorTabsRef = useRef<WorkstreamEditorTabsRef>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -923,7 +928,7 @@ export const AgentWorkstreamPanel = React.memo(React.forwardRef<AgentWorkstreamP
       .then((createdSessionId) => {
         if (!createdSessionId) {
           if (!cancelled) {
-            setChatCreationError('Could not open a chat for this session.');
+            setChatCreationError(translate('agent:workstreamPanel.chatOpenFailed'));
           }
           return;
         }
@@ -939,7 +944,7 @@ export const AgentWorkstreamPanel = React.memo(React.forwardRef<AgentWorkstreamP
       .catch((error) => {
         console.error('[AgentWorkstreamPanel] Failed to create paired chat:', error);
         if (!cancelled) {
-          setChatCreationError('Could not open a chat for this session.');
+          setChatCreationError(translate('agent:workstreamPanel.chatOpenFailed'));
         }
       });
 
@@ -1680,13 +1685,13 @@ export const AgentWorkstreamPanel = React.memo(React.forwardRef<AgentWorkstreamP
                       onClick={() => setChatCreationAttempt((attempt) => attempt + 1)}
                       className="px-3 py-1.5 rounded border border-nim bg-nim-secondary text-xs text-nim cursor-pointer hover:bg-nim-hover"
                     >
-                      Try again
+                      {t('workstreamPanel.tryAgain')}
                     </button>
                   </>
                 ) : (
                   <>
                     <span className="w-5 h-5 border-2 border-nim border-t-nim-primary rounded-full animate-spin" />
-                    <span>{chatTargetId ? 'Opening chat…' : 'Select a session to start chatting.'}</span>
+                    <span>{chatTargetId ? t('workstreamPanel.openingChat') : t('workstreamPanel.selectSessionToChat')}</span>
                   </>
                 )}
               </div>

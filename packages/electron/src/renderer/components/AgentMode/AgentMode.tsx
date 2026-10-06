@@ -78,6 +78,7 @@ import {
 } from '../../store/actions/sessionHistoryActions';
 import { defaultAgentModelAtom } from '../../store/atoms/appSettings';
 import { useGitRepoProbe } from '../../hooks/useGitRepoProbe';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 export interface AgentModeRef {
   createNewSession: (initialDraft?: string) => Promise<string | undefined>;
   createNewWorktreeSession: (options?: { baseBranch?: string; name?: string }) => Promise<void>;
@@ -130,6 +131,7 @@ export const AgentMode = forwardRef<AgentModeRef, AgentModeProps>(function Agent
   onOpenSessionInChat,
   onPanelStateChange,
 }, ref) {
+  const { t } = useTranslation('agent');
   // Ref to the workstream panel for closing tabs
   const workstreamPanelRef = useRef<AgentWorkstreamPanelRef>(null);
 
@@ -604,12 +606,12 @@ export const AgentMode = forwardRef<AgentModeRef, AgentModeProps>(function Agent
     )
   ) : (
     <div className="agent-mode-empty flex flex-col items-center justify-center h-full gap-4 text-nim-muted">
-      <p className="m-0 text-sm">Select a session or create a new one to get started</p>
+      <p className="m-0 text-sm">{t('agentMode.emptyHint')}</p>
       <button
         onClick={() => dispatchCreateNewSession({ launchSource: 'new_session_button' })}
         className="agent-mode-new-button py-2 px-4 rounded-md border border-nim-border bg-nim-bg-secondary text-nim cursor-pointer text-sm transition-colors hover:bg-nim-bg-active"
       >
-        New Session
+        {t('agentMode.newSession')}
       </button>
     </div>
   );

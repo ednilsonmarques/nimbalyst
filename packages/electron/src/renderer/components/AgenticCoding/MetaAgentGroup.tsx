@@ -12,6 +12,7 @@ import React, { memo, useCallback, useMemo, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { ProviderIcon } from '@nimbalyst/runtime/ui/icons/ProviderIcons';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   groupSessionStatusAtom,
   sessionProcessingAtom,
@@ -44,30 +45,36 @@ interface MetaAgentGroupProps {
   onWorktreeArchive?: (worktreeId: string) => void;
 }
 
+const UntitledSessionLabel: React.FC = () => {
+  const { t } = useTranslation('agent');
+  return <>{t('sessionItem.untitled')}</>;
+};
+
 /**
  * Aggregate status indicator for the meta-agent group header.
  */
 const MetaAgentGroupStatus: React.FC<{ sessionIds: string[] }> = memo(({ sessionIds }) => {
   const sessionIdsKey = useMemo(() => JSON.stringify([...sessionIds].sort()), [sessionIds]);
   const groupStatus = useAtomValue(groupSessionStatusAtom(sessionIdsKey));
+  const { t } = useTranslation('agent');
 
   if (groupStatus.hasProcessing) {
     return (
-      <div className="flex items-center justify-center text-[var(--nim-primary)]" title="Processing">
+      <div className="flex items-center justify-center text-[var(--nim-primary)]" title={t('sessionItem.processingShort')}>
         <MaterialSymbol icon="progress_activity" size={12} className="animate-spin" />
       </div>
     );
   }
   if (groupStatus.hasPendingPrompt) {
     return (
-      <div className="flex items-center justify-center text-[var(--nim-warning)] animate-pulse" title="Waiting for your response">
+      <div className="flex items-center justify-center text-[var(--nim-warning)] animate-pulse" title={t('sessionItem.waitingForResponse')}>
         <MaterialSymbol icon="help" size={12} />
       </div>
     );
   }
   if (groupStatus.hasUnread) {
     return (
-      <div className="flex items-center justify-center text-[var(--nim-primary)]" title="Unread response">
+      <div className="flex items-center justify-center text-[var(--nim-primary)]" title={t('sessionItem.unread')}>
         <MaterialSymbol icon="circle" size={6} fill />
       </div>
     );
@@ -83,10 +90,11 @@ const ChildSessionStatus: React.FC<{ sessionId: string }> = memo(({ sessionId })
   const hasPendingPrompt = useAtomValue(sessionPendingPromptAtom(sessionId));
   const hasAgentWakePending = useAtomValue(sessionAgentWakePendingAtom(sessionId));
   const hasUnread = useAtomValue(sessionUnreadAtom(sessionId));
+  const { t } = useTranslation('agent');
 
   if (isProcessing) {
     return (
-      <div className="flex items-center justify-center text-[var(--nim-primary)] animate-spin" title="Processing...">
+      <div className="flex items-center justify-center text-[var(--nim-primary)] animate-spin" title={t('sessionItem.processing')}>
         <MaterialSymbol icon="progress_activity" size={12} />
       </div>
     );
@@ -96,14 +104,14 @@ const ChildSessionStatus: React.FC<{ sessionId: string }> = memo(({ sessionId })
   }
   if (hasPendingPrompt) {
     return (
-      <div className="flex items-center justify-center text-[var(--nim-warning)]" title="Waiting for your response">
+      <div className="flex items-center justify-center text-[var(--nim-warning)]" title={t('sessionItem.waitingForResponse')}>
         <MaterialSymbol icon="help" size={12} />
       </div>
     );
   }
   if (hasUnread) {
     return (
-      <div className="flex items-center justify-center text-[var(--nim-primary)]" title="Unread response">
+      <div className="flex items-center justify-center text-[var(--nim-primary)]" title={t('sessionItem.unread')}>
         <MaterialSymbol icon="circle" size={6} fill />
       </div>
     );
@@ -140,7 +148,7 @@ const MetaAgentChildRow: React.FC<{
     <span className={`flex-1 text-xs text-[var(--nim-text)] whitespace-nowrap overflow-hidden text-ellipsis ${
       isActive ? 'font-medium' : ''
     }`}>
-      {session.title || 'Untitled Session'}
+      {session.title || <UntitledSessionLabel />}
     </span>
     <span className="shrink-0 text-[0.6875rem] text-[var(--nim-text-faint)] ml-2">
       <SessionRelativeTime sessionId={session.id} fallbackTimestamp={session.updatedAt || session.createdAt} />
@@ -171,6 +179,7 @@ export const MetaAgentGroup: React.FC<MetaAgentGroupProps> = memo(({
   onSessionBranch,
   onWorktreeArchive,
 }) => {
+  const { t } = useTranslation('agent');
   const [contextMenuSession, setContextMenuSession] = useState<SessionMeta | null>(null);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
 
@@ -251,7 +260,7 @@ export const MetaAgentGroup: React.FC<MetaAgentGroupProps> = memo(({
             e.stopPropagation();
             onToggle();
           }}
-          aria-label={isExpanded ? 'Collapse' : 'Expand'}
+          aria-label={isExpanded ? t('common.collapse') : t('common.expand')}
         >
           <MaterialSymbol
             icon="chevron_right"
@@ -271,7 +280,7 @@ export const MetaAgentGroup: React.FC<MetaAgentGroupProps> = memo(({
         <span className={`flex-1 text-xs whitespace-nowrap overflow-hidden text-ellipsis ${
           isActive ? 'font-medium text-[var(--nim-text)]' : 'text-[var(--nim-text)]'
         }`}>
-          {metaSession.title || 'Meta Agent'}
+          {metaSession.title || t('metaAgent.defaultTitle')}
         </span>
 
         {/* Child count badge */}
@@ -310,7 +319,7 @@ export const MetaAgentGroup: React.FC<MetaAgentGroupProps> = memo(({
       {contextMenuSession && (
         <SessionContextMenu
           sessionId={contextMenuSession.id}
-          title={contextMenuSession.title || 'Untitled Session'}
+          title={contextMenuSession.title || t('sessionItem.untitled')}
           position={contextMenuPosition}
           onClose={closeContextMenu}
           isArchived={contextMenuSession.isArchived}

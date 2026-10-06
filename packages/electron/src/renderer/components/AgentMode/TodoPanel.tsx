@@ -9,6 +9,7 @@
 import React, { useCallback } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { sessionStoreAtom } from '../../store';
 import { todoPanelCollapsedAtom, toggleTodoPanelCollapsedAtom } from '../../store/atoms/agentMode';
 
@@ -26,6 +27,7 @@ interface TodoPanelProps {
 export const TodoPanel: React.FC<TodoPanelProps> = React.memo(({
   sessionId,
 }) => {
+  const { t } = useTranslation('agent');
   const isCollapsed = useAtomValue(todoPanelCollapsedAtom);
   const toggleCollapsed = useSetAtom(toggleTodoPanelCollapsedAtom);
   const sessionData = useAtomValue(sessionStoreAtom(sessionId));
@@ -65,7 +67,7 @@ export const TodoPanel: React.FC<TodoPanelProps> = React.memo(({
           className="text-[var(--nim-text-muted)] shrink-0"
         />
         <span className="todo-panel-title text-xs font-medium text-[var(--nim-text)]">
-          Tasks
+          {t('panels.tasks')}
         </span>
         <span className="todo-panel-count ml-auto text-[11px] text-[var(--nim-text-muted)] font-mono">
           {completedCount}/{totalCount}
