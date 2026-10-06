@@ -5,6 +5,7 @@ import {
   type MockupProjectCanvasSource,
 } from "@nimbalyst/runtime/canvas";
 import type { EditorHostFileSystem } from "@nimbalyst/runtime";
+import { t as translate } from "@nimbalyst/runtime/i18n";
 
 export type MockupProjectConversionErrorCode =
   | "invalid-source-path"
@@ -33,7 +34,7 @@ export function canvasPathForMockupProject(sourcePath: string): string {
   if (!/\.mockupproject$/i.test(sourcePath)) {
     throw new MockupProjectConversionError(
       "invalid-source-path",
-      "Only .mockupproject files can be converted."
+      translate("editor:mockupProject.errors.invalidSourcePath")
     );
   }
   return sourcePath.replace(/\.mockupproject$/i, ".canvas");
@@ -57,7 +58,7 @@ export function convertMockupProjectSource(source: string): string {
   ) {
     throw new MockupProjectConversionError(
       "suspect-conversion",
-      "The converted canvas did not preserve every mockup and connection."
+      translate("editor:mockupProject.errors.suspectConversion")
     );
   }
 
@@ -82,13 +83,13 @@ export async function convertMockupProjectFile(
   if (!source?.exists || source.content === null) {
     throw new MockupProjectConversionError(
       "source-missing",
-      "The original mockup project could not be read. It was not modified."
+      translate("editor:mockupProject.errors.sourceMissing")
     );
   }
   if (target?.exists) {
     throw new MockupProjectConversionError(
       "target-exists",
-      `A canvas already exists at ${targetPath}. Neither file was changed.`
+      translate("editor:mockupProject.errors.targetExists", { path: targetPath })
     );
   }
 
@@ -109,7 +110,7 @@ export async function convertMockupProjectFile(
   if (!written?.exists || written.content !== canvasContent) {
     throw new MockupProjectConversionError(
       "verification-failed",
-      "The new canvas could not be verified. The original mockup project was not modified."
+      translate("editor:mockupProject.errors.verificationFailed")
     );
   }
 

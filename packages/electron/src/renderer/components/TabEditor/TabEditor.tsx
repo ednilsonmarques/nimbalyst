@@ -3292,13 +3292,13 @@ export const TabEditor: React.FC<TabEditorProps> = ({
                 <>
                   <div className="custom-editor-source-toolbar py-2 px-4 border-b border-nim flex justify-end items-center gap-2 bg-nim-secondary">
                     <span className="mr-auto text-[13px] text-nim-muted">
-                      Source Mode
+                      {t('editor:sourceMode.label')}
                     </span>
                     <button
                       onClick={() => editorHost.toggleSourceMode?.()}
                       className="py-1 px-3 text-[13px] cursor-pointer bg-nim border border-nim rounded text-nim"
                     >
-                      Editor
+                      {t('editor:sourceMode.editor')}
                     </button>
                   </div>
                   <MonacoEditor
@@ -3423,7 +3423,7 @@ export const TabEditor: React.FC<TabEditorProps> = ({
             const fileExt = filePath.substring(filePath.lastIndexOf('.'));
             return (
               <div className="p-5 text-nim">
-                <p>No custom editor found for file type: {fileExt}</p>
+                <p>{t('editor:tabEditor.noCustomEditor', { fileExt })}</p>
               </div>
             );
           })() : isImage ? (
@@ -3519,13 +3519,13 @@ export const TabEditor: React.FC<TabEditorProps> = ({
             <>
               <div className="monaco-markdown-toolbar py-2 px-4 border-b border-nim flex justify-end items-center gap-2 bg-nim-secondary">
                 <span className="mr-auto text-[13px] text-nim-muted">
-                  Source Mode
+                  {t('editor:sourceMode.label')}
                 </span>
                 <button
                   onClick={() => editorHost.toggleSourceMode?.()}
                   className="py-1 px-3 text-[13px] cursor-pointer bg-nim border border-nim rounded text-nim"
                 >
-                  Rich Text
+                  {t('editor:sourceMode.richText')}
                 </button>
               </div>
               <MonacoEditor

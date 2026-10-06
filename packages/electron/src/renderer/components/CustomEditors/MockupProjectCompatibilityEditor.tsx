@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState, type ReactElement } from "react";
 import type { EditorHost, EditorHostProps } from "@nimbalyst/runtime";
 import { MockupProjectCollabContentAdapter } from "@nimbalyst/mockuplm/collab-adapters";
 import { CanvasEditor } from "@nimbalyst/runtime/canvas/CanvasEditor";
+import { t as translate } from "@nimbalyst/runtime/i18n";
+import { useTranslation } from "@nimbalyst/runtime/i18n/react";
 
 import {
   MockupProjectConversionError,
@@ -56,7 +58,7 @@ function readOnlyCanvasHost(
 function errorMessage(cause: unknown): string {
   if (cause instanceof MockupProjectConversionError) return cause.message;
   const detail = cause instanceof Error ? cause.message : String(cause);
-  return `Conversion failed: ${detail}. The original mockup project was not modified.`;
+  return translate("editor:mockupProject.conversionFailed", { detail });
 }
 
 /**
@@ -70,6 +72,7 @@ function errorMessage(cause: unknown): string {
 export function MockupProjectCompatibilityEditor({
   host,
 }: EditorHostProps): ReactElement {
+  const { t } = useTranslation("editor");
   const [preview, setPreview] = useState<PreviewState>({ kind: "loading" });
   const [conversion, setConversion] = useState<ConversionState>({
     kind: "idle",
@@ -170,11 +173,11 @@ export function MockupProjectCompatibilityEditor({
     >
       <div className="mockup-project-compatibility-editor__notice flex shrink-0 items-center gap-3 border-b border-nim bg-nim-secondary px-4 py-2">
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold">Legacy Mockup Project</div>
+          <div className="text-sm font-semibold">{t("mockupProject.title")}</div>
           <div className="text-xs text-nim-muted">
             {host.collaboration
-              ? "This shared project is open read-only for compatibility. Its shared document remains unchanged."
-              : "This file is open read-only. Convert it to Project Canvas to keep working; the original file remains unchanged."}
+              ? t("mockupProject.sharedReadOnly")
+              : t("mockupProject.localReadOnly")}
           </div>
         </div>
         {!host.collaboration && host.fs ? (
@@ -185,15 +188,15 @@ export function MockupProjectCompatibilityEditor({
             onClick={() => void handleConvert()}
           >
             {conversion.kind === "converting"
-              ? "Converting..."
-              : "Convert to canvas"}
+              ? t("mockupProject.converting")
+              : t("mockupProject.convert")}
           </button>
         ) : null}
       </div>
 
       {conversion.kind === "converted" ? (
         <div className="mockup-project-compatibility-editor__status shrink-0 border-b border-nim px-4 py-2 text-xs text-nim-muted">
-          Created {conversion.targetPath}. The original project was not changed.
+          {t("mockupProject.created", { path: conversion.targetPath })}
         </div>
       ) : conversion.kind === "error" ? (
         <div className="mockup-project-compatibility-editor__error shrink-0 border-b border-nim px-4 py-2 text-xs text-nim-error">
@@ -201,14 +204,14 @@ export function MockupProjectCompatibilityEditor({
         </div>
       ) : targetPath ? (
         <div className="mockup-project-compatibility-editor__target sr-only">
-          Conversion target: {targetPath}
+          {t("mockupProject.conversionTarget", { path: targetPath })}
         </div>
       ) : null}
 
       <div className="min-h-0 flex-1">
         {preview.kind === "loading" ? (
           <div className="flex h-full items-center justify-center text-sm text-nim-muted">
-            Loading project preview...
+            {t("mockupProject.loadingPreview")}
           </div>
         ) : preview.kind === "error" ? (
           <div className="flex h-full items-center justify-center p-6">

@@ -8,6 +8,7 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { logger } from '../../utils/logger';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 
 interface Props {
   children: ReactNode;
@@ -78,7 +79,7 @@ export class TabEditorErrorBoundary extends Component<Props, State> {
               color: 'var(--nim-text)',
               fontSize: '18px',
             }}>
-              Unable to Load Editor
+              {translate('editor:errorBoundary.title')}
             </h3>
 
             <p style={{
@@ -86,7 +87,7 @@ export class TabEditorErrorBoundary extends Component<Props, State> {
               color: 'var(--nim-text-muted)',
               fontSize: '14px',
             }}>
-              An error occurred while loading "{this.props.fileName}".
+              {translate('editor:errorBoundary.message', { fileName: this.props.fileName })}
             </p>
 
             <p style={{
@@ -94,7 +95,7 @@ export class TabEditorErrorBoundary extends Component<Props, State> {
               color: 'var(--nim-text-faint)',
               fontSize: '13px',
             }}>
-              Other tabs should continue to work normally.
+              {translate('editor:errorBoundary.otherTabs')}
             </p>
 
             {this.state.error && (
@@ -133,7 +134,7 @@ export class TabEditorErrorBoundary extends Component<Props, State> {
                   fontSize: '14px',
                 }}
               >
-                Try Again
+                {translate('editor:errorBoundary.tryAgain')}
               </button>
 
               {this.props.onClose && (
@@ -149,7 +150,7 @@ export class TabEditorErrorBoundary extends Component<Props, State> {
                     fontSize: '14px',
                   }}
                 >
-                  Close Tab
+                  {translate('editor:errorBoundary.closeTab')}
                 </button>
               )}
             </div>

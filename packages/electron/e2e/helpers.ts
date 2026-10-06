@@ -4,6 +4,7 @@ import { spawn, type ChildProcess } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import * as os from 'os';
+import { seedE2EUiLanguage } from './utils/uiLanguageSeed';
 
 // Centralized timeouts for consistent test behavior
 export const TEST_TIMEOUTS = {
@@ -286,6 +287,8 @@ export async function launchElectronApp(options?: {
     env: options?.env,
     permissionMode: options?.permissionMode,
   });
+  // Specs assert English UI text; don't let an OS locale like pt-BR change it.
+  await seedE2EUiLanguage(testEnv.NIMBALYST_USER_DATA_DIR);
 
   const app = await _electron.launch({
     ...(recordVideoConfig ? { recordVideo: recordVideoConfig } : {}),
@@ -322,6 +325,7 @@ export async function launchElectronAppViaCdp(options?: {
     env: options?.env,
     permissionMode: options?.permissionMode,
   });
+  await seedE2EUiLanguage(testEnv.NIMBALYST_USER_DATA_DIR);
 
   const electronBinary = (await import('electron')).default as unknown as string;
   const child = spawn(electronBinary, args, {

@@ -1,1 +1,187 @@
-{}
+{
+  "sourceMode": {
+    "label": "Modo código-fonte",
+    "editor": "Editor",
+    "richText": "Texto formatado"
+  },
+  "tabEditor": {
+    "noCustomEditor": "Nenhum editor personalizado encontrado para o tipo de arquivo: {{fileExt}}"
+  },
+  "header": {
+    "trackerType": {
+      "plan": "Plano",
+      "decision": "Decisão"
+    },
+    "extensionFallback": "Extensão"
+  },
+  "tabBar": {
+    "openAiAssistantTooltip": "Abrir assistente de IA ({{shortcut}})",
+    "closeAiAssistantTooltip": "Fechar assistente de IA ({{shortcut}})",
+    "openAiAssistant": "Abrir assistente de IA",
+    "closeAiAssistant": "Fechar assistente de IA"
+  },
+  "editorMode": {
+    "resizeSidebar": "Redimensionar barra lateral de arquivos",
+    "welcomeFallback": "Abra um arquivo para começar"
+  },
+  "diff": {
+    "fileFallback": "arquivo",
+    "aiChangesTo": "Alterações da IA em {{fileName}}",
+    "aiEdited": "A IA editou {{fileName}}",
+    "sessionEdited": "editou {{fileName}}",
+    "editedAgo": "editado {{time}}",
+    "openSessionTooltip": "Abrir a sessão \"{{title}}\"",
+    "goToSession": "Ir para a sessão",
+    "goToSessionTooltip": "Abrir a sessão de IA que fez estas alterações",
+    "viewHistory": "Ver histórico",
+    "viewHistoryTooltip": "Ver alterações no histórico",
+    "readOnlyTooltip": "Este arquivo fica somente leitura enquanto você revisa as alterações da IA. Mantenha ou reverta para editá-lo novamente.",
+    "readOnlyNote": "Somente leitura durante a revisão. Mantenha ou reverta para editar.",
+    "previousChange": "Alteração anterior",
+    "nextChange": "Próxima alteração",
+    "position": "{{current}} de {{total}}",
+    "changeCount_zero": "{{count}} alterações",
+    "changeCount_one": "{{count}} alteração",
+    "changeCount_other": "{{count}} alterações",
+    "revert": "Reverter",
+    "revertAll": "Reverter tudo",
+    "revertTooltip": "Reverter esta alteração",
+    "keep": "Manter",
+    "keepAll": "Manter tudo",
+    "keepTooltip": "Manter esta alteração",
+    "rejectAll": "Rejeitar tudo",
+    "acceptAll": "Aceitar tudo",
+    "proposedChanges": "Alterações propostas",
+    "acceptChanges": "Aceitar alterações",
+    "reject": "Rejeitar",
+    "relativeTime": {
+      "justNow": "agora",
+      "minutesAgo_zero": "há {{count}} minutos",
+      "minutesAgo_one": "há {{count}} minuto",
+      "minutesAgo_other": "há {{count}} minutos",
+      "hoursAgo_zero": "há {{count}} horas",
+      "hoursAgo_one": "há {{count}} hora",
+      "hoursAgo_other": "há {{count}} horas",
+      "daysAgo_zero": "há {{count}} dias",
+      "daysAgo_one": "há {{count}} dia",
+      "daysAgo_other": "há {{count}} dias"
+    }
+  },
+  "errorBoundary": {
+    "title": "Não foi possível carregar o editor",
+    "message": "Ocorreu um erro ao carregar \"{{fileName}}\".",
+    "otherTabs": "As outras abas devem continuar funcionando normalmente.",
+    "tryAgain": "Tentar novamente",
+    "closeTab": "Fechar aba"
+  },
+  "customEditor": {
+    "renderLoopTitle": "Loop de renderização detectado",
+    "errorTitle": "Erro no editor personalizado",
+    "extensionLabel": "Extensão:",
+    "componentLabel": "/ Componente:",
+    "renderLoopMessage": "O editor personalizado está renderizando rápido demais, o que pode indicar um loop infinito. Ele foi interrompido para evitar travamentos.",
+    "unexpectedError": "Ocorreu um erro inesperado ao renderizar o editor personalizado.",
+    "errorDetails": "Detalhes do erro",
+    "commonCauses": "Causas comuns:",
+    "causeEffectDependencies": "Atualizações de estado em useEffect sem as dependências corretas",
+    "causeRecreatedCallbacks": "Props de callback recriadas a cada renderização",
+    "causeChangingReferences": "Referências de objetos/arrays mudando a cada renderização",
+    "tryAgain": "Tentar novamente"
+  },
+  "mockupProject": {
+    "title": "Projeto de mockup legado",
+    "sharedReadOnly": "Este projeto compartilhado está aberto somente leitura por compatibilidade. O documento compartilhado permanece inalterado.",
+    "localReadOnly": "Este arquivo está aberto somente leitura. Converta-o para Project Canvas para continuar trabalhando; o arquivo original permanece inalterado.",
+    "converting": "Convertendo...",
+    "convert": "Converter para canvas",
+    "created": "{{path}} criado. O projeto original não foi alterado.",
+    "conversionTarget": "Destino da conversão: {{path}}",
+    "loadingPreview": "Carregando prévia do projeto...",
+    "conversionFailed": "Falha na conversão: {{detail}}. O projeto de mockup original não foi modificado.",
+    "errors": {
+      "invalidSourcePath": "Somente arquivos .mockupproject podem ser convertidos.",
+      "suspectConversion": "O canvas convertido não preservou todos os mockups e conexões.",
+      "sourceMissing": "Não foi possível ler o projeto de mockup original. Ele não foi modificado.",
+      "targetExists": "Já existe um canvas em {{path}}. Nenhum dos arquivos foi alterado.",
+      "verificationFailed": "Não foi possível verificar o novo canvas. O projeto de mockup original não foi modificado."
+    }
+  },
+  "imageViewer": {
+    "missing": "O arquivo de imagem não existe mais",
+    "loadFailed": "Falha ao carregar a imagem"
+  },
+  "sharedLink": {
+    "openInBrowser": "Abrir no navegador",
+    "copyLink": "Copiar link"
+  },
+  "collab": {
+    "syncStatus": "Status da sincronização: {{status}}",
+    "copyCurrentDocument": "Copiar documento atual",
+    "discardLocalCopy": "Descartar cópia local",
+    "connecting": "Conectando ao documento...",
+    "loadingFromServer": "Carregando do servidor…",
+    "reuploadNotConfirmed": {
+      "title": "Reenvio não confirmado",
+      "message": "O envio foi feito, mas o servidor não confirmou que o salvou. Verifique sua conexão e tente novamente."
+    },
+    "sharedDocUpdated": {
+      "title": "Documento compartilhado atualizado",
+      "message": "O arquivo local atual foi enviado para o documento compartilhado."
+    },
+    "saveCopyFailed": {
+      "title": "Não foi possível salvar uma cópia",
+      "exporterUnavailable": "O exportador de código colaborativo não está disponível.",
+      "exportFailed": "Não foi possível exportar o arquivo."
+    },
+    "actions": {
+      "saveCopy": "Salvar uma cópia",
+      "openLocal": "Abrir local",
+      "relinkLocalSource": "Revincular fonte local",
+      "linkLocalSource": "Vincular fonte local",
+      "clearLocalSource": "Limpar fonte local"
+    },
+    "documentCopied": {
+      "title": "Documento atual copiado",
+      "message": "O documento atual completo foi copiado para que as edições não enviadas possam ser preservadas."
+    },
+    "copyFailed": "Não foi possível copiar o documento atual",
+    "discardConfirm": {
+      "title": "Descartar cópia local?",
+      "message": "Isso exclui permanentemente a réplica local e as edições não enviadas e depois fecha o documento. Esta ação não pode ser desfeita.",
+      "confirm": "Descartar e fechar",
+      "cancel": "Manter cópia local"
+    },
+    "discardFailed": "Não foi possível descartar a cópia local",
+    "seedNotConfirmed": {
+      "title": "Conteúdo inicial do documento compartilhado não confirmado",
+      "message": "O conteúdo compartilhado inicial não foi confirmado pelo servidor. Reenvie a fonte local antes que a equipe dependa deste documento."
+    },
+    "missingEditor": {
+      "noEditor": "Nenhum editor disponível para o tipo de documento: {{documentType}}",
+      "notInstalled": "{{name}} não está instalado",
+      "cannotOpenShared": "{{name}} não consegue abrir documentos compartilhados",
+      "unrecognizedEditor": "Este documento foi compartilhado a partir de um editor que esta cópia do Nimbalyst não reconhece.",
+      "needsExtension": "Este documento compartilhado precisa dessa extensão para ser aberto.",
+      "updateExtension": "Atualize a extensão para uma versão com suporte a edição colaborativa.",
+      "install": "Instalar {{name}}",
+      "update": "Atualizar {{name}}",
+      "openMarketplace": "Abrir Marketplace de extensões"
+    }
+  },
+  "comments": {
+    "panelLabel": "Comentários do documento",
+    "emptyCanComment": "Nenhum comentário ainda. Adicione um pelo editor para iniciar uma conversa.",
+    "empty": "Nenhum comentário ainda.",
+    "notices": {
+      "noTarget": "Esse comentário não está mais neste documento. Ele pode ter sido excluído.",
+      "orphaned": "O trecho a que este comentário se referia não está mais no documento, então não há para onde ir. A conversa foi mantida.",
+      "unsupported": "Este comentário aponta para algo que este editor não entende, então não pode ser exibido no lugar. A conversa foi mantida.",
+      "unavailable": "Este editor não conseguiu exibir esse comentário."
+    },
+    "refusal": {
+      "resolve": "Não foi possível resolver este comentário",
+      "replyTo": "Não foi possível responder a este comentário",
+      "delete": "Não foi possível excluir este comentário"
+    }
+  }
+}

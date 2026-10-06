@@ -10,6 +10,7 @@ import { useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { extensionMarketplaceInstallRequestAtom } from '../../store/atoms/appCommands';
 import type { CollabEditorAvailability } from './collabEditorAvailability';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 interface MissingCollabEditorNoticeProps {
   availability: Exclude<CollabEditorAvailability, { kind: 'ready' }>;
@@ -59,22 +60,23 @@ export const MissingCollabEditorNotice: React.FC<MissingCollabEditorNoticeProps>
   availability,
   documentType,
 }) => {
+  const { t } = useTranslation('editor');
   const requestMarketplaceInstall = useSetAtom(extensionMarketplaceInstallRequestAtom);
   const { extensionId } = availability;
   const { name, listed } = useMarketplaceExtensionName(extensionId);
 
   const isMissing = availability.kind === 'extension-missing';
   const headline = !extensionId
-    ? `No editor available for document type: ${documentType}`
+    ? t('collab.missingEditor.noEditor', { documentType })
     : isMissing
-      ? `${name} isn't installed`
-      : `${name} can't open shared documents`;
+      ? t('collab.missingEditor.notInstalled', { name })
+      : t('collab.missingEditor.cannotOpenShared', { name });
 
   const detail = !extensionId
-    ? 'This document was shared from an editor this copy of Nimbalyst does not recognize.'
+    ? t('collab.missingEditor.unrecognizedEditor')
     : isMissing
-      ? 'This shared document needs that extension to open.'
-      : 'Update the extension to a version that supports collaborative editing.';
+      ? t('collab.missingEditor.needsExtension')
+      : t('collab.missingEditor.updateExtension');
 
   return (
     <div className="missing-collab-editor-notice flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-nim-muted">
@@ -94,9 +96,9 @@ export const MissingCollabEditorNotice: React.FC<MissingCollabEditorNoticeProps>
         >
           {listed
             ? isMissing
-              ? `Install ${name}`
-              : `Update ${name}`
-            : 'Open Extension Marketplace'}
+              ? t('collab.missingEditor.install', { name })
+              : t('collab.missingEditor.update', { name })
+            : t('collab.missingEditor.openMarketplace')}
         </button>
       )}
     </div>

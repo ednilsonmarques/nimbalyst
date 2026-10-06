@@ -892,7 +892,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                               >
                                 {type.icon}
                               </span>
-                              <span>{type.displayName}</span>
+                              <span>{t(`editor:header.trackerType.${type.type}`, { defaultValue: type.displayName })}</span>
                               {currentDocumentType === type.type && (
                                 <span className="dropdown-checkmark ml-auto text-sm text-[var(--nim-primary)]">&#10003;</span>
                               )}
@@ -984,7 +984,7 @@ export const UnifiedEditorHeaderBar: React.FC<UnifiedEditorHeaderBarProps> = ({
                 <>
                   <div className="dropdown-divider h-px my-1 bg-[var(--nim-border)]" />
                   <div className="dropdown-section-label pt-1.5 pb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--nim-text-faint)]">
-                    {extensionId || 'Extension'}
+                    {extensionId || t('editor:header.extensionFallback')}
                   </div>
                   {extensionMenuItems.map((item, index) => (
                     <button

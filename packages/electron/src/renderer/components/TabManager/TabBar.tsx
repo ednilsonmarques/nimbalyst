@@ -784,8 +784,8 @@ export const TabBar: React.FC<TabBarProps> = ({
               className="ai-chat-toggle-button flex items-center justify-center w-7 h-7 border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)] text-[var(--nim-primary)] cursor-pointer rounded p-0 transition-all duration-200 hover:bg-[var(--nim-bg-tertiary)] hover:scale-105 active:scale-95"
               data-testid="ai-sidebar-toggle"
               onClick={onToggleAIChat}
-              title={`${isAIChatCollapsed ? 'Open' : 'Close'} AI Assistant (${getShortcutDisplay(KeyboardShortcuts.view.toggleAIChat)})`}
-              aria-label={isAIChatCollapsed ? "Open AI Assistant" : "Close AI Assistant"}
+              title={t(isAIChatCollapsed ? 'editor:tabBar.openAiAssistantTooltip' : 'editor:tabBar.closeAiAssistantTooltip', { shortcut: getShortcutDisplay(KeyboardShortcuts.view.toggleAIChat) })}
+              aria-label={isAIChatCollapsed ? t('editor:tabBar.openAiAssistant') : t('editor:tabBar.closeAiAssistant')}
             >
               <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M10 2L11.5 7.5L17 9L11.5 10.5L10 16L8.5 10.5L3 9L8.5 7.5L10 2Z" fill="currentColor"/>
