@@ -13,6 +13,8 @@
 import type { JSX } from 'react';
 import { useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { t as translate } from '@nimbalyst/runtime/i18n';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { getGithubIssueService } from '../../../../services/RendererGithubIssueService';
 import type { GithubIssueRow } from '../../../../services/RendererGithubIssueService';
 import { PullRequestActionError } from '../../PullRequestActionError';
@@ -35,14 +37,23 @@ function divergenceLines(copy: IssueDivergentCopy, issue: GithubIssueRow): strin
   if (state) {
     lines.push(
       state.upstream === 'closed'
-        ? 'Closed on GitHub, still open locally'
-        : 'Reopened on GitHub, already closed locally',
+        ? translate('pullRequest:issues.reconcile.closedUpstream')
+        : translate('pullRequest:issues.reconcile.reopenedUpstream'),
     );
   }
-  if (title) lines.push(`Title is now "${issue.title}" (imported as "${title.snapshot}")`);
-  if (upstreamBodyChanged) lines.push('The issue body changed after the last snapshot');
+  if (title) {
+    lines.push(
+      translate('pullRequest:issues.reconcile.titleChanged', {
+        title: issue.title,
+        snapshot: title.snapshot,
+      }),
+    );
+  }
+  if (upstreamBodyChanged) lines.push(translate('pullRequest:issues.reconcile.bodyChanged'));
   if (addedUpstreamLabels.length > 0) {
-    lines.push(`Labels added upstream: ${addedUpstreamLabels.join(', ')}`);
+    lines.push(
+      translate('pullRequest:issues.reconcile.labelsAdded', { labels: addedUpstreamLabels.join(', ') }),
+    );
   }
   return lines;
 }
@@ -58,6 +69,7 @@ function CopyRow({
   copy: IssueDivergentCopy;
   label: string;
 }): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [applied, setApplied] = useState<string | null>(null);
@@ -79,13 +91,13 @@ function CopyRow({
     run(async () => {
       const result = await getGithubIssueService().resnapshot(workspaceId, copy.urn);
       const changed = [
-        result.titleUpdated ? 'title' : null,
-        result.statusUpdated ? 'status' : null,
-        result.bodyChanged ? 'body (needs review)' : null,
+        result.titleUpdated ? t('issues.reconcile.changedTitle') : null,
+        result.statusUpdated ? t('issues.reconcile.changedStatus') : null,
+        result.bodyChanged ? t('issues.reconcile.changedBody') : null,
       ].filter(Boolean);
       return changed.length > 0
-        ? `Re-snapshotted: ${changed.join(', ')}`
-        : 'Re-snapshotted; labels and snapshots are current';
+        ? t('issues.reconcile.resnapshotted', { changes: changed.join(', ') })
+        : t('issues.reconcile.resnapshottedCurrent');
     });
 
   const bodyAction = (action: 'applyBody' | 'dismissBody') =>
@@ -94,7 +106,9 @@ function CopyRow({
         workspacePath: workspaceId,
         urn: copy.urn,
       });
-      return action === 'applyBody' ? 'Local body replaced with the upstream one' : 'Body change dismissed';
+      return action === 'applyBody'
+        ? t('issues.reconcile.bodyApplied')
+        : t('issues.reconcile.bodyDismissed');
     });
 
   return (
@@ -107,10 +121,10 @@ function CopyRow({
           data-testid="issue-resnapshot"
           onClick={() => void resnapshot()}
           className="ml-auto inline-flex items-center gap-1 rounded border border-nim px-2 py-0.5 text-[11px] text-nim-muted hover:text-nim transition-colors disabled:opacity-60"
-          title="Pull the current upstream title, state and labels into the local item"
+          title={t('issues.reconcile.resnapshotTitle')}
         >
           <MaterialSymbol icon="sync" size={13} />
-          Re-snapshot
+          {t('issues.reconcile.resnapshot')}
         </button>
       </div>
 
@@ -130,8 +144,7 @@ function CopyRow({
         >
           <MaterialSymbol icon="sync_problem" size={13} className="text-nim-warning" />
           <span className="flex-1 min-w-[180px]">
-            The source body changed upstream. Update to overwrite the local body, or dismiss to keep
-            yours.
+            {t('issues.reconcile.bodyBanner')}
           </span>
           <button
             type="button"
@@ -140,7 +153,7 @@ function CopyRow({
             onClick={() => void bodyAction('applyBody')}
             className="rounded bg-nim-primary px-2 py-0.5 text-nim-on-primary hover:bg-nim-primary-hover disabled:opacity-60"
           >
-            Update body
+            {t('issues.reconcile.updateBody')}
           </button>
           <button
             type="button"
@@ -148,7 +161,7 @@ function CopyRow({
             onClick={() => void bodyAction('dismissBody')}
             className="rounded border border-nim px-2 py-0.5 text-nim-muted hover:text-nim disabled:opacity-60"
           >
-            Dismiss
+            {t('issues.reconcile.discard')}
           </button>
         </div>
       )}
@@ -165,12 +178,13 @@ export function IssueReconcileSection({
   divergentCopies,
   labelForItem,
 }: IssueReconcileSectionProps): JSX.Element | null {
+  const { t } = useTranslation('pullRequest');
   if (divergentCopies.length === 0) return null;
 
   return (
     <IssueLocalSection
-      heading="Upstream changes"
-      note="GitHub is authoritative"
+      heading={t('issues.reconcile.heading')}
+      note={t('issues.reconcile.authoritative')}
       testId="issue-reconcile"
     >
       <div className="space-y-3">

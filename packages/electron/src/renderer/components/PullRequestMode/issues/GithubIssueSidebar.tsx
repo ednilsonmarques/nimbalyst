@@ -17,6 +17,7 @@
 import type { JSX } from 'react';
 import { useMemo } from 'react';
 import { useAtomValue } from 'jotai';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { getStatusOptions } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
 import { githubIssueListAtom } from '../../../store/atoms/githubIssues';
 import { GithubFilterChips } from '../GithubFilterChips';
@@ -41,18 +42,18 @@ interface GithubIssueSidebarProps {
   onToggleAttentionFilter: (chip: IssueAttentionChip) => void;
 }
 
-const FILTER_CHIPS: { id: IssueFilterChip; label: string; icon: string }[] = [
-  { id: 'open', label: 'Open', icon: 'adjust' },
-  { id: 'closed', label: 'Closed', icon: 'check_circle' },
-  { id: 'assigned-to-me', label: 'Assigned to me', icon: 'assignment_ind' },
-  { id: 'authored-by-me', label: 'Authored by me', icon: 'person' },
-  { id: 'unlabeled', label: 'Unlabeled', icon: 'label_off' },
-  { id: 'has-linked-pr', label: 'Has linked PR', icon: 'merge' },
+const FILTER_CHIPS: { id: IssueFilterChip; labelKey: string; icon: string }[] = [
+  { id: 'open', labelKey: 'issues.filters.open', icon: 'adjust' },
+  { id: 'closed', labelKey: 'issues.filters.closed', icon: 'check_circle' },
+  { id: 'assigned-to-me', labelKey: 'issues.filters.assignedToMe', icon: 'assignment_ind' },
+  { id: 'authored-by-me', labelKey: 'issues.filters.authoredByMe', icon: 'person' },
+  { id: 'unlabeled', labelKey: 'issues.filters.unlabeled', icon: 'label_off' },
+  { id: 'has-linked-pr', labelKey: 'issues.filters.hasLinkedPr', icon: 'merge' },
 ];
 
-const ATTENTION_CHIPS: { id: IssueAttentionChip; label: string; icon: string }[] = [
-  { id: 'diverged', label: 'Diverged', icon: 'sync_problem' },
-  { id: 'stale', label: `Untriaged ${STALE_UNTRIAGED_DAYS}d+`, icon: 'hourglass_empty' },
+const ATTENTION_CHIPS: { id: IssueAttentionChip; labelKey: string; icon: string }[] = [
+  { id: 'diverged', labelKey: 'issues.filters.diverged', icon: 'sync_problem' },
+  { id: 'stale', labelKey: 'issues.filters.stale', icon: 'hourglass_empty' },
 ];
 
 export function GithubIssueSidebar({
@@ -65,6 +66,11 @@ export function GithubIssueSidebar({
   activeAttentionFilters,
   onToggleAttentionFilter,
 }: GithubIssueSidebarProps): JSX.Element {
+  const { t } = useTranslation('pullRequest');
+  const filterChips = useMemo(
+    () => FILTER_CHIPS.map(({ labelKey, ...chip }) => ({ ...chip, label: t(labelKey) })),
+    [t],
+  );
   const issues = useAtomValue(githubIssueListAtom);
   const references = useIssueTrackerReferences(remote);
 
@@ -87,8 +93,12 @@ export function GithubIssueSidebar({
     for (const chips of attentionByIssue.values()) {
       for (const chip of chips) counts.set(chip, (counts.get(chip) ?? 0) + 1);
     }
-    return ATTENTION_CHIPS.map((chip) => ({ ...chip, count: counts.get(chip.id) }));
-  }, [attentionByIssue]);
+    return ATTENTION_CHIPS.map(({ labelKey, ...chip }) => ({
+      ...chip,
+      label: t(labelKey, { days: STALE_UNTRIAGED_DAYS }),
+      count: counts.get(chip.id),
+    }));
+  }, [attentionByIssue, t]);
 
   const hasAttention =
     activeAttentionFilters.length > 0 || attentionChips.some((chip) => chip.count);
@@ -100,7 +110,7 @@ export function GithubIssueSidebar({
     >
       <div className="px-3 py-2 border-b border-nim">
         <div className="text-[11px] font-semibold text-nim-muted uppercase tracking-wider">
-          Issues
+          {t('list.issues')}
         </div>
         {remote && (
           <div className="text-[11px] text-nim-faint truncate mt-0.5" title={remote}>
@@ -110,8 +120,8 @@ export function GithubIssueSidebar({
       </div>
 
       <GithubFilterChips
-        heading="Upstream"
-        chips={FILTER_CHIPS}
+        heading={t('issues.filters.upstream')}
+        chips={filterChips}
         activeIds={activeFilters}
         onToggle={onToggleFilter}
         testIdPrefix="issue-filter"
@@ -119,7 +129,7 @@ export function GithubIssueSidebar({
 
       {hasLocalState && (
         <GithubFilterChips
-          heading="Local"
+          heading={t('issues.filters.local')}
           chips={localStatusChips.map((chip) => ({
             ...chip,
             id: chip.value,
@@ -134,7 +144,7 @@ export function GithubIssueSidebar({
 
       {hasAttention && (
         <GithubFilterChips
-          heading="Needs attention"
+          heading={t('issues.filters.needsAttention')}
           chips={attentionChips}
           activeIds={activeAttentionFilters}
           onToggle={onToggleAttentionFilter}

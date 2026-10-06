@@ -21,6 +21,7 @@ import {
   useState,
 } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { ResizablePanel } from '../AgenticCoding/ResizablePanel';
 import { ChatSidebar, type ChatSidebarRef } from '../ChatSidebar';
 import type { SerializableDocumentContext } from '../../hooks/useDocumentContext';
@@ -81,6 +82,7 @@ export const GithubPanelShell = forwardRef<GithubPanelChatHandle, GithubPanelShe
     selectionSessions,
     onPanelStateChange,
   }, ref): JSX.Element {
+    const { t } = useTranslation('pullRequest');
     const layout = useAtomValue(prModeLayoutAtom);
     const setLayout = useSetAtom(setPrModeLayoutAtom);
     const chatSidebarRef = useRef<ChatSidebarRef>(null);
@@ -193,7 +195,7 @@ export const GithubPanelShell = forwardRef<GithubPanelChatHandle, GithubPanelShe
           sessionId={chatSelection?.key === selectionScope ? chatSelection.id : null}
           onSessionIdChange={handleSessionIdChange}
           autoInitializeSession={false}
-          emptyState={<p>No related AI session</p>}
+          emptyState={<p>{t('shell.noRelatedSession')}</p>}
           isActive={isActive}
           isCollapsed={layout.chatCollapsed}
           onToggleCollapse={toggleChatCollapsed}

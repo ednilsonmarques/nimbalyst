@@ -1,1 +1,367 @@
-{}
+{
+  "onboarding": {
+    "cliRequired": "GitHub CLI is required",
+    "cliRequiredDetail": "PR review uses your <code>gh</code> CLI for all GitHub access. Nimbalyst stores no tokens.",
+    "signIn": "Sign in to GitHub",
+    "run": "Run",
+    "runSuffix": "in your terminal. Nimbalyst will pick up your session automatically.",
+    "installGh": "Install gh",
+    "checking": "Checking…",
+    "recheck": "Recheck"
+  },
+  "common": {
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyCommand": "Copy command",
+    "dismiss": "Dismiss",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "clearFilters": "Clear filters",
+    "loading": "Loading…",
+    "openOnGithub": "Open on GitHub",
+    "noDescription": "No description provided.",
+    "noCommentsYet": "No comments yet.",
+    "commented": "commented",
+    "searchItemsPlaceholder": "Search items by title or key",
+    "noMatchingItems": "No matching items",
+    "linkTrackerItem": "Link tracker item"
+  },
+  "list": {
+    "ariaLabel": "GitHub list",
+    "pullRequests": "Pull Requests",
+    "issues": "Issues"
+  },
+  "sort": {
+    "updated": "Last activity",
+    "created": "Created",
+    "number": "Number"
+  },
+  "time": {
+    "justNow": "just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago",
+    "monthsAgo_zero": "{{count}}mo ago",
+    "monthsAgo_one": "{{count}}mo ago",
+    "monthsAgo_other": "{{count}}mo ago",
+    "yearsAgo_zero": "{{count}}y ago",
+    "yearsAgo_one": "{{count}}y ago",
+    "yearsAgo_other": "{{count}}y ago"
+  },
+  "shell": {
+    "noRelatedSession": "No related AI session",
+    "noRemote": "No GitHub remote detected for {{workspaceName}}."
+  },
+  "trackerBadge": {
+    "priorityCritical": "critical priority",
+    "priorityHigh": "high priority"
+  },
+  "diff": {
+    "unableToRender": "Unable to render diff: {{error}}",
+    "parseFailed": "Failed to parse diff",
+    "noTextualChanges": "No textual changes to display for this file."
+  },
+  "trackerStrip": {
+    "changeStatus": "Change review status",
+    "moreSessions_zero": "{{count}} more linked sessions",
+    "moreSessions_one": "{{count}} more linked session",
+    "moreSessions_other": "{{count}} more linked sessions",
+    "linkTitle": "Link a tracker item to this PR",
+    "staleTitle": "This PR is merged but {{item}} is still {{status}} — click to set {{target}}",
+    "theTrackerItem": "the tracker item",
+    "staleLabel": "PR merged — set {{target}}?",
+    "openInTracker": "Open {{key}} in tracker"
+  },
+  "actions": {
+    "method": {
+      "squash": "Squash and merge",
+      "merge": "Create a merge commit",
+      "rebase": "Rebase and merge"
+    },
+    "approved": "Approved",
+    "approveFailed": "Approve failed",
+    "mergedWith": "Merged ({{method}})",
+    "mergeRequested": "Merge requested",
+    "mergeFailed": "Merge failed",
+    "merged": "Merged",
+    "resolveConflicts": "Resolve conflicts before merging",
+    "branchProtection": "Branch protection may block this merge",
+    "mergeInto": "Merge #{{number}} into {{base}}",
+    "approveTitle": "Approve #{{number}}",
+    "approve": "Approve",
+    "moreMergeOptions": "More merge options",
+    "editCommitMessageEllipsis": "Edit commit message…",
+    "editCommitMessage": "Edit commit message",
+    "commitTitle": "Commit title",
+    "commitMessageOptional": "Commit message (optional)",
+    "confirmMergeInto": "{{method}} into <branch>{{base}}</branch>?"
+  },
+  "detail": {
+    "tabs": {
+      "conversation": "Conversation",
+      "files": "Files Changed",
+      "commits": "Commits",
+      "checks": "Checks"
+    },
+    "reviewWithAiTitle": "Review #{{number}} with AI",
+    "reviewWithAi": "Review with AI",
+    "openInWorktreeTitle": "Create a worktree on this PR's branch",
+    "openInWorktree": "Open in Worktree"
+  },
+  "prState": {
+    "draft": "Draft",
+    "merged": "Merged",
+    "closed": "Closed"
+  },
+  "prRow": {
+    "hasSessions": "Has linked review sessions"
+  },
+  "prFilters": {
+    "heading": "Filters",
+    "reviewStatus": "Review Status",
+    "open": "Open",
+    "closed": "Closed",
+    "awaitingReview": "Awaiting my review",
+    "createdByMe": "Created by me",
+    "withConflicts": "With conflicts",
+    "draft": "Draft"
+  },
+  "prList": {
+    "failedToLoad": "Failed to load pull requests",
+    "searchPlaceholder": "Search by title or number",
+    "loading": "Loading pull requests…",
+    "noMatch": "No pull requests match these filters",
+    "empty": "No pull requests"
+  },
+  "prEmpty": {
+    "title": "Select a pull request",
+    "body": "Pick a PR from the left to review its conversation, files, commits, and checks."
+  },
+  "checks": {
+    "group": {
+      "failure": "Failing",
+      "pending": "In progress",
+      "success": "Passing",
+      "other": "Other"
+    },
+    "failedToLoad": "Failed to load checks",
+    "loading": "Loading checks…",
+    "empty": "No checks reported.",
+    "details": "Details"
+  },
+  "commits": {
+    "failedToLoad": "Failed to load commits",
+    "loading": "Loading commits…",
+    "empty": "No commits.",
+    "copySha": "Copy SHA"
+  },
+  "conversation": {
+    "failedToLoad": "Failed to load conversation",
+    "postFailed": "Failed to post comment",
+    "description": "Description",
+    "openedThisPr": "opened this pull request",
+    "reviewThreads": "Review threads",
+    "openThreads_zero": "{{count}} open",
+    "openThreads_one": "{{count}} open",
+    "openThreads_other": "{{count}} open",
+    "allResolved": "all resolved",
+    "firstPageOnly": "Showing the first page of review threads.",
+    "addComment": "Add comment",
+    "commentPlaceholder": "Leave a comment on this pull request",
+    "comment": "Comment",
+    "loading": "Loading conversation…",
+    "reviewed": "reviewed",
+    "reviewedWithState": "reviewed ({{state}})",
+    "reviewState": {
+      "approved": "approved",
+      "changes_requested": "changes_requested",
+      "commented": "commented",
+      "dismissed": "dismissed",
+      "pending": "pending"
+    },
+    "general": "general",
+    "outdated": "outdated",
+    "resolved": "Resolved",
+    "open": "Open"
+  },
+  "files": {
+    "failedToLoad": "Failed to load files",
+    "failedToLoadContents": "Failed to load file contents",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all",
+    "noChangedFiles": "No changed files.",
+    "diffView": "Diff View",
+    "scrollAll": "Scroll through all changed files",
+    "selectFile": "Select a file to view its diff",
+    "selectFileSentence": "Select a file to view its diff.",
+    "unified": "Unified",
+    "split": "Split",
+    "fullFiles": "Full files",
+    "collapsedDiff": "Collapsed diff",
+    "binary": "Binary file — no text diff available.",
+    "loadingDiff": "Loading diff…",
+    "renamedFrom": "renamed from {{path}}",
+    "loadDiff": "Load Diff",
+    "largeDiff": "Large diffs are not rendered by default.",
+    "noPatch": "No patch preview available for this file.",
+    "rowTitle": "{{path}} ({{status}})",
+    "status": {
+      "added": "added",
+      "removed": "removed",
+      "modified": "modified",
+      "renamed": "renamed"
+    }
+  },
+  "issues": {
+    "tabs": {
+      "activity": "Activity",
+      "local": "Local"
+    },
+    "state": {
+      "open": "open",
+      "closed": "closed",
+      "closedNotPlanned": "closed as not planned"
+    },
+    "detail": {
+      "failedToLoad": "Failed to load this issue",
+      "opened": "opened {{time}}",
+      "updated": "· updated {{time}}",
+      "assignees": "Assignees",
+      "investigateTitle": "Investigate #{{number}} with AI",
+      "investigate": "Investigate",
+      "cachedCopyError": "Showing the cached copy of #{{number}} — loading it from GitHub failed: {{error}}"
+    },
+    "row": {
+      "open": "Open",
+      "closed": "Closed",
+      "notPlanned": "Not planned",
+      "openedTitle": "Opened {{time}}",
+      "diverged": "A local copy of this issue has drifted from upstream",
+      "hasSessions": "Has linked sessions",
+      "comments_zero": "{{count}} comments",
+      "comments_one": "{{count}} comments",
+      "comments_other": "{{count}} comments"
+    },
+    "filters": {
+      "upstream": "Upstream",
+      "local": "Local",
+      "needsAttention": "Needs attention",
+      "open": "Open",
+      "closed": "Closed",
+      "assignedToMe": "Assigned to me",
+      "authoredByMe": "Authored by me",
+      "unlabeled": "Unlabeled",
+      "hasLinkedPr": "Has linked PR",
+      "diverged": "Diverged",
+      "stale": "Untriaged {{days}}d+"
+    },
+    "list": {
+      "failedToLoad": "Failed to load issues",
+      "failedToRefresh": "Failed to refresh issues",
+      "searchPlaceholder": "Search by title, number, or label",
+      "loading": "Loading issues…",
+      "noMatch": "No issues match these filters",
+      "empty": "No issues"
+    },
+    "empty": {
+      "title": "Select an issue",
+      "body": "Pick an issue from the left to read its conversation and activity, or hand it to an agent."
+    },
+    "activity": {
+      "failedToLoad": "Failed to load activity",
+      "loading": "Loading activity…",
+      "empty": "No activity recorded yet.",
+      "events": {
+        "labeled": "labeled",
+        "unlabeled": "unlabeled",
+        "assigned": "assigned",
+        "unassigned": "unassigned",
+        "closed": "closed",
+        "reopened": "reopened",
+        "renamed": "renamed",
+        "milestoned": "milestoned",
+        "demilestoned": "demilestoned",
+        "referenced": "referenced",
+        "cross-referenced": "cross referenced",
+        "locked": "locked",
+        "unlocked": "unlocked",
+        "commented": "commented"
+      }
+    },
+    "conversation": {
+      "failedToLoad": "Failed to load comments",
+      "openedThisIssue": "opened this issue",
+      "loading": "Loading comments…",
+      "association": {
+        "owner": "owner",
+        "member": "member",
+        "collaborator": "collaborator",
+        "contributor": "contributor",
+        "first_time_contributor": "first_time_contributor",
+        "first_timer": "first_timer",
+        "mannequin": "mannequin"
+      }
+    },
+    "local": {
+      "adoptedLocked": "Adopted — the adopted tracker item carries the status from here",
+      "currently": "Currently {{label}}",
+      "set": "Set {{label}}",
+      "notSet": "Not set",
+      "notesPlaceholder": "What did we find? Kept local, never written to GitHub.",
+      "couldNotLink": "Could not link this item.",
+      "linkTitle": "Link an existing tracker item to this issue",
+      "investigationStatus": "Investigation status",
+      "localOnlyNote": "local only · never written to GitHub",
+      "noLocalState": "No local state for this issue. Picking a status creates one — nothing is copied from GitHub, so there is nothing that can fall out of sync.",
+      "adoptedNote": "Adopted, and escalation is one-way — the ladder is settled here. The adopted tracker item below carries the status from now on.",
+      "triageNotes": "Triage notes",
+      "updatedNote": "{{key}} · updated {{time}}",
+      "priority": "Priority",
+      "repository": "Repository",
+      "linkedSessions": "Linked sessions",
+      "noSessions": "None yet. Investigate starts one and links it here.",
+      "linkedPrs": "Linked pull requests",
+      "noPrs": "No pull request references this issue.",
+      "openPr": "Open pull request #{{number}}",
+      "linkedItems": "Linked tracker items",
+      "openInTracker": "Open {{key}} in the tracker",
+      "onlyOverlay": "Only the local overlay so far. Linking an existing item lists it here; an adopted item is shown above instead, since it points at the issue through its import provenance rather than a link."
+    },
+    "adoption": {
+      "description": "Adopting copies this issue's title, body and labels into a real tracker item that joins the normal workflow. It is the only local copy of GitHub content, so keep it for work we are actually going to do — triage state above needs no copy. This cannot be undone from here.",
+      "adoptAs": "Adopt as {{type}}",
+      "adopting": "Adopting…",
+      "adopt": "Adopt",
+      "confirmQuestion": "Adopt #{{number}} as a {{type}}?",
+      "confirmDetail": "A tracker item is created with a copy of the issue body, and this issue is marked adopted. Escalation is one-way.",
+      "adopted": "Adopted",
+      "adoptIntoTracker": "Adopt into the tracker",
+      "oneWay": "one-way",
+      "openAdopted": "Open the adopted item in the tracker",
+      "trackedLocally": "This issue is tracked locally as a real item. GitHub still owns the issue itself; the local copy is refreshed only when you re-snapshot it."
+    },
+    "reconcile": {
+      "heading": "Upstream changes",
+      "authoritative": "GitHub is authoritative",
+      "closedUpstream": "Closed on GitHub, still open locally",
+      "reopenedUpstream": "Reopened on GitHub, already closed locally",
+      "titleChanged": "Title is now \"{{title}}\" (imported as \"{{snapshot}}\")",
+      "bodyChanged": "The issue body changed after the last snapshot",
+      "labelsAdded": "Labels added upstream: {{labels}}",
+      "changedTitle": "title",
+      "changedStatus": "status",
+      "changedBody": "body (needs review)",
+      "resnapshotted": "Re-snapshotted: {{changes}}",
+      "resnapshottedCurrent": "Re-snapshotted; labels and snapshots are current",
+      "bodyApplied": "Local body replaced with the upstream one",
+      "bodyDismissed": "Body change dismissed",
+      "resnapshotTitle": "Pull the current upstream title, state and labels into the local item",
+      "resnapshot": "Re-snapshot",
+      "bodyBanner": "The source body changed upstream. Update to overwrite the local body, or dismiss to keep yours.",
+      "updateBody": "Update body",
+      "discard": "Dismiss"
+    }
+  }
+}

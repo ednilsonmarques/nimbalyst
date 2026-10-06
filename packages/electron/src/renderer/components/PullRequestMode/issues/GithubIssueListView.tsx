@@ -11,6 +11,8 @@ import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
   githubIssueListAtom,
   githubIssueListErrorAtom,
@@ -55,10 +57,10 @@ interface GithubIssueListViewProps {
   linkedPrsByIssue: ReadonlyMap<number, ReadonlyArray<number>>;
 }
 
-const SORT_OPTIONS: GithubListSortOption<PrSortKey>[] = [
-  { id: 'updated', label: 'Last activity' },
-  { id: 'created', label: 'Created' },
-  { id: 'number', label: 'Number' },
+const SORT_OPTION_KEYS: GithubListSortOption<PrSortKey>[] = [
+  { id: 'updated', label: 'sort.updated' },
+  { id: 'created', label: 'sort.created' },
+  { id: 'number', label: 'sort.number' },
 ];
 
 export function GithubIssueListView({
@@ -72,6 +74,11 @@ export function GithubIssueListView({
   onClearFilters,
   linkedPrsByIssue,
 }: GithubIssueListViewProps): JSX.Element {
+  const { t } = useTranslation('pullRequest');
+  const sortOptions = useMemo(
+    () => SORT_OPTION_KEYS.map((option) => ({ ...option, label: t(option.label) })),
+    [t],
+  );
   const layout = useAtomValue(prModeLayoutAtom);
   const setLayout = useSetAtom(setPrModeLayoutAtom);
   const ghStatus = useAtomValue(ghCliStatusAtom);
@@ -111,7 +118,7 @@ export function GithubIssueListView({
     try {
       setIssues(await getGithubIssueService().list(workspaceId, remote, { state: stateParam }));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load issues');
+      setError(err instanceof Error ? err.message : translate('pullRequest:issues.list.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -133,7 +140,7 @@ export function GithubIssueListView({
     void getGithubIssueService()
       .refresh(workspaceId, remote, { state: stateParam })
       .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : 'Failed to refresh issues'),
+        setError(err instanceof Error ? err.message : translate('pullRequest:issues.list.failedToRefresh')),
       )
       .finally(() => {
         void runFetch();
@@ -184,8 +191,8 @@ export function GithubIssueListView({
       <GithubListToolbar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search by title, number, or label"
-        sortOptions={SORT_OPTIONS}
+        searchPlaceholder={t('issues.list.searchPlaceholder')}
+        sortOptions={sortOptions}
         sortKey={sortKey}
         onSortChange={(key) => setLayout({ sortKey: key })}
         onRefresh={handleRefresh}
@@ -202,19 +209,19 @@ export function GithubIssueListView({
               className="mt-1 text-xs text-nim-link hover:text-nim-link-hover hover:underline"
               onClick={() => void runFetch()}
             >
-              Retry
+              {t('common.retry')}
             </button>
           </div>
         ) : loading && issues.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-10 text-nim-muted text-sm">
             <div className="spinner w-5 h-5 border-[3px] border-nim-secondary border-t-nim-primary rounded-full animate-spin" />
-            Loading issues…
+            {t('issues.list.loading')}
           </div>
         ) : visibleRows.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-[60px] px-5 text-nim-faint gap-2">
             <MaterialSymbol icon="inbox" size={40} className="opacity-50" />
             <span className="text-sm text-center">
-              {hasActiveNarrowing ? 'No issues match these filters' : 'No issues'}
+              {hasActiveNarrowing ? t('issues.list.noMatch') : t('issues.list.empty')}
             </span>
             {hasActiveNarrowing && (
               <button
@@ -224,7 +231,7 @@ export function GithubIssueListView({
                   onClearFilters();
                 }}
               >
-                Clear filters
+                {t('common.clearFilters')}
               </button>
             )}
           </div>

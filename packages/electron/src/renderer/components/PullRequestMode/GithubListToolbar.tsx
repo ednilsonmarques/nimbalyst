@@ -6,6 +6,7 @@
 
 import type { JSX } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { FloatingPortal, useFloatingMenu } from '../../hooks/useFloatingMenu';
 
 export interface GithubListSortOption<TKey extends string> {
@@ -37,6 +38,7 @@ export function GithubListToolbar<TKey extends string>({
   loading,
   testIdPrefix,
 }: GithubListToolbarProps<TKey>): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const sortMenu = useFloatingMenu({ placement: 'bottom-end' });
   const activeSortLabel = sortOptions.find((o) => o.id === sortKey)?.label ?? sortOptions[0]?.label;
 
@@ -101,7 +103,7 @@ export function GithubListToolbar<TKey extends string>({
         onClick={onRefresh}
         disabled={loading}
         className="flex items-center justify-center w-8 h-8 text-nim-muted hover:text-nim border border-nim rounded transition-colors shrink-0 disabled:opacity-50"
-        title="Refresh"
+        title={t('common.refresh')}
         data-testid={`${testIdPrefix}-refresh-button`}
       >
         <MaterialSymbol icon="refresh" size={16} className={loading ? 'animate-spin' : ''} />

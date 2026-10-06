@@ -3,6 +3,7 @@
  */
 
 import type { EditorContextItem } from '@nimbalyst/runtime';
+import { t } from '@nimbalyst/runtime/i18n';
 import type { PullRequestRow } from '../../services/RendererPullRequestService';
 
 /** Compact relative time ("just now", "5m ago", "3d ago", "2mo ago", "1y ago"). */
@@ -10,16 +11,16 @@ export function formatRelative(ms: number): string {
   if (!ms) return '';
   const diff = Date.now() - ms;
   const sec = Math.floor(diff / 1000);
-  if (sec < 60) return 'just now';
+  if (sec < 60) return t('pullRequest:time.justNow');
   const min = Math.floor(sec / 60);
-  if (min < 60) return `${min}m ago`;
+  if (min < 60) return t('pullRequest:time.minutesAgo', { count: min });
   const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h ago`;
+  if (hr < 24) return t('pullRequest:time.hoursAgo', { count: hr });
   const day = Math.floor(hr / 24);
-  if (day < 30) return `${day}d ago`;
+  if (day < 30) return t('pullRequest:time.daysAgo', { count: day });
   const mon = Math.floor(day / 30);
-  if (mon < 12) return `${mon}mo ago`;
-  return `${Math.floor(mon / 12)}y ago`;
+  if (mon < 12) return t('pullRequest:time.monthsAgo', { count: mon });
+  return t('pullRequest:time.yearsAgo', { count: Math.floor(mon / 12) });
 }
 
 /**

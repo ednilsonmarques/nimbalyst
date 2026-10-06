@@ -1,1 +1,367 @@
-{}
+{
+  "onboarding": {
+    "cliRequired": "O GitHub CLI é necessário",
+    "cliRequiredDetail": "A revisão de PR usa o seu CLI <code>gh</code> para todo o acesso ao GitHub. O Nimbalyst não armazena tokens.",
+    "signIn": "Entrar no GitHub",
+    "run": "Execute",
+    "runSuffix": "no seu terminal. O Nimbalyst detectará sua sessão automaticamente.",
+    "installGh": "Instalar gh",
+    "checking": "Verificando…",
+    "recheck": "Verificar novamente"
+  },
+  "common": {
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "copyCommand": "Copiar comando",
+    "dismiss": "Dispensar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "refresh": "Atualizar",
+    "retry": "Tentar novamente",
+    "clearFilters": "Limpar filtros",
+    "loading": "Carregando…",
+    "openOnGithub": "Abrir no GitHub",
+    "noDescription": "Nenhuma descrição fornecida.",
+    "noCommentsYet": "Nenhum comentário ainda.",
+    "commented": "comentou",
+    "searchItemsPlaceholder": "Buscar itens por título ou chave",
+    "noMatchingItems": "Nenhum item correspondente",
+    "linkTrackerItem": "Vincular item do rastreador"
+  },
+  "list": {
+    "ariaLabel": "Lista do GitHub",
+    "pullRequests": "Pull requests",
+    "issues": "Issues"
+  },
+  "sort": {
+    "updated": "Última atividade",
+    "created": "Criação",
+    "number": "Número"
+  },
+  "time": {
+    "justNow": "agora",
+    "minutesAgo": "há {{count}} min",
+    "hoursAgo": "há {{count}} h",
+    "daysAgo": "há {{count}} d",
+    "monthsAgo_zero": "há {{count}} meses",
+    "monthsAgo_one": "há {{count}} mês",
+    "monthsAgo_other": "há {{count}} meses",
+    "yearsAgo_zero": "há {{count}} anos",
+    "yearsAgo_one": "há {{count}} ano",
+    "yearsAgo_other": "há {{count}} anos"
+  },
+  "shell": {
+    "noRelatedSession": "Nenhuma sessão de IA relacionada",
+    "noRemote": "Nenhum remote do GitHub detectado para {{workspaceName}}."
+  },
+  "trackerBadge": {
+    "priorityCritical": "prioridade crítica",
+    "priorityHigh": "prioridade alta"
+  },
+  "diff": {
+    "unableToRender": "Não foi possível renderizar o diff: {{error}}",
+    "parseFailed": "Falha ao analisar o diff",
+    "noTextualChanges": "Nenhuma alteração textual para exibir neste arquivo."
+  },
+  "trackerStrip": {
+    "changeStatus": "Alterar status da revisão",
+    "moreSessions_zero": "mais {{count}} sessões vinculadas",
+    "moreSessions_one": "mais {{count}} sessão vinculada",
+    "moreSessions_other": "mais {{count}} sessões vinculadas",
+    "linkTitle": "Vincular um item do rastreador a este PR",
+    "staleTitle": "Este PR foi mesclado, mas {{item}} ainda está em {{status}} — clique para definir {{target}}",
+    "theTrackerItem": "o item do rastreador",
+    "staleLabel": "PR mesclado — definir {{target}}?",
+    "openInTracker": "Abrir {{key}} no rastreador"
+  },
+  "actions": {
+    "method": {
+      "squash": "Squash e mesclar",
+      "merge": "Criar um commit de merge",
+      "rebase": "Rebase e mesclar"
+    },
+    "approved": "Aprovado",
+    "approveFailed": "Falha ao aprovar",
+    "mergedWith": "Mesclado ({{method}})",
+    "mergeRequested": "Merge solicitado",
+    "mergeFailed": "Falha no merge",
+    "merged": "Mesclado",
+    "resolveConflicts": "Resolva os conflitos antes de mesclar",
+    "branchProtection": "A proteção de branch pode bloquear este merge",
+    "mergeInto": "Mesclar #{{number}} em {{base}}",
+    "approveTitle": "Aprovar #{{number}}",
+    "approve": "Aprovar",
+    "moreMergeOptions": "Mais opções de merge",
+    "editCommitMessageEllipsis": "Editar mensagem de commit…",
+    "editCommitMessage": "Editar mensagem de commit",
+    "commitTitle": "Título do commit",
+    "commitMessageOptional": "Mensagem do commit (opcional)",
+    "confirmMergeInto": "{{method}} em <branch>{{base}}</branch>?"
+  },
+  "detail": {
+    "tabs": {
+      "conversation": "Conversa",
+      "files": "Arquivos alterados",
+      "commits": "Commits",
+      "checks": "Verificações"
+    },
+    "reviewWithAiTitle": "Revisar #{{number}} com IA",
+    "reviewWithAi": "Revisar com IA",
+    "openInWorktreeTitle": "Criar um worktree no branch deste PR",
+    "openInWorktree": "Abrir em worktree"
+  },
+  "prState": {
+    "draft": "Rascunho",
+    "merged": "Mesclado",
+    "closed": "Fechado"
+  },
+  "prRow": {
+    "hasSessions": "Tem sessões de revisão vinculadas"
+  },
+  "prFilters": {
+    "heading": "Filtros",
+    "reviewStatus": "Status da revisão",
+    "open": "Abertos",
+    "closed": "Fechados",
+    "awaitingReview": "Aguardando minha revisão",
+    "createdByMe": "Criados por mim",
+    "withConflicts": "Com conflitos",
+    "draft": "Rascunhos"
+  },
+  "prList": {
+    "failedToLoad": "Falha ao carregar os pull requests",
+    "searchPlaceholder": "Buscar por título ou número",
+    "loading": "Carregando pull requests…",
+    "noMatch": "Nenhum pull request corresponde a estes filtros",
+    "empty": "Nenhum pull request"
+  },
+  "prEmpty": {
+    "title": "Selecione um pull request",
+    "body": "Escolha um PR à esquerda para revisar a conversa, os arquivos, os commits e as verificações."
+  },
+  "checks": {
+    "group": {
+      "failure": "Falhando",
+      "pending": "Em andamento",
+      "success": "Passando",
+      "other": "Outros"
+    },
+    "failedToLoad": "Falha ao carregar as verificações",
+    "loading": "Carregando verificações…",
+    "empty": "Nenhuma verificação reportada.",
+    "details": "Detalhes"
+  },
+  "commits": {
+    "failedToLoad": "Falha ao carregar os commits",
+    "loading": "Carregando commits…",
+    "empty": "Nenhum commit.",
+    "copySha": "Copiar SHA"
+  },
+  "conversation": {
+    "failedToLoad": "Falha ao carregar a conversa",
+    "postFailed": "Falha ao publicar o comentário",
+    "description": "Descrição",
+    "openedThisPr": "abriu este pull request",
+    "reviewThreads": "Threads de revisão",
+    "openThreads_zero": "{{count}} abertas",
+    "openThreads_one": "{{count}} aberta",
+    "openThreads_other": "{{count}} abertas",
+    "allResolved": "todas resolvidas",
+    "firstPageOnly": "Mostrando a primeira página das threads de revisão.",
+    "addComment": "Adicionar comentário",
+    "commentPlaceholder": "Deixe um comentário neste pull request",
+    "comment": "Comentar",
+    "loading": "Carregando conversa…",
+    "reviewed": "revisou",
+    "reviewedWithState": "revisou ({{state}})",
+    "reviewState": {
+      "approved": "aprovado",
+      "changes_requested": "alterações solicitadas",
+      "commented": "comentado",
+      "dismissed": "descartado",
+      "pending": "pendente"
+    },
+    "general": "geral",
+    "outdated": "desatualizado",
+    "resolved": "Resolvida",
+    "open": "Aberta"
+  },
+  "files": {
+    "failedToLoad": "Falha ao carregar os arquivos",
+    "failedToLoadContents": "Falha ao carregar o conteúdo do arquivo",
+    "expandAll": "Expandir tudo",
+    "collapseAll": "Recolher tudo",
+    "noChangedFiles": "Nenhum arquivo alterado.",
+    "diffView": "Visualização do diff",
+    "scrollAll": "Role por todos os arquivos alterados",
+    "selectFile": "Selecione um arquivo para ver o diff",
+    "selectFileSentence": "Selecione um arquivo para ver o diff.",
+    "unified": "Unificado",
+    "split": "Dividido",
+    "fullFiles": "Arquivos completos",
+    "collapsedDiff": "Diff recolhido",
+    "binary": "Arquivo binário — nenhum diff de texto disponível.",
+    "loadingDiff": "Carregando diff…",
+    "renamedFrom": "renomeado de {{path}}",
+    "loadDiff": "Carregar diff",
+    "largeDiff": "Diffs grandes não são renderizados por padrão.",
+    "noPatch": "Nenhuma prévia de patch disponível para este arquivo.",
+    "rowTitle": "{{path}} ({{status}})",
+    "status": {
+      "added": "adicionado",
+      "removed": "removido",
+      "modified": "modificado",
+      "renamed": "renomeado"
+    }
+  },
+  "issues": {
+    "tabs": {
+      "activity": "Atividade",
+      "local": "Local"
+    },
+    "state": {
+      "open": "aberta",
+      "closed": "fechada",
+      "closedNotPlanned": "fechada como não planejada"
+    },
+    "detail": {
+      "failedToLoad": "Falha ao carregar esta issue",
+      "opened": "aberta {{time}}",
+      "updated": "· atualizada {{time}}",
+      "assignees": "Responsáveis",
+      "investigateTitle": "Investigar #{{number}} com IA",
+      "investigate": "Investigar",
+      "cachedCopyError": "Mostrando a cópia em cache de #{{number}} — falha ao carregá-la do GitHub: {{error}}"
+    },
+    "row": {
+      "open": "Aberta",
+      "closed": "Fechada",
+      "notPlanned": "Não planejada",
+      "openedTitle": "Aberta {{time}}",
+      "diverged": "Uma cópia local desta issue divergiu do upstream",
+      "hasSessions": "Tem sessões vinculadas",
+      "comments_zero": "{{count}} comentários",
+      "comments_one": "{{count}} comentário",
+      "comments_other": "{{count}} comentários"
+    },
+    "filters": {
+      "upstream": "Upstream",
+      "local": "Local",
+      "needsAttention": "Requer atenção",
+      "open": "Abertas",
+      "closed": "Fechadas",
+      "assignedToMe": "Atribuídas a mim",
+      "authoredByMe": "Criadas por mim",
+      "unlabeled": "Sem rótulo",
+      "hasLinkedPr": "Com PR vinculado",
+      "diverged": "Divergentes",
+      "stale": "Sem triagem há {{days}}d+"
+    },
+    "list": {
+      "failedToLoad": "Falha ao carregar as issues",
+      "failedToRefresh": "Falha ao atualizar as issues",
+      "searchPlaceholder": "Buscar por título, número ou rótulo",
+      "loading": "Carregando issues…",
+      "noMatch": "Nenhuma issue corresponde a estes filtros",
+      "empty": "Nenhuma issue"
+    },
+    "empty": {
+      "title": "Selecione uma issue",
+      "body": "Escolha uma issue à esquerda para ler a conversa e a atividade, ou entregá-la a um agente."
+    },
+    "activity": {
+      "failedToLoad": "Falha ao carregar a atividade",
+      "loading": "Carregando atividade…",
+      "empty": "Nenhuma atividade registrada ainda.",
+      "events": {
+        "labeled": "adicionou o rótulo",
+        "unlabeled": "removeu o rótulo",
+        "assigned": "atribuiu a",
+        "unassigned": "removeu a atribuição de",
+        "closed": "fechou",
+        "reopened": "reabriu",
+        "renamed": "renomeou",
+        "milestoned": "adicionou ao marco",
+        "demilestoned": "removeu do marco",
+        "referenced": "referenciou",
+        "cross-referenced": "mencionou em",
+        "locked": "bloqueou",
+        "unlocked": "desbloqueou",
+        "commented": "comentou"
+      }
+    },
+    "conversation": {
+      "failedToLoad": "Falha ao carregar os comentários",
+      "openedThisIssue": "abriu esta issue",
+      "loading": "Carregando comentários…",
+      "association": {
+        "owner": "proprietário",
+        "member": "membro",
+        "collaborator": "colaborador",
+        "contributor": "contribuidor",
+        "first_time_contributor": "contribuidor pela primeira vez",
+        "first_timer": "estreante",
+        "mannequin": "manequim"
+      }
+    },
+    "local": {
+      "adoptedLocked": "Adotada — o item adotado do rastreador passa a carregar o status",
+      "currently": "Atual: {{label}}",
+      "set": "Definir {{label}}",
+      "notSet": "Não definida",
+      "notesPlaceholder": "O que descobrimos? Fica local, nunca é gravado no GitHub.",
+      "couldNotLink": "Não foi possível vincular este item.",
+      "linkTitle": "Vincular um item existente do rastreador a esta issue",
+      "investigationStatus": "Status da investigação",
+      "localOnlyNote": "somente local · nunca gravado no GitHub",
+      "noLocalState": "Nenhum estado local para esta issue. Escolher um status cria um — nada é copiado do GitHub, então não há nada que possa ficar dessincronizado.",
+      "adoptedNote": "Adotada, e o escalonamento é unidirecional — a escada de status fica definida aqui. O item adotado do rastreador abaixo carrega o status a partir de agora.",
+      "triageNotes": "Notas de triagem",
+      "updatedNote": "{{key}} · atualizado {{time}}",
+      "priority": "Prioridade",
+      "repository": "Repositório",
+      "linkedSessions": "Sessões vinculadas",
+      "noSessions": "Nenhuma ainda. Investigar inicia uma e a vincula aqui.",
+      "linkedPrs": "Pull requests vinculados",
+      "noPrs": "Nenhum pull request referencia esta issue.",
+      "openPr": "Abrir pull request #{{number}}",
+      "linkedItems": "Itens do rastreador vinculados",
+      "openInTracker": "Abrir {{key}} no rastreador",
+      "onlyOverlay": "Por enquanto, só o overlay local. Vincular um item existente o lista aqui; um item adotado aparece acima, pois aponta para a issue pela procedência da importação, e não por um vínculo."
+    },
+    "adoption": {
+      "description": "Adotar copia o título, o corpo e os rótulos desta issue para um item real do rastreador, que entra no fluxo normal. É a única cópia local de conteúdo do GitHub, então reserve-a para trabalho que realmente vamos fazer — o estado de triagem acima não precisa de cópia. Isso não pode ser desfeito daqui.",
+      "adoptAs": "Adotar como {{type}}",
+      "adopting": "Adotando…",
+      "adopt": "Adotar",
+      "confirmQuestion": "Adotar #{{number}} como {{type}}?",
+      "confirmDetail": "Um item do rastreador é criado com uma cópia do corpo da issue, e esta issue é marcada como adotada. O escalonamento é unidirecional.",
+      "adopted": "Adotada",
+      "adoptIntoTracker": "Adotar no rastreador",
+      "oneWay": "unidirecional",
+      "openAdopted": "Abrir o item adotado no rastreador",
+      "trackedLocally": "Esta issue é rastreada localmente como um item real. O GitHub continua dono da issue em si; a cópia local só é atualizada quando você refaz o snapshot."
+    },
+    "reconcile": {
+      "heading": "Alterações no upstream",
+      "authoritative": "O GitHub é a fonte da verdade",
+      "closedUpstream": "Fechada no GitHub, ainda aberta localmente",
+      "reopenedUpstream": "Reaberta no GitHub, já fechada localmente",
+      "titleChanged": "O título agora é \"{{title}}\" (importado como \"{{snapshot}}\")",
+      "bodyChanged": "O corpo da issue mudou após o último snapshot",
+      "labelsAdded": "Rótulos adicionados no upstream: {{labels}}",
+      "changedTitle": "título",
+      "changedStatus": "status",
+      "changedBody": "corpo (precisa de revisão)",
+      "resnapshotted": "Snapshot refeito: {{changes}}",
+      "resnapshottedCurrent": "Snapshot refeito; rótulos e snapshots estão atualizados",
+      "bodyApplied": "Corpo local substituído pelo do upstream",
+      "bodyDismissed": "Alteração do corpo descartada",
+      "resnapshotTitle": "Trazer o título, o estado e os rótulos atuais do upstream para o item local",
+      "resnapshot": "Refazer snapshot",
+      "bodyBanner": "O corpo de origem mudou no upstream. Atualize para sobrescrever o corpo local ou descarte para manter o seu.",
+      "updateBody": "Atualizar corpo",
+      "discard": "Descartar"
+    }
+  }
+}

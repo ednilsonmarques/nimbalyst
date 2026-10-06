@@ -5,6 +5,8 @@
 import type { JSX } from 'react';
 import { useEffect, useState } from 'react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
   getPullRequestService,
   type PullRequestRow,
@@ -20,6 +22,7 @@ interface CommitsTabProps {
 }
 
 export function CommitsTab({ workspaceId, remote, pr, refreshToken }: CommitsTabProps): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const [commits, setCommits] = useState<PullRequestCommitRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +38,7 @@ export function CommitsTab({ workspaceId, remote, pr, refreshToken }: CommitsTab
         if (!cancelled) setCommits(rows);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load commits');
+        if (!cancelled) setError(err instanceof Error ? err.message : translate('pullRequest:commits.failedToLoad'));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -62,12 +65,12 @@ export function CommitsTab({ workspaceId, remote, pr, refreshToken }: CommitsTab
       {loading && commits.length === 0 ? (
         <div className="flex items-center justify-center gap-2 py-6 text-nim-muted text-sm">
           <div className="spinner w-4 h-4 border-[2px] border-nim-secondary border-t-nim-primary rounded-full animate-spin" />
-          Loading commits…
+          {t('commits.loading')}
         </div>
       ) : error ? (
         <div className="text-nim-error text-sm p-4">{error}</div>
       ) : commits.length === 0 ? (
-        <div className="text-nim-faint text-sm text-center py-6">No commits.</div>
+        <div className="text-nim-faint text-sm text-center py-6">{t('commits.empty')}</div>
       ) : (
         commits.map((commit) => (
           <div
@@ -96,7 +99,7 @@ export function CommitsTab({ workspaceId, remote, pr, refreshToken }: CommitsTab
             <button
               className="flex items-center gap-1 px-1.5 py-1 rounded text-[11px] font-mono text-nim-muted hover:text-nim hover:bg-nim-tertiary transition-colors shrink-0"
               onClick={() => handleCopy(commit.sha)}
-              title="Copy SHA"
+              title={t('commits.copySha')}
             >
               <MaterialSymbol icon={copiedSha === commit.sha ? 'check' : 'content_copy'} size={12} />
               {commit.sha.slice(0, 7)}

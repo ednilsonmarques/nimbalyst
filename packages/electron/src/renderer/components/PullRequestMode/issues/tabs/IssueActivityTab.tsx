@@ -7,6 +7,8 @@ import type { JSX } from 'react';
 import { useEffect, useMemo } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
+import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
   githubIssueDetailErrorAtom,
   githubIssueDetailLoadingAtom,
@@ -74,6 +76,7 @@ export function IssueActivityTab({
   issue,
   refreshToken,
 }: IssueActivityTabProps): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const loaded = useAtomValue(githubIssueTimelineAtom);
   const setTimeline = useSetAtom(githubIssueTimelineAtom);
   const loading = useAtomValue(githubIssueDetailLoadingAtom);
@@ -93,7 +96,7 @@ export function IssueActivityTab({
       .catch((err: unknown) => {
         if (!cancelled) {
           setTimeline([]);
-          setError(err instanceof Error ? err.message : 'Failed to load activity');
+          setError(err instanceof Error ? err.message : translate('pullRequest:issues.activity.failedToLoad'));
         }
       })
       .finally(() => {
@@ -126,7 +129,7 @@ export function IssueActivityTab({
       {loading && timeline.length === 0 ? (
         <div className="flex items-center justify-center gap-2 py-6 text-nim-muted text-sm">
           <div className="spinner w-4 h-4 border-[2px] border-nim-secondary border-t-nim-primary rounded-full animate-spin" />
-          Loading activity…
+          {t('issues.activity.loading')}
         </div>
       ) : (
         timeline.map((entry) => {
@@ -142,7 +145,11 @@ export function IssueActivityTab({
                 className="text-nim-faint shrink-0"
               />
               {entry.actorLogin && <span className="font-medium text-nim">{entry.actorLogin}</span>}
-              <span>{entry.event.replace(/[-_]/g, ' ')}</span>
+              <span>
+                {t(`issues.activity.events.${entry.event}`, {
+                  defaultValue: entry.event.replace(/[-_]/g, ' '),
+                })}
+              </span>
               {detail && <span className="text-nim truncate">{detail}</span>}
               <span className="ml-auto shrink-0 text-nim-faint">
                 {formatRelative(entry.createdAt)}
@@ -153,7 +160,7 @@ export function IssueActivityTab({
       )}
 
       {!loading && timeline.length === 0 && !error && (
-        <div className="text-nim-faint text-sm text-center py-4">No activity recorded yet.</div>
+        <div className="text-nim-faint text-sm text-center py-4">{t('issues.activity.empty')}</div>
       )}
     </div>
   );

@@ -12,6 +12,7 @@ import type { JSX } from 'react';
 import { useMemo, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol, ProviderIcon, SessionReferenceChip } from '@nimbalyst/runtime';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import type { TrackerRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import { globalRegistry, getRoleField } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
 import {
@@ -70,6 +71,7 @@ async function updateItemFields(record: TrackerRecord, updates: Record<string, u
 
 /** Editable status pill: the item's own workflowStatus options in a menu. */
 function StatusPill({ record }: { record: TrackerRecord }): JSX.Element | null {
+  const { t } = useTranslation('pullRequest');
   const menu = useFloatingMenu({ placement: 'bottom-start' });
   const [busy, setBusy] = useState(false);
   const option = statusOptionFor(record);
@@ -102,7 +104,7 @@ function StatusPill({ record }: { record: TrackerRecord }): JSX.Element | null {
         onClick={() => menu.setIsOpen(!menu.isOpen)}
         className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium transition-[filter] hover:brightness-125 disabled:opacity-60"
         style={style}
-        title="Change review status"
+        title={t('trackerStrip.changeStatus')}
       >
         {option.icon && <MaterialSymbol icon={option.icon} size={12} />}
         {option.label}
@@ -153,6 +155,7 @@ function LinkedSessions({
   sessions: SessionMeta[];
   onOpen: (sessionId: string) => void;
 }): JSX.Element | null {
+  const { t } = useTranslation('pullRequest');
   const menu = useFloatingMenu({ placement: 'bottom-start' });
   if (sessions.length === 0) return null;
 
@@ -178,7 +181,7 @@ function LinkedSessions({
             data-testid="pr-open-session"
             className="flex items-center gap-1 px-2 py-0.5 text-[11px] text-nim-muted hover:text-nim border border-nim rounded transition-colors"
             onClick={() => menu.setIsOpen(!menu.isOpen)}
-            title={`${overflow.length} more linked ${overflow.length === 1 ? 'session' : 'sessions'}`}
+            title={t('trackerStrip.moreSessions', { count: overflow.length })}
           >
             +{overflow.length}
             <MaterialSymbol icon="arrow_drop_down" size={14} />
@@ -223,6 +226,7 @@ function LinkTrackerItemButton({
   prNumber: number;
   alreadyLinkedIds: Set<string>;
 }): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const menu = useFloatingMenu({ placement: 'bottom-end' });
   const [query, setQuery] = useState('');
   const [linkingId, setLinkingId] = useState<string | null>(null);
@@ -272,10 +276,10 @@ function LinkTrackerItemButton({
         data-testid="pr-link-tracker-item"
         className="flex items-center gap-1 px-2 py-0.5 text-[11px] text-nim-faint hover:text-nim rounded transition-colors"
         onClick={() => menu.setIsOpen(!menu.isOpen)}
-        title="Link a tracker item to this PR"
+        title={t('trackerStrip.linkTitle')}
       >
         <MaterialSymbol icon="add_link" size={13} />
-        Link tracker item
+        {t('common.linkTrackerItem')}
       </button>
       {menu.isOpen && (
         <FloatingPortal>
@@ -290,12 +294,12 @@ function LinkTrackerItemButton({
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search items by title or key"
+              placeholder={t('common.searchItemsPlaceholder')}
               className="nim-input w-full h-7 text-xs mb-1"
               data-testid="pr-link-tracker-search"
             />
             {candidates.length === 0 ? (
-              <div className="px-2 py-2 text-xs text-nim-faint">No matching items</div>
+              <div className="px-2 py-2 text-xs text-nim-faint">{t('common.noMatchingItems')}</div>
             ) : (
               candidates.map((item) => (
                 <button
@@ -325,6 +329,7 @@ function LinkTrackerItemButton({
  * action. Types without the role show nothing — no semantics invented.
  */
 function StaleItemHint({ record }: { record: TrackerRecord }): JSX.Element | null {
+  const { t } = useTranslation('pullRequest');
   const [busy, setBusy] = useState(false);
   const model = globalRegistry.get(record.primaryType);
   const mergedStatus = model ? getRoleField(model, 'prMergedStatus') : undefined;
@@ -351,10 +356,14 @@ function StaleItemHint({ record }: { record: TrackerRecord }): JSX.Element | nul
       disabled={busy}
       onClick={() => void apply()}
       className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium text-nim-warning bg-nim-warning/10 hover:bg-nim-warning/20 transition-colors disabled:opacity-60"
-      title={`This PR is merged but ${record.issueKey ?? 'the tracker item'} is still ${getRecordStatus(record)} — click to set ${option?.label ?? mergedStatus}`}
+      title={t('trackerStrip.staleTitle', {
+        item: record.issueKey ?? t('trackerStrip.theTrackerItem'),
+        status: getRecordStatus(record),
+        target: option?.label ?? mergedStatus,
+      })}
     >
       <MaterialSymbol icon="warning" size={12} />
-      PR merged — set {option?.label ?? mergedStatus}?
+      {t('trackerStrip.staleLabel', { target: option?.label ?? mergedStatus })}
     </button>
   );
 }
@@ -366,6 +375,7 @@ export function PrTrackerStrip({
   prState,
   onOpenSession,
 }: PrTrackerStripProps): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const { items, primary, sessions } = context;
   const alreadyLinkedIds = useMemo(() => new Set(items.map((i) => i.id)), [items]);
   const setWindowMode = useSetAtom(setWindowModeAtom);
@@ -391,7 +401,7 @@ export function PrTrackerStrip({
                 data-testid="pr-tracker-chip"
                 className="font-mono text-[11px] text-nim-muted hover:text-nim hover:underline transition-colors"
                 onClick={() => navigateToTrackerItem(item.id)}
-                title={`Open ${item.issueKey} in tracker`}
+                title={t('trackerStrip.openInTracker', { key: item.issueKey })}
               >
                 {item.issueKey}
               </button>

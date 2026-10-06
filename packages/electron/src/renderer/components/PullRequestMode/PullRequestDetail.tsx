@@ -13,6 +13,7 @@ import type { JSX } from 'react';
 import { useEffect, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import {
   prModeLayoutAtom,
   setPrModeLayoutAtom,
@@ -42,11 +43,11 @@ interface PullRequestDetailProps {
   onOpenInWorktree?: () => void;
 }
 
-const TABS: { id: PrDetailTab; label: string }[] = [
-  { id: 'conversation', label: 'Conversation' },
-  { id: 'files', label: 'Files Changed' },
-  { id: 'commits', label: 'Commits' },
-  { id: 'checks', label: 'Checks' },
+const TABS: { id: PrDetailTab; labelKey: string }[] = [
+  { id: 'conversation', labelKey: 'detail.tabs.conversation' },
+  { id: 'files', labelKey: 'detail.tabs.files' },
+  { id: 'commits', labelKey: 'detail.tabs.commits' },
+  { id: 'checks', labelKey: 'detail.tabs.checks' },
 ];
 
 const DETAIL_POLL_MS = 60_000;
@@ -66,6 +67,7 @@ export function PullRequestDetail({
   onOpenSession,
   onOpenInWorktree,
 }: PullRequestDetailProps): JSX.Element {
+  const { t } = useTranslation('pullRequest');
   const layout = useAtomValue(prModeLayoutAtom);
   const setLayout = useSetAtom(setPrModeLayoutAtom);
   const activeTab = layout.activeDetailTab;
@@ -109,16 +111,16 @@ export function PullRequestDetail({
               className="flex items-center gap-1 px-2 py-1 text-xs text-nim-muted hover:text-nim border border-nim rounded transition-colors"
               onClick={onStartReviewSession}
               data-testid="pr-start-review-session"
-              title={`Review #${pr.number} with AI`}
+              title={t('detail.reviewWithAiTitle', { number: pr.number })}
             >
               <MaterialSymbol icon="chat" size={14} />
-              Review with AI
+              {t('detail.reviewWithAi')}
             </button>
             {htmlUrl && (
               <button
                 className="flex items-center gap-1 px-2 py-1 text-xs text-nim-muted hover:text-nim border border-nim rounded transition-colors"
                 onClick={() => window.electronAPI?.openExternal(htmlUrl)}
-                title="Open on GitHub"
+                title={t('common.openOnGithub')}
               >
                 <MaterialSymbol icon="open_in_new" size={14} />
                 GitHub
@@ -129,10 +131,10 @@ export function PullRequestDetail({
                 className="flex items-center gap-1 px-2 py-1 text-xs bg-nim-primary text-nim-on-primary hover:bg-nim-primary-hover rounded transition-colors"
                 onClick={onOpenInWorktree}
                 data-testid="pr-open-in-worktree"
-                title="Create a worktree on this PR's branch"
+                title={t('detail.openInWorktreeTitle')}
               >
                 <MaterialSymbol icon="account_tree" size={14} />
-                Open in Worktree
+                {t('detail.openInWorktree')}
               </button>
             )}
           </div>
@@ -162,7 +164,7 @@ export function PullRequestDetail({
                   : 'border-transparent text-nim-muted hover:text-nim'
               }`}
             >
-              {tab.label}
+              {t(tab.labelKey)}
             </button>
           ))}
         </div>
