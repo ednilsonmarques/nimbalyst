@@ -82,6 +82,7 @@ describe('display messages i18n', () => {
       'super-loops': 'settings:agentFeatures.alpha.superLoops',
       blitz: 'settings:agentFeatures.alpha.blitz',
       'meta-agent': 'settings:agentFeatures.alpha.metaAgent',
+      'agent-team-view': 'settings:agentFeatures.alpha.agentTeamView',
     };
     for (const feature of ALPHA_FEATURES) {
       expect(i18n.t(keys[feature.tag]), feature.tag).toBe(feature.description);

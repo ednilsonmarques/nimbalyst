@@ -341,6 +341,7 @@ const SessionHistoryComponent: React.FC = () => {
   // enforced on the New Super Loop button (disabled when isNotGitRepo).
   const isSuperLoopsAvailable = isSuperLoopsAlphaEnabled;
   const isMetaAgentEnabled = useAtomValue(alphaFeatureEnabledAtom('meta-agent'));
+  const isAgentTeamViewEnabled = useAtomValue(alphaFeatureEnabledAtom('agent-team-view'));
 
   // === Super Loop state ===
   const localSuperLoops = useAtomValue(superLoopListAtom);
@@ -3078,6 +3079,19 @@ const SessionHistoryComponent: React.FC = () => {
               {t('sessionList.kanban')}
             </button>
           </HelpTooltip>
+          {isAgentTeamViewEnabled && (
+            <button
+              className={`flex items-center gap-1 px-2 py-1.5 text-[11px] font-semibold rounded border cursor-pointer transition-all duration-150 shrink-0 ${viewMode === 'team' ? 'bg-[var(--nim-primary)] border-[var(--nim-primary)] text-white hover:opacity-90' : 'bg-[var(--nim-bg-secondary)] border-[var(--nim-border)] text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-hover)] hover:border-[var(--nim-primary)] hover:text-[var(--nim-text)]'}`}
+              data-testid="session-team-button"
+              aria-pressed={viewMode === 'team'}
+              onClick={() => setViewMode(viewMode === 'team' ? 'list' : 'team')}
+              title={viewMode === 'team' ? t('sessionList.switchToList') : t('sessionList.switchToTeam')}
+              aria-label={viewMode === 'team' ? t('sessionList.switchToList') : t('sessionList.switchToTeam')}
+            >
+              <MaterialSymbol icon="account_tree" size={12} />
+              {t('sessionList.team')}
+            </button>
+          )}
           {onOpenQuickSearch && (
             <HelpTooltip testId="session-quick-search-button">
               <button

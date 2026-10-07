@@ -38,7 +38,20 @@ export interface SessionHistoryLayout {
   preCollapseWidth?: number;
   collapsedGroups: string[];
   sortOrder: 'updated' | 'created';
-  viewMode: 'list' | 'kanban';
+  viewMode: SessionViewMode;
+}
+
+/**
+ * Right-side view of Agent mode. 'team' is the alpha delegation-tree view
+ * (feature flag `agent-team-view`); AgentTeamView falls back to the normal
+ * panel when the flag is off, so a persisted 'team' never strands the user.
+ */
+export type SessionViewMode = 'list' | 'kanban' | 'team';
+
+const SESSION_VIEW_MODES: readonly SessionViewMode[] = ['list', 'kanban', 'team'];
+
+function coerceViewMode(value: unknown): SessionViewMode {
+  return SESSION_VIEW_MODES.includes(value as SessionViewMode) ? (value as SessionViewMode) : 'list';
 }
 
 /**
@@ -102,8 +115,8 @@ export function mergeWithDefaults(persisted: Partial<AgentModeLayout> | undefine
   const sessionHistoryLayout: SessionHistoryLayout = {
     ...DEFAULT_SESSION_HISTORY_LAYOUT,
     ...persisted?.sessionHistoryLayout,
-    // The retired 'card' view mode coerces to 'list' on load.
-    viewMode: persisted?.sessionHistoryLayout?.viewMode === 'kanban' ? 'kanban' : 'list',
+    // Unknown values (including the retired 'card' view mode) coerce to 'list' on load.
+    viewMode: coerceViewMode(persisted?.sessionHistoryLayout?.viewMode),
     // Escape hatch (#924): a persisted sortOrder that crashes the panel would
     // otherwise brick the workspace on every launch with no in-app recovery.
     // Coerce any value other than the two known ones back to 'updated'.
@@ -186,7 +199,7 @@ export const sortOrderAtom = atom(
   (get) => get(agentModeLayoutAtom).sessionHistoryLayout.sortOrder
 );
 
-/** View mode for session history (list or kanban) */
+/** View mode for session history (list, kanban or team) */
 export const viewModeAtom = atom(
   (get) => get(agentModeLayoutAtom).sessionHistoryLayout.viewMode
 );
@@ -422,7 +435,7 @@ export const setSortOrderAtom = atom(
  */
 export const setViewModeAtom = atom(
   null,
-  (get, set, viewMode: 'list' | 'kanban') => {
+  (get, set, viewMode: SessionViewMode) => {
     set(setSessionHistoryLayoutAtom, { viewMode });
   }
 );

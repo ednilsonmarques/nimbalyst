@@ -65,6 +65,7 @@ import {
 import { fetchSessionSharesAtom } from '../../store';
 import { BlitzDialog } from '../BlitzDialog/BlitzDialog';
 import { MetaAgentMode } from '../MetaAgentMode/MetaAgentMode';
+import { AgentTeamView } from '../AgentTeam/AgentTeamView';
 import { tipCreateWorktreeSessionRequestAtom } from '../../tips/atoms';
 import {
   blitzDialogOpenAtom,
@@ -76,7 +77,7 @@ import {
   createWorktreeSessionCoreActionAtom,
   addSessionToWorktreeActionAtom,
 } from '../../store/actions/sessionHistoryActions';
-import { defaultAgentModelAtom } from '../../store/atoms/appSettings';
+import { alphaFeatureEnabledAtom, defaultAgentModelAtom } from '../../store/atoms/appSettings';
 import { useGitRepoProbe } from '../../hooks/useGitRepoProbe';
 import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 export interface AgentModeRef {
@@ -622,6 +623,7 @@ export const AgentMode = forwardRef<AgentModeRef, AgentModeProps>(function Agent
   const leftContent = <SessionHistory />;
 
   const viewMode = useAtomValue(viewModeAtom);
+  const isTeamViewEnabled = useAtomValue(alphaFeatureEnabledAtom('agent-team-view'));
 
   const kanbanContent = (
     <SessionKanbanBoard
@@ -630,11 +632,21 @@ export const AgentMode = forwardRef<AgentModeRef, AgentModeProps>(function Agent
     />
   );
 
+  // A persisted 'team' with the alpha flag off shows the normal panel, mounted
+  // in its usual place so the session view is not remounted.
+  const showTeamView = viewMode === 'team' && isTeamViewEnabled;
+
   return (
     <div className="agent-mode flex flex-row h-full w-full overflow-hidden">
       <ResizablePanel
         leftPanel={leftContent}
-        rightPanel={viewMode === 'kanban' ? kanbanContent : rightContent}
+        rightPanel={
+          viewMode === 'kanban'
+            ? kanbanContent
+            : showTeamView
+              ? <AgentTeamView onSessionOpen={dispatchSelectSession} />
+              : rightContent
+        }
         leftWidth={historyWidth}
         minWidth={200}
         maxWidth={500}

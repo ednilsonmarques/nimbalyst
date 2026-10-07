@@ -1601,7 +1601,8 @@
     "alpha": {
       "superLoops": "Ativa os Super Loops para fluxos de trabalho iterativos de agentes em worktrees dedicadas.",
       "blitz": "Executa o mesmo prompt em várias worktrees isoladas para fazer mais de uma tentativa em uma tarefa.",
-      "metaAgent": "Ativa sessões de meta-agente que orquestram e delegam trabalho para sessões filhas."
+      "metaAgent": "Ativa sessões de meta-agente que orquestram e delegam trabalho para sessões filhas.",
+      "agentTeamView": "Adiciona ao modo Agente uma visualização Equipe que mostra quais sessões delegaram trabalho para quais, com status ao vivo."
     }
   },
   "themes": {

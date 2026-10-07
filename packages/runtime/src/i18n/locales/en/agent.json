@@ -90,6 +90,8 @@
     "switchToList": "Switch to list view",
     "switchToKanban": "Switch to kanban view",
     "kanban": "Kanban",
+    "switchToTeam": "Switch to team view",
+    "team": "Team",
     "searchOrTagPlaceholder": "Search or type # to filter by tag...",
     "searchOrTagAria": "Search sessions or filter by tag",
     "clearSearchAndTags": "Clear search and tag filters",
@@ -340,6 +342,31 @@
   },
   "transcriptPeek": {
     "noMessages": "No messages yet"
+  },
+  "agentTeam": {
+    "title": "Team",
+    "subtitle": "Sessions in this workspace linked by delegation. Click an agent to open its session.",
+    "teamsHeading": "Teams ({{total}})",
+    "standaloneHeading": "Standalone ({{total}})",
+    "standaloneHint": "Sessions that neither delegated work nor were delegated by another session.",
+    "emptyTeamsTitle": "No teams yet",
+    "emptyTeamsHint": "A team appears when a session creates other sessions, for example a meta-agent or a session that uses spawn_session.",
+    "emptyAll": "No sessions in this workspace yet.",
+    "agentCount": "Agents: {{total}}",
+    "showAllStandalone": "Show all ({{total}})",
+    "showFewerStandalone": "Show fewer",
+    "creatorOutsideView": "Created by a session outside this view",
+    "metaAgentRole": "Meta-agent",
+    "openSession": "Open session: {{title}}",
+    "status": {
+      "awaitingYou": "Waiting for you",
+      "running": "Running",
+      "queued": "Queued",
+      "unread": "New activity",
+      "scheduled": "Wakeup scheduled",
+      "messagePending": "Message pending",
+      "idle": "Idle"
+    }
   },
   "mcpStatus": {
     "secondsAgo": "{{count}}s ago",

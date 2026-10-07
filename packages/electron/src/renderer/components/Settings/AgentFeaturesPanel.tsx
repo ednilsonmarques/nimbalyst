@@ -19,6 +19,7 @@ const AGENT_FEATURE_TAGS: AlphaFeatureTag[] = [
   'super-loops',
   'blitz',
   'meta-agent',
+  'agent-team-view',
 ];
 
 // Localized descriptions for the alpha features shown here, looked up by tag at
@@ -28,6 +29,7 @@ const ALPHA_FEATURE_DESCRIPTION_KEYS: Partial<Record<AlphaFeatureTag, string>> =
   'super-loops': 'agentFeatures.alpha.superLoops',
   blitz: 'agentFeatures.alpha.blitz',
   'meta-agent': 'agentFeatures.alpha.metaAgent',
+  'agent-team-view': 'agentFeatures.alpha.agentTeamView',
 };
 
 interface WorkflowSourceSettings {

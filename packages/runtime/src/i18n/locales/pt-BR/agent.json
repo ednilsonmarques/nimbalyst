@@ -90,6 +90,8 @@
     "switchToList": "Alternar para visualização em lista",
     "switchToKanban": "Alternar para visualização kanban",
     "kanban": "Kanban",
+    "switchToTeam": "Alternar para visualização de equipe",
+    "team": "Equipe",
     "searchOrTagPlaceholder": "Pesquise ou digite # para filtrar por tag...",
     "searchOrTagAria": "Pesquisar sessões ou filtrar por tag",
     "clearSearchAndTags": "Limpar pesquisa e filtros de tag",
@@ -340,6 +342,31 @@
   },
   "transcriptPeek": {
     "noMessages": "Nenhuma mensagem ainda"
+  },
+  "agentTeam": {
+    "title": "Equipe",
+    "subtitle": "Sessões deste espaço de trabalho ligadas por delegação. Clique em um agente para abrir a sessão dele.",
+    "teamsHeading": "Equipes ({{total}})",
+    "standaloneHeading": "Avulsas ({{total}})",
+    "standaloneHint": "Sessões que não delegaram trabalho nem receberam trabalho de outra sessão.",
+    "emptyTeamsTitle": "Nenhuma equipe ainda",
+    "emptyTeamsHint": "Uma equipe aparece quando uma sessão cria outras sessões, por exemplo um meta-agente ou uma sessão que usa spawn_session.",
+    "emptyAll": "Nenhuma sessão neste espaço de trabalho ainda.",
+    "agentCount": "Agentes: {{total}}",
+    "showAllStandalone": "Mostrar todas ({{total}})",
+    "showFewerStandalone": "Mostrar menos",
+    "creatorOutsideView": "Criada por uma sessão fora desta visualização",
+    "metaAgentRole": "Meta-agente",
+    "openSession": "Abrir a sessão: {{title}}",
+    "status": {
+      "awaitingYou": "Aguardando você",
+      "running": "Em execução",
+      "queued": "Na fila",
+      "unread": "Nova atividade",
+      "scheduled": "Despertar agendado",
+      "messagePending": "Mensagem pendente",
+      "idle": "Ociosa"
+    }
   },
   "mcpStatus": {
     "secondsAgo": "há {{count}} s",

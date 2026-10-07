@@ -46,6 +46,13 @@ export const ALPHA_FEATURES: readonly AlphaFeatureDefinition[] = [
       "Enable meta-agent sessions that orchestrate and delegate work to child sessions.",
     icon: "hub",
   },
+  {
+    tag: "agent-team-view",
+    name: "Agent Team View",
+    description:
+      "Add a Team view to Agent mode that shows which sessions delegated work to which, with live status.",
+    icon: "account_tree",
+  },
 ] as const;
 
 /**

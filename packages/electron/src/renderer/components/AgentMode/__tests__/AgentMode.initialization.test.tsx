@@ -32,7 +32,7 @@ vi.mock('../../../store/atoms/agentFileViewer', async () => { const { atom } = a
 vi.mock('../../../store/atoms/blitz', async () => { const { atom } = await import('jotai'); return { blitzAnalysisCreatedAtom: atom(null, () => {}) }; });
 vi.mock('../../../store/atoms/agentMode', async () => { const { atom } = await import('jotai'); return { requestOpenSessionAtom: atom(null, () => {}), toggleSessionHistoryCollapsedAtom: atom(null, () => {}) }; });
 vi.mock('../../../tips/atoms', async () => { const { atom } = await import('jotai'); return { tipCreateWorktreeSessionRequestAtom: atom(null, () => {}) }; });
-vi.mock('../../../store/atoms/appSettings', async () => { const { atom } = await import('jotai'); return { defaultAgentModelAtom: atom(null, () => {}) }; });
+vi.mock('../../../store/atoms/appSettings', async () => { const { atom } = await import('jotai'); const flag = atom(false); return { defaultAgentModelAtom: atom(null, () => {}), alphaFeatureEnabledAtom: () => flag }; });
 vi.mock('../../../store/actions/sessionHistoryActions', async () => { const { atom } = await import('jotai'); return { blitzDialogOpenAtom: atom(null, () => {}), sessionQuickOpenRequestedAtom: atom(null, () => {}), selectSessionActionAtom: atom(null, () => {}), openSessionInTabActionAtom: atom(null, () => {}), createNewSessionActionAtom: atom(null, () => {}), createNewWorktreeSessionActionAtom: atom(null, () => {}), createWorktreeSessionCoreActionAtom: atom(null, () => {}), addSessionToWorktreeActionAtom: atom(null, () => {}) }; });
 vi.mock('../../../hooks/useGitRepoProbe', () => ({ useGitRepoProbe: () => true }));
 vi.mock('../../../hooks/useSuperLoop', () => ({ useSuperLoopInit: () => {} }));
@@ -49,6 +49,7 @@ vi.mock('../../AgenticCoding/SessionHistory', () => ({ SessionHistory: () => nul
 vi.mock('../../TrackerMode/SessionKanbanBoard', () => ({ SessionKanbanBoard: () => null }));
 vi.mock('../../BlitzDialog/BlitzDialog', () => ({ BlitzDialog: () => null }));
 vi.mock('../../MetaAgentMode/MetaAgentMode', () => ({ MetaAgentMode: () => null }));
+vi.mock('../../AgentTeam/AgentTeamView', () => ({ AgentTeamView: () => null }));
 vi.mock('../../AgenticCoding/ResizablePanel', () => ({ ResizablePanel: ({ rightPanel }: { rightPanel: React.ReactNode }) => rightPanel }));
 vi.mock('../AgentWorkstreamPanel', () => ({
   AgentWorkstreamPanel: ({ workspacePath, workstreamId }: { workspacePath: string; workstreamId: string }) => {

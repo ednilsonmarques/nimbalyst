@@ -1601,7 +1601,8 @@
     "alpha": {
       "superLoops": "Enable Super Loops for iterative agent workflows in dedicated worktrees.",
       "blitz": "Run the same prompt on multiple isolated worktrees to make more than one attempt at a task.",
-      "metaAgent": "Enable meta-agent sessions that orchestrate and delegate work to child sessions."
+      "metaAgent": "Enable meta-agent sessions that orchestrate and delegate work to child sessions.",
+      "agentTeamView": "Add a Team view to Agent mode that shows which sessions delegated work to which, with live status."
     }
   },
   "themes": {

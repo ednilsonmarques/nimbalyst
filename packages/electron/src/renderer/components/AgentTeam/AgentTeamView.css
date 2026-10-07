@@ -1,0 +1,71 @@
+/*
+ * Top-down delegation tree drawn with plain CSS connectors: each child list
+ * drops a vertical line from its parent, and each child draws the horizontal
+ * rail plus its own vertical stub. No layout engine, no persisted positions.
+ */
+
+.agent-team-tree ul {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: 16px 0 0;
+  list-style: none;
+}
+
+.agent-team-tree ul::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 16px;
+  border-left: 1px solid var(--nim-border);
+}
+
+.agent-team-tree li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 6px 0;
+}
+
+.agent-team-tree li::before,
+.agent-team-tree li::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 50%;
+  width: 50%;
+  height: 16px;
+  border-top: 1px solid var(--nim-border);
+}
+
+.agent-team-tree li::after {
+  right: auto;
+  left: 50%;
+  border-left: 1px solid var(--nim-border);
+}
+
+.agent-team-tree li:only-child {
+  padding-top: 0;
+}
+
+.agent-team-tree li:only-child::before,
+.agent-team-tree li:only-child::after {
+  display: none;
+}
+
+.agent-team-tree li:first-child::before,
+.agent-team-tree li:last-child::after {
+  border: 0 none;
+}
+
+.agent-team-tree li:last-child::before {
+  border-right: 1px solid var(--nim-border);
+  border-radius: 0 6px 0 0;
+}
+
+.agent-team-tree li:first-child::after {
+  border-radius: 6px 0 0 0;
+}
