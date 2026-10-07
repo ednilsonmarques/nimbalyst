@@ -232,7 +232,7 @@ export const META_AGENT_TOOL_DEFS: Array<{
           type: "string",
           enum: ["explorer", "implementer", "reviewer", "other"],
           description:
-            "Team mode only (ignored outside a Team mode team). explorer: research/reading, defaults to Sonnet and read-only tools. implementer: makes changes, defaults to the team root's model and full tools. reviewer: independent review, defaults to Sonnet and read-only tools (pass toolScope \"full\" if it must run tests). other: defaults to the root's model. An explicit model or toolScope always wins. Omitted means other.",
+            "Team mode only (ignored outside a Team mode team). explorer: research/reading, defaults to Sonnet and read-only tools. implementer: makes changes, defaults to the team root's model and full tools. reviewer: independent review, defaults to Sonnet and read-only tools (pass toolScope \"full\" if it must run tests). other: defaults to the root's model. An explicit model or toolScope always wins. Omitted means other. A team may have at most 3 sessions active at once and 8 in total, nested at most 2 levels below the team root; the call is refused beyond that.",
         },
         effortLevel: {
           type: "string",
@@ -288,7 +288,7 @@ export const META_AGENT_TOOL_DEFS: Array<{
           type: "string",
           enum: ["explorer", "implementer", "reviewer", "other"],
           description:
-            "Team mode only (ignored outside a Team mode team). explorer: research/reading, defaults to Sonnet and read-only tools. implementer: makes changes, defaults to the team root's model and full tools. reviewer: independent review, defaults to Sonnet and read-only tools (pass toolScope \"full\" if it must run tests). other: defaults to the root's model. An explicit model or toolScope always wins. Omitted means other.",
+            "Team mode only (ignored outside a Team mode team). explorer: research/reading, defaults to Sonnet and read-only tools. implementer: makes changes, defaults to the team root's model and full tools. reviewer: independent review, defaults to Sonnet and read-only tools (pass toolScope \"full\" if it must run tests). other: defaults to the root's model. An explicit model or toolScope always wins. Omitted means other. A team may have at most 3 sessions active at once and 8 in total, nested at most 2 levels below the team root; the call is refused beyond that.",
         },
         effortLevel: {
           type: "string",

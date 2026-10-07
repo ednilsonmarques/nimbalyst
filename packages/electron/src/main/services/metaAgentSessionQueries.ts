@@ -9,6 +9,7 @@
  */
 
 import { database as databaseWorker } from '../database/PGLiteDatabaseWorker';
+import { teamSpawnRefusal, type TeamCaller, type TeamUsage } from './team/teamPolicy';
 
 /** Controllable "max parallel" limit: children currently running. */
 const MAX_IN_FLIGHT = 4;
@@ -82,4 +83,52 @@ export async function assertChildSpawnCapacity(workspaceId: string, metaSessionI
       `Meta-agent lifetime spawn backstop reached (${LIFETIME_BACKSTOP} total children spawned by this parent); refusing to spawn more`
     );
   }
+}
+
+/**
+ * Size and activity of a Team mode team: every session descending from the
+ * root through created_by_session_id (children, grandchildren), archived ones
+ * included because the budget is for the team's whole life. "Active" also
+ * counts a session that is idle but holds a pending/executing queued prompt:
+ * a member created a moment ago has not started its first turn yet.
+ *
+ * Not filtered by workspace: the root id alone identifies the team, and members
+ * filed under another spelling of the workspace path (#1551) must still count.
+ * UNION (not UNION ALL) keeps a malformed creator cycle from recursing forever.
+ */
+export async function getTeamUsage(rootSessionId: string): Promise<TeamUsage> {
+  const { rows } = await databaseWorker.query<{ total: string | null; active: string | null }>(
+    `WITH RECURSIVE team_tree(id) AS (
+         SELECT id FROM ai_sessions WHERE created_by_session_id = $1
+       UNION
+         SELECT s.id FROM ai_sessions s JOIN team_tree t ON s.created_by_session_id = t.id
+     )
+     SELECT
+         COUNT(*)::text AS total,
+         SUM(CASE WHEN s.status IN ('running', 'waiting_for_input')
+                    OR EXISTS (
+                      SELECT 1 FROM queued_prompts q
+                       WHERE q.session_id = s.id AND q.status IN ('pending', 'executing')
+                    )
+                  THEN 1 ELSE 0 END)::text AS active
+       FROM team_tree t
+       JOIN ai_sessions s ON s.id = t.id`,
+    [rootSessionId]
+  );
+  return {
+    total: Number(rows[0]?.total ?? '0') || 0,
+    active: Number(rows[0]?.active ?? '0') || 0,
+  };
+}
+
+/**
+ * Team mode gate, run before any side effect of a child creation. Complements
+ * (does not replace) assertChildSpawnCapacity, which still applies per creator.
+ */
+export async function assertTeamSpawnCapacity(team: TeamCaller): Promise<void> {
+  // Depth needs no query; refuse it before touching the database.
+  const depthRefusal = teamSpawnRefusal(team, { total: 0, active: 0 });
+  if (depthRefusal) throw new Error(depthRefusal);
+  const refusal = teamSpawnRefusal(team, await getTeamUsage(team.rootSessionId));
+  if (refusal) throw new Error(refusal);
 }

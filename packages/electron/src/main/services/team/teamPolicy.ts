@@ -73,3 +73,34 @@ export function teamRoleDefaultToolScope(role: TeamRole): 'read' | 'full' | unde
 export function buildTeamChild(team: TeamCaller, role: TeamRole): TeamChild {
   return { role, rootSessionId: team.rootSessionId, depth: team.depth + 1 };
 }
+
+/** Runtime-enforced Team mode limits. SDK sub-agents are not sessions and never count. */
+export const TEAM_LIMITS = Object.freeze({
+  /** Members nest at most this many levels below the root (root 0, children 1, grandchildren 2). */
+  maxDepth: 2,
+  /** Real sessions of one team that may be active at once (running, waiting, or with a queued prompt). */
+  maxActive: 3,
+  /** Real sessions one team may ever create, archived ones included. */
+  budget: 8,
+});
+
+export interface TeamUsage {
+  /** Every descendant session of the root, archived included. */
+  total: number;
+  /** Descendants running, waiting for input, or holding a pending/executing queued prompt. */
+  active: number;
+}
+
+/** Why a new member may not be created, or null when it may. Pure; MetaAgentService throws it. */
+export function teamSpawnRefusal(team: TeamCaller, usage: TeamUsage): string | null {
+  if (team.depth + 1 > TEAM_LIMITS.maxDepth) {
+    return `Team depth limit reached: this session is at depth ${team.depth} and team members may nest at most ${TEAM_LIMITS.maxDepth} levels below the team root. Do the work yourself or report back to your coordinator.`;
+  }
+  if (usage.total >= TEAM_LIMITS.budget) {
+    return `Team budget reached: this team has already created ${usage.total}/${TEAM_LIMITS.budget} sessions. Integrate the results you have, or ask the user before going further.`;
+  }
+  if (usage.active >= TEAM_LIMITS.maxActive) {
+    return `Team limit: ${usage.active}/${TEAM_LIMITS.maxActive} sessions are already active in this team. Wait for a member to finish (its report arrives automatically) before delegating more.`;
+  }
+  return null;
+}

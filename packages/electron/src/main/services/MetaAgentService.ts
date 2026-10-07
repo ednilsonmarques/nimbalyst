@@ -19,6 +19,7 @@ import { getDefaultAIModel } from '../utils/store';
 import { resolveStoredWorkspaceId, sameWorkspaceIdentity } from '../utils/workspaceIdentity';
 import {
   assertChildSpawnCapacity,
+  assertTeamSpawnCapacity,
   getSessionStatusRow as querySessionStatusRow,
   getSpawnedSessionRows,
 } from './metaAgentSessionQueries';
@@ -491,7 +492,31 @@ export class MetaAgentService {
   ): ReturnType<MetaAgentService['createChildSessionCore']> {
     const caller = await AISessionsRepository.get(metaSessionId);
     const team = caller ? resolveTeamCaller(metaSessionId, caller.metadata, caller.agentRole) : null;
-    return this.createChildSessionCore(metaSessionId, workspaceId, args, team);
+    if (!team) {
+      return this.createChildSessionCore(metaSessionId, workspaceId, args, null);
+    }
+    // Team limits are checked before any side effect (worktree, row, prompt),
+    // and check + creation run under one lock per team so parallel calls from
+    // the same team cannot both pass a limit that only one of them fits.
+    return this.withTeamSpawnLock(team.rootSessionId, async () => {
+      await assertTeamSpawnCapacity(team);
+      return this.createChildSessionCore(metaSessionId, workspaceId, args, team);
+    });
+  }
+
+  private readonly teamSpawnLocks = new Map<string, Promise<unknown>>();
+
+  /** Run `task` after every earlier task of the same team has settled. */
+  private async withTeamSpawnLock<T>(rootSessionId: string, task: () => Promise<T>): Promise<T> {
+    const previous = this.teamSpawnLocks.get(rootSessionId) ?? Promise.resolve();
+    const run = previous.then(task, task);
+    const tail = run.then(() => undefined, () => undefined);
+    this.teamSpawnLocks.set(rootSessionId, tail);
+    try {
+      return await run;
+    } finally {
+      if (this.teamSpawnLocks.get(rootSessionId) === tail) this.teamSpawnLocks.delete(rootSessionId);
+    }
   }
 
   private async createChildSessionCore(
@@ -814,8 +839,13 @@ export class MetaAgentService {
     const isolated = args.isolated === true;
     // Inside a team the coordinator needs every member's result, so report back
     // by default there; elsewhere spawn_session stays fire-and-forget.
-    const parentInTeam = resolveTeamCaller(parentSessionId, parent.metadata, parent.agentRole) !== null;
-    const notifyOnComplete = args.notifyOnComplete === true || (parentInTeam && args.notifyOnComplete !== false);
+    const parentTeam = resolveTeamCaller(parentSessionId, parent.metadata, parent.agentRole);
+    const notifyOnComplete = args.notifyOnComplete === true || (parentTeam !== null && args.notifyOnComplete !== false);
+    // Refuse an over-limit team spawn before the workstream promotion below; the
+    // authoritative check runs again under the team lock in createChildSessionInternal.
+    if (parentTeam) {
+      await assertTeamSpawnCapacity(parentTeam);
+    }
 
     // Sibling mode: resolve (or create) a workstream container so the new
     // session shares files-edited, tabs, and workstream overview with the
