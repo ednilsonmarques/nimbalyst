@@ -36,6 +36,7 @@ import { inheritedOwnership, isParentNotificationSuppressed } from './extensionS
 import { startExtensionSessionService } from './extensionSessions/extensionSessionsService';
 import { broadcastSessionCreated } from './session/broadcastSessionCreated';
 import { extractMessageText, extractUserPrompts } from './metaAgentMessageText';
+import { describeChildToolScope, isToolScopeEnforced } from './ai/childToolScope';
 import type { NotificationOptions, NotificationResult } from './NotificationService';
 import type { MobilePushResult } from '@nimbalyst/runtime/sync/types';
 import { composeNotificationTitle } from '../../shared/notificationTitle';
@@ -75,6 +76,8 @@ interface SessionResultData {
   /** Capability scope the child was granted (read|write|full). The objective
    *  record of what the child COULD do; null/full means all tools. */
   toolScope?: string | null;
+  /** Whether the child's provider actually withholds what toolScope denies. */
+  toolScopeEnforced?: boolean;
 }
 
 interface CreateChildSessionArgs {
@@ -129,6 +132,18 @@ function normalizeStoredChildModelIdentifier(
   }
 
   return model;
+}
+
+/**
+ * The session that queued an input row, from the prompt provenance providers
+ * copy into `ai_agent_messages.metadata` (AIProvider.withPromptProvenanceMetadata).
+ * Null for user-typed prompts and rows written before provenance existed.
+ */
+export function promptOriginSessionId(metadata?: Record<string, unknown> | null): string | null {
+  const provenance = metadata?.promptProvenance;
+  if (!provenance || typeof provenance !== 'object') return null;
+  const origin = (provenance as Record<string, unknown>).originSessionId;
+  return typeof origin === 'string' && origin ? origin : null;
 }
 
 interface SpawnSessionArgs {
@@ -1304,7 +1319,12 @@ export class MetaAgentService {
       const metaStatusRow = await this.getSessionStatusRow(metaSession.id, metaSession.workspacePath);
       const metaStatus = (metaStatusRow?.status || 'idle') as SessionStatusValue;
 
-      const result = await this.buildSessionResultData(sessionId, session.workspacePath, undefined, false);
+      // The parent wrote the child's task (and any follow-ups); echoing them back
+      // in the recap only spends the parent's context. get_session_result still
+      // returns them.
+      const result = await this.buildSessionResultData(sessionId, session.workspacePath, undefined, false, {
+        excludeInputFromSessionId: session.createdBySessionId,
+      });
 
       // NIM-6: real dedup gate. Drop notifications whose semantic content is
       // identical to the last one delivered for this child. The previous code
@@ -1397,11 +1417,9 @@ export class MetaAgentService {
         lines.push(`- ${filePath}`);
       }
     }
-    if (result.toolScope === 'read' || result.toolScope === 'write') {
-      const denied = result.toolScope === 'read' ? 'write_file or run_command' : 'run_command';
-      lines.push(
-        `Tool scope: ${result.toolScope} (this child had NO ${denied}). Any claim it ran, built, or tested anything is false; "Files modified" above is the complete list of files it changed.`,
-      );
+    const toolScopeLine = describeChildToolScope(result.toolScope, result.toolScopeEnforced === true);
+    if (toolScopeLine) {
+      lines.push(toolScopeLine);
     }
     if (result.errorMessage) {
       lines.push(`Error: ${result.errorMessage}`);
@@ -1452,7 +1470,8 @@ export class MetaAgentService {
     prefetchedSession?: { title: string; provider: string; model: string | null; status: string; lastActivity: number | null; createdAt: number; updatedAt: number; worktreeId: string | null },
     // Skip the heavier full-turn extract when the caller only needs preview
     // fields (the list and notification paths discard fullResponse).
-    includeFullResponse: boolean = true
+    includeFullResponse: boolean = true,
+    options: { excludeInputFromSessionId?: string } = {}
   ): Promise<SessionResultData> {
     let sessionTitle: string;
     let sessionProvider: string;
@@ -1493,7 +1512,7 @@ export class MetaAgentService {
 
     const messages = await AgentMessagesRepository.list(sessionId, { limit: 500 });
     const userPrompts = extractUserPrompts(messages);
-    const recentMessages = this.extractRecentMessages(messages, 3);
+    const recentMessages = this.extractRecentMessages(messages, 3, undefined, options.excludeInputFromSessionId);
     const pendingPrompt = await this.getPendingInteractivePrompt(sessionId);
 
     let editedFiles: string[] = [];
@@ -1529,6 +1548,11 @@ export class MetaAgentService {
       updatedAt: sessionUpdatedAt,
       worktreeId: sessionWorktreeId,
       toolScope: sessionToolScope,
+      // Only a restricted scope makes enforcement a meaningful question.
+      toolScopeEnforced:
+        sessionToolScope === 'read' || sessionToolScope === 'write'
+          ? isToolScopeEnforced(sessionProvider)
+          : undefined,
     };
   }
 
@@ -1800,11 +1824,21 @@ export class MetaAgentService {
     limit: number,
     // Cap each message so a verbose child cannot inline an unbounded block
     // into the auto-injected [Child Session Update] notification.
-    maxPerMessage: number = 2000
+    maxPerMessage: number = 2000,
+    // Skip input rows this session sent (its own task and follow-ups), keeping
+    // the recap to what the child said and what anyone else asked it.
+    excludeInputFromSessionId?: string
   ): Array<{ direction: 'input' | 'output'; text: string }> {
     const collected: Array<{ direction: 'input' | 'output'; text: string }> = [];
     for (let index = messages.length - 1; index >= 0 && collected.length < limit; index -= 1) {
       const message = messages[index];
+      if (
+        excludeInputFromSessionId &&
+        message.direction === 'input' &&
+        promptOriginSessionId(message.metadata) === excludeInputFromSessionId
+      ) {
+        continue;
+      }
       const text = extractMessageText(message.content, message.metadata);
       if (!text) {
         continue;

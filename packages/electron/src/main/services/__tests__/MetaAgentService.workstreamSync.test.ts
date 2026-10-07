@@ -33,6 +33,11 @@ vi.mock('@nimbalyst/runtime/ai/server/SessionStateManager', () => ({
 vi.mock('electron', () => ({
   BrowserWindow: { getAllWindows: () => [] },
 }));
+vi.mock('../ai/providerResolution', () => ({
+  resolveExtensionAgentRef: () => null,
+  isExtensionAgentProvider: () => false,
+  usesHostSuppliedToolLoop: () => false,
+}));
 
 const mockPushChange = vi.fn();
 vi.mock('../SyncManager', () => ({

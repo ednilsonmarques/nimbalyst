@@ -41,6 +41,11 @@ vi.mock('@nimbalyst/runtime/ai/server/SessionStateManager', () => ({
 vi.mock('electron', () => ({
   BrowserWindow: { getAllWindows: () => [] },
 }));
+vi.mock('../ai/providerResolution', () => ({
+  resolveExtensionAgentRef: () => null,
+  isExtensionAgentProvider: () => false,
+  usesHostSuppliedToolLoop: () => false,
+}));
 
 vi.mock('../SyncManager', () => ({ getSyncProvider: () => ({ pushChange: vi.fn() }) }));
 vi.mock('../../utils/ipcRegistry', () => ({ safeHandle: vi.fn() }));

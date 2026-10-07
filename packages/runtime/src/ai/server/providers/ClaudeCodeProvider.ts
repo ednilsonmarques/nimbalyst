@@ -675,6 +675,7 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
         {
           getAgentRole: (sid) => this.getAgentRole(sid),
           getWorkflowPreset: (sid) => this.getWorkflowPreset(sid),
+          getToolScope: (sid) => this.getToolScope(sid),
           ensureGitContext: (wp) => this.ensureGitContext(wp),
           ensureSessionDirective: async (sid) => { this.frozenSessionDirective = await this.getSessionDirective(sid); },
           buildSystemPrompt: (dc, teams, meta, preset) => this.buildSystemPrompt(dc, teams, meta, preset),

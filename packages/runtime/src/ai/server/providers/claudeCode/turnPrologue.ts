@@ -37,7 +37,7 @@ import { ClaudeCodeDeps } from './dependencyInjection';
 import { resolveEffectiveSessionMode } from './resolveEffectiveSessionMode';
 import { ClaudeCodeTranscriptAdapter } from './ClaudeCodeTranscriptAdapter';
 import { buildSdkOptions, type BuildSdkOptionsDeps, type BuildSdkOptionsResult } from './sdkOptionsBuilder';
-import { SDK_NATIVE_TOOLS } from './toolPolicy';
+import { SDK_NATIVE_TOOLS, mergeToolScopeDisallowedTools, type ChildToolScope } from './toolPolicy';
 import type { TurnState } from './turnState';
 
 /** Text attachments above this go to a file on disk instead of inline in the prompt. */
@@ -183,6 +183,8 @@ export interface TurnQueryHost {
   /** 'meta-agent' selects the restricted tool set and prompt. */
   getAgentRole(sessionId?: string): Promise<'standard' | 'meta-agent'>;
   getWorkflowPreset(sessionId?: string): Promise<MetaAgentWorkflowPreset>;
+  /** Frozen `metadata.toolScope` of a child session; 'full' when unrestricted. */
+  getToolScope(sessionId?: string): Promise<ChildToolScope>;
   /** Resolves and freezes the git snapshot; must be awaited before buildSystemPrompt (#1177). */
   ensureGitContext(workspacePath?: string): Promise<void>;
   /** Resolves and freezes `metadata.sessionDirective`; must be awaited before buildSystemPrompt. */
@@ -390,6 +392,18 @@ export async function buildTurnQuery(
     (options as any).allowedTools = host.metaAgentAllowedTools;
     (options as any).disallowedTools = blockedNativeTools;
     (options as any).blockedTools = blockedNativeTools;
+  } else {
+    // A child created with toolScope read/write must not see the tools its
+    // scope denies; MetaAgentService tells the parent the child could not use them.
+    // getToolScope throws (fail-closed) when the scope cannot be read, which
+    // ends the turn before query() runs.
+    const toolScope = await host.getToolScope(sessionId);
+    const disallowedTools = mergeToolScopeDisallowedTools(
+      (options as any).disallowedTools,
+      toolScope,
+      Object.keys((options as any).mcpServers ?? {}),
+    );
+    if (disallowedTools) (options as any).disallowedTools = disallowedTools;
   }
 
   const queryStartTime = Date.now();

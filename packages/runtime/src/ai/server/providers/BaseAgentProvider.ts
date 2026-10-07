@@ -16,7 +16,9 @@ import { BaseAIProvider } from '../AIProvider';
 import { AIProviderType, ProviderCapabilities, type DocumentContext } from '../types';
 import { AgentCapabilities, BUILTIN_AGENT_CAPABILITIES } from '../agentCapabilities';
 import { AISessionsRepository } from '../../../storage/repositories/AISessionsRepository';
+import { hasSessionStore } from '../../adapters/sessionStore';
 import { FrozenSessionDirectives } from './sessionDirective';
+import { resolveChildToolScope, type ChildToolScope } from './claudeCode/toolPolicy';
 import type { MetaAgentWorkflowPreset } from '../../prompt';
 import {
   ProviderPermissionMixin,
@@ -338,6 +340,41 @@ export abstract class BaseAgentProvider extends BaseAIProvider {
     if (frozen !== undefined) return frozen;
     this.outOfBandNamingBySession.set(sessionId, live);
     return live;
+  }
+
+  private readonly frozenToolScopes = new Map<string, Promise<ChildToolScope>>();
+
+  /**
+   * `metadata.toolScope` of a child session, read on its first turn and frozen.
+   * It is written once at child creation; freezing keeps the tool list (part of
+   * the cached prompt prefix) stable across turns.
+   *
+   * Fail-closed: toolScope is a security restriction, and a session whose row
+   * cannot be read might be a restricted child. After one retry the read error
+   * is rethrown (and not frozen), so the turn fails before query() instead of
+   * running with full tools; the next turn reads again.
+   */
+  protected getToolScope(sessionId?: string): Promise<ChildToolScope> {
+    // No session store means no persisted metadata at all, so no child scope
+    // can exist (headless/test runtimes). A store that fails to read is
+    // different: that is where a restricted child could be hiding.
+    if (!sessionId || !hasSessionStore()) return Promise.resolve('full');
+    let scope = this.frozenToolScopes.get(sessionId);
+    if (!scope) {
+      const read = () => AISessionsRepository.get(sessionId);
+      scope = read()
+        .catch(read)
+        .then((session) => resolveChildToolScope((session?.metadata as Record<string, unknown> | undefined)?.toolScope))
+        .catch((error: unknown): never => {
+          this.frozenToolScopes.delete(sessionId);
+          console.error(`[AGENT] Could not load tool scope for session ${sessionId}; refusing to run the turn unrestricted:`, error);
+          throw new Error(
+            'Could not verify this session\'s tool restrictions (session metadata unavailable), so the turn was not run. Try again.',
+          );
+        });
+      this.frozenToolScopes.set(sessionId, scope);
+    }
+    return scope;
   }
 
   protected async getWorkflowPreset(sessionId?: string): Promise<MetaAgentWorkflowPreset> {
