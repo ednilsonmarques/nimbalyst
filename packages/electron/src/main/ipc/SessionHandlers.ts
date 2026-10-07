@@ -25,6 +25,7 @@ import { normalizeSessionPhaseMetadataUpdate } from '../services/session/session
 import { destroyProviderForArchivedSession } from '../services/ai/archiveSessionProviderLifecycle';
 import { resolveSessionModelSelection } from '../services/ai/sessionModelSelection';
 import { inheritedOwnership, stripOwnerControlledMetadata } from '../services/extensionSessions/sessionOwnership';
+import { sanitizeRendererCreateTeamMetadata } from '../services/team/teamSessionMetadata';
 
 // Initialize session manager
 const sessionManager = new SessionManager();
@@ -250,7 +251,11 @@ export async function registerSessionHandlers() {
                 // missing when the first turn reads it. Ownership is assigned
                 // only by the host (extension session broker, spawn inheritance).
                 ...(session.metadata && typeof session.metadata === 'object'
-                    ? { metadata: normalizeSessionPhaseMetadataUpdate(stripOwnerControlledMetadata(session.metadata)) }
+                    ? {
+                        metadata: normalizeSessionPhaseMetadataUpdate(
+                            sanitizeRendererCreateTeamMetadata(stripOwnerControlledMetadata(session.metadata), provider),
+                        ),
+                    }
                     : {}),
             };
             // console.log('[SessionHandlers] Creating session with payload:', JSON.stringify(createPayload));

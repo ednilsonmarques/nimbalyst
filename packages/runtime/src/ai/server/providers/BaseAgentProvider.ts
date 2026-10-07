@@ -19,6 +19,7 @@ import { AISessionsRepository } from '../../../storage/repositories/AISessionsRe
 import { hasSessionStore } from '../../adapters/sessionStore';
 import { FrozenSessionDirectives } from './sessionDirective';
 import { resolveChildToolScope, type ChildToolScope } from './claudeCode/toolPolicy';
+import { NO_TEAM, resolveTeamContext, type TeamContext } from './teamContext';
 import type { MetaAgentWorkflowPreset } from '../../prompt';
 import {
   ProviderPermissionMixin,
@@ -375,6 +376,33 @@ export abstract class BaseAgentProvider extends BaseAIProvider {
       this.frozenToolScopes.set(sessionId, scope);
     }
     return scope;
+  }
+
+  private readonly frozenTeamContexts = new Map<string, Promise<TeamContext>>();
+
+  /**
+   * Team mode context (`metadata.teamMode` / `metadata.teamChild`), read on the
+   * session's first turn and frozen: it feeds the system prompt, which must stay
+   * byte-stable for the prompt cache, and both keys are creation-only anyway.
+   * A failed read yields no team policy for that turn and is retried next turn;
+   * team limits are enforced by MetaAgentService, not by this prompt.
+   */
+  protected getTeamContext(sessionId?: string): Promise<TeamContext> {
+    if (!sessionId || !hasSessionStore()) return Promise.resolve(NO_TEAM);
+    let context = this.frozenTeamContexts.get(sessionId);
+    if (!context) {
+      context = AISessionsRepository.get(sessionId)
+        .then((session) => resolveTeamContext(
+          session?.metadata as Record<string, unknown> | undefined,
+          session?.agentRole,
+        ))
+        .catch((): TeamContext => {
+          this.frozenTeamContexts.delete(sessionId);
+          return NO_TEAM;
+        });
+      this.frozenTeamContexts.set(sessionId, context);
+    }
+    return context;
   }
 
   protected async getWorkflowPreset(sessionId?: string): Promise<MetaAgentWorkflowPreset> {

@@ -1,6 +1,7 @@
 import type { DocumentContext } from './types';
 import { getPreferredAgentLanguage } from './server/preferredAgentLanguageConfig';
-import { MCP_CORE } from './server/services/mcpTopology';
+import { MCP_CORE, MCP_HOST } from './server/services/mcpTopology';
+import type { TeamRole } from './server/providers/teamContext';
 
 /**
  * Build session naming instructions section
@@ -109,6 +110,13 @@ export interface ClaudeCodePromptOptions {
    * prompt. Same freeze requirement as `gitContext`: resolve once per session.
    */
   sessionDirective?: string;
+  /**
+   * Team mode root (`metadata.teamMode`): append the coordinator policy. Same
+   * freeze requirement as `gitContext`: resolve once per session.
+   */
+  teamMode?: boolean;
+  /** Role of a session created inside a team (`metadata.teamChild.role`); appends the member contract. */
+  teamChildRole?: TeamRole;
   isVoiceMode?: boolean;
   voiceModeCodingAgentPrompt?: {
     prepend?: string;
@@ -150,6 +158,8 @@ export function buildClaudeCodeSystemPrompt(options: ClaudeCodePromptOptions): s
     worktreePath,
     gitContext,
     sessionDirective,
+    teamMode = false,
+    teamChildRole,
     isVoiceMode = false,
     voiceModeCodingAgentPrompt,
     planTrackingEnabled = false,
@@ -316,12 +326,66 @@ The user is interacting via voice mode. A voice assistant (GPT-4 Realtime) handl
   }
 
   prompt += `\nWhen coordinating sibling sessions, use consume_session_inbox when available at integration boundaries, after long validation, and before final synthesis. It consumes informational reports within the current turn; list_queued_prompts only inspects them and leaves them queued. Read the full batch before issuing follow-ups; yield at instruction boundaries. Never poll an empty inbox. Send informational handoffs with send_prompt messageKind=report, and keep instructions/questions/errors distinct. Use the final response for automatic completion notifications instead of sending it twice.\n`;
+  if (teamMode) {
+    prompt += buildTeamModeAddendum(effectiveToolReferenceStyle);
+  } else if (teamChildRole) {
+    prompt += buildTeamChildAddendum(teamChildRole);
+  }
   const directive = sessionDirective?.trim();
   if (directive) {
     prompt += `\n${directive}\n`;
   }
   return prompt + `
 </addendum>
+`;
+}
+
+/**
+ * Coordinator policy for a Team mode root session. Static text (no per-turn
+ * values) so the system prompt stays byte-stable for the prompt cache.
+ */
+export function buildTeamModeAddendum(style: ToolReferenceStyle = 'claude'): string {
+  const createSessionTool = formatMcpToolReference(MCP_HOST, 'create_session', style);
+  const spawnSessionTool = formatMcpToolReference(MCP_HOST, 'spawn_session', style);
+  const getSessionResultTool = formatMcpToolReference(MCP_HOST, 'get_session_result', style);
+  const sendPromptTool = formatMcpToolReference(MCP_HOST, 'send_prompt', style);
+  return `
+## Team Mode
+
+This session coordinates a team. You decompose the work, delegate it, follow it, integrate the results and decide the next step. Do trivial work yourself; delegate the rest.
+
+### Two levels of delegation
+- SDK sub-agent (the Agent tool): only for quick, one-off, read-only lookups whose answer you need in this same turn.
+- Real Nimbalyst session (${createSessionTool} / ${spawnSessionTool}): for relevant work, meaning anything that edits files, is an independent review, needs extensive reading, takes long, deserves its own history, should be followed in the Team view, benefits from its own worktree, or is a major step of the task.
+
+These tools are deferred: load them with ToolSearch (\`select:\` their names) before deciding to fall back to the Agent tool.
+
+### Roles
+Pass \`role\` when creating a session:
+- \`explorer\`: research and reading (defaults to Sonnet, read-only).
+- \`implementer\`: makes the changes (defaults to your model, full tools).
+- \`reviewer\`: independent review of someone else's work (defaults to Sonnet, read-only; pass toolScope "full" if it must run tests or commands).
+- \`other\`: anything else (defaults to your model).
+
+Use ${createSessionTool} for explorers, reviewers and implementers in the shared workspace. Use ${spawnSessionTool} with useWorktree only for an implementer that needs its own worktree. Never let two sessions write the same file.
+
+### Briefs
+Every brief states: the role, the exact deliverable, the acceptance criterion, the files the session owns and the files it must not touch, and any limits. A session knows nothing beyond its brief.
+
+### Limits
+A team has at most 3 real sessions active at once, 8 real sessions in total, and sessions nest at most 2 levels deep. The runtime enforces these; when it refuses a new session, integrate what you have or ask the user.
+
+### Ownership and integration
+Once delegated, a slice belongs to that session: do not read or redo it yourself; ask it through ${sendPromptTool}. Members report back automatically with a short summary; use ${getSessionResultTool} only when the summary is not enough. After results arrive, integrate and answer before considering more delegation.
+`;
+}
+
+/** Contract for a session created inside a team. Static per role. */
+export function buildTeamChildAddendum(role: TeamRole): string {
+  return `
+## Team Member
+
+You are the ${role} of a coordinated team; your brief is your whole task. When you finish, end with a short report of about 15 lines at most: the result, the relevant files and evidence, and anything left open. Do not repeat the task. Do not create other sessions unless your brief explicitly allows it; the team's depth and size are limited.
 `;
 }
 

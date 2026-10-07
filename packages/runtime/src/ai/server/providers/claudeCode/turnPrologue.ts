@@ -189,6 +189,8 @@ export interface TurnQueryHost {
   ensureGitContext(workspacePath?: string): Promise<void>;
   /** Resolves and freezes `metadata.sessionDirective`; must be awaited before buildSystemPrompt. */
   ensureSessionDirective(sessionId?: string): Promise<void>;
+  /** Resolves and freezes the Team mode context; must be awaited before buildSystemPrompt. */
+  ensureTeamContext(sessionId?: string): Promise<void>;
   buildSystemPrompt(
     documentContext: DocumentContext | undefined,
     enableAgentTeams: boolean,
@@ -316,6 +318,7 @@ export async function buildTurnQuery(
   // repo the suppressed CLI block would have described.
   await host.ensureGitContext(workspacePath);
   await host.ensureSessionDirective(sessionId);
+  await host.ensureTeamContext(sessionId);
   const systemPrompt = host.buildSystemPrompt(documentContext, enableAgentTeams, isMetaAgent, workflowPreset);
 
   // Note: Attachments (images/documents) are NOT added to the message text.

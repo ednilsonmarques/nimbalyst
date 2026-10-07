@@ -30,6 +30,7 @@ export interface McpServerStatusInfo {
 import { parse as parseShellCommand } from 'shell-quote';
 
 import { BaseAgentProvider } from './BaseAgentProvider';
+import { NO_TEAM, type TeamContext } from './teamContext';
 import {
   AIProviderType,
   DocumentContext,
@@ -205,6 +206,9 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
   // `metadata.sessionDirective`, frozen by BaseAgentProvider.getSessionDirective
   // and copied here because buildSystemPrompt is synchronous.
   private frozenSessionDirective: string | undefined = undefined;
+  // Team mode context, frozen by BaseAgentProvider.getTeamContext and copied
+  // here for the same reason.
+  private frozenTeamContext: TeamContext = NO_TEAM;
 
   private markMessagesAsHidden: boolean = false; // Flag to mark next messages as hidden
   private helperMethod: 'native' | 'custom' = 'native';
@@ -678,6 +682,7 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
           getToolScope: (sid) => this.getToolScope(sid),
           ensureGitContext: (wp) => this.ensureGitContext(wp),
           ensureSessionDirective: async (sid) => { this.frozenSessionDirective = await this.getSessionDirective(sid); },
+          ensureTeamContext: async (sid) => { this.frozenTeamContext = await this.getTeamContext(sid); },
           buildSystemPrompt: (dc, teams, meta, preset) => this.buildSystemPrompt(dc, teams, meta, preset),
           emit: (event, payload) => { this.emit(event, payload); },
           withPromptProvenanceMetadata: (dc) => this.withPromptProvenanceMetadata(dc),
@@ -3495,6 +3500,8 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
       worktreePath,
       gitContext: this.frozenGitContext,
       sessionDirective: this.frozenSessionDirective,
+      teamMode: this.frozenTeamContext.teamMode,
+      teamChildRole: this.frozenTeamContext.teamChild?.role,
       isVoiceMode,
       voiceModeCodingAgentPrompt,
       enableAgentTeams,

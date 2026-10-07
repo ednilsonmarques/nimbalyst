@@ -170,6 +170,8 @@
       "newSuperLoop": "Novo Super Loop",
       "superLoopRequiresGit": "Super Loops exigem um repositório git",
       "newMetaAgent": "Novo meta-agente",
+      "newTeamSession": "Nova sessão em Modo Equipe",
+      "teamSessionRequiresClaudeCode": "O Modo Equipe requer um modelo Claude Code como modelo padrão",
       "remoteUnavailable": "Esta operação não está disponível na máquina remota selecionada.",
       "remoteDestination": "Máquina remota selecionada"
     },

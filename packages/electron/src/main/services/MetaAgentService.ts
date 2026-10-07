@@ -36,6 +36,16 @@ import { inheritedOwnership, isParentNotificationSuppressed } from './extensionS
 import { startExtensionSessionService } from './extensionSessions/extensionSessionsService';
 import { broadcastSessionCreated } from './session/broadcastSessionCreated';
 import { extractMessageText, extractUserPrompts } from './metaAgentMessageText';
+import { TEAM_CHILD_METADATA_KEY } from '@nimbalyst/runtime/ai/server/providers/teamContext';
+import {
+  TEAM_PROVIDER,
+  buildTeamChild,
+  resolveRequestedTeamRole,
+  resolveTeamCaller,
+  teamRoleDefaultModel,
+  teamRoleDefaultToolScope,
+  type TeamCaller,
+} from './team/teamPolicy';
 import { describeChildToolScope, isToolScopeEnforced } from './ai/childToolScope';
 import type { NotificationOptions, NotificationResult } from './NotificationService';
 import type { MobilePushResult } from '@nimbalyst/runtime/sync/types';
@@ -94,6 +104,8 @@ interface CreateChildSessionArgs {
    * value is NOT inherited from the caller.
    */
   effortLevel?: string;
+  /** Team mode role (explorer | implementer | reviewer | other); ignored outside a team. */
+  role?: string;
 }
 
 /**
@@ -178,6 +190,8 @@ interface SpawnSessionArgs {
    * `model` there is no inherit-from-caller mode.
    */
   effortLevel?: string;
+  /** Team mode role (explorer | implementer | reviewer | other); ignored outside a team. */
+  role?: string;
 }
 
 interface NotifyUserArgs {
@@ -465,14 +479,31 @@ export class MetaAgentService {
     return JSON.stringify(result, null, 2);
   }
 
+  /**
+   * Single entry point for every child-session creation path (create_session,
+   * spawn_session, Actions launches). Resolves whether the caller belongs to a
+   * Team mode team; outside a team the creation is exactly what it was before.
+   */
   private async createChildSessionInternal(
+    metaSessionId: string,
+    workspaceId: string,
+    args: Parameters<MetaAgentService['createChildSessionCore']>[2],
+  ): ReturnType<MetaAgentService['createChildSessionCore']> {
+    const caller = await AISessionsRepository.get(metaSessionId);
+    const team = caller ? resolveTeamCaller(metaSessionId, caller.metadata, caller.agentRole) : null;
+    return this.createChildSessionCore(metaSessionId, workspaceId, args, team);
+  }
+
+  private async createChildSessionCore(
     metaSessionId: string,
     workspaceId: string,
     args: CreateChildSessionArgs & {
       parentSessionIdOverride?: string | null;
       /** false = fire-and-forget; written on the row before the first prompt is queued. */
       notifyParent?: boolean;
-    }
+    },
+    /** The caller's team, or null outside Team mode. */
+    team: TeamCaller | null,
   ): Promise<{
     sessionId: string;
     title: string;
@@ -539,6 +570,21 @@ export class MetaAgentService {
       // Best-effort lookup; fall through to the hardcoded default below.
     }
 
+    // Team mode: validate the role and pick its default model before any side
+    // effect. Outside a team (team === null) none of this applies.
+    const teamRole = team ? resolveRequestedTeamRole(args.role) : null;
+    let teamRootModel: string | null = parentModel;
+    if (team && team.depth > 0) {
+      try {
+        const root = await AISessionsRepository.get(team.rootSessionId);
+        if (root) teamRootModel = normalizeStoredChildModelIdentifier(root.provider ?? null, root.model ?? null);
+      } catch {
+        // Keep the caller's model; the root's own model is only a default.
+      }
+    }
+    const requestedModel = args.model
+      ?? (teamRole && !args.provider ? teamRoleDefaultModel(teamRole, teamRootModel) ?? undefined : undefined);
+
     // Keyed by the workspace the CALLER is registered under, not the spelling
     // the dispatcher canonicalized to: a child filed under a spelling no window
     // is open on is created and then never started (#1551). An orphaned caller
@@ -556,15 +602,18 @@ export class MetaAgentService {
     // self-describing identifier wrongly trips the claude-code mismatch guard.
     const explicitModelProvider =
       args.provider
-      ?? (args.model?.includes(':') ? ModelIdentifier.tryParse(args.model)?.provider ?? null : null)
+      ?? (requestedModel?.includes(':') ? ModelIdentifier.tryParse(requestedModel)?.provider ?? null : null)
       ?? parentProvider;
-    const explicitModel = normalizeStoredChildModelIdentifier(explicitModelProvider, args.model ?? null);
+    const explicitModel = normalizeStoredChildModelIdentifier(explicitModelProvider, requestedModel ?? null);
     const model = explicitModel || defaultModel;
     const parsed = ModelIdentifier.tryParse(model);
     const provider = (args.provider ||
       parsed?.provider ||
       parentProvider ||
       'claude-code') as AIProviderType;
+    if (team && provider !== TEAM_PROVIDER) {
+      throw new Error(`Team mode supports ${TEAM_PROVIDER} sessions only; refusing to create a ${provider} team member.`);
+    }
     // Provider and model MUST agree. Otherwise a child is persisted with, e.g.,
     // provider=claude-code + an antigravity-gemini model, gets routed to the
     // Claude Code provider, is rejected ("requires a claude-code:* identifier"),
@@ -655,8 +704,10 @@ export class MetaAgentService {
     // Read-only tool segregation: persist a restricted capability scope so the
     // child is granted only the matching dev tools at turn time (an analyze
     // child physically cannot run_command, so it cannot build or claim to).
+    // An explicit toolScope always wins over the team role's default.
+    const requestedToolScope = args.toolScope ?? (teamRole ? teamRoleDefaultToolScope(teamRole) : undefined);
     const childToolScope =
-      args.toolScope === 'read' || args.toolScope === 'write' ? args.toolScope : undefined;
+      requestedToolScope === 'read' || requestedToolScope === 'write' ? requestedToolScope : undefined;
 
     // Reasoning effort: every turn reads it back out of session metadata
     // (MessageStreamingHandler for codex/others, buildClaudeCodeRuntimeConfig
@@ -677,6 +728,8 @@ export class MetaAgentService {
       ...(childToolScope ? { toolScope: childToolScope } : {}),
       ...(childEffortLevel ? { effortLevel: childEffortLevel } : {}),
       ...(args.notifyParent === false ? { notifyParent: false } : {}),
+      // Written with the row (creation-only); the store refuses to change it later.
+      ...(team && teamRole ? { [TEAM_CHILD_METADATA_KEY]: buildTeamChild(team, teamRole) } : {}),
     };
 
     const sessionId = randomUUID();
@@ -759,7 +812,10 @@ export class MetaAgentService {
     const workspaceKey = resolveStoredWorkspaceId(parent.workspacePath, workspaceId);
 
     const isolated = args.isolated === true;
-    const notifyOnComplete = args.notifyOnComplete === true;
+    // Inside a team the coordinator needs every member's result, so report back
+    // by default there; elsewhere spawn_session stays fire-and-forget.
+    const parentInTeam = resolveTeamCaller(parentSessionId, parent.metadata, parent.agentRole) !== null;
+    const notifyOnComplete = args.notifyOnComplete === true || (parentInTeam && args.notifyOnComplete !== false);
 
     // Sibling mode: resolve (or create) a workstream container so the new
     // session shares files-edited, tabs, and workstream overview with the
@@ -796,6 +852,7 @@ export class MetaAgentService {
       worktreeId: inheritedWorktreeId,
       model: effectiveModel,
       effortLevel: args.effortLevel,
+      role: args.role,
       parentSessionIdOverride: workstreamId,
       // Default is fire-and-forget: kicking off work in a fresh session is the
       // common /launch-new-session use case (escape a long parent context).

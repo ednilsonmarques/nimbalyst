@@ -354,6 +354,13 @@ const SessionHistoryComponent: React.FC = () => {
   const defaultAgentModel = useAtomValue(defaultAgentModelAtom);
   const addSession = useSetAtom(addSessionFullAtom);
 
+  // Team mode root: a normal session created with metadata.teamMode (creation-only;
+  // the main process accepts it for Claude Code sessions only).
+  const teamModeModelSupported = !defaultAgentModel || defaultAgentModel.startsWith('claude-code:');
+  const handleNewTeamSession = () => {
+    void dispatchCreateNewSession({ launchSource: 'session_history', metadata: { teamMode: true } });
+  };
+
   const handleNewMetaAgent = async () => {
     try {
       const result = await createMetaAgentSession(workspacePath, defaultAgentModel);
@@ -2086,6 +2093,7 @@ const SessionHistoryComponent: React.FC = () => {
     openWorktreeBaseBranchPicker,
     openSuperLoopDialog,
     handleNewMetaAgent,
+    handleNewTeamSession,
   });
   createHandlersRef.current = {
     onNewSession,
@@ -2094,6 +2102,7 @@ const SessionHistoryComponent: React.FC = () => {
     openWorktreeBaseBranchPicker,
     openSuperLoopDialog,
     handleNewMetaAgent,
+    handleNewTeamSession,
   };
 
   const hasWorktreeOption = Boolean(onNewWorktreeSession);
@@ -2154,6 +2163,17 @@ const SessionHistoryComponent: React.FC = () => {
         onSelect: () => { void createHandlersRef.current.handleNewMetaAgent(); },
       });
     }
+    if (isAgentTeamViewEnabled) {
+      items.push({
+        id: 'team-session',
+        label: t('sessionList.create.newTeamSession'),
+        icon: 'account_tree',
+        testId: 'new-team-session-button',
+        disabled: !teamModeModelSupported,
+        disabledReason: t('sessionList.create.teamSessionRequiresClaudeCode'),
+        onSelect: () => createHandlersRef.current.handleNewTeamSession(),
+      });
+    }
 
     setTitleBarCreateMenu('agent', {
       mode: 'agent',
@@ -2172,6 +2192,8 @@ const SessionHistoryComponent: React.FC = () => {
     hasTerminalOption,
     isSuperLoopsAvailable,
     isMetaAgentEnabled,
+    isAgentTeamViewEnabled,
+    teamModeModelSupported,
     isNotGitRepo,
     t,
   ]);
@@ -2189,6 +2211,7 @@ const SessionHistoryComponent: React.FC = () => {
       onNewTerminal,
       isSuperLoopsAvailable || null,
       isMetaAgentEnabled || null,
+      isAgentTeamViewEnabled || null,
     ].filter(Boolean);
     if (availableOptions.length === 1) {
       // Only one option available, trigger it directly. `onNewSession` is

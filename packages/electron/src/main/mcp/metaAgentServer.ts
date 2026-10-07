@@ -24,6 +24,7 @@ type CreateSessionArgs = {
   worktreeId?: string;
   toolScope?: string;
   effortLevel?: string;
+  role?: string;
 };
 
 type SpawnSessionArgs = {
@@ -41,6 +42,7 @@ type SpawnSessionArgs = {
    */
   isolated?: boolean;
   effortLevel?: string;
+  role?: string;
 };
 
 type RespondToPromptArgs = {
@@ -226,6 +228,12 @@ export const META_AGENT_TOOL_DEFS: Array<{
           description:
             "Capability scope for the child. \"read\" = read_file/list_files/search_files only (pure investigation). \"write\" = those plus write_file but NO run_command, so the child can save a file deliverable (e.g. a report) yet cannot build/test/run anything. \"full\" (default) = all tools including run_command. Use read or write for analyze/research tasks so the child physically cannot run a build, and reserve full for tasks that must build/test.",
         },
+        role: {
+          type: "string",
+          enum: ["explorer", "implementer", "reviewer", "other"],
+          description:
+            "Team mode only (ignored outside a Team mode team). explorer: research/reading, defaults to Sonnet and read-only tools. implementer: makes changes, defaults to the team root's model and full tools. reviewer: independent review, defaults to Sonnet and read-only tools (pass toolScope \"full\" if it must run tests). other: defaults to the root's model. An explicit model or toolScope always wins. Omitted means other.",
+        },
         effortLevel: {
           type: "string",
           enum: ["low", "medium", "high", "xhigh", "max", "ultra"],
@@ -275,6 +283,12 @@ export const META_AGENT_TOOL_DEFS: Array<{
           type: "boolean",
           description:
             "Default false. When false (the default), the calling session receives no follow-up prompt when the spawned session completes/errors/waits — fire and forget. Set true only when the caller specifically wants to be told the result and continue working with it.",
+        },
+        role: {
+          type: "string",
+          enum: ["explorer", "implementer", "reviewer", "other"],
+          description:
+            "Team mode only (ignored outside a Team mode team). explorer: research/reading, defaults to Sonnet and read-only tools. implementer: makes changes, defaults to the team root's model and full tools. reviewer: independent review, defaults to Sonnet and read-only tools (pass toolScope \"full\" if it must run tests). other: defaults to the root's model. An explicit model or toolScope always wins. Omitted means other.",
         },
         effortLevel: {
           type: "string",

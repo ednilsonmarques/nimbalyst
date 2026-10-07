@@ -4,6 +4,7 @@
 
 import { toMillis } from '../utils/timestampUtils';
 import { parseJsonObjectColumn } from '../utils/jsonColumn';
+import { preserveStoredTeamMetadata, stripCreationOnlyTeamMetadata } from './team/teamSessionMetadata';
 import {
   OWNER_METADATA_KEY,
   SESSION_OWNER_KEY,
@@ -512,6 +513,8 @@ export function createPGLiteSessionStore(db: PGliteLike, ensureDbReady?: EnsureR
           [OWNER_METADATA_KEY]: existingMetadata[OWNER_METADATA_KEY] ?? {},
         };
       }
+      // Team mode keys are creation-only too: a re-issued create keeps them as stored.
+      createMetadata = preserveStoredTeamMetadata(createMetadata, existingMetadata);
 
       await db.query(
         `INSERT INTO ai_sessions (
@@ -625,7 +628,7 @@ export function createPGLiteSessionStore(db: PGliteLike, ensureDbReady?: EnsureR
         const raw = metadata.metadata as unknown;
         const incoming =
           raw && typeof raw === 'object' && !Array.isArray(raw)
-            ? stripOwnerControlledMetadata(raw as Record<string, unknown>)
+            ? stripCreationOnlyTeamMetadata(stripOwnerControlledMetadata(raw as Record<string, unknown>))
             : metadata.metadata;
         if (
           incoming === null ||
