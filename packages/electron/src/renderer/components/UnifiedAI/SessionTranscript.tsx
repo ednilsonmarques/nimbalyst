@@ -16,7 +16,8 @@ import { RemoteSessionTranscript } from './RemoteSessionTranscript';
  */
 
 import React, { useCallback, useRef, useImperativeHandle, forwardRef, useEffect, useState, useMemo } from 'react';
-import { useAtom, useSetAtom, useAtomValue } from 'jotai';
+import { atom, useAtom, useSetAtom, useAtomValue } from 'jotai';
+import { isRecommendedTeamRootModel } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 import { store, registerInteractiveWidgetHost, unregisterInteractiveWidgetHost } from '@nimbalyst/runtime/store';
 import type { SessionData, ChatAttachment, TranscriptViewMessage } from '@nimbalyst/runtime/ai/server/types';
 import { agentCapabilitiesForProviderType } from '@nimbalyst/runtime/ai/server/agentCapabilities';
@@ -496,6 +497,13 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
 
   // Effort level: read from session metadata, fall back to global default
   const showEffortLevel = useMemo(() => supportsEffortLevel(currentModel), [currentModel]);
+  // Team mode coordinator below the recommended tier (Opus/Fable): warn only.
+  // The user's manual model choice always wins; nothing is changed back.
+  const isTeamModeRoot = useAtomValue(useMemo(
+    () => atom((get) => (get(sessionStoreAtom(sessionId))?.metadata as Record<string, unknown> | undefined)?.teamMode === true),
+    [sessionId],
+  ));
+  const showTeamModelWarning = isTeamModeRoot && !!currentModel && !isRecommendedTeamRootModel(currentModel);
   const effortLevel = useMemo(() => {
     return rawEffortLevel != null ? parseEffortLevel(rawEffortLevel) : defaultEffortLevel;
   }, [rawEffortLevel, defaultEffortLevel]);
@@ -2710,6 +2718,17 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
           onFileClick={handleFileClick}
           pendingReviewFiles={pendingReviewFiles}
         />
+      )}
+
+      {showTeamModelWarning && (
+        <div
+          className="team-model-warning mx-3 mb-1 flex items-center gap-1.5 rounded border border-[var(--nim-warning)]/40 bg-[var(--nim-warning)]/10 px-2 py-1 text-[11px] text-[var(--nim-text)]"
+          data-testid="team-model-warning"
+          role="status"
+        >
+          <span aria-hidden className="text-[var(--nim-warning)]">⚠</span>
+          {t('transcript.teamModelBelowRecommended')}
+        </div>
       )}
 
       {/* Queue display */}

@@ -4,7 +4,10 @@ import {
   buildTeamChild,
   resolveRequestedTeamRole,
   resolveTeamCaller,
+  teamRoleDefaultEffort,
   teamRoleDefaultModel,
+  TEAM_ROOT_PRESETS,
+  isRecommendedTeamRootModel,
   teamRoleDefaultToolScope,
 } from '../teamPolicy';
 import {
@@ -41,12 +44,17 @@ describe('resolveRequestedTeamRole', () => {
 });
 
 describe('role defaults', () => {
-  it('model: explorer and reviewer on Sonnet, implementer and other on the root model', () => {
-    expect(teamRoleDefaultModel('explorer', 'claude-code:opus')).toBe('claude-code:sonnet');
-    expect(teamRoleDefaultModel('reviewer', 'claude-code:opus')).toBe('claude-code:sonnet');
-    expect(teamRoleDefaultModel('implementer', 'claude-code:opus')).toBe('claude-code:opus');
-    expect(teamRoleDefaultModel('other', 'claude-code:opus')).toBe('claude-code:opus');
-    expect(teamRoleDefaultModel('implementer', null)).toBeNull();
+  it('model: every role defaults to Sonnet', () => {
+    for (const role of ['explorer', 'implementer', 'reviewer', 'other'] as const) {
+      expect(teamRoleDefaultModel(role)).toBe('claude-code:sonnet');
+    }
+  });
+
+  it('effort: reviewer high, every other role medium', () => {
+    expect(teamRoleDefaultEffort('reviewer')).toBe('high');
+    expect(teamRoleDefaultEffort('explorer')).toBe('medium');
+    expect(teamRoleDefaultEffort('implementer')).toBe('medium');
+    expect(teamRoleDefaultEffort('other')).toBe('medium');
   });
 
   it('tool scope: explorer and reviewer read, implementer full, other left to the caller', () => {
@@ -58,6 +66,26 @@ describe('role defaults', () => {
 
   it('a member is one level below its caller', () => {
     expect(buildTeamChild({ rootSessionId: 'root', depth: 1 }, 'reviewer')).toEqual({ role: 'reviewer', rootSessionId: 'root', depth: 2 });
+  });
+});
+
+describe('coordinator presets', () => {
+  it('Standard = Opus/high, Large = Fable/high, Critical = Fable/max, never -1m', () => {
+    expect(TEAM_ROOT_PRESETS.map((p) => [p.id, p.model, p.effortLevel])).toEqual([
+      ['standard', 'claude-code:opus', 'high'],
+      ['large', 'claude-code:fable', 'high'],
+      ['critical', 'claude-code:fable', 'max'],
+    ]);
+    expect(TEAM_ROOT_PRESETS.some((p) => p.model.endsWith('-1m'))).toBe(false);
+  });
+
+  it('recommended coordinator tier is any Opus or Fable variant', () => {
+    for (const m of ['claude-code:opus', 'claude-code:opus-1m', 'claude-code:opus-4-8', 'claude-code:fable', 'claude-code:fable-1m']) {
+      expect(isRecommendedTeamRootModel(m), m).toBe(true);
+    }
+    for (const m of ['claude-code:sonnet', 'claude-code:haiku', 'openai-codex:gpt-5.5', null]) {
+      expect(isRecommendedTeamRootModel(m), String(m)).toBe(false);
+    }
   });
 });
 
@@ -74,17 +102,27 @@ describe('creation-only team metadata', () => {
     expect(preserveStoredTeamMetadata({ teamMode: true }, null)).toEqual({ teamMode: true });
   });
 
-  it('renderer creates: never teamChild, teamMode only as true on claude-code', () => {
-    expect(sanitizeRendererCreateTeamMetadata({ teamMode: true, teamChild: { role: 'x' } }, 'claude-code')).toEqual({ teamMode: true });
-    expect(sanitizeRendererCreateTeamMetadata({ teamMode: 'yes' }, 'claude-code')).toEqual({});
+  it('renderer creates: never teamChild, teamMode only as true', () => {
+    expect(sanitizeRendererCreateTeamMetadata({ teamMode: true, teamChild: { role: 'x' } }, 'claude-code:opus')).toEqual({ teamMode: true });
+    expect(sanitizeRendererCreateTeamMetadata({ teamMode: 'yes' }, 'claude-code:opus')).toEqual({});
+    const plain = { phase: 'x' };
+    expect(sanitizeRendererCreateTeamMetadata(plain, 'claude-code:opus')).toBe(plain);
+  });
+
+  it('keeps teamMode outside the recommended presets and only warns (policy in the UX, not in the core)', () => {
     const warn = console.warn;
-    console.warn = () => {};
+    const warnings: string[] = [];
+    console.warn = (msg: string) => { warnings.push(msg); };
     try {
-      expect(sanitizeRendererCreateTeamMetadata({ teamMode: true, phase: 'x' }, 'openai-codex')).toEqual({ phase: 'x' });
+      expect(sanitizeRendererCreateTeamMetadata({ teamMode: true, effortLevel: 'low' }, 'claude-code:sonnet'))
+        .toEqual({ teamMode: true, effortLevel: 'low' });
+      expect(sanitizeRendererCreateTeamMetadata({ teamMode: true }, 'openai-codex:gpt-5.5')).toEqual({ teamMode: true });
+      expect(warnings).toHaveLength(2);
+      warnings.length = 0;
+      sanitizeRendererCreateTeamMetadata({ teamMode: true }, 'claude-code:fable');
+      expect(warnings).toHaveLength(0);
     } finally {
       console.warn = warn;
     }
-    const plain = { phase: 'x' };
-    expect(sanitizeRendererCreateTeamMetadata(plain, 'claude-code')).toBe(plain);
   });
 });

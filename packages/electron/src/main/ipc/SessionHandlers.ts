@@ -253,7 +253,7 @@ export async function registerSessionHandlers() {
                 ...(session.metadata && typeof session.metadata === 'object'
                     ? {
                         metadata: normalizeSessionPhaseMetadataUpdate(
-                            sanitizeRendererCreateTeamMetadata(stripOwnerControlledMetadata(session.metadata), provider),
+                            sanitizeRendererCreateTeamMetadata(stripOwnerControlledMetadata(session.metadata), model),
                         ),
                     }
                     : {}),

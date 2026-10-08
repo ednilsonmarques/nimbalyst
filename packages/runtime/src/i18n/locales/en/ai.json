@@ -77,7 +77,8 @@
     "collapseRawTerminal": "Collapse raw terminal",
     "expandRawTerminal": "Expand raw terminal",
     "rawTerminal": "Raw terminal",
-    "waitForTurnToSwitchModel": "Wait for the current turn to finish before switching models"
+    "waitForTurnToSwitchModel": "Wait for the current turn to finish before switching models",
+    "teamModelBelowRecommended": "Team mode coordinator is below the recommended model (Opus or Fable)."
   },
   "modelPicker": {
     "selectModel": "Select Model",

@@ -43,6 +43,7 @@ import {
   buildTeamChild,
   resolveRequestedTeamRole,
   resolveTeamCaller,
+  teamRoleDefaultEffort,
   teamRoleDefaultModel,
   teamRoleDefaultToolScope,
   type TeamCaller,
@@ -432,6 +433,8 @@ export class MetaAgentService {
       useWorktree: false,
       worktreeId: inheritedWorktreeId,
       model: effectiveModel,
+      // A user-triggered launch keeps the parent's model; no team role defaults.
+      skipTeamRoleModelDefaults: true,
       parentSessionIdOverride: workstreamId,
       // Always fire-and-forget for human-triggered launches — the user can
       // watch the new session themselves; no need to surface child-completion
@@ -526,6 +529,11 @@ export class MetaAgentService {
       parentSessionIdOverride?: string | null;
       /** false = fire-and-forget; written on the row before the first prompt is queued. */
       notifyParent?: boolean;
+      /**
+       * The model was chosen by inheritance (Actions launch, spawn inheritModel):
+       * treat it as an explicit choice and skip the team role's model/effort defaults.
+       */
+      skipTeamRoleModelDefaults?: boolean;
     },
     /** The caller's team, or null outside Team mode. */
     team: TeamCaller | null,
@@ -595,20 +603,15 @@ export class MetaAgentService {
       // Best-effort lookup; fall through to the hardcoded default below.
     }
 
-    // Team mode: validate the role and pick its default model before any side
-    // effect. Outside a team (team === null) none of this applies.
+    // Team mode: validate the role and pick its default model and effort before
+    // any side effect. Outside a team (team === null) none of this applies, and
+    // an explicit model / effortLevel always wins over the role default.
     const teamRole = team ? resolveRequestedTeamRole(args.role) : null;
-    let teamRootModel: string | null = parentModel;
-    if (team && team.depth > 0) {
-      try {
-        const root = await AISessionsRepository.get(team.rootSessionId);
-        if (root) teamRootModel = normalizeStoredChildModelIdentifier(root.provider ?? null, root.model ?? null);
-      } catch {
-        // Keep the caller's model; the root's own model is only a default.
-      }
-    }
+    const applyRoleModelDefaults = teamRole !== null && !args.skipTeamRoleModelDefaults;
     const requestedModel = args.model
-      ?? (teamRole && !args.provider ? teamRoleDefaultModel(teamRole, teamRootModel) ?? undefined : undefined);
+      ?? (applyRoleModelDefaults && !args.provider ? teamRoleDefaultModel(teamRole!) : undefined);
+    const effortLevelForChild = requestedEffortLevel
+      ?? (applyRoleModelDefaults ? teamRoleDefaultEffort(teamRole!) : undefined);
 
     // Keyed by the workspace the CALLER is registered under, not the spelling
     // the dispatcher canonicalized to: a child filed under a spelling no window
@@ -740,8 +743,8 @@ export class MetaAgentService {
     // effort selector displays the same level the provider will actually run
     // at, rather than a level the transport would silently lower. Writing
     // nothing leaves the child on the app-wide default.
-    const childEffortLevel = requestedEffortLevel
-      ? clampEffortLevel(requestedEffortLevel, normalizedModel)
+    const childEffortLevel = effortLevelForChild
+      ? clampEffortLevel(effortLevelForChild, normalizedModel)
       : undefined;
 
     // Everything a reader must never see missing goes in the insert itself:
@@ -883,6 +886,8 @@ export class MetaAgentService {
       model: effectiveModel,
       effortLevel: args.effortLevel,
       role: args.role,
+      // inheritModel is an explicit choice: keep the caller's model, no role defaults.
+      skipTeamRoleModelDefaults: !args.model && args.inheritModel === true,
       parentSessionIdOverride: workstreamId,
       // Default is fire-and-forget: kicking off work in a fresh session is the
       // common /launch-new-session use case (escape a long parent context).

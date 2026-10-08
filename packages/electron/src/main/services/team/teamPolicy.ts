@@ -16,8 +16,10 @@ import {
 /** Team mode only runs on Claude Code in this phase. */
 export const TEAM_PROVIDER = 'claude-code';
 
-/** Default model for the read-heavy roles. */
+/** Default model for every team member; the coordinator promotes one explicitly when needed. */
 export const TEAM_SONNET_MODEL = 'claude-code:sonnet';
+
+export { TEAM_ROOT_PRESETS, isRecommendedTeamRootModel } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 
 export interface TeamCaller {
   rootSessionId: string;
@@ -53,10 +55,17 @@ export function resolveRequestedTeamRole(raw: unknown): TeamRole {
   return role;
 }
 
-/** Explorer and reviewer run on Sonnet; implementer and other inherit the root's model. */
-export function teamRoleDefaultModel(role: TeamRole, rootModel: string | null): string | null {
-  if (role === 'explorer' || role === 'reviewer') return TEAM_SONNET_MODEL;
-  return rootModel;
+/**
+ * Every role defaults to Sonnet. Kept per role so a role can get its own
+ * default later without touching the caller.
+ */
+export function teamRoleDefaultModel(_role: TeamRole): string {
+  return TEAM_SONNET_MODEL;
+}
+
+/** Reviewers think harder (high); every other role runs at medium. */
+export function teamRoleDefaultEffort(role: TeamRole): 'medium' | 'high' {
+  return role === 'reviewer' ? 'high' : 'medium';
 }
 
 /**

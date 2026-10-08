@@ -170,10 +170,13 @@
       "newSuperLoop": "New Super Loop",
       "superLoopRequiresGit": "Super Loops require a git repository",
       "newMetaAgent": "New Meta Agent",
-      "newTeamSession": "New Team mode session",
-      "teamSessionRequiresClaudeCode": "Team mode needs a Claude Code model as the default model",
       "remoteUnavailable": "This operation is not available on the selected remote machine.",
-      "remoteDestination": "Selected remote machine"
+      "remoteDestination": "Selected remote machine",
+      "newTeamSession": {
+        "standard": "New Team mode session: Standard (Opus, high)",
+        "large": "New Team mode session: Large (Fable, high)",
+        "critical": "New Team mode session: Critical (Fable, max)"
+      }
     },
     "errors": {
       "loadFailed": "Failed to load sessions",

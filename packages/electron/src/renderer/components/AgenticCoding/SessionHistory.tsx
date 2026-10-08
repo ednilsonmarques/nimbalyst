@@ -25,6 +25,7 @@ import { getTimeGroupKey, TimeGroupKey } from '../../utils/dateFormatting';
 import { getFileName } from '../../utils/pathUtils';
 import { KeyboardShortcuts, getShortcutDisplay } from '../../../shared/KeyboardShortcuts';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
+import { TEAM_ROOT_PRESETS, type TeamRootPreset } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
@@ -354,11 +355,14 @@ const SessionHistoryComponent: React.FC = () => {
   const defaultAgentModel = useAtomValue(defaultAgentModelAtom);
   const addSession = useSetAtom(addSessionFullAtom);
 
-  // Team mode root: a normal session created with metadata.teamMode (creation-only;
-  // the main process accepts it for Claude Code sessions only).
-  const teamModeModelSupported = !defaultAgentModel || defaultAgentModel.startsWith('claude-code:');
-  const handleNewTeamSession = () => {
-    void dispatchCreateNewSession({ launchSource: 'session_history', metadata: { teamMode: true } });
+  // Team mode root: a normal session created with metadata.teamMode (creation-only)
+  // on one of the coordinator presets (model + effort).
+  const handleNewTeamSession = (preset: TeamRootPreset) => {
+    void dispatchCreateNewSession({
+      launchSource: 'session_history',
+      model: preset.model,
+      metadata: { teamMode: true, effortLevel: preset.effortLevel },
+    });
   };
 
   const handleNewMetaAgent = async () => {
@@ -2164,15 +2168,15 @@ const SessionHistoryComponent: React.FC = () => {
       });
     }
     if (isAgentTeamViewEnabled) {
-      items.push({
-        id: 'team-session',
-        label: t('sessionList.create.newTeamSession'),
-        icon: 'account_tree',
-        testId: 'new-team-session-button',
-        disabled: !teamModeModelSupported,
-        disabledReason: t('sessionList.create.teamSessionRequiresClaudeCode'),
-        onSelect: () => createHandlersRef.current.handleNewTeamSession(),
-      });
+      for (const preset of TEAM_ROOT_PRESETS) {
+        items.push({
+          id: `team-session-${preset.id}`,
+          label: t(`sessionList.create.newTeamSession.${preset.id}`),
+          icon: 'account_tree',
+          testId: `new-team-session-${preset.id}-button`,
+          onSelect: () => createHandlersRef.current.handleNewTeamSession(preset),
+        });
+      }
     }
 
     setTitleBarCreateMenu('agent', {
@@ -2193,7 +2197,6 @@ const SessionHistoryComponent: React.FC = () => {
     isSuperLoopsAvailable,
     isMetaAgentEnabled,
     isAgentTeamViewEnabled,
-    teamModeModelSupported,
     isNotGitRepo,
     t,
   ]);

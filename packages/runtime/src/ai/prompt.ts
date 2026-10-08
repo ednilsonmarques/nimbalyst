@@ -361,11 +361,13 @@ This session coordinates a team. You decompose the work, delegate it, follow it,
 These tools are deferred: load them with ToolSearch (\`select:\` their names) before deciding to fall back to the Agent tool.
 
 ### Roles
-Pass \`role\` when creating a session:
-- \`explorer\`: research and reading (defaults to Sonnet, read-only).
-- \`implementer\`: makes the changes (defaults to your model, full tools).
-- \`reviewer\`: independent review of someone else's work (defaults to Sonnet, read-only; pass toolScope "full" if it must run tests or commands).
-- \`other\`: anything else (defaults to your model).
+Pass \`role\` when creating a session. Every member runs on Sonnet by default:
+- \`explorer\`: research and reading (Sonnet, effort medium, read-only).
+- \`implementer\`: makes the changes (Sonnet, effort medium, full tools).
+- \`reviewer\`: independent review of someone else's work (Sonnet, effort high, read-only; pass toolScope "full" if it must run tests or commands).
+- \`other\`: anything else (Sonnet, effort medium).
+
+To promote a member, pass \`model\` and \`effortLevel\` explicitly (e.g. \`claude-code:opus\` with \`high\`, or \`claude-code:fable\` with \`high\` or \`max\`). Promote only when the task clearly needs it, such as a hard implementation or a critical review: stronger models and higher effort cost much more.
 
 Use ${createSessionTool} for explorers, reviewers and implementers in the shared workspace. Use ${spawnSessionTool} with useWorktree only for an implementer that needs its own worktree. Never let two sessions write the same file.
 

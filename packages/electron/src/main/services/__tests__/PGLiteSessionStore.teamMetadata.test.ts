@@ -60,6 +60,15 @@ it('keeps teamMode and teamChild out of reach of ordinary metadata writes', asyn
   expect(await metadataOf('child')).toMatchObject({ teamChild, tags: ['a'] });
 });
 
+it('lets the user change a team root model and effort later, keeping teamMode', async () => {
+  const store = createPGLiteSessionStore(sqlite);
+  await store.create({ id: 'root', provider: 'claude-code', model: 'claude-code:opus', workspaceId: '/p', metadata: { teamMode: true, effortLevel: 'high' } });
+  await store.updateMetadata('root', { model: 'claude-code:sonnet', metadata: { effortLevel: 'low' } } as never);
+  const { rows } = await sqlite.query<{ model: string }>(`SELECT model FROM ai_sessions WHERE id = 'root'`);
+  expect(rows[0].model).toBe('claude-code:sonnet');
+  expect(await metadataOf('root')).toMatchObject({ teamMode: true, effortLevel: 'low' });
+});
+
 it('cannot turn a normal session into a team root after creation', async () => {
   const store = createPGLiteSessionStore(sqlite);
   await store.create({ id: 'plain', provider: 'claude-code', workspaceId: '/p', metadata: { phase: 'backlog' } });

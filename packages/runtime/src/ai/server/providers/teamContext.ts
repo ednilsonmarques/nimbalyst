@@ -59,3 +59,33 @@ export function resolveTeamContext(
   if (!teamMode && !teamChild) return NO_TEAM;
   return { teamMode, teamChild };
 }
+
+export type TeamRootPresetId = 'standard' | 'large' | 'critical';
+
+export interface TeamRootPreset {
+  id: TeamRootPresetId;
+  model: string;
+  effortLevel: 'high' | 'max';
+}
+
+/**
+ * Coordinator presets offered by "New Team mode session". Never the `-1m`
+ * variants: those stay an explicit choice (they can bill usage credits).
+ */
+export const TEAM_ROOT_PRESETS: readonly TeamRootPreset[] = Object.freeze([
+  { id: 'standard', model: 'claude-code:opus', effortLevel: 'high' },
+  { id: 'large', model: 'claude-code:fable', effortLevel: 'high' },
+  { id: 'critical', model: 'claude-code:fable', effortLevel: 'max' },
+]);
+
+/**
+ * Whether a Team mode coordinator runs at least at the recommended tier (any
+ * Opus or Fable variant). Used only to warn: a user's manual choice always wins.
+ */
+export function isRecommendedTeamRootModel(model: string | null | undefined): boolean {
+  if (!model) return false;
+  const separator = model.indexOf(':');
+  const provider = separator === -1 ? '' : model.slice(0, separator);
+  const variant = (separator === -1 ? model : model.slice(separator + 1)).toLowerCase();
+  return provider === 'claude-code' && /^(opus|fable)(\b|-)/.test(variant);
+}

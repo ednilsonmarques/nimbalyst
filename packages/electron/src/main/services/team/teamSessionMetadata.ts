@@ -9,7 +9,7 @@ import {
   TEAM_CHILD_METADATA_KEY,
   TEAM_MODE_METADATA_KEY,
 } from '@nimbalyst/runtime/ai/server/providers/teamContext';
-import { TEAM_PROVIDER } from './teamPolicy';
+import { isRecommendedTeamRootModel } from './teamPolicy';
 
 const CREATION_ONLY_KEYS = [TEAM_MODE_METADATA_KEY, TEAM_CHILD_METADATA_KEY] as const;
 
@@ -40,20 +40,21 @@ export function preserveStoredTeamMetadata(
 
 /**
  * Metadata a renderer may set when creating a session: never `teamChild` (only
- * the host creates team members), and `teamMode` only as `true` on a Claude
- * Code session.
+ * the host creates team members), and `teamMode` only as `true`.
+ *
+ * The UI only offers the recommended coordinator presets, but the core does not
+ * enforce them: a Team mode root on any other model is kept (and logged) so
+ * advanced/API callers are not locked in. Strong policy in the UX, not in the core.
  */
 export function sanitizeRendererCreateTeamMetadata(
   metadata: Record<string, unknown>,
-  provider: string,
+  model: string | null | undefined,
 ): Record<string, unknown> {
   if (!(TEAM_MODE_METADATA_KEY in metadata) && !(TEAM_CHILD_METADATA_KEY in metadata)) return metadata;
   const { [TEAM_CHILD_METADATA_KEY]: _child, [TEAM_MODE_METADATA_KEY]: teamMode, ...rest } = metadata;
-  if (teamMode === true && provider === TEAM_PROVIDER) {
-    return { ...rest, [TEAM_MODE_METADATA_KEY]: true };
+  if (teamMode !== true) return rest;
+  if (!isRecommendedTeamRootModel(model)) {
+    console.warn(`[team] Team mode session created on ${model ?? 'an unknown model'}, outside the recommended presets (Opus or Fable).`);
   }
-  if (teamMode !== undefined) {
-    console.warn(`[team] Ignoring teamMode on a ${provider} session: Team mode supports ${TEAM_PROVIDER} only.`);
-  }
-  return rest;
+  return { ...rest, [TEAM_MODE_METADATA_KEY]: true };
 }

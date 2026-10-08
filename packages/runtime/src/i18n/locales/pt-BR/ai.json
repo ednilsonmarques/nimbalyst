@@ -77,7 +77,8 @@
     "collapseRawTerminal": "Recolher terminal bruto",
     "expandRawTerminal": "Expandir terminal bruto",
     "rawTerminal": "Terminal bruto",
-    "waitForTurnToSwitchModel": "Aguarde o turno atual terminar antes de trocar de modelo"
+    "waitForTurnToSwitchModel": "Aguarde o turno atual terminar antes de trocar de modelo",
+    "teamModelBelowRecommended": "O orquestrador do Modo Equipe está abaixo do modelo recomendado (Opus ou Fable)."
   },
   "modelPicker": {
     "selectModel": "Selecionar modelo",

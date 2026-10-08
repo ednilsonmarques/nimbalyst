@@ -81,41 +81,66 @@ beforeEach(() => {
 });
 
 describe('Team mode child creation', () => {
-  it('explorer from the root: Sonnet, read-only, teamChild at depth 1', async () => {
+  it('explorer from the root: Sonnet, medium, read-only, teamChild at depth 1', async () => {
     await service().createChildSessionInternal('root', '/ws', { role: 'explorer' });
     const row = created();
     expect(row.model).toBe('claude-code:sonnet');
+    expect(row.metadata.effortLevel).toBe('medium');
     expect(row.createdBySessionId).toBe('root');
     expect(row.metadata.toolScope).toBe('read');
     expect(row.metadata.teamChild).toEqual({ role: 'explorer', rootSessionId: 'root', depth: 1 });
   });
 
-  it('reviewer from the root: Sonnet, read-only', async () => {
+  it('reviewer from the root: Sonnet, high, read-only', async () => {
     await service().createChildSessionInternal('root', '/ws', { role: 'reviewer' });
     expect(created().model).toBe('claude-code:sonnet');
+    expect(created().metadata.effortLevel).toBe('high');
     expect(created().metadata.toolScope).toBe('read');
   });
 
-  it('implementer from the root: root model, full tools (no scope written)', async () => {
+  it('implementer from an Opus root: Sonnet (not the root model), medium, full tools', async () => {
     await service().createChildSessionInternal('root', '/ws', { role: 'implementer' });
     const row = created();
-    expect(row.model).toBe('claude-code:opus');
+    expect(row.model).toBe('claude-code:sonnet');
+    expect(row.metadata.effortLevel).toBe('medium');
     expect(row.metadata.toolScope).toBeUndefined();
     expect(row.metadata.teamChild).toEqual({ role: 'implementer', rootSessionId: 'root', depth: 1 });
   });
 
-  it('a member creating `other` gets the ROOT model, not its own, at depth 2', async () => {
+  it('a member creating `other` gets Sonnet/medium at depth 2, without reading the root', async () => {
     await service().createChildSessionInternal('member', '/ws', {});
     const row = created();
-    expect(row.model).toBe('claude-code:opus');
+    expect(row.model).toBe('claude-code:sonnet');
+    expect(row.metadata.effortLevel).toBe('medium');
+    expect(vi.mocked(AISessionsRepository.get).mock.calls.map(([id]) => id)).not.toContain('root');
     expect(row.metadata.toolScope).toBeUndefined();
     expect(row.metadata.teamChild).toEqual({ role: 'other', rootSessionId: 'root', depth: 2 });
   });
 
-  it('an explicit model and toolScope win over the role defaults', async () => {
-    await service().createChildSessionInternal('root', '/ws', { role: 'explorer', model: 'claude-code:opus', toolScope: 'write' });
-    expect(created().model).toBe('claude-code:opus');
+  it('an explicit model, effortLevel and toolScope win over the role defaults (promotion)', async () => {
+    await service().createChildSessionInternal('root', '/ws', { role: 'implementer', model: 'claude-code:fable', effortLevel: 'max', toolScope: 'write' });
+    expect(created().model).toBe('claude-code:fable');
+    expect(created().metadata.effortLevel).toBe('max');
     expect(created().metadata.toolScope).toBe('write');
+  });
+
+  it('an explicit model alone keeps the role default effort', async () => {
+    await service().createChildSessionInternal('root', '/ws', { role: 'explorer', model: 'claude-code:opus' });
+    expect(created().model).toBe('claude-code:opus');
+    expect(created().metadata.effortLevel).toBe('medium');
+  });
+
+  it('Actions launch inside a team keeps the parent model and gets no role effort', async () => {
+    await service().launchActionSession('root', '/ws', { prompt: 'x', autoSubmit: false });
+    expect(created().model).toBe('claude-code:opus');
+    expect(created().metadata.effortLevel).toBeUndefined();
+  });
+
+  it('spawn_session inheritModel inside a team keeps the caller model and gets no role effort', async () => {
+    await service().spawnSession('root', '/ws', { prompt: 'x', isolated: true, inheritModel: true, role: 'implementer' });
+    expect(created().model).toBe('claude-code:opus');
+    expect(created().metadata.effortLevel).toBeUndefined();
+    expect(created().metadata.teamChild).toEqual({ role: 'implementer', rootSessionId: 'root', depth: 1 });
   });
 
   it('refuses an unknown role before creating anything', async () => {
@@ -131,10 +156,11 @@ describe('Team mode child creation', () => {
 });
 
 describe('outside Team mode nothing changes', () => {
-  it('ignores role: parent model, no scope, no teamChild', async () => {
+  it('ignores role: parent model, no effort, no scope, no teamChild', async () => {
     await service().createChildSessionInternal('plain', '/ws', { role: 'explorer' });
     const row = created();
     expect(row.model).toBe('claude-code:opus');
+    expect(row.metadata.effortLevel).toBeUndefined();
     expect(row.metadata.toolScope).toBeUndefined();
     expect(row.metadata.teamChild).toBeUndefined();
   });

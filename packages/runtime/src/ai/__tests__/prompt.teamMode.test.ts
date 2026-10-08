@@ -43,6 +43,16 @@ describe('Team mode system prompt', () => {
     expect(text).toContain('do not read or redo it yourself');
   });
 
+  it('states the member defaults and explicit, sparing promotion', () => {
+    const text = buildTeamModeAddendum('claude');
+    expect(text).toContain('Every member runs on Sonnet by default');
+    expect(text).toContain('`reviewer`: independent review of someone else\'s work (Sonnet, effort high');
+    expect(text).toContain('`implementer`: makes the changes (Sonnet, effort medium');
+    expect(text).toContain('pass `model` and `effortLevel` explicitly');
+    expect(text).toContain('Promote only when the task clearly needs it');
+    expect(text).not.toContain('defaults to your model');
+  });
+
   it('is static: the same text every call (prompt-cache stable)', () => {
     expect(buildTeamModeAddendum('claude')).toBe(buildTeamModeAddendum('claude'));
     expect(buildTeamChildAddendum('implementer')).toBe(buildTeamChildAddendum('implementer'));
