@@ -20,6 +20,7 @@ import {
   reindexItemRelationshipsAfterWrite,
   trackerRowUpdatedToIso,
 } from './trackerRelationshipIndexStore';
+import { prepareManualTeamNoteCreate } from '@nimbalyst/runtime/plugins/TrackerPlugin/models/teamNoteRules';
 
 export interface NativeTrackerCreatePayload {
   id: string;
@@ -147,6 +148,9 @@ async function createRow(
   if (payload.customFields) {
     Object.assign(data, payload.customFields);
   }
+  // A team-note created here is the user's (the agent path is the MCP tool): no
+  // provenance is invented, and createdByAgent marks it manual.
+  prepareManualTeamNoteCreate(payload.type, data, payload.content);
 
   const source = payload.source || 'native';
   const contentJson =

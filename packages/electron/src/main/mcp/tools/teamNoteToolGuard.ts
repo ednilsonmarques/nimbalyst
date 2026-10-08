@@ -9,6 +9,7 @@ import {
   TEAM_NOTE_TYPE,
   checkTeamNoteBody,
   checkTeamNoteKind,
+  checkTeamNoteStatus,
   resolveTeamNoteWriter,
   stripTeamNoteProvenance,
 } from '../../services/team/teamNotes';
@@ -57,6 +58,8 @@ export async function guardTeamNoteCreate(args: any, sessionId: string | undefin
   if (bodyError) return refuse(bodyError);
   const kindError = checkTeamNoteKind(args.fields?.noteKind);
   if (kindError) return refuse(kindError);
+  const statusError = checkTeamNoteStatus(args.status ?? args.fields?.status);
+  if (statusError) return refuse(statusError);
 
   const writer = await resolveTeamNoteWriter(sessionId, loadWorktree);
   if (!writer.allowed) return refuse(writer.reason);
@@ -88,6 +91,8 @@ export async function guardTeamNoteUpdate(
   if (!writer.allowed) return refuse(writer.reason);
 
   liftFieldsDescription(args);
+  const statusError = checkTeamNoteStatus(args.status ?? args.fields?.status);
+  if (statusError) return refuse(statusError);
   if (args.description !== undefined) {
     const bodyError = checkTeamNoteBody(args.description);
     if (bodyError) return refuse(bodyError);

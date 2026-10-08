@@ -2736,7 +2736,8 @@ class PGLiteWorker {
         CREATE TABLE IF NOT EXISTS tracker_revision_types (type TEXT PRIMARY KEY);
         INSERT INTO tracker_revision_types (type) VALUES
           ('source'), ('capture'), ('citation'),
-          ('entity'), ('claim'), ('question'), ('finding'), ('investigation')
+          ('entity'), ('claim'), ('question'), ('finding'), ('investigation'),
+          ('team-note')
         ON CONFLICT (type) DO NOTHING;
 
         CREATE OR REPLACE FUNCTION tracker_items_record_revision() RETURNS trigger AS $fn$

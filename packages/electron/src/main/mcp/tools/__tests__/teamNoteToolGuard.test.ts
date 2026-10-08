@@ -59,6 +59,11 @@ describe('tracker_create of a team-note', () => {
       .toMatch(/limit is 600/);
   });
 
+  it('refuses an invalid status on create and update (shared rule)', async () => {
+    expect((await guardTeamNoteCreate(note({ status: 'done' }), 'root'))?.content[0].text).toMatch(/status must be/);
+    expect((await guardTeamNoteUpdate({ id: 'nte_1', status: 'to-do' }, 'team-note', 'root'))?.content[0].text).toMatch(/status must be/);
+  });
+
   it('refuses a missing kind and team-note as a mere type tag', async () => {
     expect((await guardTeamNoteCreate(note({ fields: {} }), 'root'))?.content[0].text).toMatch(/noteKind/);
     expect((await guardTeamNoteCreate({ type: 'task', typeTags: ['team-note'] }, 'root'))?.content[0].text).toMatch(/primary type/);

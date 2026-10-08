@@ -252,6 +252,7 @@ export function getMigrations(schemaDir: string): Migration[] {
     { version: 49, name: 'personal_pages', sqlFile: path.join(schemaDir, '0049_personal_pages.sql') },
     { version: 50, name: 'personal_pages_one_tree', sqlFile: path.join(schemaDir, '0050_personal_pages_one_tree.sql') },
     { version: 51, name: 'personal_pages_parents_and_order', sqlFile: path.join(schemaDir, '0051_personal_pages_parents_and_order.sql') },
+    { version: 52, name: 'tracker_revision_type_team_note', sqlFile: path.join(schemaDir, '0052_tracker_revision_type_team_note.sql') },
   ];
 }
 

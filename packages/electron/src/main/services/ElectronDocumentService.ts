@@ -44,6 +44,7 @@ import {
   readStoredFieldValue,
   writeStoredFieldValue,
 } from './tracker/relationshipFieldStorage';
+import { TEAM_NOTE_TYPE, assertTeamNoteBody, assertTeamNoteUpdate } from '@nimbalyst/runtime/plugins/TrackerPlugin/models/teamNoteRules';
 import { projectionWouldChange } from './tracker/projectionUpdateGuard';
 import { assignLocalKeysToRows } from './tracker/localKeyAllocator';
 import { workspaceLocalKeyStore } from './tracker/workspaceLocalKeyStore';
@@ -2016,6 +2017,8 @@ export class ElectronDocumentService implements DocumentService {
       throw new Error(`Tracker item not found: ${itemId}`);
     }
     const data = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+    // Snapshot for the team-note rules below (provenance must not change).
+    const teamNoteBefore = row.type === TEAM_NOTE_TYPE ? JSON.parse(JSON.stringify(data)) : null;
 
     // Handle typeTags separately -- stored in SQL column, not JSONB
     const newTypeTags: string[] | undefined = updates.typeTags === undefined ? undefined
@@ -2068,6 +2071,8 @@ export class ElectronDocumentService implements DocumentService {
     // survives the sync re-serialization and inverse-write reads find it (NIM-1305).
     nestRelationshipFieldsIntoCustomFields(data, globalRegistry.get(row.type)?.fields ?? [], { writtenFields });
 
+    // Team-note structure applies to every edit through this funnel (UI fields, batch).
+    assertTeamNoteUpdate(row.type, updates, teamNoteBefore, data);
     options.beforeWrite?.(this.rowToTrackerItem({ ...row, data, type_tags: newTypeTags ?? row.type_tags }));
     if (newTypeTags) {
       await database.query(`UPDATE tracker_items SET type_tags = $1 WHERE id = $2`, [newTypeTags, row.id]);
@@ -2326,6 +2331,7 @@ export class ElectronDocumentService implements DocumentService {
     if (trackerContentMatches(row.content, content, contentJson)) {
       return;
     }
+    assertTeamNoteBody(row.type, content);
     const data = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
     const modifierIdentity = getCurrentIdentity(row.workspace);
     appendActivity(data, modifierIdentity, 'updated', { field: 'content' });

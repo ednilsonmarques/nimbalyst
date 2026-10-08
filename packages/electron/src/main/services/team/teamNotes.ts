@@ -11,20 +11,25 @@
 
 import { AISessionsRepository } from '@nimbalyst/runtime/storage/repositories/AISessionsRepository';
 import { resolveTeamContext } from '@nimbalyst/runtime/ai/server/providers/teamContext';
+import {
+  TEAM_NOTE_PROVENANCE_FIELDS,
+  teamNoteBodyError,
+  teamNoteKindError,
+  teamNoteStatusError,
+} from '@nimbalyst/runtime/plugins/TrackerPlugin/models/teamNoteRules';
 
-export const TEAM_NOTE_TYPE = 'team-note';
-
-/** Approximate ceiling for a note body; a note is a summary, not a report. */
-export const TEAM_NOTE_BODY_MAX_CHARS = 600;
+// The structural rules (kinds, statuses, body cap, protected provenance) live in
+// the runtime's teamNoteRules and apply to every tracker write path; this module
+// adds only the agent-facing policy on top of them.
+export {
+  TEAM_NOTE_BODY_MAX_CHARS,
+  TEAM_NOTE_KINDS,
+  TEAM_NOTE_PROVENANCE_FIELDS,
+  TEAM_NOTE_TYPE,
+} from '@nimbalyst/runtime/plugins/TrackerPlugin/models/teamNoteRules';
 
 /** Default page size for listing team notes (active ones by default). */
 export const TEAM_NOTE_LIST_DEFAULT_LIMIT = 20;
-
-export const TEAM_NOTE_KINDS = ['decision', 'discovery', 'risk', 'pending', 'test', 'context'] as const;
-export type TeamNoteKind = (typeof TEAM_NOTE_KINDS)[number];
-
-/** Fields only the host writes. Agent-supplied values are dropped. */
-export const TEAM_NOTE_PROVENANCE_FIELDS = ['sourceSession', 'teamRootSession', 'agentRole', 'branch', 'worktree'] as const;
 
 export interface TeamNoteProvenance {
   sourceSession: string | null;
@@ -118,21 +123,19 @@ export function stripTeamNoteProvenance(fields: unknown): Record<string, unknown
   return rest;
 }
 
-/** Error text for an oversized body, or null when it fits. */
+/** Error text for an oversized body, or null when it fits (shared rule). */
 export function checkTeamNoteBody(body: unknown): string | null {
-  if (typeof body !== 'string') return null;
-  const length = body.replace(/\\n/g, '\n').trim().length;
-  if (length <= TEAM_NOTE_BODY_MAX_CHARS) return null;
-  return (
-    `Team Note body is ${length} characters; the limit is ${TEAM_NOTE_BODY_MAX_CHARS}. ` +
-    `Keep only the durable summary and point to the session, files or commit for the details.`
-  );
+  return body === undefined || body === null ? null : teamNoteBodyError(body);
 }
 
-/** Error text for a missing or unknown noteKind, or null when valid. */
+/** Error text for a missing or unknown noteKind, or null when valid (shared rule). */
 export function checkTeamNoteKind(kind: unknown): string | null {
-  if (typeof kind === 'string' && (TEAM_NOTE_KINDS as readonly string[]).includes(kind)) return null;
-  return `Team Note needs fields.noteKind, one of: ${TEAM_NOTE_KINDS.join(', ')}.`;
+  return teamNoteKindError(kind);
+}
+
+/** Error text for an unknown status, or null when absent or valid (shared rule). */
+export function checkTeamNoteStatus(status: unknown): string | null {
+  return status === undefined || status === null || status === '' ? null : teamNoteStatusError(status);
 }
 
 /** Compact one-line summary of a note for the coordinator's listing. */
