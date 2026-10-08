@@ -1,6 +1,6 @@
 import type { DocumentContext } from './types';
 import { getPreferredAgentLanguage } from './server/preferredAgentLanguageConfig';
-import { MCP_CORE, MCP_HOST } from './server/services/mcpTopology';
+import { MCP_CORE, MCP_HOST, MCP_TRACKERS } from './server/services/mcpTopology';
 import type { TeamRole } from './server/providers/teamContext';
 
 /**
@@ -327,9 +327,9 @@ The user is interacting via voice mode. A voice assistant (GPT-4 Realtime) handl
 
   prompt += `\nWhen coordinating sibling sessions, use consume_session_inbox when available at integration boundaries, after long validation, and before final synthesis. It consumes informational reports within the current turn; list_queued_prompts only inspects them and leaves them queued. Read the full batch before issuing follow-ups; yield at instruction boundaries. Never poll an empty inbox. Send informational handoffs with send_prompt messageKind=report, and keep instructions/questions/errors distinct. Use the final response for automatic completion notifications instead of sending it twice.\n`;
   if (teamMode) {
-    prompt += buildTeamModeAddendum(effectiveToolReferenceStyle);
+    prompt += buildTeamModeAddendum(effectiveToolReferenceStyle, trackersEnabled);
   } else if (teamChildRole) {
-    prompt += buildTeamChildAddendum(teamChildRole);
+    prompt += buildTeamChildAddendum(teamChildRole, trackersEnabled);
   }
   const directive = sessionDirective?.trim();
   if (directive) {
@@ -344,7 +344,7 @@ The user is interacting via voice mode. A voice assistant (GPT-4 Realtime) handl
  * Coordinator policy for a Team mode root session. Static text (no per-turn
  * values) so the system prompt stays byte-stable for the prompt cache.
  */
-export function buildTeamModeAddendum(style: ToolReferenceStyle = 'claude'): string {
+export function buildTeamModeAddendum(style: ToolReferenceStyle = 'claude', teamNotesEnabled = true): string {
   const createSessionTool = formatMcpToolReference(MCP_HOST, 'create_session', style);
   const spawnSessionTool = formatMcpToolReference(MCP_HOST, 'spawn_session', style);
   const getSessionResultTool = formatMcpToolReference(MCP_HOST, 'get_session_result', style);
@@ -379,16 +379,44 @@ A team has at most 3 real sessions active at once, 8 real sessions in total, and
 
 ### Ownership and integration
 Once delegated, a slice belongs to that session: do not read or redo it yourself; ask it through ${sendPromptTool}. Members report back automatically with a short summary; use ${getSessionResultTool} only when the summary is not enough. After results arrive, integrate and answer before considering more delegation.
+${teamNotesEnabled ? buildTeamNotesSection(style) : ''}`;
+}
+
+/**
+ * Team Notes guidance for the coordinator. Only present when the workspace has
+ * trackers enabled: notes are tracker items and are unavailable otherwise.
+ */
+function buildTeamNotesSection(style: ToolReferenceStyle): string {
+  const listTool = formatMcpToolReference(MCP_TRACKERS, 'tracker_list', style);
+  const getTool = formatMcpToolReference(MCP_TRACKERS, 'tracker_get', style);
+  const createTool = formatMcpToolReference(MCP_TRACKERS, 'tracker_create', style);
+  const updateTool = formatMcpToolReference(MCP_TRACKERS, 'tracker_update', style);
+  return `
+### Team Notes
+Team Notes are the team's durable memory: \`team-note\` tracker items with \`fields.noteKind\` = decision, discovery, risk, pending, test or context. The session that produced a finding keeps the full history; a note keeps only the distilled conclusion.
+- Before decomposing a relevant task, read the active notes: ${listTool} with type \`team-note\` (compact, 20 by default). Open a body with ${getTool} only when you need it.
+- Record only durable knowledge: a decision, a discovery, a risk, a pending item, a test result or important context. Never paste a report, a member's whole answer or a transcript; the body is capped at about 600 characters.
+- Before ${createTool}, look for a similar note and prefer ${updateTool} on it. Close a pending item by setting it to \`resolved\`; when a note replaces another, set \`supersedes\` and mark the old one \`obsolete\`. Never delete notes.
+- Members only suggest notes in their reports; you decide what to record. Source session, role, branch and worktree are filled in by Nimbalyst.
+- In a brief, cite only the keys of the relevant notes (e.g. "Context: NIM-12, NIM-18"); the member reads them with ${getTool}. Do not paste notes into briefs.
 `;
 }
 
 /** Contract for a session created inside a team. Static per role. */
-export function buildTeamChildAddendum(role: TeamRole): string {
+export function buildTeamChildAddendum(role: TeamRole, teamNotesEnabled = true): string {
+  const notes = teamNotesEnabled
+    ? `
+If your work produced something durable for the project (a decision, discovery, risk, pending item, test result or important context), end your report with at most three suggestions; you never write notes yourself:
+Suggested notes:
+- [KIND] title — short summary
+Your brief may cite Team Note keys as context; read only those with tracker_get.
+`
+    : '';
   return `
 ## Team Member
 
 You are the ${role} of a coordinated team; your brief is your whole task. When you finish, end with a short report of about 15 lines at most: the result, the relevant files and evidence, and anything left open. Do not repeat the task. Do not create other sessions unless your brief explicitly allows it; the team's depth and size are limited.
-`;
+${notes}`;
 }
 
 export type MetaAgentWorkflowPreset = 'default' | 'implement-review-test' | 'research';

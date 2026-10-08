@@ -65,6 +65,8 @@ import {
 } from './trackerToolItemAccess';
 import { handleTrackerPublicationUpdate } from './trackerPublicationTool';
 import { prepareTrackerUpdateInput } from './trackerToolUpdateInput';
+import { guardTeamNoteCreate, guardTeamNoteUpdate, isTeamNoteCreate } from './teamNoteToolGuard';
+import { TEAM_NOTE_LIST_DEFAULT_LIMIT, TEAM_NOTE_TYPE, formatTeamNoteSummary } from '../../services/team/teamNotes';
 import { handleGithubIssueOverlayCreate } from './githubIssueOverlayTool';
 import {
   bodyWriteFailure,
@@ -1114,7 +1116,12 @@ export async function handleTrackerList(
     const requestedLimit = Number(args.limit);
     const limit = requestedLimit < 0
       ? 10_000
-      : Math.min(Number.isFinite(requestedLimit) && requestedLimit > 0 ? requestedLimit : 50, 250);
+      : Math.min(
+        Number.isFinite(requestedLimit) && requestedLimit > 0
+          ? requestedLimit
+          : (args.type === TEAM_NOTE_TYPE ? TEAM_NOTE_LIST_DEFAULT_LIMIT : 50),
+        250,
+      );
     // Register custom (.nimbalyst/trackers/*.yaml) types before any role/inbox
     // resolution runs. Without this, a custom type's workflowStatus role falls
     // back to `status` and its inbox/collection predicates answer wrongly --
@@ -1416,8 +1423,9 @@ export async function handleTrackerList(
         .map((blocker: any) => ({ localKey: blocker.ref })) ?? []),
       ...cycleItems,
     ], { canIssueKeys: listCanIssueKeys });
-    const formatSummaryItem = (item: any): string =>
-      `- [${item.type}] ${item.title} (${item.status || "no status"}, ${item.priority || "no priority"}, ${item.syncStatus}) [ref: ${getTrackerDisplayRef(item)}]${item.issueKeyStatus === 'unassigned' ? ` — ${issueKeyMessage(item, { canIssueKeys: listCanIssueKeys })}` : ''}`;
+    const formatSummaryItem = (item: any): string => item.type === TEAM_NOTE_TYPE
+      ? formatTeamNoteSummary(item, getTrackerDisplayRef(item))
+      : `- [${item.type}] ${item.title} (${item.status || "no status"}, ${item.priority || "no priority"}, ${item.syncStatus}) [ref: ${getTrackerDisplayRef(item)}]${item.issueKeyStatus === 'unassigned' ? ` — ${issueKeyMessage(item, { canIssueKeys: listCanIssueKeys })}` : ''}`;
     const summary = mode === 'ready'
       ? [...readyTrackOrder.keys()]
           .map((trackId) => `Track ${trackId}:\n${items
@@ -1460,6 +1468,11 @@ export async function handleTrackerList(
         source: item.source,
         syncStatus: item.syncStatus,
         updated: item.updated,
+        ...(item.type === TEAM_NOTE_TYPE ? {
+          noteKind: item.customFields?.noteKind,
+          agentRole: item.customFields?.agentRole,
+          sourceSession: item.customFields?.sourceSession,
+        } : {}),
         ...(includeReadiness ? {
           blockedBy: item.blockedBy,
           unblocks: item.unblocks,
@@ -1893,6 +1906,12 @@ export async function handleTrackerCreate(
     const humanOnly = rejectHumanOnlyStatus(args, args.type);
     if (humanOnly) return humanOnly;
 
+    // Team Notes: host-owned provenance, member write gate and body cap.
+    if (isTeamNoteCreate(args)) {
+      const refusal = await guardTeamNoteCreate(args, sessionId);
+      if (refusal) return refusal;
+    }
+
     const issueOverlayResult = await handleGithubIssueOverlayCreate(
       args,
       workspacePath,
@@ -2267,6 +2286,10 @@ export async function handleTrackerUpdate(
           isError: true,
         };
       }
+
+      // Team Notes: members cannot write, provenance cannot be rewritten, body cap.
+      const teamNoteRefusal = await guardTeamNoteUpdate(args, item.type, sessionId);
+      if (teamNoteRefusal) return teamNoteRefusal;
 
       if (args.published !== undefined) {
         return await handleTrackerPublicationUpdate(args, item, workspacePath, db, docService, rowToTrackerItem);

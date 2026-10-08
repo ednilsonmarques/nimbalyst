@@ -43,6 +43,30 @@ describe('Team mode system prompt', () => {
     expect(text).toContain('do not read or redo it yourself');
   });
 
+  it('teaches the coordinator Team Notes when trackers are enabled', () => {
+    const prompt = buildClaudeCodeSystemPrompt({ ...base, teamMode: true });
+    expect(prompt).toContain('### Team Notes');
+    expect(prompt).toContain('mcp__nimbalyst-trackers__tracker_list');
+    expect(prompt).toContain('look for a similar note');
+    expect(prompt).toContain('cite only the keys of the relevant notes');
+    expect(prompt).toContain('Never paste a report');
+  });
+
+  it('has no Team Notes at all when trackers are disabled in the workspace', () => {
+    const root = buildClaudeCodeSystemPrompt({ ...base, teamMode: true, trackersEnabled: false });
+    expect(root).toContain('## Team Mode');
+    expect(root).not.toContain('Team Notes');
+    const child = buildClaudeCodeSystemPrompt({ ...base, teamChildRole: 'explorer', trackersEnabled: false });
+    expect(child).not.toContain('Suggested notes');
+  });
+
+  it('members only suggest notes', () => {
+    const child = buildTeamChildAddendum('reviewer');
+    expect(child).toContain('Suggested notes:');
+    expect(child).toContain('you never write notes yourself');
+    expect(child).toContain('read only those with tracker_get');
+  });
+
   it('states the member defaults and explicit, sparing promotion', () => {
     const text = buildTeamModeAddendum('claude');
     expect(text).toContain('Every member runs on Sonnet by default');

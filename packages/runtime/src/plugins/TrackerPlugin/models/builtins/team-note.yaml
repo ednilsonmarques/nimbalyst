@@ -1,0 +1,127 @@
+type: team-note
+displayName: Team Note
+displayNamePlural: Team Notes
+icon: sticky_note_2
+color: "#0d9488"
+
+# Distilled, durable project memory written by a Team mode coordinator: a
+# decision, discovery, risk, pending item, test result or context. Never a
+# transcript; the session it came from keeps the full history.
+modes:
+  inline: false
+  fullDocument: false
+
+sharing: team
+draftByDefault: false
+
+idPrefix: nte
+idFormat: ulid
+
+fields:
+  - name: title
+    type: string
+    required: true
+    displayInline: true
+
+  - name: noteKind
+    type: select
+    required: true
+    displayInline: true
+    options:
+      - value: decision
+        label: Decision
+        icon: gavel
+      - value: discovery
+        label: Discovery
+        icon: travel_explore
+      - value: risk
+        label: Risk
+        icon: warning
+      - value: pending
+        label: Pending
+        icon: pending_actions
+      - value: test
+        label: Test
+        icon: science
+      - value: context
+        label: Context
+        icon: info
+
+  - name: status
+    type: select
+    default: active
+    options:
+      - value: active
+        label: Active
+        icon: radio_button_checked
+        category: started
+      - value: resolved
+        label: Resolved
+        icon: check_circle
+        category: done
+      - value: obsolete
+        label: Obsolete
+        icon: history
+        category: cancelled
+
+  - name: files
+    type: array
+    itemType: string
+    displayInline: false
+
+  - name: supersedes
+    type: relationship
+    relationshipTypeKey: supersedes
+    targetTrackerTypes:
+      - team-note
+    multiValue: true
+
+  # Provenance, filled by the host from the calling session (never by the agent).
+  - name: sourceSession
+    type: string
+    displayInline: false
+    readOnly: true
+
+  - name: teamRootSession
+    type: string
+    displayInline: false
+    readOnly: true
+
+  - name: agentRole
+    type: string
+    displayInline: false
+    readOnly: true
+
+  - name: branch
+    type: string
+    displayInline: false
+    readOnly: true
+
+  - name: worktree
+    type: string
+    displayInline: false
+    readOnly: true
+
+  - name: created
+    type: datetime
+    displayInline: false
+    readOnly: true
+
+  - name: updated
+    type: datetime
+    displayInline: false
+    readOnly: true
+
+statusBarLayout:
+  - row:
+    - field: noteKind
+      width: 160
+    - field: status
+      width: 160
+
+inlineTemplate: "{icon} {title} {status}"
+
+roles:
+  title: title
+  workflowStatus: status
+  tags: tags
