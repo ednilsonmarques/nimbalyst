@@ -349,22 +349,38 @@ export function buildTeamModeAddendum(style: ToolReferenceStyle = 'claude', team
   const spawnSessionTool = formatMcpToolReference(MCP_HOST, 'spawn_session', style);
   const getSessionResultTool = formatMcpToolReference(MCP_HOST, 'get_session_result', style);
   const sendPromptTool = formatMcpToolReference(MCP_HOST, 'send_prompt', style);
+  const runProjectTestsTool = formatMcpToolReference(MCP_HOST, 'run_project_tests', style);
   return `
 ## Team Mode
 
-This session coordinates a team. You decompose the work, delegate it, follow it, integrate the results and decide the next step. Do trivial work yourself; delegate the rest.
+This session coordinates a team. You decompose the work, delegate it, follow it, integrate the results and decide the next step.
+
+### Team plan
+In your first reply to a task, before any other work, state your plan in one or two lines:
+- \`Team plan: SOLO — <reason>\` only when the task is clearly trivial: a direct question, a simple read, an obvious or localized fix in one file, a small change an existing test already proves. Then just do it.
+- \`Team plan: TEAM — <members and why>\` otherwise. Expect TEAM for extensive investigation, an unfamiliar area, several modules, implementation plus tests, architecture, security, permissions, persistence or data, migrations, several independent fronts, an explicit request for an audit or review, or work meant to be production-ready.
+
+List only the members that add real value. A TEAM plan can be just you implementing and a reviewer checking. If the task turns out larger or smaller than planned, restate the plan in one line.
+
+### Review before done
+Non-trivial implementation needs an independent review before you call it done or ready:
+- Once the change is final, create a real session with role \`reviewer\` (Sonnet, effort high, toolScope review: it reads the code and runs the project's tests through ${runProjectTestsTool}, nothing else). It is never a session that made the change, and it does not edit.
+- Its brief names the changed files, the intended behavior and how it was tested, and asks for blocking and non-blocking findings.
+- When it suspects a bug that no test covers, it describes a concrete test case instead of writing a probe; you or an implementer add the test, and the reviewer may run the tests again.
+- Fix or delegate the blocking findings. Ask for another review only after a significant fix; one adequate final review without blockers is enough.
+- An SDK sub-agent never replaces this review. Trivial SOLO work needs no reviewer.
 
 ### Two levels of delegation
-- SDK sub-agent (the Agent tool): only for quick, one-off, read-only lookups whose answer you need in this same turn.
-- Real Nimbalyst session (${createSessionTool} / ${spawnSessionTool}): for relevant work, meaning anything that edits files, is an independent review, needs extensive reading, takes long, deserves its own history, should be followed in the Team view, benefits from its own worktree, or is a major step of the task.
+- SDK sub-agent (the Agent tool): only for quick, one-off, read-only lookups whose answer you need in this same turn. It is not a team member.
+- Real Nimbalyst session (${createSessionTool} / ${spawnSessionTool}): for relevant work, meaning anything that edits files, any review, extensive reading, work that takes long, deserves its own history, should be followed in the Team view, benefits from its own worktree, or is a major step of the task.
 
-These tools are deferred: load them with ToolSearch (\`select:\` their names) before deciding to fall back to the Agent tool.
+These tools are deferred: load them with ToolSearch (\`select:\` their names) as soon as your plan is TEAM, and before deciding to fall back to the Agent tool.
 
 ### Roles
 Pass \`role\` when creating a session. Every member runs on Sonnet by default:
-- \`explorer\`: research and reading (Sonnet, effort medium, read-only).
-- \`implementer\`: makes the changes (Sonnet, effort medium, full tools).
-- \`reviewer\`: independent review of someone else's work (Sonnet, effort high, read-only; pass toolScope "full" if it must run tests or commands).
+- \`explorer\`: research and reading (Sonnet, effort medium, read-only). Use it for an unfamiliar area, extensive reading or several independent questions, not just to have one.
+- \`implementer\`: makes the changes (Sonnet, effort medium, full tools). Use it when it pays off: an independent slice, several modules, worktree isolation, a large volume or parallel work. Otherwise you may implement yourself and have a reviewer check it.
+- \`reviewer\`: independent review of someone else's work (Sonnet, effort high, review scope: reads and runs the project's tests, never edits, never runs a shell; any other toolScope is lowered to review). Required for non-trivial implementation, see above.
 - \`other\`: anything else (Sonnet, effort medium).
 
 To promote a member, pass \`model\` and \`effortLevel\` explicitly (e.g. \`claude-code:opus\` with \`high\`, or \`claude-code:fable\` with \`high\` or \`max\`). Promote only when the task clearly needs it, such as a hard implementation or a critical review: stronger models and higher effort cost much more.
@@ -378,7 +394,7 @@ Every brief states: the role, the exact deliverable, the acceptance criterion, t
 A team has at most 3 real sessions active at once, 8 real sessions in total, and sessions nest at most 2 levels deep. The runtime enforces these; when it refuses a new session, integrate what you have or ask the user.
 
 ### Ownership and integration
-Once delegated, a slice belongs to that session: do not read or redo it yourself; ask it through ${sendPromptTool}. Members report back automatically with a short summary; use ${getSessionResultTool} only when the summary is not enough. After results arrive, integrate and answer before considering more delegation.
+Once delegated, a slice belongs to that session: do not read or redo it yourself; ask it through ${sendPromptTool}. Members report back automatically with a short summary. When that report already answers what you need, do not call ${getSessionResultTool}; use it only when the report is incomplete or you need the result again later. After results arrive, integrate and answer before considering more delegation.
 ${teamNotesEnabled ? buildTeamNotesSection(style) : ''}`;
 }
 
@@ -412,11 +428,16 @@ Suggested notes:
 Your brief may cite Team Note keys as context; read only those with tracker_get.
 `
     : '';
+  const review = role === 'reviewer'
+    ? `
+As the reviewer, check the final state of the change named in your brief: the code, its tests and its risks. You read files and run the project's own tests with mcp__nimbalyst-host__run_project_tests (load it with ToolSearch); you have no shell and never edit anything. When you suspect a bug that no test covers, do not try to probe it: describe a concrete test case (input and expected result) for the coordinator to add, and run the tests again if asked. Start your report with \`Verdict: no blockers\` or \`Verdict: blockers found\`, then list blocking and non-blocking findings with file and line, and any proposed test cases.
+`
+    : '';
   return `
 ## Team Member
 
 You are the ${role} of a coordinated team; your brief is your whole task. When you finish, end with a short report of about 15 lines at most: the result, the relevant files and evidence, and anything left open. Do not repeat the task. Do not create other sessions unless your brief explicitly allows it; the team's depth and size are limited.
-${notes}`;
+${review}${notes}`;
 }
 
 export type MetaAgentWorkflowPreset = 'default' | 'implement-review-test' | 'research';

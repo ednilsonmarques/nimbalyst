@@ -9,6 +9,7 @@ import {
   TEAM_ROOT_PRESETS,
   isRecommendedTeamRootModel,
   teamRoleDefaultToolScope,
+  resolveChildToolScopeRequest,
 } from '../teamPolicy';
 import {
   preserveStoredTeamMetadata,
@@ -57,11 +58,42 @@ describe('role defaults', () => {
     expect(teamRoleDefaultEffort('other')).toBe('medium');
   });
 
-  it('tool scope: explorer and reviewer read, implementer full, other left to the caller', () => {
+  it('tool scope: explorer read, reviewer review, implementer full, other left to the caller', () => {
     expect(teamRoleDefaultToolScope('explorer')).toBe('read');
-    expect(teamRoleDefaultToolScope('reviewer')).toBe('read');
+    expect(teamRoleDefaultToolScope('reviewer')).toBe('review');
     expect(teamRoleDefaultToolScope('implementer')).toBe('full');
     expect(teamRoleDefaultToolScope('other')).toBeUndefined();
+  });
+
+  describe('resolveChildToolScopeRequest', () => {
+    it('stores the role default when nothing is requested (full is stored as no scope)', () => {
+      expect(resolveChildToolScopeRequest(undefined, 'explorer')).toBe('read');
+      expect(resolveChildToolScopeRequest(undefined, 'reviewer')).toBe('review');
+      expect(resolveChildToolScopeRequest(undefined, 'implementer')).toBeUndefined();
+      expect(resolveChildToolScopeRequest(undefined, 'other')).toBeUndefined();
+      expect(resolveChildToolScopeRequest(undefined, undefined)).toBeUndefined();
+    });
+
+    it('a reviewer never gets more than review: full, write or anything else is lowered', () => {
+      for (const requested of ['full', 'write', 'review', 'admin', 42, null]) {
+        expect(resolveChildToolScopeRequest(requested, 'reviewer'), String(requested)).toBe('review');
+      }
+      expect(resolveChildToolScopeRequest('read', 'reviewer')).toBe('read');
+    });
+
+    it('an explicit known scope wins for other roles; full means no restriction', () => {
+      expect(resolveChildToolScopeRequest('write', 'implementer')).toBe('write');
+      expect(resolveChildToolScopeRequest('review', 'other')).toBe('review');
+      expect(resolveChildToolScopeRequest('read', undefined)).toBe('read');
+      expect(resolveChildToolScopeRequest('full', 'explorer')).toBeUndefined();
+    });
+
+    it('fails closed: an unrecognized value is stored as read, never full', () => {
+      for (const requested of ['admin', 'READ', 'Full', 42, {}]) {
+        expect(resolveChildToolScopeRequest(requested, undefined), String(requested)).toBe('read');
+        expect(resolveChildToolScopeRequest(requested, 'implementer'), String(requested)).toBe('read');
+      }
+    });
   });
 
   it('a member is one level below its caller', () => {

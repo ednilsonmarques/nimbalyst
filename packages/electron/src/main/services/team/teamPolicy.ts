@@ -69,14 +69,40 @@ export function teamRoleDefaultEffort(role: TeamRole): 'medium' | 'high' {
 }
 
 /**
- * Tool scope a role gets when the caller does not pass one. Explorer and
- * reviewer are read-only, implementer gets full tools; `other` has no role
- * default (the caller decides, as outside a team).
+ * Tool scope a role gets when the caller does not pass one. Explorer is
+ * read-only; reviewer reads and may run the workspace's tests (`review`);
+ * implementer gets full tools; `other` has no role default (the caller
+ * decides, as outside a team).
  */
-export function teamRoleDefaultToolScope(role: TeamRole): 'read' | 'full' | undefined {
-  if (role === 'explorer' || role === 'reviewer') return 'read';
+export function teamRoleDefaultToolScope(role: TeamRole): 'read' | 'review' | 'full' | undefined {
+  if (role === 'explorer') return 'read';
+  if (role === 'reviewer') return 'review';
   if (role === 'implementer') return 'full';
   return undefined;
+}
+
+/** Scopes that restrict a child and are stored in `metadata.toolScope`. */
+export type StoredChildToolScope = 'read' | 'review' | 'write';
+
+/**
+ * The scope to store for a new child, or undefined for full access.
+ *
+ * - A reviewer never gets more than `review`: `full`, `write` or anything else
+ *   is lowered to `review`; only an explicit `read` (stricter) is kept.
+ * - Otherwise an explicit scope wins over the role default; `full` means no
+ *   restriction.
+ * - Fail closed: an unrecognized value is stored as `read`, never widened to
+ *   full access.
+ */
+export function resolveChildToolScopeRequest(
+  explicit: unknown,
+  role: TeamRole | undefined,
+): StoredChildToolScope | undefined {
+  if (role === 'reviewer') return explicit === 'read' ? 'read' : 'review';
+  const requested = explicit ?? (role ? teamRoleDefaultToolScope(role) : undefined);
+  if (requested === undefined || requested === null || requested === 'full') return undefined;
+  if (requested === 'read' || requested === 'review' || requested === 'write') return requested;
+  return 'read';
 }
 
 export function buildTeamChild(team: TeamCaller, role: TeamRole): TeamChild {

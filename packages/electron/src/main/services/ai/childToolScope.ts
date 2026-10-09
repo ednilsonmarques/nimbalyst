@@ -19,9 +19,12 @@ export function describeChildToolScope(
   toolScope: string | null | undefined,
   enforced: boolean,
 ): string | null {
-  if (toolScope !== 'read' && toolScope !== 'write') return null;
+  if (toolScope !== 'read' && toolScope !== 'review' && toolScope !== 'write') return null;
   if (!enforced) {
     return `Tool scope: ${toolScope} was requested, but this child's provider does not enforce it. Verify any claim that it ran, built, tested, or edited something against "Files modified" and its result.`;
+  }
+  if (toolScope === 'review') {
+    return `Tool scope: review (this child had NO file-writing, shell (run_command/Bash), delegation, or app-changing tools; its only execution was the workspace's own tests through run_project_tests). Any other claim it ran or built something is false unless it went through a user-configured MCP server, which the scope does not cover; "Files modified" above is the complete list of files it changed.`;
   }
   const denied = toolScope === 'read'
     ? 'file-writing, shell (run_command/Bash), delegation, or app-changing tools'

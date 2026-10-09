@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getDevAgentOpenAITools } from '../devAgentTools';
+import { getDevAgentOpenAITools, resolveDevToolScope } from '../devAgentTools';
 
 describe('getDevAgentOpenAITools scope filtering', () => {
   it("'read' returns only read_file, list_files, search_files", () => {
@@ -32,5 +32,26 @@ describe('getDevAgentOpenAITools scope filtering', () => {
     const tools = getDevAgentOpenAITools();
     const names = tools.map((t) => t.function.name);
     expect(names).toContain('run_command');
+  });
+});
+
+describe('resolveDevToolScope', () => {
+  it('keeps the known scopes; absent stays full for sessions created without one', () => {
+    expect(resolveDevToolScope('read')).toBe('read');
+    expect(resolveDevToolScope('write')).toBe('write');
+    expect(resolveDevToolScope('full')).toBe('full');
+    expect(resolveDevToolScope(undefined)).toBe('full');
+    expect(resolveDevToolScope(null)).toBe('full');
+  });
+
+  it('maps review to read: the dev toolset has no test-only runner', () => {
+    expect(resolveDevToolScope('review')).toBe('read');
+    expect(getDevAgentOpenAITools(resolveDevToolScope('review')).map((t) => t.function.name)).not.toContain('run_command');
+  });
+
+  it('fails closed: an unrecognized scope becomes read, never full', () => {
+    for (const raw of ['admin', 'READ', 'Full', 42, {}]) {
+      expect(resolveDevToolScope(raw), String(raw)).toBe('read');
+    }
   });
 });

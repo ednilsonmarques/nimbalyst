@@ -115,9 +115,10 @@ export const NIMBALYST_HANDLED_TOOLS: readonly string[] = [
 /**
  * Capability scope a child session was created with (`metadata.toolScope`,
  * written by MetaAgentService.createChildSessionInternal). `full` or absent
- * means no restriction.
+ * means no restriction. `review` is `read` plus the one execution a reviewer
+ * needs: the workspace's own test command through `run_project_tests`.
  */
-export type ChildToolScope = 'read' | 'write' | 'full';
+export type ChildToolScope = 'read' | 'review' | 'write' | 'full';
 
 /**
  * Absent / `full` → full. Any other unrecognized value is treated as `read`:
@@ -125,7 +126,7 @@ export type ChildToolScope = 'read' | 'write' | 'full';
  * into full access.
  */
 export function resolveChildToolScope(raw: unknown): ChildToolScope {
-  if (raw === 'read' || raw === 'write') return raw;
+  if (raw === 'read' || raw === 'review' || raw === 'write') return raw;
   if (raw === undefined || raw === null || raw === '' || raw === 'full') return 'full';
   return 'read';
 }
@@ -208,17 +209,23 @@ export function readScopeDeniedFirstPartyTools(
   );
 }
 
+/** The workspace test runner: the only execution `review` adds to `read`. */
+export const RUN_PROJECT_TESTS_TOOL = mcpTool(MCP_HOST, 'run_project_tests');
+
 /**
  * Native and Nimbalyst tools a Claude Code child must not see for its scope:
- * `read` investigates only; `write` may also edit files but runs, delegates,
- * commits and reconfigures nothing. User-configured MCP servers are not covered.
+ * `read` investigates only; `review` is `read` that may also run the
+ * workspace's tests (never a shell, never an edit); `write` may also edit files
+ * but runs, delegates, commits and reconfigures nothing. User-configured MCP
+ * servers are not covered.
  */
 export function toolScopeDeniedTools(scope: ChildToolScope): readonly string[] {
-  if (scope === 'read') {
-    return [...new Set([
+  if (scope === 'read' || scope === 'review') {
+    const denied = [...new Set([
       ...FILE_WRITE_TOOLS, ...RUN_TOOLS, ...DELEGATION_TOOLS, ...CONFIG_AND_COMMIT_TOOLS,
       ...readScopeDeniedFirstPartyTools(),
     ])];
+    return scope === 'review' ? denied.filter((tool) => tool !== RUN_PROJECT_TESTS_TOOL) : denied;
   }
   if (scope === 'write') return [...RUN_TOOLS, ...DELEGATION_TOOLS, ...CONFIG_AND_COMMIT_TOOLS];
   return [];
@@ -226,9 +233,9 @@ export function toolScopeDeniedTools(scope: ChildToolScope): readonly string[] {
 
 /**
  * Merge the scope's denied tools into existing SDK `disallowedTools` without
- * dropping prior entries. For `read`, per-extension Nimbalyst servers
- * (`nimbalyst-<ext>`, dynamic, not in the topology) are denied whole, since
- * their tools are not known to be read-only.
+ * dropping prior entries. For `read` and `review`, per-extension Nimbalyst
+ * servers (`nimbalyst-<ext>`, dynamic, not in the topology) are denied whole,
+ * since their tools are not known to be read-only.
  */
 export function mergeToolScopeDisallowedTools(
   existing: readonly string[] | undefined,
@@ -236,7 +243,7 @@ export function mergeToolScopeDisallowedTools(
   mcpServerKeys: readonly string[] = [],
 ): string[] | undefined {
   const denied = [...toolScopeDeniedTools(scope)];
-  if (scope === 'read') {
+  if (scope === 'read' || scope === 'review') {
     denied.push(...mcpServerKeys.filter(isExtensionServerConfigKey).map((key) => `mcp__${key}`));
   }
   if (denied.length === 0) return existing ? [...existing] : undefined;

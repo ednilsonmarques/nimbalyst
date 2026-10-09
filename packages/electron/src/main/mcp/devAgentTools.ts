@@ -133,9 +133,16 @@ export type DevToolScope = 'read' | 'write' | 'full';
 
 const DEV_AGENT_READ_TOOLS = new Set<string>(['read_file', 'list_files', 'search_files']);
 
-/** Validate an untrusted scope value, falling back to 'full' (back-compat). */
+/**
+ * Validate an untrusted scope value. Absent means full (back-compat: sessions
+ * created without a scope). `review` has no dev-toolset equivalent of the
+ * workspace test runner, so it maps to `read`. Any other value fails closed to
+ * `read`: a scope this build does not understand must never widen to full.
+ */
 export function resolveDevToolScope(raw: unknown): DevToolScope {
-  return raw === 'read' || raw === 'write' || raw === 'full' ? raw : 'full';
+  if (raw === undefined || raw === null || raw === '') return 'full';
+  if (raw === 'read' || raw === 'write' || raw === 'full') return raw;
+  return 'read';
 }
 
 export function getDevAgentOpenAITools(scope: DevToolScope = 'full'): MetaAgentOpenAITool[] {

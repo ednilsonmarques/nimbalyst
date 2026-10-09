@@ -45,7 +45,7 @@ import {
   resolveTeamCaller,
   teamRoleDefaultEffort,
   teamRoleDefaultModel,
-  teamRoleDefaultToolScope,
+  resolveChildToolScopeRequest,
   type TeamCaller,
 } from './team/teamPolicy';
 import { describeChildToolScope, isToolScopeEnforced } from './ai/childToolScope';
@@ -732,10 +732,9 @@ export class MetaAgentService {
     // Read-only tool segregation: persist a restricted capability scope so the
     // child is granted only the matching dev tools at turn time (an analyze
     // child physically cannot run_command, so it cannot build or claim to).
-    // An explicit toolScope always wins over the team role's default.
-    const requestedToolScope = args.toolScope ?? (teamRole ? teamRoleDefaultToolScope(teamRole) : undefined);
-    const childToolScope =
-      requestedToolScope === 'read' || requestedToolScope === 'write' ? requestedToolScope : undefined;
+    // An explicit toolScope wins over the team role's default, except that a
+    // reviewer is held to `review`; an unrecognized value fails closed to `read`.
+    const childToolScope = resolveChildToolScopeRequest(args.toolScope, teamRole ?? undefined);
 
     // Reasoning effort: every turn reads it back out of session metadata
     // (MessageStreamingHandler for codex/others, buildClaudeCodeRuntimeConfig
@@ -1642,7 +1641,7 @@ export class MetaAgentService {
       toolScope: sessionToolScope,
       // Only a restricted scope makes enforcement a meaningful question.
       toolScopeEnforced:
-        sessionToolScope === 'read' || sessionToolScope === 'write'
+        sessionToolScope === 'read' || sessionToolScope === 'review' || sessionToolScope === 'write'
           ? isToolScopeEnforced(sessionProvider)
           : undefined,
     };

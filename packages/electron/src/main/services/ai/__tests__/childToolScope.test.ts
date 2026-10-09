@@ -31,6 +31,14 @@ describe('describeChildToolScope', () => {
     expect(describeChildToolScope('write', true)).toContain('this child had NO shell (run_command/Bash) or delegation tools');
   });
 
+  it('review states that its only execution was the workspace tests', () => {
+    const line = describeChildToolScope('review', true)!;
+    expect(line).toContain('Tool scope: review');
+    expect(line).toContain('NO file-writing, shell (run_command/Bash), delegation, or app-changing tools');
+    expect(line).toContain('its only execution was the workspace\'s own tests through run_project_tests');
+    expect(describeChildToolScope('review', false)).toContain('does not enforce it');
+  });
+
   it('does not claim a denial the provider never applied', () => {
     const line = describeChildToolScope('write', false)!;
     expect(line).toContain('does not enforce it');

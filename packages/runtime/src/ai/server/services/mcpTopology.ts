@@ -164,6 +164,9 @@ export const HOST_TOOLS: readonly string[] = [
   'get_session_result',
   'list_spawned_sessions',
   'list_worktrees',
+  // Runs only the workspace's own `npm test`; the one execution a `review`
+  // child (Team mode reviewer) may perform.
+  'run_project_tests',
   // NOTE: `applyDiff` / `streamContent` are intentionally NOT declared here.
   // They have live CallTool handlers (httpServer switch) + renderer IPC
   // listeners, but no ListTools schema — they are deliberately unadvertised so

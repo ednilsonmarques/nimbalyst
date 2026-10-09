@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  RUN_PROJECT_TESTS_TOOL,
   mergeToolScopeDisallowedTools,
   readScopeDeniedFirstPartyTools,
   resolveChildToolScope,
@@ -20,6 +21,8 @@ describe('resolveChildToolScope', () => {
     expect(resolveChildToolScope('READ')).toBe('read');
     expect(resolveChildToolScope('readonly')).toBe('read');
     expect(resolveChildToolScope(42)).toBe('read');
+    expect(resolveChildToolScope('REVIEW')).toBe('read');
+    expect(resolveChildToolScope('admin')).toBe('read');
   });
 });
 
@@ -120,6 +123,57 @@ describe('toolScopeDeniedTools', () => {
 
   it('full denies nothing', () => {
     expect(toolScopeDeniedTools('full')).toEqual([]);
+  });
+
+  it('read cannot run the project tests; write and full can', () => {
+    expect(toolScopeDeniedTools('read')).toContain(RUN_PROJECT_TESTS_TOOL);
+    expect(toolScopeDeniedTools('write')).not.toContain(RUN_PROJECT_TESTS_TOOL);
+    expect(toolScopeDeniedTools('full')).not.toContain(RUN_PROJECT_TESTS_TOOL);
+  });
+});
+
+describe('review scope', () => {
+  const review = toolScopeDeniedTools('review');
+
+  it('is exactly read plus run_project_tests', () => {
+    const read = toolScopeDeniedTools('read');
+    expect(RUN_PROJECT_TESTS_TOOL).toBe('mcp__nimbalyst-host__run_project_tests');
+    expect(review).not.toContain(RUN_PROJECT_TESTS_TOOL);
+    expect([...review].sort()).toEqual(read.filter((tool) => tool !== RUN_PROJECT_TESTS_TOOL).sort());
+  });
+
+  it('denies every shell, file edit, delegation, commit and config route', () => {
+    for (const tool of [
+      'Write', 'Edit', 'MultiEdit', 'NotebookEdit',
+      'Bash', 'PowerShell', 'REPL', 'Monitor', 'EnterWorktree', 'CronCreate', 'RemoteTrigger',
+      'Agent', 'Task', 'Workflow', 'TeamCreate', 'TeammateTool', 'SendMessage',
+      'mcp__nimbalyst-host__create_session', 'mcp__nimbalyst-host__spawn_session',
+      'mcp__nimbalyst-host__send_prompt', 'mcp__nimbalyst-host__respond_to_prompt',
+      'mcp__nimbalyst__developer_git_commit_proposal', 'Config', 'Mcp',
+      'mcp__nimbalyst-host__features_toggle', 'mcp__nimbalyst-host__workspace_set_trust',
+      'mcp__nimbalyst-trackers__tracker_create', 'mcp__nimbalyst-trackers__tracker_define_type',
+      'mcp__nimbalyst-extension-dev__extension_install', 'mcp__nimbalyst-extension-dev__renderer_eval',
+    ]) {
+      expect(review, tool).toContain(tool);
+    }
+  });
+
+  it('keeps reading and the read-only Nimbalyst lookups', () => {
+    for (const tool of ['Read', 'Grep', 'Glob', 'LS', 'mcp__nimbalyst-trackers__tracker_get',
+      'mcp__nimbalyst-host__get_session_result', 'mcp__nimbalyst__update_session_meta']) {
+      expect(review, tool).not.toContain(tool);
+    }
+  });
+
+  it('is recognized, not failed closed to read', () => {
+    expect(resolveChildToolScope('review')).toBe('review');
+  });
+
+  it('denies per-extension servers wholesale, like read', () => {
+    const merged = mergeToolScopeDisallowedTools(undefined, 'review', ['nimbalyst-host', 'nimbalyst-excalidraw'])!;
+    expect(merged).toContain('mcp__nimbalyst-excalidraw');
+    expect(merged).not.toContain('mcp__nimbalyst-host');
+    expect(merged).not.toContain(RUN_PROJECT_TESTS_TOOL);
   });
 });
 

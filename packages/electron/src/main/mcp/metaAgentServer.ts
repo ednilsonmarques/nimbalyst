@@ -14,6 +14,8 @@ import type { OrchestrationMessageKind } from '@nimbalyst/runtime/ai/server/type
  */
 
 import { resolveCallerWorkspaceId } from "../utils/workspaceIdentity";
+import { runProjectTests } from "../services/team/projectTestRunner";
+import { getEnhancedPath } from "../services/shellEnvironment";
 
 type CreateSessionArgs = {
   title?: string;
@@ -224,15 +226,15 @@ export const META_AGENT_TOOL_DEFS: Array<{
         },
         toolScope: {
           type: "string",
-          enum: ["read", "write", "full"],
+          enum: ["read", "review", "write", "full"],
           description:
-            "Capability scope for the child. \"read\" = read_file/list_files/search_files only (pure investigation). \"write\" = those plus write_file but NO run_command, so the child can save a file deliverable (e.g. a report) yet cannot build/test/run anything. \"full\" (default) = all tools including run_command. Use read or write for analyze/research tasks so the child physically cannot run a build, and reserve full for tasks that must build/test.",
+            "Capability scope for the child. \"read\" = read_file/list_files/search_files only (pure investigation). \"review\" = read plus run_project_tests (the workspace's own test command), no edits and no shell. \"write\" = those plus write_file but NO run_command, so the child can save a file deliverable (e.g. a report) yet cannot build/test/run anything. \"full\" (default) = all tools including run_command. Use read or write for analyze/research tasks so the child physically cannot run a build, and reserve full for tasks that must build/test.",
         },
         role: {
           type: "string",
           enum: ["explorer", "implementer", "reviewer", "other"],
           description:
-            "Team mode only (ignored outside a Team mode team). Every role defaults to Sonnet. explorer: research/reading, effort medium, read-only tools. implementer: makes changes, effort medium, full tools. reviewer: independent review, effort high, read-only tools (pass toolScope \"full\" if it must run tests). other: effort medium. An explicit model, effortLevel or toolScope always wins; promote (e.g. claude-code:opus + high) only when the task needs it. Omitted means other. A team may have at most 3 sessions active at once and 8 in total, nested at most 2 levels below the team root; the call is refused beyond that.",
+            "Team mode only (ignored outside a Team mode team). Every role defaults to Sonnet. explorer: research/reading, effort medium, read-only tools. implementer: makes changes, effort medium, full tools. reviewer: independent review, effort high, review scope (reads, and runs the project's tests only through run_project_tests; never edits, never runs a shell). other: effort medium. An explicit model, effortLevel or toolScope wins, except that a reviewer always gets the review scope (full or write is lowered to review); promote (e.g. claude-code:opus + high) only when the task needs it. Omitted means other. A team may have at most 3 sessions active at once and 8 in total, nested at most 2 levels below the team root; the call is refused beyond that.",
         },
         effortLevel: {
           type: "string",
@@ -288,7 +290,7 @@ export const META_AGENT_TOOL_DEFS: Array<{
           type: "string",
           enum: ["explorer", "implementer", "reviewer", "other"],
           description:
-            "Team mode only (ignored outside a Team mode team). Every role defaults to Sonnet. explorer: research/reading, effort medium, read-only tools. implementer: makes changes, effort medium, full tools. reviewer: independent review, effort high, read-only tools (pass toolScope \"full\" if it must run tests). other: effort medium. An explicit model, effortLevel or toolScope always wins; promote (e.g. claude-code:opus + high) only when the task needs it. Omitted means other. A team may have at most 3 sessions active at once and 8 in total, nested at most 2 levels below the team root; the call is refused beyond that.",
+            "Team mode only (ignored outside a Team mode team). Every role defaults to Sonnet. explorer: research/reading, effort medium, read-only tools. implementer: makes changes, effort medium, full tools. reviewer: independent review, effort high, review scope (reads, and runs the project's tests only through run_project_tests; never edits, never runs a shell). other: effort medium. An explicit model, effortLevel or toolScope wins, except that a reviewer always gets the review scope (full or write is lowered to review); promote (e.g. claude-code:opus + high) only when the task needs it. Omitted means other. A team may have at most 3 sessions active at once and 8 in total, nested at most 2 levels below the team root; the call is refused beyond that.",
         },
         effortLevel: {
           type: "string",
@@ -474,6 +476,25 @@ export const META_AGENT_TOOL_DEFS: Array<{
       properties: {},
     },
   },
+  {
+    name: "run_project_tests",
+    description:
+      "Run the workspace's own test command (`npm test`, as the \"test\" script of the package.json at the workspace root defines it) in your workspace and return the exit code, duration and output. You cannot choose the command, its arguments or the directory. Returns status \"unavailable\" when the project has no test script. Optionally narrow the run to one existing test file.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        testPath: {
+          type: "string",
+          description:
+            "Optional. A test file (or folder) relative to the workspace root, e.g. \"test/cart.test.js\". Letters, digits, \".\", \"_\", \"-\" and \"/\" only; no \"..\", no absolute path, must exist. Passed to the test script as `npm test -- <testPath>`.",
+        },
+        timeoutSeconds: {
+          type: "number",
+          description: "Optional. Default 120, maximum 300. The run and every process it started are stopped at the limit.",
+        },
+      },
+    },
+  },
 ];
 
 /**
@@ -595,6 +616,17 @@ export async function dispatchMetaAgentTool(
       return toolFns.respondToPrompt(aiSessionId, effectiveWorkspaceId, (args ?? {}) as RespondToPromptArgs);
     case "list_spawned_sessions":
       return toolFns.listSpawnedSessions(aiSessionId, effectiveWorkspaceId);
+    case "run_project_tests":
+      // Runs in the caller's own directory (a worktree caller passes its
+      // worktree), never a path the agent supplies.
+      return JSON.stringify(
+        await runProjectTests(aiSessionId, workspaceId, {
+          testPath: args?.testPath,
+          timeoutSeconds: args?.timeoutSeconds,
+        }, { pathEnv: getEnhancedPath }),
+        null,
+        2,
+      );
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

@@ -91,10 +91,20 @@ describe('Team mode child creation', () => {
     expect(row.metadata.teamChild).toEqual({ role: 'explorer', rootSessionId: 'root', depth: 1 });
   });
 
-  it('reviewer from the root: Sonnet, high, read-only', async () => {
+  it('reviewer from the root: Sonnet, high, review scope', async () => {
     await service().createChildSessionInternal('root', '/ws', { role: 'reviewer' });
     expect(created().model).toBe('claude-code:sonnet');
     expect(created().metadata.effortLevel).toBe('high');
+    expect(created().metadata.toolScope).toBe('review');
+  });
+
+  it.each(['full', 'write'])('a reviewer asked for %s is stored as review, never full', async (toolScope) => {
+    await service().createChildSessionInternal('root', '/ws', { role: 'reviewer', toolScope });
+    expect(created().metadata.toolScope).toBe('review');
+  });
+
+  it('an unrecognized toolScope is stored as read, never as full', async () => {
+    await service().createChildSessionInternal('root', '/ws', { role: 'implementer', toolScope: 'admin' });
     expect(created().metadata.toolScope).toBe('read');
   });
 
