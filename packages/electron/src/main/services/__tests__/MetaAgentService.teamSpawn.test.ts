@@ -5,7 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@nimbalyst/runtime/storage/repositories/AISessionsRepository', () => ({
   AISessionsRepository: { create: vi.fn(), updateMetadata: vi.fn(), get: vi.fn() },
 }));
-vi.mock('@nimbalyst/runtime/storage/repositories/AgentMessagesRepository', () => ({ AgentMessagesRepository: {} }));
+// Under vitest NODE_ENV is "test", so a seeded prompt is persisted as a
+// synthetic message instead of running the child (MetaAgentService
+// shouldBypassChildAgentExecutionForTests); spawn_session always has a prompt.
+vi.mock('@nimbalyst/runtime/storage/repositories/AgentMessagesRepository', () => ({ AgentMessagesRepository: { create: vi.fn() } }));
 vi.mock('@nimbalyst/runtime/storage/repositories/SessionFilesRepository', () => ({ SessionFilesRepository: {} }));
 vi.mock('@nimbalyst/runtime/ai/server', () => ({
   ClaudeCodeProvider: { setMetaAgentServerPort: vi.fn() },

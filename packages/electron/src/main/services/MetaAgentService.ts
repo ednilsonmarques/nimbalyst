@@ -1972,8 +1972,10 @@ export class MetaAgentService {
     return value.replace(/[%_\\]/g, '\\$&');
   }
 
+  // Workspace-relative paths use forward slashes on every platform, like the
+  // rest of the app, so the same file reads the same on Windows.
   private stripWorkspacePath(filePath: string, workspacePath: string): string {
     if (!workspacePath) return filePath;
-    return path.relative(workspacePath, filePath);
+    return path.relative(workspacePath, filePath).split(path.sep).join('/');
   }
 }
