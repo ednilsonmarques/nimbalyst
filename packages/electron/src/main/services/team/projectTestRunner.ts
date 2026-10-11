@@ -3,8 +3,10 @@
  *
  * This is the only execution a `review` child (Team mode reviewer) may perform.
  * The agent never supplies a command, arguments, a working directory or a
- * shell: the command is `npm test` as the workspace's package.json defines it,
- * run in the caller's workspace, optionally narrowed to one existing test file.
+ * shell: the command is `npm test` as a package.json of the workspace defines
+ * it, run in the caller's workspace or in one existing folder inside it
+ * (`projectPath`, for projects whose package.json is not at the root),
+ * optionally narrowed to one existing test file of that project.
  *
  * What the project's tests themselves do (temp files, snapshots, caches) is the
  * project's code, not a capability granted to the agent. There is no OS
@@ -42,6 +44,9 @@ export interface ProjectTestsResult {
 }
 
 export interface ProjectTestsArgs {
+  /** Folder of the project inside the workspace; omitted means the root. */
+  projectPath?: unknown;
+  /** Test file or folder, relative to the project folder. */
   testPath?: unknown;
   timeoutSeconds?: unknown;
 }
@@ -60,49 +65,84 @@ export interface ProjectTestRunnerDeps {
 
 const running = new Set<string>();
 
+type PathCheck = { ok: true; relative: string; absolute: string } | { ok: false; reason: string };
+
 /**
- * Validate an agent-supplied test path: structural checks first, then the real
- * path must exist inside the workspace. Returns the normalized relative path
- * (forward slashes) or an error.
+ * Validate an agent-supplied relative path: structural checks first, then the
+ * real path must exist strictly inside `root` (a link pointing outside fails).
  */
-export function validateTestPath(
-  raw: unknown,
-  workspaceRoot: string,
-): { ok: true; relative: string } | { ok: false; reason: string } {
-  if (typeof raw !== 'string' || raw.length === 0) return { ok: false, reason: 'testPath must be a non-empty string.' };
-  if (raw.length > TEST_PATH_MAX_LENGTH) return { ok: false, reason: 'testPath is too long.' };
+function validateInsidePath(raw: unknown, root: string, label: string, container: string): PathCheck {
+  if (typeof raw !== 'string' || raw.length === 0) return { ok: false, reason: `${label} must be a non-empty string.` };
+  if (raw.length > TEST_PATH_MAX_LENGTH) return { ok: false, reason: `${label} is too long.` };
   if (!TEST_PATH_CHARS.test(raw)) {
-    return { ok: false, reason: 'testPath may only contain letters, digits, ".", "_", "-" and "/".' };
+    return { ok: false, reason: `${label} may only contain letters, digits, ".", "_", "-" and "/".` };
   }
-  if (raw.startsWith('-')) return { ok: false, reason: 'testPath cannot start with "-".' };
-  if (raw.startsWith('/') || path.isAbsolute(raw)) return { ok: false, reason: 'testPath must be relative to the workspace.' };
+  if (raw.startsWith('-')) return { ok: false, reason: `${label} cannot start with "-".` };
+  if (raw.startsWith('/') || path.isAbsolute(raw)) return { ok: false, reason: `${label} must be relative to ${container}.` };
   const segments = raw.split('/');
   if (segments.some((segment) => segment === '' || segment === '..')) {
-    return { ok: false, reason: 'testPath cannot contain ".." or empty segments.' };
+    return { ok: false, reason: `${label} cannot contain ".." or empty segments.` };
   }
 
   let rootReal: string;
   let targetReal: string;
   try {
-    rootReal = fs.realpathSync(workspaceRoot);
+    rootReal = fs.realpathSync(root);
     targetReal = fs.realpathSync(path.resolve(rootReal, raw));
   } catch {
-    return { ok: false, reason: `testPath does not exist in the workspace: ${raw}` };
+    return { ok: false, reason: `${label} does not exist in ${container}: ${raw}` };
   }
   const relative = path.relative(rootReal, targetReal);
   if (relative === '' || relative.startsWith('..') || path.isAbsolute(relative)) {
-    return { ok: false, reason: 'testPath must stay inside the workspace.' };
+    return { ok: false, reason: `${label} must stay inside ${container}.` };
   }
-  return { ok: true, relative: relative.split(path.sep).join('/') };
+  return { ok: true, relative: relative.split(path.sep).join('/'), absolute: targetReal };
 }
 
-/** The workspace's test script, or why there is none. Never invents one. */
-export function readTestScript(workspaceRoot: string): { ok: true } | { ok: false; reason: string } {
+/**
+ * Validate an agent-supplied test path against the folder the tests run in
+ * (the workspace, or the project folder when `projectPath` was given). Returns
+ * the normalized relative path (forward slashes) or an error.
+ */
+export function validateTestPath(
+  raw: unknown,
+  projectRoot: string,
+  container: string = 'the workspace',
+): { ok: true; relative: string } | { ok: false; reason: string } {
+  const checked = validateInsidePath(raw, projectRoot, 'testPath', container);
+  return checked.ok ? { ok: true, relative: checked.relative } : checked;
+}
+
+/**
+ * Validate an agent-supplied project folder: an existing directory strictly
+ * inside the workspace. It only chooses WHERE `npm test` runs; the command
+ * still comes from that folder's own package.json.
+ */
+export function validateProjectPath(raw: unknown, workspaceRoot: string): PathCheck {
+  const checked = validateInsidePath(raw, workspaceRoot, 'projectPath', 'the workspace');
+  if (!checked.ok) return checked;
+  let isDirectory = false;
+  try {
+    isDirectory = fs.statSync(checked.absolute).isDirectory();
+  } catch {
+    isDirectory = false;
+  }
+  return isDirectory ? checked : { ok: false, reason: `projectPath must be a folder: ${checked.relative}` };
+}
+
+/** The project's test script, or why there is none. Never invents one. */
+export function readTestScript(
+  projectRoot: string,
+  where: string = 'the workspace root',
+): { ok: true } | { ok: false; reason: string } {
   let pkg: unknown;
   try {
-    pkg = JSON.parse(fs.readFileSync(path.join(workspaceRoot, 'package.json'), 'utf8'));
+    pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
   } catch {
-    return { ok: false, reason: 'No readable package.json at the workspace root, so there is no known test command.' };
+    const hint = where === 'the workspace root'
+      ? ' If the project lives in a subfolder, pass projectPath (for example "web").'
+      : '';
+    return { ok: false, reason: `No readable package.json at ${where}, so there is no known test command.${hint}` };
   }
   const script = (pkg as { scripts?: Record<string, unknown> } | null)?.scripts?.test;
   if (typeof script !== 'string' || script.trim() === '') {
@@ -175,8 +215,9 @@ function resolveTimeoutSeconds(raw: unknown): number {
 }
 
 /**
- * Run the workspace's `npm test` for one calling session. `sessionKey` serializes
- * runs per session: a second concurrent call gets `busy`.
+ * Run `npm test` of the workspace (or of one project folder inside it) for one
+ * calling session. `sessionKey` serializes runs per session: a second
+ * concurrent call gets `busy`.
  */
 export async function runProjectTests(
   sessionKey: string,
@@ -191,12 +232,23 @@ export async function runProjectTests(
   if (!workspaceRoot || !path.isAbsolute(workspaceRoot) || !fs.existsSync(workspaceRoot)) {
     return { status: 'unavailable', reason: 'The calling session has no workspace on disk.' };
   }
-  const script = readTestScript(workspaceRoot);
+
+  let projectRoot = workspaceRoot;
+  let projectRelative: string | null = null;
+  if (args.projectPath !== undefined && args.projectPath !== null && args.projectPath !== '') {
+    const project = validateProjectPath(args.projectPath, workspaceRoot);
+    if (!project.ok) return { status: 'rejected', reason: project.reason };
+    projectRoot = project.absolute;
+    projectRelative = project.relative;
+  }
+  const where = projectRelative === null ? 'the workspace root' : `projectPath "${projectRelative}"`;
+  const script = readTestScript(projectRoot, where);
   if (!script.ok) return { status: 'unavailable', reason: script.reason };
 
   const npmArgs = ['test'];
   if (args.testPath !== undefined && args.testPath !== null && args.testPath !== '') {
-    const checked = validateTestPath(args.testPath, workspaceRoot);
+    const container = projectRelative === null ? 'the workspace' : 'the project folder';
+    const checked = validateTestPath(args.testPath, projectRoot, container);
     if (!checked.ok) return { status: 'rejected', reason: checked.reason };
     npmArgs.push('--', checked.relative);
   }
@@ -209,7 +261,7 @@ export async function runProjectTests(
   const terminateTree = deps.terminateTree ?? ((child: ChildProcess) => terminateOwnedProcessTree(child));
   const now = deps.now ?? Date.now;
   const timeoutMs = resolveTimeoutSeconds(args.timeoutSeconds) * 1000;
-  const command = `npm ${npmArgs.join(' ')}`;
+  const command = `npm ${npmArgs.join(' ')}${projectRelative === null ? '' : ` (in ${projectRelative})`}`;
 
   running.add(sessionKey);
   const started = now();
@@ -221,7 +273,7 @@ export async function runProjectTests(
       let settled = false;
 
       const child = spawn(npm.node, [npm.npmCli, ...npmArgs], {
-        cwd: workspaceRoot,
+        cwd: projectRoot,
         shell: false,
         windowsHide: true,
         stdio: ['ignore', 'pipe', 'pipe'],

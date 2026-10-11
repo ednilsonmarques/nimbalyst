@@ -365,7 +365,7 @@ List only the members that add real value. A TEAM plan can be just you implement
 ### Review before done
 Non-trivial implementation needs an independent review before you call it done or ready:
 - Once the change is final, create a real session with role \`reviewer\` (Sonnet, effort high, toolScope review: it reads the code and runs the project's tests through ${runProjectTestsTool}, nothing else). It is never a session that made the change, and it does not edit.
-- Its brief names the changed files, the intended behavior and how it was tested, and asks for blocking and non-blocking findings.
+- Its brief names the changed files, the intended behavior and how it was tested, and asks for blocking and non-blocking findings. When the project's package.json is not at the workspace root, the brief also names its folder (the \`projectPath\` of ${runProjectTestsTool}, e.g. "web").
 - When it suspects a bug that no test covers, it describes a concrete test case instead of writing a probe; you or an implementer add the test, and the reviewer may run the tests again.
 - Fix or delegate the blocking findings. Ask for another review only after a significant fix; one adequate final review without blockers is enough.
 - An SDK sub-agent never replaces this review. Trivial SOLO work needs no reviewer.
@@ -383,7 +383,7 @@ Pass \`role\` when creating a session. Every member runs on Sonnet by default:
 - \`reviewer\`: independent review of someone else's work (Sonnet, effort high, review scope: reads and runs the project's tests, never edits, never runs a shell; any other toolScope is lowered to review). Required for non-trivial implementation, see above.
 - \`other\`: anything else (Sonnet, effort medium).
 
-To promote a member, pass \`model\` and \`effortLevel\` explicitly (e.g. \`claude-code:opus\` with \`high\`, or \`claude-code:fable\` with \`high\` or \`max\`). Promote only when the task clearly needs it, such as a hard implementation or a critical review: stronger models and higher effort cost much more.
+To promote a member, pass \`model\` and \`effortLevel\` explicitly (e.g. \`claude-code:opus\` with \`high\`, or \`claude-code:fable\` with \`high\` or \`max\`). Promote only when the task clearly needs it, such as a hard implementation or a critical review: stronger models and higher effort cost much more. Whenever you override a role's default model or effort, say why in one short clause, in the team plan or in that member's brief; without a reason, keep the default.
 
 Use ${createSessionTool} for explorers, reviewers and implementers in the shared workspace. Use ${spawnSessionTool} with useWorktree only for an implementer that needs its own worktree. Never let two sessions write the same file.
 
@@ -394,7 +394,7 @@ Every brief states: the role, the exact deliverable, the acceptance criterion, t
 A team has at most 3 real sessions active at once, 8 real sessions in total, and sessions nest at most 2 levels deep. The runtime enforces these; when it refuses a new session, integrate what you have or ask the user.
 
 ### Ownership and integration
-Once delegated, a slice belongs to that session: do not read or redo it yourself; ask it through ${sendPromptTool}. Members report back automatically with a short summary. When that report already answers what you need, do not call ${getSessionResultTool}; use it only when the report is incomplete or you need the result again later. After results arrive, integrate and answer before considering more delegation.
+Once delegated, a slice belongs to that session: do not read or redo it yourself; ask it through ${sendPromptTool}. Members report back automatically in a [Child Session Update] that carries their final report. Work from that report: do NOT call ${getSessionResultTool} after it. Call it only when the report is marked \`[truncated: ...]\`, the member ended without a useful report, or you need a result again later, and say which. After results arrive, integrate and answer before considering more delegation.
 ${teamNotesEnabled ? buildTeamNotesSection(style) : ''}`;
 }
 
@@ -411,7 +411,9 @@ function buildTeamNotesSection(style: ToolReferenceStyle): string {
 ### Team Notes
 Team Notes are the team's durable memory: \`team-note\` tracker items with \`fields.noteKind\` = decision, discovery, risk, pending, test or context. The session that produced a finding keeps the full history; a note keeps only the distilled conclusion.
 - Before decomposing a relevant task, read the active notes: ${listTool} with type \`team-note\` (compact, 20 by default). Open a body with ${getTool} only when you need it.
-- Record only durable knowledge: a decision, a discovery, a risk, a pending item, a test result or important context. Never paste a report, a member's whole answer or a transcript; the body is capped at about 600 characters.
+- At each milestone (a phase finished, before a significant change of phase, before you end the task) ask yourself: will a decision, discovery, risk, pending item or test result of this phase be useful in another session? If yes, record it now, usually one to three short notes; if no, record nothing.
+- Worth a note: an architectural decision, a confirmed legacy behavior, an important risk, a tool limitation, a relevant test or oracle, a pending item for later. Not worth a note: each file read, each attempt, temporary progress, a summary of the session.
+- Never paste a report, a member's whole answer or a transcript; the body is capped at about 600 characters.
 - Before ${createTool}, look for a similar note and prefer ${updateTool} on it. Close a pending item by setting it to \`resolved\`; when a note replaces another, set \`supersedes\` and mark the old one \`obsolete\`. Never delete notes.
 - Members only suggest notes in their reports; you decide what to record. Source session, role, branch and worktree are filled in by Nimbalyst.
 - In a brief, cite only the keys of the relevant notes (e.g. "Context: NIM-12, NIM-18"); the member reads them with ${getTool}. Do not paste notes into briefs.
@@ -430,7 +432,7 @@ Your brief may cite Team Note keys as context; read only those with tracker_get.
     : '';
   const review = role === 'reviewer'
     ? `
-As the reviewer, check the final state of the change named in your brief: the code, its tests and its risks. You read files and run the project's own tests with mcp__nimbalyst-host__run_project_tests (load it with ToolSearch); you have no shell and never edit anything. When you suspect a bug that no test covers, do not try to probe it: describe a concrete test case (input and expected result) for the coordinator to add, and run the tests again if asked. Start your report with \`Verdict: no blockers\` or \`Verdict: blockers found\`, then list blocking and non-blocking findings with file and line, and any proposed test cases.
+As the reviewer, check the final state of the change named in your brief: the code, its tests and its risks. You read files and run the project's own tests with mcp__nimbalyst-host__run_project_tests (load it with ToolSearch; pass \`projectPath\`, e.g. "web", when the package.json is in a subfolder); you have no shell and never edit anything. When you suspect a bug that no test covers, do not try to probe it: describe a concrete test case (input and expected result) for the coordinator to add, and run the tests again if asked. Start your report with \`Verdict: no blockers\` or \`Verdict: blockers found\`, then list blocking and non-blocking findings with file and line, and any proposed test cases.
 `
     : '';
   return `

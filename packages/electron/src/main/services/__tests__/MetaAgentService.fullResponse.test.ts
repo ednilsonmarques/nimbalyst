@@ -106,6 +106,36 @@ describe('MetaAgentService buildSessionResultData full child response (FIX A)', 
     expect(data.fullResponse.endsWith('...')).toBe(false);
   });
 
+  // The [Child Session Update] is built from recentMessages. Cut at 2,000 the
+  // child's report nearly always arrived incomplete and the parent fetched the
+  // whole result to read its ending.
+  it('keeps the final report whole in recentMessages up to 8,000 characters; earlier messages stay at 2,000', async () => {
+    vi.mocked(AgentMessagesRepository.list).mockResolvedValue([
+      { direction: 'input', content: 'do the research', metadata: null },
+      { direction: 'output', content: 'N'.repeat(3000), metadata: null },
+      { direction: 'output', content: 'R'.repeat(6000), metadata: null },
+    ] as never);
+
+    const data = await (MetaAgentService.getInstance() as any).buildSessionResultData('child-6', '/ws', PREFETCHED);
+    const outputs = data.recentMessages.filter((m: { direction: string }) => m.direction === 'output');
+
+    expect(outputs.at(-1).text).toBe('R'.repeat(6000));
+    expect(outputs[0].text.startsWith('N'.repeat(2000) + '... [truncated: 1000 more characters')).toBe(true);
+  });
+
+  it('marks a final report cut at the cap so the parent knows to fetch the rest', async () => {
+    vi.mocked(AgentMessagesRepository.list).mockResolvedValue([
+      { direction: 'output', content: 'R'.repeat(9500), metadata: null },
+    ] as never);
+
+    const data = await (MetaAgentService.getInstance() as any).buildSessionResultData('child-7', '/ws', PREFETCHED);
+
+    expect(data.recentMessages).toHaveLength(1);
+    expect(data.recentMessages[0].text).toBe(
+      'R'.repeat(8000) + '... [truncated: 1500 more characters; get_session_result has the full text]',
+    );
+  });
+
   it('does not truncate a response already under the preview cap (full == preview)', async () => {
     const shortReport = 'concise finding at file.ts:42';
     vi.mocked(AgentMessagesRepository.list).mockResolvedValue([

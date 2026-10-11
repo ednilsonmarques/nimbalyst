@@ -14,6 +14,7 @@ import {
   readTestScript,
   resolveNpmFromPath,
   runProjectTests,
+  validateProjectPath,
   validateTestPath,
 } from '../projectTestRunner';
 
@@ -285,4 +286,124 @@ describe('HeadTailCollector', () => {
     expect(text.endsWith('FGHIJ')).toBe(true);
     expect(text).toContain('[10 characters omitted]');
   });
+});
+
+describe('projectPath: a project folder inside the workspace', () => {
+  // Workspace whose package.json lives in web/, like a repo with the app in a subfolder.
+  function nested(files: Record<string, string> = {}): string {
+    return project(null, {
+      'web/package.json': JSON.stringify({ name: 'web', version: '1.0.0', scripts: { test: 'node --test' } }),
+      'web/test/ok.test.mjs': PASSING,
+      'web/test/bad.test.mjs': FAILING,
+      'docs/readme.md': 'x',
+      'other/package.json': JSON.stringify({ name: 'other', scripts: { test: 'node exit3.js' } }),
+      'other/exit3.js': 'process.exit(3);\n',
+      'other/only.test.mjs': PASSING,
+      ...files,
+    });
+  }
+
+  it('the root stays the default, and says how to reach a subfolder when it has no package.json', async () => {
+    const result = await runProjectTests('s', nested(), {});
+    expect(result.status).toBe('unavailable');
+    expect(result.reason).toContain('workspace root');
+    expect(result.reason).toContain('pass projectPath');
+  });
+
+  it('runs the test script of the chosen folder, in that folder, without a shell', async () => {
+    const dir = nested();
+    const calls: Array<{ args: readonly string[]; cwd: unknown; shell: unknown }> = [];
+    const result = await runProjectTests('s', dir, { projectPath: 'web', testPath: 'test/ok.test.mjs' }, {
+      spawn: (command, args, options) => {
+        calls.push({ args, cwd: options.cwd, shell: options.shell });
+        return nodeSpawn(command, args, options);
+      },
+    });
+    expect(result).toMatchObject({ status: 'passed', exitCode: 0, command: 'npm test -- test/ok.test.mjs (in web)' });
+    expect(calls).toHaveLength(1);
+    expect(calls[0].shell).toBe(false);
+    expect(fs.realpathSync(String(calls[0].cwd))).toBe(fs.realpathSync(path.join(dir, 'web')));
+    expect(calls[0].args.slice(1)).toEqual(['test', '--', 'test/ok.test.mjs']);
+  });
+
+  it('uses that folder own script and keeps its exit code', async () => {
+    const dir = nested();
+    expect(await runProjectTests('s', dir, { projectPath: 'web' })).toMatchObject({ status: 'failed' });
+    expect(await runProjectTests('s', dir, { projectPath: 'other' })).toMatchObject({ status: 'failed', exitCode: 3, command: 'npm test (in other)' });
+  });
+
+  it('a folder without package.json is unavailable, never a guess', async () => {
+    const result = await runProjectTests('s', nested(), { projectPath: 'docs' });
+    expect(result.status).toBe('unavailable');
+    expect(result.reason).toContain('projectPath "docs"');
+  });
+
+  it.each([
+    ['missing', 'does not exist'],
+    ['..', '".."'],
+    ['web/..', '".."'],
+    ['../outside', '".."'],
+    ['/etc', 'relative'],
+    ['C:/Windows', 'may only contain'],
+    ['web\\test', 'may only contain'],
+    ['-x', 'cannot start with "-"'],
+    ['web;calc', 'may only contain'],
+    ['web/package.json', 'must be a folder'],
+    ['.', 'must stay inside the workspace'],
+  ])('rejects projectPath %s and runs nothing', async (projectPath, reason) => {
+    let spawned = false;
+    const dir = nested();
+    const checked = validateProjectPath(projectPath, dir);
+    expect(checked.ok).toBe(false);
+    expect(checked.ok ? '' : checked.reason).toContain(reason);
+    const result = await runProjectTests('s', dir, { projectPath }, { spawn: () => { spawned = true; throw new Error('must not spawn'); } });
+    expect(result.status).toBe('rejected');
+    expect(spawned).toBe(false);
+  });
+
+  it('rejects a projectPath link whose real path leaves the workspace', (ctx) => {
+    const dir = nested();
+    const outside = path.join(root, 'outside-project');
+    fs.mkdirSync(outside);
+    fs.writeFileSync(path.join(outside, 'package.json'), JSON.stringify({ scripts: { test: 'node --test' } }));
+    try {
+      fs.symlinkSync(outside, path.join(dir, 'escape'), 'junction');
+    } catch {
+      ctx.skip();
+    }
+    const checked = validateProjectPath('escape', dir);
+    expect(checked.ok).toBe(false);
+    expect(checked.ok ? '' : checked.reason).toContain('inside the workspace');
+  });
+
+  it('testPath cannot leave the chosen project folder, even to another folder of the workspace', async (ctx) => {
+    const dir = nested();
+    for (const testPath of ['../other/only.test.mjs', '/other/only.test.mjs']) {
+      expect((await runProjectTests('s', dir, { projectPath: 'web', testPath })).status).toBe('rejected');
+    }
+    // A link inside web/ that resolves to a sibling folder of the same workspace.
+    try {
+      fs.symlinkSync(path.join(dir, 'other'), path.join(dir, 'web', 'sibling'), 'junction');
+    } catch {
+      ctx.skip();
+    }
+    const result = await runProjectTests('s', dir, { projectPath: 'web', testPath: 'sibling/only.test.mjs' });
+    expect(result.status).toBe('rejected');
+    expect(result.reason).toContain('inside the project folder');
+  });
+
+  it('timeout and output limits are unchanged inside a project folder', async () => {
+    const dir = nested({
+      'big/package.json': JSON.stringify({ scripts: { test: 'node big.js' } }),
+      'big/big.js': "process.stdout.write('START-' + 'x'.repeat(200000) + '-END');\n",
+      'slow/package.json': JSON.stringify({ scripts: { test: 'node slow.js' } }),
+      'slow/slow.js': 'setInterval(() => {}, 1000);\n',
+    });
+    const big = await runProjectTests('s', dir, { projectPath: 'big' });
+    expect(big).toMatchObject({ status: 'passed', truncated: true });
+    expect(big.stdout).toContain('START-');
+    expect(big.stdout).toContain('-END');
+    const slow = await runProjectTests('s', dir, { projectPath: 'slow', timeoutSeconds: 2 });
+    expect(slow.status).toBe('timed_out');
+  }, 30_000);
 });

@@ -43,6 +43,14 @@ describe('Team mode system prompt', () => {
     expect(text).toContain('do not read or redo it yourself');
   });
 
+  it('records Team Notes at milestones, a few durable ones, never everything', () => {
+    const prompt = buildClaudeCodeSystemPrompt({ ...base, teamMode: true });
+    expect(prompt).toContain('At each milestone (a phase finished, before a significant change of phase, before you end the task) ask yourself');
+    expect(prompt).toContain('If yes, record it now, usually one to three short notes; if no, record nothing.');
+    expect(prompt).toContain('Worth a note: an architectural decision, a confirmed legacy behavior, an important risk, a tool limitation, a relevant test or oracle, a pending item for later.');
+    expect(prompt).toContain('Not worth a note: each file read, each attempt, temporary progress, a summary of the session.');
+  });
+
   it('teaches the coordinator Team Notes when trackers are enabled', () => {
     const prompt = buildClaudeCodeSystemPrompt({ ...base, teamMode: true });
     expect(prompt).toContain('### Team Notes');
@@ -142,9 +150,20 @@ describe('Team mode system prompt', () => {
       expect(text).toContain('as soon as your plan is TEAM');
     });
 
-    it('avoids a redundant get_session_result after an automatic report', () => {
-      expect(text).toContain('When that report already answers what you need, do not call `mcp__nimbalyst-host__get_session_result`');
-      expect(text).toContain('use it only when the report is incomplete or you need the result again later');
+    it('works from the automatic report and fetches the result only when it is cut or missing', () => {
+      expect(text).toContain('a [Child Session Update] that carries their final report');
+      expect(text).toContain('do NOT call `mcp__nimbalyst-host__get_session_result` after it');
+      expect(text).toContain('Call it only when the report is marked `[truncated: ...]`, the member ended without a useful report, or you need a result again later, and say which.');
+    });
+
+    it('asks for a stated reason whenever a role default model or effort is overridden', () => {
+      expect(text).toContain("Whenever you override a role's default model or effort, say why in one short clause, in the team plan or in that member's brief; without a reason, keep the default.");
+      expect(text).toContain('Every member runs on Sonnet by default');
+    });
+
+    it('tells the reviewer brief where the tests live when package.json is not at the root', () => {
+      expect(text).toContain('the brief also names its folder (the `projectPath` of `mcp__nimbalyst-host__run_project_tests`, e.g. "web")');
+      expect(buildTeamChildAddendum('reviewer')).toContain('pass `projectPath`, e.g. "web", when the package.json is in a subfolder');
     });
   });
 

@@ -221,6 +221,9 @@ type RequestMobilePush = (
   options: { force?: boolean; reason?: string }
 ) => Promise<MobilePushResult | null>;
 
+/** Cap of a child's final report inside a [Child Session Update]. */
+export const CHILD_UPDATE_FINAL_REPORT_MAX_CHARS = 8000;
+
 export class MetaAgentService {
   private static instance: MetaAgentService | null = null;
   private starting: Promise<void> | null = null;
@@ -1918,9 +1921,14 @@ export class MetaAgentService {
     maxPerMessage: number = 2000,
     // Skip input rows this session sent (its own task and follow-ups), keeping
     // the recap to what the child said and what anyone else asked it.
-    excludeInputFromSessionId?: string
+    excludeInputFromSessionId?: string,
+    // The newest output message is the child's report. Cut at maxPerMessage it
+    // almost always arrived incomplete, and the parent then fetched the whole
+    // result (several times larger) just to read its ending.
+    maxFinalOutput: number = CHILD_UPDATE_FINAL_REPORT_MAX_CHARS
   ): Array<{ direction: 'input' | 'output'; text: string }> {
     const collected: Array<{ direction: 'input' | 'output'; text: string }> = [];
+    let finalOutputSeen = false;
     for (let index = messages.length - 1; index >= 0 && collected.length < limit; index -= 1) {
       const message = messages[index];
       if (
@@ -1934,9 +1942,14 @@ export class MetaAgentService {
       if (!text) {
         continue;
       }
+      const isOutput = message.direction !== 'input';
+      const cap = isOutput && !finalOutputSeen ? Math.max(maxPerMessage, maxFinalOutput) : maxPerMessage;
+      if (isOutput) finalOutputSeen = true;
       collected.push({
-        direction: message.direction === 'input' ? 'input' : 'output',
-        text: text.length > maxPerMessage ? `${text.slice(0, maxPerMessage)}...` : text,
+        direction: isOutput ? 'output' : 'input',
+        text: text.length > cap
+          ? `${text.slice(0, cap)}... [truncated: ${text.length - cap} more characters; get_session_result has the full text]`
+          : text,
       });
     }
     return collected.reverse();

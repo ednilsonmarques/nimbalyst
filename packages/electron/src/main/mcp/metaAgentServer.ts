@@ -479,14 +479,19 @@ export const META_AGENT_TOOL_DEFS: Array<{
   {
     name: "run_project_tests",
     description:
-      "Run the workspace's own test command (`npm test`, as the \"test\" script of the package.json at the workspace root defines it) in your workspace and return the exit code, duration and output. You cannot choose the command, its arguments or the directory. Returns status \"unavailable\" when the project has no test script. Optionally narrow the run to one existing test file.",
+      "Run the workspace's own test command (`npm test`, as the \"test\" script of a package.json of the workspace defines it) and return the exit code, duration and output. It runs at the workspace root, or in one existing project folder inside the workspace when the package.json is not at the root (projectPath). You cannot choose the command or its arguments. Returns status \"unavailable\" when that folder has no test script. Optionally narrow the run to one existing test file.",
     inputSchema: {
       type: "object",
       properties: {
+        projectPath: {
+          type: "string",
+          description:
+            "Optional. Folder of the project inside the workspace whose package.json holds the test script, e.g. \"web\". Omit it when the package.json is at the workspace root. Relative only: letters, digits, \".\", \"_\", \"-\" and \"/\"; no \"..\", no absolute path; must be an existing folder inside the workspace.",
+        },
         testPath: {
           type: "string",
           description:
-            "Optional. A test file (or folder) relative to the workspace root, e.g. \"test/cart.test.js\". Letters, digits, \".\", \"_\", \"-\" and \"/\" only; no \"..\", no absolute path, must exist. Passed to the test script as `npm test -- <testPath>`.",
+            "Optional. A test file (or folder) relative to the project folder (projectPath, or the workspace root when omitted), e.g. \"test/cart.test.js\". Letters, digits, \".\", \"_\", \"-\" and \"/\" only; no \"..\", no absolute path, must exist. Passed to the test script as `npm test -- <testPath>`.",
         },
         timeoutSeconds: {
           type: "number",
@@ -621,6 +626,7 @@ export async function dispatchMetaAgentTool(
       // worktree), never a path the agent supplies.
       return JSON.stringify(
         await runProjectTests(aiSessionId, workspaceId, {
+          projectPath: args?.projectPath,
           testPath: args?.testPath,
           timeoutSeconds: args?.timeoutSeconds,
         }, { pathEnv: getEnhancedPath }),
