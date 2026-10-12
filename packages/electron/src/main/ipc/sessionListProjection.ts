@@ -60,6 +60,11 @@ export function projectSessionList(
       tags: (entry as any).tags || undefined,
       // Linked tracker item IDs
       linkedTrackerItemIds: (entry as any).linkedTrackerItemIds || undefined,
+      // Team mode projections (sidebar grouping and Team view)
+      teamMode: entry.teamMode || undefined,
+      teamRole: entry.teamRole || undefined,
+      effortLevel: entry.effortLevel || undefined,
+      toolScope: entry.toolScope || undefined,
       metadata: {},
     };
   });

@@ -31,67 +31,8 @@ import type { CustomToolWidgetProps } from './index';
 import { interactiveWidgetHostAtom, getInteractiveWidgetHost } from '../../../../store/atoms/interactiveWidgetHost';
 import type { PermissionScope } from './InteractiveWidgetHost';
 import { unwrapShellCommand } from '../../utils/unwrapShellCommand';
-
-/**
- * Get a human-readable display name for a tool pattern
- */
-function getPatternDisplayName(pattern: string): string {
-  // Handle compound commands - these get unique patterns and shouldn't be cached
-  if (pattern.startsWith('Bash:compound:')) {
-    return 'this compound command (one-time only)';
-  }
-
-  // Handle Bash patterns like "Bash(git commit:*)" -> "git commit commands"
-  const bashMatch = pattern.match(/^Bash\(([^:]+):\*\)$/);
-  if (bashMatch) {
-    return `${bashMatch[1]} commands`;
-  }
-  if (pattern === 'Bash') {
-    return 'Run shell commands';
-  }
-
-  // Handle WebFetch patterns like "WebFetch(domain:example.com)" -> "Fetch from example.com"
-  const webfetchMatch = pattern.match(/^WebFetch\(domain:(.+)\)$/);
-  if (webfetchMatch) {
-    return `Fetch from ${webfetchMatch[1]}`;
-  }
-  if (pattern === 'WebFetch') {
-    return 'Fetch any web page';
-  }
-
-  const displayNames: Record<string, string> = {
-    'Edit': 'Edit files in project',
-    'Write': 'Create files in project',
-    'Read': 'Read files',
-    'Glob': 'Search for files',
-    'Grep': 'Search file contents',
-    'WebSearch': 'Search the web',
-    'Task': 'Run background tasks',
-    'TodoWrite': 'Update task list',
-  };
-
-  if (displayNames[pattern]) {
-    return displayNames[pattern];
-  }
-
-  // Handle MCP tools: mcp__server-name__tool_name -> "Server Name: Tool Name"
-  if (pattern.toLowerCase().startsWith('mcp__')) {
-    const parts = pattern.split('__');
-    if (parts.length >= 3) {
-      const serverName = parts[1]
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-      const mcpToolName = parts[2]
-        .split('_')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-      return `${serverName}: ${mcpToolName}`;
-    }
-  }
-
-  return pattern;
-}
+import { useTranslation } from '../../../../i18n/react';
+import { describePermissionPattern, localizePermissionWarning } from './toolPermissionText';
 
 // ============================================================
 // Widget Component
@@ -106,6 +47,7 @@ export const ToolPermissionWidget: React.FC<CustomToolWidgetProps> = ({
 
   // Get host from atom (set by SessionTranscript)
   const host = useAtomValue(interactiveWidgetHostAtom(sessionId));
+  const { t } = useTranslation('ai');
 
   // Parse tool call data
   const args = (toolCall.arguments || {}) as Record<string, any>;
@@ -113,7 +55,9 @@ export const ToolPermissionWidget: React.FC<CustomToolWidgetProps> = ({
   const toolName = (args.toolName || '') as string;
   const rawCommand = unwrapShellCommand((args.rawCommand || '') as string);
   const pattern = (args.pattern || toolName) as string;
-  const patternDisplayName = (args.patternDisplayName || getPatternDisplayName(pattern)) as string;
+  // Prefer our own localized description; the name carried by the request is
+  // English and only a fallback for patterns this widget does not recognize.
+  const patternDisplayName = (describePermissionPattern(pattern, t) || args.patternDisplayName || pattern) as string;
   const isDestructive = (args.isDestructive || false) as boolean;
   const suppressAlwaysAllowRule = args.suppressAlwaysAllowRule === true;
   const warnings: string[] = (args.warnings || []) as string[];
@@ -273,10 +217,10 @@ export const ToolPermissionWidget: React.FC<CustomToolWidgetProps> = ({
   // Show completed state
   if (displayResult || hasResponded) {
     const statusText = displayCancelled
-      ? 'Permission Cancelled'
+      ? t('toolPermission.status.cancelled')
       : displayResult?.decision === 'allow'
-        ? 'Permission Granted'
-        : 'Permission Denied';
+        ? t('toolPermission.status.granted')
+        : t('toolPermission.status.denied');
 
     const statusColor = displayCancelled
       ? 'text-nim-muted'
@@ -285,12 +229,12 @@ export const ToolPermissionWidget: React.FC<CustomToolWidgetProps> = ({
         : 'text-nim-error';
 
     const scopeText = displayResult?.scope === 'always-all'
-      ? 'All Domains'
+      ? t('toolPermission.scope.allDomains')
       : displayResult?.scope === 'always'
-        ? 'Always'
+        ? t('toolPermission.scope.always')
         : displayResult?.scope === 'session'
-          ? 'This Session'
-          : 'Once';
+          ? t('toolPermission.scope.session')
+          : t('toolPermission.scope.once');
 
     return (
       <div
@@ -314,7 +258,7 @@ export const ToolPermissionWidget: React.FC<CustomToolWidgetProps> = ({
             {statusText}
             {teammateName && (
               <span className="ml-2 text-xs font-normal text-nim-muted">
-                (from teammate: {teammateName})
+                {t('toolPermission.fromTeammate', { name: teammateName })}
               </span>
             )}
           </span>
@@ -390,10 +334,10 @@ export const ToolPermissionWidget: React.FC<CustomToolWidgetProps> = ({
           )}
         </span>
         <span className="text-sm font-semibold text-nim flex-1">
-          Allow this tool?
+          {t('toolPermission.title')}
           {teammateName && (
             <span className="ml-2 text-xs font-normal text-nim-muted">
-              (from teammate: {teammateName})
+              {t('toolPermission.fromTeammate', { name: teammateName })}
             </span>
           )}
         </span>
@@ -409,30 +353,30 @@ export const ToolPermissionWidget: React.FC<CustomToolWidgetProps> = ({
           {showTooltip && (
             <div className="absolute bottom-full right-0 mb-2 p-3 w-[300px] rounded-md border border-nim bg-nim-tertiary text-[11px] leading-relaxed text-nim-muted shadow-lg z-[100]">
               <div className="font-semibold text-nim mb-2">
-                Permission Options
+                {t('toolPermission.help.heading')}
               </div>
               <div className="mb-2">
-                <span className="font-semibold text-nim">Deny:</span> Block this request
+                <span className="font-semibold text-nim">{t('toolPermission.buttons.deny')}:</span> {t('toolPermission.help.deny')}
               </div>
               <div className="mb-2">
-                <span className="font-semibold text-nim">Allow Once:</span> Allow just this request
+                <span className="font-semibold text-nim">{t('toolPermission.buttons.allowOnce')}:</span> {t('toolPermission.help.allowOnce')}
               </div>
               {!suppressAlwaysAllowRule && <>
                 <div className="mb-2">
-                  <span className="font-semibold text-nim">Session:</span> Allow{' '}
+                  <span className="font-semibold text-nim">{t('toolPermission.buttons.session')}:</span> {t('toolPermission.help.sessionBefore')}{' '}
                   <span className="font-mono text-[10px] text-nim-faint bg-nim-secondary px-1 py-0.5 rounded">
                     {patternDisplayName}
-                  </span> until you close the app
+                  </span> {t('toolPermission.help.sessionAfter')}
                 </div>
                 <div className="mb-0">
-                  <span className="font-semibold text-nim">Always:</span> Save to{' '}
+                  <span className="font-semibold text-nim">{t('toolPermission.buttons.always')}:</span> {t('toolPermission.help.alwaysBefore')}{' '}
                   <span className="font-mono text-[10px] text-nim-faint bg-nim-secondary px-1 py-0.5 rounded">
                     .claude/settings.local.json
                   </span>
                 </div>
               </>}
               <div className="mt-2 pt-2 border-t border-nim text-nim-faint">
-                Pattern: <span className="font-mono text-[10px] text-nim-faint bg-nim-secondary px-1 py-0.5 rounded">{pattern}</span>
+                {t('toolPermission.help.pattern')} <span className="font-mono text-[10px] text-nim-faint bg-nim-secondary px-1 py-0.5 rounded">{pattern}</span>
               </div>
             </div>
           )}
@@ -450,7 +394,7 @@ export const ToolPermissionWidget: React.FC<CustomToolWidgetProps> = ({
                   <path d="M8 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
                 </svg>
-                <span>{warning}</span>
+                <span>{localizePermissionWarning(warning, t)}</span>
               </div>
             ))}
           </div>
@@ -472,8 +416,7 @@ export const ToolPermissionWidget: React.FC<CustomToolWidgetProps> = ({
             data-testid="tool-permission-host-reconnecting"
             className="text-[11px] text-nim-muted bg-nim-tertiary border border-nim rounded px-2 py-1.5"
           >
-            Reconnecting to permission backend. Buttons will work once the
-            session view is fully loaded.
+            {t('toolPermission.hostReconnecting')}
           </div>
         )}
 
@@ -487,7 +430,7 @@ export const ToolPermissionWidget: React.FC<CustomToolWidgetProps> = ({
             disabled={isSubmitting}
             className="px-3 py-1.5 rounded-md text-[11px] font-medium cursor-pointer border border-nim bg-nim-tertiary text-nim whitespace-nowrap transition-all duration-150 hover:bg-nim-hover disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Deny
+            {t('toolPermission.buttons.deny')}
           </button>
           <button
             type="button"
@@ -496,7 +439,7 @@ export const ToolPermissionWidget: React.FC<CustomToolWidgetProps> = ({
             disabled={isSubmitting}
             className="px-3 py-1.5 rounded-md text-[11px] font-medium cursor-pointer border border-nim bg-nim-tertiary text-nim whitespace-nowrap transition-all duration-150 hover:bg-nim-hover disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Allow Once
+            {t('toolPermission.buttons.allowOnce')}
           </button>
           {!suppressAlwaysAllowRule && <>
             <div className="w-px h-5 bg-nim mx-1" />
@@ -505,20 +448,20 @@ export const ToolPermissionWidget: React.FC<CustomToolWidgetProps> = ({
               data-testid="tool-permission-allow-session"
               onClick={handleAllowSession}
               disabled={isSubmitting}
-              title={`Allow ${patternDisplayName} for this session`}
+              title={t('toolPermission.titles.session', { pattern: patternDisplayName })}
               className="px-3 py-1.5 rounded-md text-[11px] font-medium cursor-pointer border border-nim-primary bg-transparent text-nim-primary whitespace-nowrap transition-all duration-150 hover:bg-[color-mix(in_srgb,var(--nim-primary)_10%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Session
+              {t('toolPermission.buttons.session')}
             </button>
             <button
               type="button"
               data-testid="tool-permission-allow-always"
               onClick={handleAllowAlways}
               disabled={isSubmitting}
-              title={`Save ${patternDisplayName} to .claude/settings.local.json`}
+              title={t('toolPermission.titles.always', { pattern: patternDisplayName })}
               className="px-3 py-1.5 rounded-md text-[11px] font-medium cursor-pointer border-none bg-nim-primary text-nim-on-primary whitespace-nowrap transition-all duration-150 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Always
+              {t('toolPermission.buttons.always')}
             </button>
           </>}
           {isWebFetchRequest && !suppressAlwaysAllowRule && (
@@ -529,10 +472,10 @@ export const ToolPermissionWidget: React.FC<CustomToolWidgetProps> = ({
                 data-testid="tool-permission-allow-all-domains"
                 onClick={handleAllowAllDomains}
                 disabled={isSubmitting || isAllowingAllDomains}
-                title="Allow fetching from any domain without asking"
+                title={t('toolPermission.titles.allDomains')}
                 className="px-3 py-1.5 rounded-md text-[11px] font-medium cursor-pointer border-none bg-nim-primary text-nim-on-primary whitespace-nowrap transition-all duration-150 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isAllowingAllDomains ? 'Saving...' : 'All Domains'}
+                {isAllowingAllDomains ? t('toolPermission.buttons.saving') : t('toolPermission.buttons.allDomains')}
               </button>
             </>
           )}
@@ -540,7 +483,7 @@ export const ToolPermissionWidget: React.FC<CustomToolWidgetProps> = ({
 
         {/* Pattern info */}
         {!suppressAlwaysAllowRule && <div className="text-[11px] text-nim-faint">
-          Session/Always will allow: <span className="font-medium text-nim-muted bg-nim-tertiary px-1.5 py-0.5 rounded text-[10px]">{patternDisplayName}</span>
+          {t('toolPermission.willAllow')} <span className="font-medium text-nim-muted bg-nim-tertiary px-1.5 py-0.5 rounded text-[10px]">{patternDisplayName}</span>
         </div>}
       </div>
     </div>

@@ -11,6 +11,7 @@ import {
     type AIProviderType,
 } from '@nimbalyst/runtime/ai/server/types';
 import type { UpdateSessionMetadataPayload } from '@nimbalyst/runtime/ai/adapters/sessionStore';
+import { readTeamSessionFields } from '@nimbalyst/runtime/ai/adapters/sessionStore';
 import path from "path";
 import { BrowserWindow } from 'electron';
 import { safeHandle, safeOn } from '../utils/ipcRegistry';
@@ -617,6 +618,7 @@ export async function registerSessionHandlers() {
                     phase: metadata.phase || undefined,
                     tags: Array.isArray(metadata.tags) ? metadata.tags : undefined,
                     linkedTrackerItemIds: Array.isArray(metadata.linkedTrackerItemIds) ? metadata.linkedTrackerItemIds : undefined,
+                    ...readTeamSessionFields(metadata),
                 };
             });
 

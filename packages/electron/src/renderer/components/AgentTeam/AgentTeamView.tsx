@@ -14,7 +14,10 @@ import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import { sessionRegistryAtom } from '../../store/atoms/sessions';
 import { alphaFeatureEnabledAtom } from '../../store/atoms/appSettings';
-import { buildTeamForest, countTeamNodes, isTeamCandidate, type TeamTreeNode } from './agentTeamGraph';
+import { buildTeamForest, countTeamNodes, isTeamCandidate, teamTreeMembers, type TeamTreeNode } from './agentTeamGraph';
+import { isTeamRoot } from './teamMembership';
+import { TeamSummaryLine } from './TeamSummaryLine';
+import { displayModel } from '../AgenticCoding/SessionAttentionRow';
 import { AgentTeamNode } from './AgentTeamNode';
 import { useTeamWorktrees } from './useTeamWorktrees';
 import type { TeamWorktreeInfo } from './teamDataSource';
@@ -90,11 +93,9 @@ function AgentTeamBoard({ onSessionOpen }: { onSessionOpen: (sessionId: string) 
                   className="agent-team-tree-card overflow-x-auto rounded-md border border-[var(--nim-border)] p-4"
                   data-testid={`agent-team-tree-${root.session.id}`}
                 >
-                  <div className="mb-2 text-[11px] text-[var(--nim-text-faint)]">
-                    {t('agentTeam.agentCount', { total: countTeamNodes(root) })}
-                  </div>
+                  <TeamTreeHeader root={root} />
                   <div className="agent-team-tree flex w-max min-w-full flex-col items-center">
-                    <TeamTreeBranch node={root} worktrees={worktrees} onOpen={onSessionOpen} />
+                    <TeamTreeBranch node={root} worktrees={worktrees} onOpen={onSessionOpen} isRoot />
                   </div>
                 </div>
               ))}
@@ -137,14 +138,49 @@ function AgentTeamBoard({ onSessionOpen }: { onSessionOpen: (sessionId: string) 
   );
 }
 
+/**
+ * Identity of a team block: the root's title first, then what kind of team it
+ * is. The plain agent count stays as a detail.
+ */
+function TeamTreeHeader({ root }: { root: TeamTreeNode }) {
+  const { t } = useTranslation('agent');
+  const { session } = root;
+  const members = useMemo(() => teamTreeMembers(root), [root]);
+  const title = session.title || t('sessionItem.untitled');
+  const total = countTeamNodes(root);
+  return (
+    <div className="agent-team-tree-header mb-3" data-testid={`agent-team-header-${session.id}`}>
+      <div className="truncate text-sm font-semibold text-[var(--nim-text)]" title={title} data-testid="agent-team-header-title">
+        {title}
+      </div>
+      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-[var(--nim-text-muted)]">
+        {isTeamRoot(session) ? (
+          <TeamSummaryLine
+            members={members}
+            showRoles
+            extra={[[displayModel(session.model, session.provider), session.effortLevel].filter(Boolean).join('/')]}
+          />
+        ) : (
+          <span data-testid="team-summary-line" data-team-kind="delegation">
+            {t('agentTeam.memberCount', { count: members.length })}
+          </span>
+        )}
+        <span className="text-[var(--nim-text-faint)]">{t('agentTeam.agentCount', { total })}</span>
+      </div>
+    </div>
+  );
+}
+
 function TeamTreeBranch({
   node,
   worktrees,
   onOpen,
+  isRoot,
 }: {
   node: TeamTreeNode;
   worktrees: Map<string, TeamWorktreeInfo>;
   onOpen: (sessionId: string) => void;
+  isRoot?: boolean;
 }) {
   const { session } = node;
   return (
@@ -154,6 +190,7 @@ function TeamTreeBranch({
         worktree={session.worktreeId ? worktrees.get(session.worktreeId) : undefined}
         creatorOutsideView={node.creatorOutsideView}
         onOpen={onOpen}
+        isRoot={isRoot}
       />
       {node.children.length > 0 && (
         <ul>

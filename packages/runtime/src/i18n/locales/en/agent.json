@@ -371,7 +371,32 @@
       "scheduled": "Wakeup scheduled",
       "messagePending": "Message pending",
       "idle": "Idle"
-    }
+    },
+    "teamLabel": "Team",
+    "solo": "Solo",
+    "memberCount_zero": "{{count}} members",
+    "memberCount_one": "{{count}} member",
+    "memberCount_other": "{{count}} members",
+    "activeCount_zero": "{{count}} active",
+    "activeCount_one": "{{count}} active",
+    "activeCount_other": "{{count}} active",
+    "roleCount": "{{count}} {{role}}",
+    "roles": {
+      "coordinator": "Coordinator",
+      "explorer": "Explorer",
+      "implementer": "Implementer",
+      "reviewer": "Reviewer",
+      "other": "Member"
+    },
+    "scope": {
+      "read": "read-only",
+      "review": "review",
+      "write": "write, no shell",
+      "full": "full tools"
+    },
+    "effortTitle": "Reasoning effort: {{effort}}",
+    "scopeTitle": "Tool scope: {{scope}}",
+    "soloHint": "Team mode session working without members."
   },
   "mcpStatus": {
     "secondsAgo": "{{count}}s ago",

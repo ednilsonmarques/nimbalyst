@@ -26,6 +26,7 @@ import type {
   ChatSession,
   AgentMessage
 } from '@nimbalyst/runtime';
+import { readTeamSessionFields } from '@nimbalyst/runtime/ai/adapters/sessionStore';
 import { filterSessionsForPersonalSync } from '@nimbalyst/runtime/sync';
 
 type PGliteLike = {
@@ -930,6 +931,7 @@ export function createPGLiteSessionStore(db: PGliteLike, ensureDbReady?: EnsureR
           tags: Array.isArray(metadata.tags) ? metadata.tags : undefined,
           // Linked tracker item IDs from metadata JSONB
           linkedTrackerItemIds: Array.isArray(metadata.linkedTrackerItemIds) ? metadata.linkedTrackerItemIds : undefined,
+          ...readTeamSessionFields(metadata),
         } satisfies SessionMeta & { hasPendingInteractivePrompt?: boolean; phase?: string; tags?: string[]; linkedTrackerItemIds?: string[] };
       });
     },

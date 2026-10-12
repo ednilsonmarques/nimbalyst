@@ -33,6 +33,11 @@ export function sessionListMetadata(
     ...(s.linkedTrackerItemIds && {
       linkedTrackerItemIds: s.linkedTrackerItemIds,
     }),
+    // Team mode projections (sidebar grouping and Team view)
+    ...(s.teamMode && { teamMode: true }),
+    ...(s.teamRole && { teamRole: s.teamRole }),
+    ...(s.effortLevel && { effortLevel: s.effortLevel }),
+    ...(s.toolScope && { toolScope: s.toolScope }),
     ...(s.agentRole && { agentRole: s.agentRole }),
     ...(s.createdBySessionId !== undefined && {
       createdBySessionId: s.createdBySessionId,

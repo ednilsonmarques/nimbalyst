@@ -89,6 +89,10 @@ export function initSessionListListeners(): () => void {
         ...(updates.updatedAt !== undefined && { updatedAt: updates.updatedAt as number }),
         ...(updates.isArchived !== undefined && { isArchived: updates.isArchived as boolean }),
         ...(updates.isPinned !== undefined && { isPinned: updates.isPinned as boolean }),
+        ...(updates.teamMode === true && { teamMode: true }),
+        ...(typeof updates.teamRole === 'string' && { teamRole: updates.teamRole }),
+        ...(typeof updates.effortLevel === 'string' && { effortLevel: updates.effortLevel }),
+        ...(typeof updates.toolScope === 'string' && { toolScope: updates.toolScope }),
       });
       store.set(sessionRegistryAtom, registry);
     }

@@ -530,5 +530,79 @@
     "viewInstructions": "View Installation Instructions",
     "remindLater": "Remind Me Later",
     "dontShowAgain": "Don't Show Again"
+  },
+  "toolPermission": {
+    "title": "Allow this tool?",
+    "fromTeammate": "(from teammate: {{name}})",
+    "status": {
+      "cancelled": "Permission Cancelled",
+      "granted": "Permission Granted",
+      "denied": "Permission Denied"
+    },
+    "scope": {
+      "allDomains": "All Domains",
+      "always": "Always",
+      "session": "This Session",
+      "once": "Once"
+    },
+    "buttons": {
+      "deny": "Deny",
+      "allowOnce": "Allow Once",
+      "session": "Session",
+      "always": "Always",
+      "allDomains": "All Domains",
+      "saving": "Saving..."
+    },
+    "titles": {
+      "session": "Allow {{pattern}} for this session",
+      "always": "Save {{pattern}} to .claude/settings.local.json",
+      "allDomains": "Allow fetching from any domain without asking"
+    },
+    "willAllow": "Session/Always will allow:",
+    "help": {
+      "heading": "Permission Options",
+      "deny": "Block this request",
+      "allowOnce": "Allow just this request",
+      "sessionBefore": "Allow",
+      "sessionAfter": "until you close the app",
+      "alwaysBefore": "Save to",
+      "pattern": "Pattern:"
+    },
+    "hostReconnecting": "Reconnecting to permission backend. Buttons will work once the session view is fully loaded.",
+    "patterns": {
+      "compound": "this compound command (one-time only)",
+      "commands": "{{command}} commands",
+      "shell": "Run shell commands",
+      "fetchFrom": "Fetch from {{domain}}",
+      "fetchAny": "Fetch any web page",
+      "edit": "Edit files in project",
+      "write": "Create files in project",
+      "read": "Read files",
+      "glob": "Search for files",
+      "grep": "Search file contents",
+      "webSearch": "Search the web",
+      "task": "Run background tasks",
+      "todoWrite": "Update task list"
+    },
+    "warnings": {
+      "classifierFlagged": "Auto-mode classifier flagged this call: {{reason}}",
+      "classifierApproval": "Auto-mode classifier requested user approval before running this tool.",
+      "compoundPart": "This is part of a compound command - each part is checked separately"
+    },
+    "classifierReasons": {
+      "unrequestedCommitInAConnectedApp": "Unrequested Commit in a Connected App",
+      "untrustedCodeIntegration": "Untrusted Code Integration"
+    },
+    "denied": {
+      "title": "Tool denied",
+      "source": "Source: {{label}}",
+      "unknownTool": "unknown tool",
+      "reasonTypes": {
+        "classifier": "Auto-mode classifier",
+        "mode": "Permission mode",
+        "rule": "Permission rule",
+        "asyncAgent": "Async agent"
+      }
+    }
   }
 }

@@ -12,6 +12,7 @@
  */
 
 import type { SessionMeta } from '@nimbalyst/runtime';
+import { isTeamRoot } from './teamMembership';
 
 export interface TeamTreeNode {
   session: SessionMeta;
@@ -23,7 +24,7 @@ export interface TeamTreeNode {
 export interface TeamForest {
   /** Roots of the delegation trees, most recently active team first. */
   teams: TeamTreeNode[];
-  /** Sessions with no delegation relation at all, most recently updated first. */
+  /** Sessions with no delegation relation at all and not Team mode roots, most recently updated first. */
   standalone: SessionMeta[];
 }
 
@@ -36,6 +37,11 @@ export function isTeamCandidate(session: SessionMeta): boolean {
 
 export function countTeamNodes(node: TeamTreeNode): number {
   return node.children.reduce((total, child) => total + countTeamNodes(child), 1);
+}
+
+/** Every session below the root of a tree, in tree order. The root is not included. */
+export function teamTreeMembers(node: TeamTreeNode): SessionMeta[] {
+  return node.children.flatMap((child) => [child.session, ...teamTreeMembers(child)]);
 }
 
 function latestActivity(node: TeamTreeNode): number {
@@ -80,7 +86,9 @@ export function buildTeamForest(sessions: Iterable<SessionMeta>): TeamForest {
 
     const hasChildren = childrenByCreator.has(session.id);
     const creatorOutsideView = !!creatorId && creatorId !== session.id;
-    if (hasChildren || creatorOutsideView) {
+    // A Team mode root is a team even before it creates a member (solo): it
+    // must not be filed with the sessions that have nothing to do with teams.
+    if (hasChildren || creatorOutsideView || isTeamRoot(session)) {
       teams.push(buildNode(session, creatorOutsideView));
     } else {
       standalone.push(session);

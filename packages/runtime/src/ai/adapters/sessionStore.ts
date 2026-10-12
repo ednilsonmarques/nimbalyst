@@ -46,10 +46,32 @@ export interface SessionMeta {
   tags?: string[];
   // Linked tracker item IDs (from metadata JSONB)
   linkedTrackerItemIds?: string[];
+  // Team mode (read-only projections of metadata JSONB, for the sidebar and the Team view)
+  /** True for a Team mode root (metadata.teamMode). */
+  teamMode?: boolean;
+  /** Role of a team member (metadata.teamChild.role). */
+  teamRole?: string;
+  /** Reasoning effort the session was created with (metadata.effortLevel). */
+  effortLevel?: string;
+  /** Restricted tool scope of a child session (metadata.toolScope); absent means full. */
+  toolScope?: string;
   // Branch tracking - SEPARATE from hierarchical parentSessionId
   branchedFromSessionId?: string;
   branchPointMessageId?: number;
   branchedAt?: number;
+}
+
+/** Team-mode fields of a session row's metadata, as carried on SessionMeta. */
+export function readTeamSessionFields(
+  metadata: Record<string, unknown> | null | undefined,
+): Pick<SessionMeta, 'teamMode' | 'teamRole' | 'effortLevel' | 'toolScope'> {
+  const child = metadata?.teamChild as { role?: unknown } | null | undefined;
+  return {
+    ...(metadata?.teamMode === true && { teamMode: true }),
+    ...(child && typeof child.role === 'string' && { teamRole: child.role }),
+    ...(typeof metadata?.effortLevel === 'string' && { effortLevel: metadata.effortLevel }),
+    ...(typeof metadata?.toolScope === 'string' && { toolScope: metadata.toolScope }),
+  };
 }
 
 /** @deprecated Use SessionMeta */

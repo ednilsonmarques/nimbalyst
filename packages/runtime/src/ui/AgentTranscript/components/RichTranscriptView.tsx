@@ -26,6 +26,8 @@ import { usePendingPermissionNavigation } from './usePendingPermissionNavigation
 import { usePendingQuestionNavigation } from './usePendingQuestionNavigation';
 import { AttachmentStagingDeniedCard } from './AttachmentStagingDeniedCard';
 import { useElapsedTimeRef } from './CustomToolWidgets/useElapsedTime';
+import { useTranslation } from '../../../i18n/react';
+import { localizeClassifierReason } from './CustomToolWidgets/toolPermissionText';
 
 // Per-session VList cache - survives component remounts so returning to a session
 // doesn't re-measure all items from scratch
@@ -373,24 +375,24 @@ const REMINDER_KIND_LABELS: Record<string, string> = {
   wakeup_resume: 'Resumed from scheduled wakeup',
 };
 
-// Keyed by the known PermissionDeniedReasonType values from the SDK. Typed
-// here as a partial record so an unknown value (forward-compatible SDK
-// addition) falls back to the raw string or "SDK" in the renderer.
-const REASON_TYPE_LABELS: Partial<Record<string, string>> = {
-  classifier: 'Auto-mode classifier',
-  mode: 'Permission mode',
-  rule: 'Permission rule',
-  asyncAgent: 'Async agent',
-};
+// The known PermissionDeniedReasonType values from the SDK. An unknown value
+// (forward-compatible SDK addition) falls back to the raw string or "SDK".
+const KNOWN_REASON_TYPES = new Set(['classifier', 'mode', 'rule', 'asyncAgent']);
 
 const PermissionDeniedCard: React.FC<{
   message: TranscriptViewMessage;
 }> = ({ message }) => {
+  const { t } = useTranslation('ai');
   const payload = message.systemMessage;
-  const toolName = payload?.deniedToolName ?? 'unknown tool';
-  const reason = payload?.deniedReason;
+  const toolName = payload?.deniedToolName ?? t('toolPermission.denied.unknownTool');
   const reasonType = payload?.deniedReasonType;
-  const reasonLabel = (reasonType && REASON_TYPE_LABELS[reasonType]) ?? reasonType ?? 'SDK';
+  // Only the classifier's reason has labels we know; other sources keep their text.
+  const reason = payload?.deniedReason && reasonType === 'classifier'
+    ? localizeClassifierReason(payload.deniedReason, t)
+    : payload?.deniedReason;
+  const reasonLabel = reasonType && KNOWN_REASON_TYPES.has(reasonType)
+    ? t(`toolPermission.denied.reasonTypes.${reasonType}`)
+    : reasonType ?? 'SDK';
 
   return (
     <div
@@ -399,7 +401,7 @@ const PermissionDeniedCard: React.FC<{
     >
       <div className="flex items-center gap-2 text-xs text-[var(--nim-error)]">
         <MaterialSymbol icon="block" size={14} />
-        <span className="font-semibold uppercase tracking-[0.08em]">Tool denied</span>
+        <span className="font-semibold uppercase tracking-[0.08em]">{t('toolPermission.denied.title')}</span>
         <span className="text-[var(--nim-text-muted)]">·</span>
         <code className="text-[11px] font-mono text-[var(--nim-text)]">{toolName}</code>
         <span className="ml-auto text-[10px] text-[var(--nim-text-faint)]">
@@ -412,7 +414,7 @@ const PermissionDeniedCard: React.FC<{
         </p>
       )}
       <p className="m-0 mt-1 text-[10px] uppercase tracking-wide text-[var(--nim-text-faint)]">
-        Source: {reasonLabel}
+        {t('toolPermission.denied.source', { label: reasonLabel })}
       </p>
     </div>
   );

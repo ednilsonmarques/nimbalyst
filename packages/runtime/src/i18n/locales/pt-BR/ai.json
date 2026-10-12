@@ -530,5 +530,79 @@
     "viewInstructions": "Ver instruções de instalação",
     "remindLater": "Lembrar mais tarde",
     "dontShowAgain": "Não mostrar novamente"
+  },
+  "toolPermission": {
+    "title": "Permitir esta ferramenta?",
+    "fromTeammate": "(do colega de equipe: {{name}})",
+    "status": {
+      "cancelled": "Permissão cancelada",
+      "granted": "Permissão concedida",
+      "denied": "Permissão negada"
+    },
+    "scope": {
+      "allDomains": "Todos os domínios",
+      "always": "Sempre",
+      "session": "Nesta sessão",
+      "once": "Uma vez"
+    },
+    "buttons": {
+      "deny": "Negar",
+      "allowOnce": "Permitir uma vez",
+      "session": "Nesta sessão",
+      "always": "Sempre",
+      "allDomains": "Todos os domínios",
+      "saving": "Salvando..."
+    },
+    "titles": {
+      "session": "Permitir nesta sessão: {{pattern}}",
+      "always": "Salvar em .claude/settings.local.json: {{pattern}}",
+      "allDomains": "Permitir buscar em qualquer domínio sem perguntar"
+    },
+    "willAllow": "Nesta sessão/Sempre permitirá:",
+    "help": {
+      "heading": "Opções de permissão",
+      "deny": "Bloqueia esta solicitação",
+      "allowOnce": "Permite só esta solicitação",
+      "sessionBefore": "Permite",
+      "sessionAfter": "até você fechar o app",
+      "alwaysBefore": "Salva em",
+      "pattern": "Padrão:"
+    },
+    "hostReconnecting": "Reconectando ao serviço de permissões. Os botões voltam a funcionar quando a sessão terminar de carregar.",
+    "patterns": {
+      "compound": "este comando composto (somente desta vez)",
+      "commands": "comandos {{command}}",
+      "shell": "Executar comandos de shell",
+      "fetchFrom": "Buscar em {{domain}}",
+      "fetchAny": "Buscar qualquer página da web",
+      "edit": "Editar arquivos no projeto",
+      "write": "Criar arquivos no projeto",
+      "read": "Ler arquivos",
+      "glob": "Procurar arquivos",
+      "grep": "Pesquisar no conteúdo dos arquivos",
+      "webSearch": "Pesquisar na web",
+      "task": "Executar tarefas em segundo plano",
+      "todoWrite": "Atualizar a lista de tarefas"
+    },
+    "warnings": {
+      "classifierFlagged": "O classificador do modo automático sinalizou esta ação: {{reason}}",
+      "classifierApproval": "O classificador do modo automático pediu sua aprovação antes de executar esta ferramenta.",
+      "compoundPart": "Isto faz parte de um comando composto: cada parte é verificada separadamente"
+    },
+    "classifierReasons": {
+      "unrequestedCommitInAConnectedApp": "Commit não solicitado em um aplicativo conectado",
+      "untrustedCodeIntegration": "Integração de código não confiável"
+    },
+    "denied": {
+      "title": "Ferramenta negada",
+      "source": "Origem: {{label}}",
+      "unknownTool": "ferramenta desconhecida",
+      "reasonTypes": {
+        "classifier": "Classificador do modo automático",
+        "mode": "Modo de permissão",
+        "rule": "Regra de permissão",
+        "asyncAgent": "Agente assíncrono"
+      }
+    }
   }
 }

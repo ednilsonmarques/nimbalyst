@@ -371,7 +371,32 @@
       "scheduled": "Despertar agendado",
       "messagePending": "Mensagem pendente",
       "idle": "Ociosa"
-    }
+    },
+    "teamLabel": "Equipe",
+    "solo": "Solo",
+    "memberCount_zero": "{{count}} membros",
+    "memberCount_one": "{{count}} membro",
+    "memberCount_other": "{{count}} membros",
+    "activeCount_zero": "{{count}} ativos",
+    "activeCount_one": "{{count}} ativo",
+    "activeCount_other": "{{count}} ativos",
+    "roleCount": "{{count}} {{role}}",
+    "roles": {
+      "coordinator": "Coordenador",
+      "explorer": "Explorer",
+      "implementer": "Implementer",
+      "reviewer": "Reviewer",
+      "other": "Membro"
+    },
+    "scope": {
+      "read": "somente leitura",
+      "review": "revisão",
+      "write": "escrita, sem shell",
+      "full": "todas as ferramentas"
+    },
+    "effortTitle": "Esforço de raciocínio: {{effort}}",
+    "scopeTitle": "Escopo de ferramentas: {{scope}}",
+    "soloHint": "Sessão em Modo Equipe trabalhando sem membros."
   },
   "mcpStatus": {
     "secondsAgo": "há {{count}} s",

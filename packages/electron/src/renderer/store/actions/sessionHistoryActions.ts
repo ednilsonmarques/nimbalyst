@@ -477,6 +477,9 @@ export const createNewSessionActionAtom = atom(
           worktreeId: null,
           childCount: 0,
           uncommittedCount: 0,
+          // A Team mode root is one from its first frame, not only after the next list refresh.
+          ...(options.metadata?.teamMode === true && { teamMode: true }),
+          ...(typeof options.metadata?.effortLevel === 'string' && { effortLevel: options.metadata.effortLevel }),
         });
 
         if (options.initialDraft) {

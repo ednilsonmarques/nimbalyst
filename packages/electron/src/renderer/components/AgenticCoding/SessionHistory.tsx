@@ -90,6 +90,8 @@ import {
   reconcileSessionPinToggle,
   workstreamChildrenNeedRefresh,
 } from './workstreamChildPinReconciliation';
+import { buildDelegationGroups } from './sessionTeamGroups';
+import { collectTeamMembers, findTeamRootId, isTeamRoot, teamRootsToKeep } from '../AgentTeam/teamMembership';
 import './SessionHistory.css';
 
 // SessionItem is the shared SessionMeta type from the store atoms.
@@ -832,7 +834,10 @@ const SessionHistoryComponent: React.FC = () => {
       }
       return true;
     });
-    setSessions(filtered.sort(compareSessionOrder));
+    // A match on a team member keeps its team: the root stays so the member is
+    // shown inside its group (expanded while filtering) instead of orphaned.
+    const withTeamRoots = [...filtered, ...teamRootsToKeep(filtered, sessionsToFilter)];
+    setSessions(withTeamRoots.sort(compareSessionOrder));
   }, [searchQuery, tagFilter.tags, allSessions, mode, compareSessionOrder, sessionRegistry, contentSearchTriggered]);
 
   useEffect(() => {
@@ -1213,12 +1218,12 @@ const SessionHistoryComponent: React.FC = () => {
   };
 
   const getMetaAgentGroupSessionIds = (metaSessionId: string) => {
-    return [
-      metaSessionId,
-      ...sessions
-        .filter(session => session.createdBySessionId === metaSessionId)
-        .map(session => session.id),
-    ];
+    const root = sessions.find(session => session.id === metaSessionId);
+    // A team acts as a whole, at any depth; a meta-agent with its direct children.
+    const members = root && isTeamRoot(root)
+      ? collectTeamMembers(metaSessionId, sessions)
+      : sessions.filter(session => session.createdBySessionId === metaSessionId);
+    return [metaSessionId, ...members.map(session => session.id)];
   };
 
   const handleArchiveMetaAgentSession = async (metaSessionId: string) => {
@@ -1501,6 +1506,11 @@ const SessionHistoryComponent: React.FC = () => {
       if (parentSession?.agentRole === 'meta-agent') {
         return `meta-agent:${parentSession.id}`;
       }
+    }
+    // Team mode root or one of its members (same group component, same key)
+    const teamRootId = findTeamRootId(activeSession, new Map(allSessions.map(s => [s.id, s])));
+    if (teamRootId) {
+      return `meta-agent:${teamRootId}`;
     }
 
     // Workstream (has children, no worktreeId)
@@ -2304,50 +2314,40 @@ const SessionHistoryComponent: React.FC = () => {
     const pinnedItems: UnifiedListItem[] = [];
     const metaAgentItems: UnifiedListItem[] = [];
 
-    // Identify meta-agent sessions and their child sessions
-    const metaAgentSessionIds = new Set<string>();
-    const metaAgentChildSessionIds = new Set<string>();
-    if (isMetaAgentEnabled) {
-      for (const session of sessions) {
-        if (session.agentRole === 'meta-agent') {
-          metaAgentSessionIds.add(session.id);
-        }
+    // Sessions that delegate work render as one group: a meta-agent with the
+    // sessions it created (behind its alpha flag), or a Team mode root with its
+    // members. Membership is the same reading the Team view uses.
+    const delegation = buildDelegationGroups(sessions, { metaAgentEnabled: isMetaAgentEnabled });
+    const metaAgentSessionIds = delegation.groupedIds;
+    const metaAgentChildSessionIds = delegation.memberIds;
+    for (const group of delegation.groups) {
+      const session = group.root;
+      // Meta-agent children keep the list order; team members keep creation order.
+      const childSessions = group.kind === 'metaAgent' ? [...group.members].sort(compareSessionOrder) : group.members;
+      const latestChildTimestamp = childSessions.length > 0
+        ? Math.max(...childSessions.map(s => getDisplayedOrderTimestamp(s)))
+        : 0;
+      const rank = Math.min(
+        getDisplayedOrderRank(session.id),
+        ...childSessions.map(s => getDisplayedOrderRank(s.id)),
+      );
+      const timestamp = Math.max(
+        timestampField === 'updatedAt' ? getDisplayedOrderTimestamp(session) : session.createdAt,
+        latestChildTimestamp
+      );
+      const item = { type: 'metaAgent' as const, metaSession: session, childSessions, timestamp, rank };
+      if (group.kind === 'metaAgent') {
+        // Meta-agent groups keep their own bucket at the top.
+        metaAgentItems.push(item);
+      } else if (session.isPinned) {
+        // A team sits where its root would: pinned or in the time buckets.
+        pinnedItems.push(item);
+      } else {
+        items.push(item);
       }
-      // Collect children (sessions created by meta-agent sessions)
-      for (const session of sessions) {
-        if (session.createdBySessionId && metaAgentSessionIds.has(session.createdBySessionId)) {
-          metaAgentChildSessionIds.add(session.id);
-        }
-      }
-      // Build meta-agent group items (always at top)
-      for (const session of sessions) {
-        if (session.agentRole === 'meta-agent') {
-          const childSessions = sessions
-            .filter(s => s.createdBySessionId === session.id)
-            .sort(compareSessionOrder);
-          const latestChildTimestamp = childSessions.length > 0
-            ? Math.max(...childSessions.map(s => getDisplayedOrderTimestamp(s)))
-            : 0;
-          const rank = Math.min(
-            getDisplayedOrderRank(session.id),
-            ...childSessions.map(s => getDisplayedOrderRank(s.id)),
-          );
-          const timestamp = Math.max(
-            timestampField === 'updatedAt' ? getDisplayedOrderTimestamp(session) : session.createdAt,
-            latestChildTimestamp
-          );
-          metaAgentItems.push({
-            type: 'metaAgent' as const,
-            metaSession: session,
-            childSessions,
-            timestamp,
-            rank,
-          });
-        }
-      }
-      // Sort meta-agent items by timestamp (newest first)
-      metaAgentItems.sort(compareUnifiedItems);
     }
+    // Sort meta-agent items by timestamp (newest first)
+    metaAgentItems.sort(compareUnifiedItems);
 
     // Add regular sessions and workstreams (those without worktreeId)
     for (const session of sessions) {
@@ -3658,7 +3658,9 @@ const SessionHistoryComponent: React.FC = () => {
                   );
                 }
                 if (item.type === 'metaAgent') {
-                  const isMetaExpanded = !collapsedGroups.includes(`meta-agent:${item.metaSession.id}`);
+                  // While a search or tag filter is on, a group never hides what matched.
+                  const isFiltering = searchQuery.trim().length > 0 || tagFilter.tags.length > 0;
+                  const isMetaExpanded = isFiltering || !collapsedGroups.includes(`meta-agent:${item.metaSession.id}`);
                   const isMetaActive = item.metaSession.id === activeSessionId
                     || item.childSessions.some(s => s.id === activeSessionId);
 
@@ -3666,6 +3668,9 @@ const SessionHistoryComponent: React.FC = () => {
                     <MetaAgentGroup
                       metaSession={item.metaSession}
                       childSessions={item.childSessions}
+                      summaryMembers={isFiltering && isTeamRoot(item.metaSession)
+                        ? collectTeamMembers(item.metaSession.id, allSessions)
+                        : undefined}
                       isExpanded={isMetaExpanded}
                       isActive={isMetaActive}
                       isSelected={selectedGroupIds.has(`meta-agent:${item.metaSession.id}`)}
