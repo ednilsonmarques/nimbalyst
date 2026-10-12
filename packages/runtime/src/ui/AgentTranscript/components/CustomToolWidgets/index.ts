@@ -50,6 +50,7 @@ export { BashWidget } from './BashWidget';
 export { GitCommitConfirmationWidget } from './GitCommitConfirmationWidget';
 export { ExitPlanModeWidget } from './ExitPlanModeWidget';
 export { ToolPermissionWidget } from './ToolPermissionWidget';
+export { TeamCheckpointWidget } from './TeamCheckpointWidget';
 export { FileChangeWidget } from './FileChangeWidget';
 export { SuperProgressSnapshotWidget } from './SuperProgressSnapshotWidget';
 export { SuperLoopProgressWidget } from './SuperLoopProgressWidget';
@@ -116,6 +117,7 @@ import { BashWidget } from './BashWidget';
 import { GitCommitConfirmationWidget } from './GitCommitConfirmationWidget';
 import { ExitPlanModeWidget } from './ExitPlanModeWidget';
 import { ToolPermissionWidget } from './ToolPermissionWidget';
+import { TeamCheckpointWidget } from './TeamCheckpointWidget';
 import { SuperProgressSnapshotWidget } from './SuperProgressSnapshotWidget';
 import { SuperLoopProgressWidget } from './SuperLoopProgressWidget';
 import { UpdateSessionMetaWidget } from './UpdateSessionMetaWidget';
@@ -188,6 +190,10 @@ const BUILT_IN_TOOL_WIDGETS: CustomToolWidgetRegistry = {
 
   // Tool permission - interactive permission widget for tools requiring approval
   'ToolPermission': ToolPermissionWidget,
+
+  // Team mode checkpoint - "Continue team" card the host posts in a team root
+  // when the team has used its authorized budget.
+  'TeamCheckpoint': TeamCheckpointWidget,
 
   // Note: Codex `file_change` is intentionally NOT registered here. RichTranscriptView
   // routes it to EditToolResultCard via extractCodexFileChanges so it renders as an

@@ -38,9 +38,66 @@ describe('Team mode system prompt', () => {
     expect(text).toContain('mcp__nimbalyst-host__spawn_session');
     expect(text).toContain('SDK sub-agent');
     for (const role of ['explorer', 'implementer', 'reviewer', 'other']) expect(text).toContain(`\`${role}\``);
-    expect(text).toContain('at most 3 real sessions active at once, 8 real sessions in total');
+    expect(text).toContain('at most 3 real sessions active at once');
     expect(text).toContain('2 levels deep');
+    expect(text).toContain('a budget of 8 real sessions in total');
     expect(text).toContain('do not read or redo it yourself');
+  });
+
+  describe('team checkpoint', () => {
+    const text = buildTeamModeAddendum('claude');
+    const checkpoint = text.slice(text.indexOf('### Team checkpoint'), text.indexOf('### Ownership and integration'));
+
+    it('counts every member ever created and no longer tells the coordinator to just integrate or ask', () => {
+      expect(text).toContain('counting every member ever created, finished and archived ones included');
+      expect(text).not.toContain('integrate what you have or ask the user');
+    });
+
+    it('exhausted budget: stop, inform the user, ask to continue the team', () => {
+      expect(checkpoint).toContain('The budget is a checkpoint, not a wall, and only the user can move it');
+      expect(checkpoint).toContain('when a creation is refused with "Team budget reached"');
+      expect(checkpoint).toContain('Nimbalyst shows the user an action to continue the team in this transcript');
+      expect(checkpoint).toContain('stop, tell the user the team reached its checkpoint (how many members were created and what the next one is for), ask them to continue the team, naming the action exactly as the refusal names it, and end your turn');
+      expect(checkpoint).toContain('You are told when they authorize it.');
+    });
+
+    it('never hardcodes the action name: the refusal gives it in the user language', () => {
+      expect(checkpoint).toContain("the refusal gives that action's exact name in the user's language");
+      // The static, cached prompt names no button in any language.
+      expect(text).not.toContain('Continue team');
+      expect(text).not.toContain('Continuar equipe');
+    });
+
+    it('the coordinator cannot extend the budget itself', () => {
+      expect(checkpoint).toContain('You cannot extend the budget yourself and no tool does.');
+    });
+
+    it('never changes a role to get around the budget', () => {
+      expect(checkpoint).toContain('While the budget is exhausted, never work around it:');
+      expect(checkpoint).toContain("do not change a member's role: an explorer does not become an implementer, an implementer does not become a reviewer;");
+      expect(checkpoint).toContain('do not tell a member to forget its earlier role or instructions;');
+      expect(checkpoint).toContain('do not take over work you were going to delegate, just to avoid creating a member;');
+      // Implementing yourself as a plan (not as an escape) is still allowed.
+      expect(text).toContain('Otherwise you may implement yourself and have a reviewer check it.');
+    });
+
+    it('never skips the review nor recycles an earlier reviewer as the independent one', () => {
+      expect(checkpoint).toContain('do not present an earlier reviewer as the new independent reviewer of later work;');
+      expect(checkpoint).toContain('do not skip the required review.');
+      // The mandatory independent review itself is untouched.
+      expect(text).toContain('Non-trivial implementation needs an independent review before you call it done or ready');
+    });
+
+    it('reusing a member in its own role stays allowed', () => {
+      expect(checkpoint).toContain('Reusing a member in its own role stays fine, with or without budget left');
+      expect(checkpoint).toContain('an explorer gets a new investigation, an implementer continues related implementation, a reviewer gets a follow-up of the same review round');
+    });
+
+    it('does not reach the members: they only report to their coordinator', () => {
+      for (const role of ['explorer', 'implementer', 'reviewer', 'other'] as const) {
+        expect(buildTeamChildAddendum(role)).not.toContain('Team checkpoint');
+      }
+    });
   });
 
   it('records Team Notes at milestones, a few durable ones, never everything', () => {

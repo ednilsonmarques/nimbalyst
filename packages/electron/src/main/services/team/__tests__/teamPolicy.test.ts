@@ -141,6 +141,18 @@ describe('creation-only team metadata', () => {
     expect(sanitizeRendererCreateTeamMetadata(plain, 'claude-code:opus')).toBe(plain);
   });
 
+  it('teamBudget is out of reach of every ordinary write: a session cannot raise its own budget', () => {
+    const forged = { teamBudget: { authorized: 99, extensions: 23 } };
+    expect(stripCreationOnlyTeamMetadata({ ...forged, phase: 'x' })).toEqual({ phase: 'x' });
+    // A re-issued create keeps the stored authorization and ignores a forged one.
+    expect(preserveStoredTeamMetadata({ ...forged }, { teamMode: true, teamBudget: { authorized: 12, extensions: 1 } }))
+      .toEqual({ teamMode: true, teamBudget: { authorized: 12, extensions: 1 } });
+    expect(preserveStoredTeamMetadata({ ...forged }, { teamMode: true })).toEqual({ teamMode: true });
+    // A renderer create starts at the initial budget, team root or not.
+    expect(sanitizeRendererCreateTeamMetadata({ teamMode: true, ...forged }, 'claude-code:opus')).toEqual({ teamMode: true });
+    expect(sanitizeRendererCreateTeamMetadata({ ...forged, phase: 'x' }, 'claude-code:opus')).toEqual({ phase: 'x' });
+  });
+
   it('keeps teamMode outside the recommended presets and only warns (policy in the UX, not in the core)', () => {
     const warn = console.warn;
     const warnings: string[] = [];

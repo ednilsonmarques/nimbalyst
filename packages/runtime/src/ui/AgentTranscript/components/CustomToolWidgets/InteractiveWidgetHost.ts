@@ -121,6 +121,19 @@ export interface ToolPermissionResponse {
 }
 
 // ============================================================
+// Team Checkpoint Types
+// ============================================================
+
+export interface TeamContinueResult {
+  success: boolean;
+  /** True when this click extended the budget; false when it was already extended. */
+  extended?: boolean;
+  /** Sessions the team is authorized to create after the call. */
+  authorized?: number;
+  error?: string;
+}
+
+// ============================================================
 // Git Commit Types
 // ============================================================
 
@@ -269,6 +282,22 @@ export interface InteractiveWidgetHost {
    * Cancel a tool permission request
    */
   toolPermissionCancel(requestId: string): Promise<void>;
+
+  // ============================================================
+  // Team Checkpoint Operations
+  // ============================================================
+
+  /**
+   * The user continues a Team mode team that reached its budget checkpoint.
+   * This click is the authorization, so it has its own host channel and is
+   * not an interactive-prompt answer. Optional: a host that cannot reach the
+   * desktop main process (mobile) leaves the card read-only.
+   *
+   * `checkpointLevel` is the authorized level of the card that was clicked. It
+   * never changes what is authorized; the host uses it only to close a card
+   * left behind by a level the team has already passed.
+   */
+  teamContinue?(rootSessionId: string, checkpointLevel?: number): Promise<TeamContinueResult>;
 
   // ============================================================
   // Git Commit Operations

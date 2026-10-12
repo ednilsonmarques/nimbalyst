@@ -6,6 +6,7 @@
  */
 
 import {
+  TEAM_BUDGET_METADATA_KEY,
   TEAM_ROLES,
   parseTeamRole,
   resolveTeamContext,
@@ -115,8 +116,13 @@ export const TEAM_LIMITS = Object.freeze({
   maxDepth: 2,
   /** Real sessions of one team that may be active at once (running, waiting, or with a queued prompt). */
   maxActive: 3,
-  /** Real sessions one team may ever create, archived ones included. */
+  /**
+   * Real sessions a team may create before its first checkpoint, archived ones
+   * included. Not a lifetime ceiling: the user may extend it (budgetExtension).
+   */
   budget: 8,
+  /** Sessions added each time the user continues the team at a checkpoint. */
+  budgetExtension: 4,
 });
 
 export interface TeamUsage {
@@ -126,13 +132,67 @@ export interface TeamUsage {
   active: number;
 }
 
-/** Why a new member may not be created, or null when it may. Pure; MetaAgentService throws it. */
-export function teamSpawnRefusal(team: TeamCaller, usage: TeamUsage): string | null {
+/**
+ * Sessions a team root is authorized to create, from its metadata. A root
+ * without the key (every root created before checkpoints existed) or with a
+ * malformed one gets the initial budget, never less.
+ */
+export function resolveAuthorizedTeamBudget(rootMetadata: unknown): number {
+  const metadata = rootMetadata && typeof rootMetadata === 'object' && !Array.isArray(rootMetadata)
+    ? (rootMetadata as Record<string, unknown>)
+    : null;
+  const stored = metadata?.[TEAM_BUDGET_METADATA_KEY];
+  const authorized = stored && typeof stored === 'object' && !Array.isArray(stored)
+    ? (stored as Record<string, unknown>).authorized
+    : undefined;
+  return typeof authorized === 'number' && Number.isSafeInteger(authorized) && authorized > TEAM_LIMITS.budget
+    ? authorized
+    : TEAM_LIMITS.budget;
+}
+
+/** The team has created every session it is authorized to: it is at a checkpoint. */
+export function isTeamBudgetExhausted(usage: TeamUsage, authorizedBudget: number): boolean {
+  return usage.total >= authorizedBudget;
+}
+
+/** `metadata.teamBudget` after the user continues a team authorized for `authorizedBudget`. */
+export function extendedTeamBudget(authorizedBudget: number): { authorized: number; extensions: number } {
+  const authorized = authorizedBudget + TEAM_LIMITS.budgetExtension;
+  return {
+    authorized,
+    extensions: Math.round((authorized - TEAM_LIMITS.budget) / TEAM_LIMITS.budgetExtension),
+  };
+}
+
+/** The checkpoint action's name when no UI language is known (the English label). */
+export const DEFAULT_CONTINUE_ACTION_LABEL = 'Continue team';
+
+/** A creation refused because the team is at its checkpoint; carries what the user is shown. */
+export class TeamBudgetReachedError extends Error {
+  constructor(message: string, readonly total: number, readonly authorized: number) {
+    super(message);
+    this.name = 'TeamBudgetReachedError';
+  }
+}
+
+/**
+ * Why a new member may not be created, or null when it may. Pure; MetaAgentService throws it.
+ * `authorizedBudget` is the root's own (resolveAuthorizedTeamBudget).
+ * `continueActionLabel` is the name of the checkpoint action as the user sees
+ * it (the UI language), so the coordinator points the user to a button that exists.
+ */
+export function teamSpawnRefusal(
+  team: TeamCaller,
+  usage: TeamUsage,
+  authorizedBudget: number = TEAM_LIMITS.budget,
+  continueActionLabel: string = DEFAULT_CONTINUE_ACTION_LABEL,
+): string | null {
   if (team.depth + 1 > TEAM_LIMITS.maxDepth) {
     return `Team depth limit reached: this session is at depth ${team.depth} and team members may nest at most ${TEAM_LIMITS.maxDepth} levels below the team root. Do the work yourself or report back to your coordinator.`;
   }
-  if (usage.total >= TEAM_LIMITS.budget) {
-    return `Team budget reached: this team has already created ${usage.total}/${TEAM_LIMITS.budget} sessions. Integrate the results you have, or ask the user before going further.`;
+  if (isTeamBudgetExhausted(usage, authorizedBudget)) {
+    // Keep the "Team budget reached: this team" opening: scripts/team-pilot-report.mjs matches it.
+    return `Team budget reached: this team has already created ${usage.total}/${authorizedBudget} sessions, which is its checkpoint. Only the user can authorize more, with the "${continueActionLabel}" action now shown in the coordinator's transcript; no tool and no session can. Coordinator: stop here, tell the user the team reached its checkpoint and ask them to continue the team, naming the action exactly as "${continueActionLabel}". Do not change a member's role, do the work yourself or skip the independent review to get around it. Team member: report this to your coordinator.`;
   }
   if (usage.active >= TEAM_LIMITS.maxActive) {
     return `Team limit: ${usage.active}/${TEAM_LIMITS.maxActive} sessions are already active in this team. Wait for a member to finish (its report arrives automatically) before delegating more.`;

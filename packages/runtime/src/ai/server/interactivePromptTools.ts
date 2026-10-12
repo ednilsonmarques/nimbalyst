@@ -23,6 +23,8 @@ export const INTERACTIVE_WIDGET_TOOLS = new Set([
   'git_commit_proposal',
   'developer_git_commit_proposal',
   'developer.git_commit_proposal',
+  // Team mode "Continue team" card (TEAM_CHECKPOINT_TOOL_NAME in providers/teamContext).
+  'TeamCheckpoint',
 ]);
 
 /**

@@ -17,6 +17,8 @@
  * See plan: `nimbalyst-local/plans/canonical-transcript-deprecation.md`.
  */
 
+import { TEAM_CHECKPOINT_PROMPT_ORIGIN } from '../providers/teamContext';
+
 export type MessageKind = 'user' | 'assistant' | 'tool' | 'system' | 'meta';
 
 export interface ExtractedSearchable {
@@ -78,7 +80,7 @@ function extractClaudeCodeInput(parsed: unknown, content: string, metadata?: Rec
       if (isSystemReminder(prompt, metadata)) {
         return { searchableText: null, messageKind: 'system' };
       }
-      if (metadata?.promptOrigin === 'wakeup_resume') {
+      if (metadata?.promptOrigin === 'wakeup_resume' || metadata?.promptOrigin === TEAM_CHECKPOINT_PROMPT_ORIGIN) {
         return { searchableText: null, messageKind: 'system' };
       }
       return { searchableText: nonEmpty(prompt), messageKind: 'user' };

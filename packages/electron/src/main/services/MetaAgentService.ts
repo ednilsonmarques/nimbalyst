@@ -20,8 +20,10 @@ import { resolveStoredWorkspaceId, sameWorkspaceIdentity } from '../utils/worksp
 import {
   assertChildSpawnCapacity,
   assertTeamSpawnCapacity,
+  authorizeTeamContinuation,
   getSessionStatusRow as querySessionStatusRow,
   getSpawnedSessionRows,
+  type TeamContinuationResult,
 } from './metaAgentSessionQueries';
 import { toMillis } from '../utils/timestampUtils';
 import { createWorktreeStore } from './WorktreeStore';
@@ -46,8 +48,17 @@ import {
   teamRoleDefaultEffort,
   teamRoleDefaultModel,
   resolveChildToolScopeRequest,
+  TEAM_LIMITS,
+  TeamBudgetReachedError,
   type TeamCaller,
 } from './team/teamPolicy';
+import {
+  TEAM_CONTINUATION_NOTICE_CONTEXT,
+  buildTeamContinuationNotice,
+  postTeamCheckpointCard,
+  resolveTeamCheckpointCard,
+  teamContinueActionLabel,
+} from './team/teamCheckpoint';
 import { describeChildToolScope, isToolScopeEnforced } from './ai/childToolScope';
 import type { NotificationOptions, NotificationResult } from './NotificationService';
 import type { MobilePushResult } from '@nimbalyst/runtime/sync/types';
@@ -468,6 +479,19 @@ export class MetaAgentService {
       }
     });
 
+    // "Continue team" on the checkpoint card. Renderer-only on purpose: the
+    // user's click is the authorization, and no MCP tool reaches this.
+    safeHandle('team:continue', async (_event, payload: { sessionId?: unknown; checkpointLevel?: unknown } | undefined) => {
+      try {
+        const sessionId = typeof payload?.sessionId === 'string' ? payload.sessionId : '';
+        if (!sessionId) return { success: false, error: 'sessionId is required' };
+        const checkpointLevel = typeof payload?.checkpointLevel === 'number' ? payload.checkpointLevel : undefined;
+        return { success: true, ...(await this.continueTeam(sessionId, checkpointLevel)) };
+      } catch (error) {
+        return { success: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    });
+
     if (process.env.PLAYWRIGHT === '1' || process.env.PLAYWRIGHT_TEST === 'true' || process.env.NODE_ENV === 'test') {
       safeHandle('meta-agent:get-server-port', async () => {
         return { success: true, port: this.serverPort };
@@ -505,9 +529,104 @@ export class MetaAgentService {
     // and check + creation run under one lock per team so parallel calls from
     // the same team cannot both pass a limit that only one of them fits.
     return this.withTeamSpawnLock(team.rootSessionId, async () => {
-      await assertTeamSpawnCapacity(team);
+      await this.assertTeamSpawnCapacityOrShowCheckpoint(team);
       return this.createChildSessionCore(metaSessionId, workspaceId, args, team);
     });
+  }
+
+  /**
+   * The team gate every creation path goes through (including spawn_session's
+   * early check). At a checkpoint the creation stays refused, and the user is
+   * shown the "Continue team" card in the root's transcript, whoever was
+   * refused: the refusal tells the model that the card is there.
+   */
+  private async assertTeamSpawnCapacityOrShowCheckpoint(team: TeamCaller): Promise<void> {
+    try {
+      await assertTeamSpawnCapacity(team, teamContinueActionLabel());
+    } catch (error) {
+      if (error instanceof TeamBudgetReachedError) {
+        await this.showTeamCheckpoint(team.rootSessionId, error.total, error.authorized);
+      }
+      throw error;
+    }
+  }
+
+  private async showTeamCheckpoint(rootSessionId: string, created: number, authorized: number): Promise<void> {
+    try {
+      const root = await AISessionsRepository.get(rootSessionId);
+      if (!root?.workspacePath) return;
+      await postTeamCheckpointCard({ rootSessionId, workspacePath: root.workspacePath, created, authorized });
+    } catch (error) {
+      console.warn('[MetaAgentService] Failed to show the Team checkpoint:', error);
+    }
+  }
+
+  /**
+   * The user continues a team at its checkpoint ("Continue team" in the root's
+   * transcript). Human-only entry point: it is reached from the renderer IPC
+   * `team:continue` and from no MCP tool, so a session cannot extend its own
+   * budget. The budget is read and extended under the team's spawn lock, like
+   * every creation.
+   *
+   * `checkpointLevel` is the level of the card (or bar) that was clicked. It
+   * authorizes nothing: it only lets a card left behind by a level the team
+   * already passed be closed, so it stops showing as pending.
+   */
+  public async continueTeam(rootSessionId: string, checkpointLevel?: number): Promise<TeamContinuationResult> {
+    const result = await this.withTeamSpawnLock(rootSessionId, () => authorizeTeamContinuation(rootSessionId));
+    if (!result.extended) {
+      if (
+        result.reason === 'not-at-checkpoint' && typeof result.authorized === 'number' &&
+        typeof checkpointLevel === 'number' && Number.isSafeInteger(checkpointLevel) &&
+        checkpointLevel >= TEAM_LIMITS.budget && checkpointLevel < result.authorized
+      ) {
+        try {
+          const root = await AISessionsRepository.get(rootSessionId);
+          if (root?.workspacePath) {
+            await resolveTeamCheckpointCard({
+              rootSessionId,
+              workspacePath: root.workspacePath,
+              previousAuthorized: checkpointLevel,
+              authorized: result.authorized,
+            });
+          }
+        } catch (error) {
+          console.warn('[MetaAgentService] Failed to close a stale Team checkpoint card:', error);
+        }
+      }
+      return result;
+    }
+
+    // Everything below runs outside the lock: waking the coordinator starts a
+    // turn that may create a member, which needs the lock itself. The budget is
+    // already extended, so a failure here must not undo the answer.
+    try {
+      const root = await AISessionsRepository.get(rootSessionId);
+      const workspacePath = root?.workspacePath;
+      if (!workspacePath) return result;
+      await resolveTeamCheckpointCard({
+        rootSessionId,
+        workspacePath,
+        previousAuthorized: result.previousAuthorized,
+        authorized: result.authorized,
+      });
+      // Tell the coordinator, so one click is enough to resume the team. The
+      // drive is fire-and-forget: the click must not wait for the turn it starts.
+      if (this.aiService) {
+        await this.aiService.queuePromptForSession(
+          rootSessionId,
+          buildTeamContinuationNotice({ total: result.total, authorized: result.authorized }),
+          undefined,
+          // System provenance and its own origin: the transcript shows it as a
+          // status line, not as something the user typed.
+          { promptOrigin: TEAM_CONTINUATION_NOTICE_CONTEXT.promptOrigin, promptProvenance: { ...TEAM_CONTINUATION_NOTICE_CONTEXT.promptProvenance } },
+        );
+        this.aiService.requestQueueDrive(rootSessionId, workspacePath, 'meta-agent');
+      }
+    } catch (error) {
+      console.warn('[MetaAgentService] Team continued, but the coordinator could not be notified:', error);
+    }
+    return result;
   }
 
   private readonly teamSpawnLocks = new Map<string, Promise<unknown>>();
@@ -849,7 +968,7 @@ export class MetaAgentService {
     // Refuse an over-limit team spawn before the workstream promotion below; the
     // authoritative check runs again under the team lock in createChildSessionInternal.
     if (parentTeam) {
-      await assertTeamSpawnCapacity(parentTeam);
+      await this.assertTeamSpawnCapacityOrShowCheckpoint(parentTeam);
     }
 
     // Sibling mode: resolve (or create) a workstream container so the new

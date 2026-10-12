@@ -14,6 +14,26 @@ export const TEAM_ROLES: readonly TeamRole[] = ['explorer', 'implementer', 'revi
 
 export const TEAM_MODE_METADATA_KEY = 'teamMode';
 export const TEAM_CHILD_METADATA_KEY = 'teamChild';
+/**
+ * `metadata.teamBudget` on a team root: `{ authorized, extensions }`, the number
+ * of sessions the user has authorized this team to create. Absent means the
+ * initial budget. Written only by the host when the user continues the team.
+ */
+export const TEAM_BUDGET_METADATA_KEY = 'teamBudget';
+
+/**
+ * Transcript card shown in a team root when a creation is refused for budget.
+ * Not an interactive prompt: it is answered only through the renderer's
+ * `team:continue` IPC, never through respond_to_prompt, mobile or voice.
+ */
+export const TEAM_CHECKPOINT_TOOL_NAME = 'TeamCheckpoint';
+
+/**
+ * `promptOrigin` of the notice the host queues for the coordinator once the
+ * user continues the team. The transcript shows a prompt of this origin as a
+ * system status line (never as a user message), with this as its reminder kind.
+ */
+export const TEAM_CHECKPOINT_PROMPT_ORIGIN = 'team_checkpoint';
 
 export interface TeamChild {
   role: TeamRole;

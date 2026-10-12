@@ -604,5 +604,18 @@
         "asyncAgent": "Async agent"
       }
     }
+  },
+  "teamCheckpoint": {
+    "title": "Team checkpoint",
+    "reached": "This team has created {{created}} members, the limit authorized so far ({{authorized}}). It is a safety and cost checkpoint.",
+    "explain": "You can keep working with the current members, or continue the team to allow new sessions ({{extension}} more members). The limit of {{maxActive}} sessions running at the same time still applies.",
+    "continue": "Continue team",
+    "continuing": "Continuing...",
+    "continued": "Team continued: up to {{authorized}} members",
+    "failed": "Could not continue the team. Try again.",
+    "desktopOnly": "Open this session in the desktop app to continue the team.",
+    "bar": "Team checkpoint: {{created}} members created. Continue the team to allow new sessions.",
+    "noticeLabel": "Team checkpoint: continuation authorized",
+    "notice": "[Team checkpoint] The user authorized this team to continue: it may now create up to {{authorized}} sessions in total ({{total}} created so far). The limits of {{maxActive}} active sessions at once and {{maxDepth}} levels of depth are unchanged. Continue from where you stopped, creating a new member where the work calls for one."
   }
 }

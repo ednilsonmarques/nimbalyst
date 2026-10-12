@@ -23,6 +23,9 @@ import { ToolCallChanges } from './ToolCallChanges';
 import { setSessionIsAtBottom, getSessionIsAtBottom } from '../../../store/atoms/transcriptScroll';
 import { isAppleMobileWebKit } from '../../../utils/platform';
 import { usePendingPermissionNavigation } from './usePendingPermissionNavigation';
+import { TeamCheckpointBar } from './CustomToolWidgets/TeamCheckpointWidget';
+import { findPendingTeamCheckpoint } from './CustomToolWidgets/teamCheckpointState';
+import { TEAM_CHECKPOINT_PROMPT_ORIGIN } from '../../../ai/server/providers/teamContext';
 import { usePendingQuestionNavigation } from './usePendingQuestionNavigation';
 import { AttachmentStagingDeniedCard } from './AttachmentStagingDeniedCard';
 import { useElapsedTimeRef } from './CustomToolWidgets/useElapsedTime';
@@ -424,6 +427,7 @@ const SystemReminderCard: React.FC<{
   message: TranscriptViewMessage;
 }> = ({ message }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { t } = useTranslation('ai');
 
   const content = (message.text ?? '')
     .replace(/^\s*<SYSTEM_REMINDER>/, '')
@@ -440,11 +444,18 @@ const SystemReminderCard: React.FC<{
     (typeof message.metadata?.reminderKind === 'string'
       ? (message.metadata.reminderKind as string)
       : undefined);
-  const label =
-    (reminderKind && REMINDER_KIND_LABELS[reminderKind]) ?? 'System Reminder';
+  // The Team checkpoint notice follows the UI language; the other kinds keep
+  // their fixed English labels.
+  const label = reminderKind === TEAM_CHECKPOINT_PROMPT_ORIGIN
+    ? t('teamCheckpoint.noticeLabel')
+    : (reminderKind && REMINDER_KIND_LABELS[reminderKind]) ?? 'System Reminder';
 
   return (
-    <div className="rich-transcript-system-reminder ml-6 mb-2 rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-tertiary)] px-3 py-2">
+    <div
+      data-testid="system-reminder-card"
+      data-reminder-kind={reminderKind}
+      className="rich-transcript-system-reminder ml-6 mb-2 rounded-md border border-[var(--nim-border)] bg-[var(--nim-bg-tertiary)] px-3 py-2"
+    >
       <button
         type="button"
         onClick={() => setIsExpanded(v => !v)}
@@ -1224,6 +1235,10 @@ export const RichTranscriptView = React.forwardRef<
   const { pendingQuestions, jumpToQuestion } = usePendingQuestionNavigation({
     messages, sessionId, vlistRef, scrollContainerRef, ready: isScrollReady && isContainerVisible,
   });
+  // A Team mode checkpoint still waiting for the user. Later messages (a late
+  // member report, another coordinator turn) scroll its card away, so the same
+  // action stays docked under the transcript until the user continues the team.
+  const pendingTeamCheckpoint = useMemo(() => findPendingTeamCheckpoint(messages), [messages]);
 
   const settings = propsSettings || defaultSettings;
   const previousRenderRef = useRef<{
@@ -2616,6 +2631,13 @@ export const RichTranscriptView = React.forwardRef<
             Jump to question
           </button>
         </div>
+      )}
+      {pendingTeamCheckpoint && (
+        <TeamCheckpointBar
+          key={`${sessionId}:${pendingTeamCheckpoint.authorized}`}
+          sessionId={sessionId}
+          card={pendingTeamCheckpoint}
+        />
       )}
     </div>
   );

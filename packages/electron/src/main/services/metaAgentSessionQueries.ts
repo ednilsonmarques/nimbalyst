@@ -9,7 +9,16 @@
  */
 
 import { database as databaseWorker } from '../database/PGLiteDatabaseWorker';
-import { teamSpawnRefusal, type TeamCaller, type TeamUsage } from './team/teamPolicy';
+import { TEAM_BUDGET_METADATA_KEY, resolveTeamContext } from '@nimbalyst/runtime/ai/server/providers/teamContext';
+import {
+  TeamBudgetReachedError,
+  extendedTeamBudget,
+  isTeamBudgetExhausted,
+  resolveAuthorizedTeamBudget,
+  teamSpawnRefusal,
+  type TeamCaller,
+  type TeamUsage,
+} from './team/teamPolicy';
 
 /** Controllable "max parallel" limit: children currently running. */
 const MAX_IN_FLIGHT = 4;
@@ -121,14 +130,81 @@ export async function getTeamUsage(rootSessionId: string): Promise<TeamUsage> {
   };
 }
 
+/** SQLite hands whole JSON columns back as text; PGLite as objects. */
+function parseMetadataColumn(value: unknown): Record<string, unknown> | null {
+  let parsed = value;
+  if (typeof parsed === 'string') {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return null;
+    }
+  }
+  return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : null;
+}
+
+async function getTeamRootRow(
+  rootSessionId: string,
+): Promise<{ metadata: Record<string, unknown> | null; agentRole: string | null } | null> {
+  const { rows } = await databaseWorker.query<{ metadata: unknown; agent_role: string | null }>(
+    `SELECT metadata, agent_role FROM ai_sessions WHERE id = $1 LIMIT 1`,
+    [rootSessionId],
+  );
+  if (!rows[0]) return null;
+  return { metadata: parseMetadataColumn(rows[0].metadata), agentRole: rows[0].agent_role ?? null };
+}
+
+/** Sessions the root is authorized to create: its stored budget, or the initial one. */
+export async function getTeamAuthorizedBudget(rootSessionId: string): Promise<number> {
+  return resolveAuthorizedTeamBudget((await getTeamRootRow(rootSessionId))?.metadata);
+}
+
 /**
  * Team mode gate, run before any side effect of a child creation. Complements
  * (does not replace) assertChildSpawnCapacity, which still applies per creator.
+ * A team at its checkpoint is refused with TeamBudgetReachedError.
+ * `continueActionLabel`: the checkpoint action's name in the UI language.
  */
-export async function assertTeamSpawnCapacity(team: TeamCaller): Promise<void> {
+export async function assertTeamSpawnCapacity(team: TeamCaller, continueActionLabel?: string): Promise<void> {
   // Depth needs no query; refuse it before touching the database.
   const depthRefusal = teamSpawnRefusal(team, { total: 0, active: 0 });
   if (depthRefusal) throw new Error(depthRefusal);
-  const refusal = teamSpawnRefusal(team, await getTeamUsage(team.rootSessionId));
-  if (refusal) throw new Error(refusal);
+  const usage = await getTeamUsage(team.rootSessionId);
+  const authorized = await getTeamAuthorizedBudget(team.rootSessionId);
+  const refusal = teamSpawnRefusal(team, usage, authorized, continueActionLabel);
+  if (!refusal) return;
+  if (isTeamBudgetExhausted(usage, authorized)) throw new TeamBudgetReachedError(refusal, usage.total, authorized);
+  throw new Error(refusal);
+}
+
+export type TeamContinuationResult =
+  | { extended: true; total: number; previousAuthorized: number; authorized: number }
+  | { extended: false; reason: 'not-a-team-root' | 'not-at-checkpoint'; total?: number; authorized?: number };
+
+/**
+ * The user continues a team: its root may create `budgetExtension` more
+ * sessions. The only writer of `metadata.teamBudget` (ordinary metadata writes
+ * drop the key), and reachable only from the renderer's `team:continue` IPC.
+ *
+ * Extends only a team root that has reached its checkpoint, so authorizations
+ * cannot be stockpiled and a repeated click is a no-op. Callers hold the team's
+ * spawn lock so the read and the write cannot interleave with a creation.
+ */
+export async function authorizeTeamContinuation(rootSessionId: string): Promise<TeamContinuationResult> {
+  const root = await getTeamRootRow(rootSessionId);
+  if (!root || !resolveTeamContext(root.metadata, root.agentRole).teamMode) {
+    return { extended: false, reason: 'not-a-team-root' };
+  }
+  const previousAuthorized = resolveAuthorizedTeamBudget(root.metadata);
+  const usage = await getTeamUsage(rootSessionId);
+  if (!isTeamBudgetExhausted(usage, previousAuthorized)) {
+    return { extended: false, reason: 'not-at-checkpoint', total: usage.total, authorized: previousAuthorized };
+  }
+  const next = extendedTeamBudget(previousAuthorized);
+  // Same merge as OWNER_METADATA_MERGE_SQL (`metadata || $1` is translated for SQLite).
+  await databaseWorker.query(
+    `UPDATE ai_sessions SET metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb WHERE id = $2`,
+    [JSON.stringify({ [TEAM_BUDGET_METADATA_KEY]: next }), rootSessionId],
+  );
+  return { extended: true, total: usage.total, previousAuthorized, authorized: next.authorized };
 }

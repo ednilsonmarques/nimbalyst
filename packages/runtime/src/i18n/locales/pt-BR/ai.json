@@ -604,5 +604,18 @@
         "asyncAgent": "Agente assíncrono"
       }
     }
+  },
+  "teamCheckpoint": {
+    "title": "Checkpoint da equipe",
+    "reached": "Esta equipe já criou {{created}} membros, o limite autorizado até aqui ({{authorized}}). É um checkpoint de segurança e de custo.",
+    "explain": "Você pode seguir com os membros atuais ou continuar a equipe para permitir novas sessões (mais {{extension}} membros). O limite de {{maxActive}} sessões rodando ao mesmo tempo continua valendo.",
+    "continue": "Continuar equipe",
+    "continuing": "Continuando...",
+    "continued": "Equipe liberada: até {{authorized}} membros",
+    "failed": "Não foi possível continuar a equipe. Tente de novo.",
+    "desktopOnly": "Abra esta sessão no aplicativo desktop para continuar a equipe.",
+    "bar": "Checkpoint da equipe: {{created}} membros criados. Continue a equipe para permitir novas sessões.",
+    "noticeLabel": "Checkpoint da equipe: continuação autorizada",
+    "notice": "[Checkpoint da equipe] O usuário autorizou a continuação: a equipe agora pode criar até {{authorized}} sessões no total ({{total}} criadas até aqui). Os limites de {{maxActive}} sessões ativas ao mesmo tempo e {{maxDepth}} níveis de profundidade não mudaram. Continue de onde parou, criando um novo membro onde o trabalho pedir."
   }
 }

@@ -60,6 +60,31 @@ it('keeps teamMode and teamChild out of reach of ordinary metadata writes', asyn
   expect(await metadataOf('child')).toMatchObject({ teamChild, tags: ['a'] });
 });
 
+it('keeps teamBudget out of reach of ordinary metadata writes and re-issued creates', async () => {
+  const store = createPGLiteSessionStore(sqlite);
+  await store.create({ id: 'root', provider: 'claude-code', workspaceId: '/p', metadata: { teamMode: true } });
+
+  // What update_session_meta, the renderer or sync could send: dropped, the rest is kept.
+  await store.updateMetadata('root', { metadata: { teamBudget: { authorized: 99, extensions: 23 }, phase: 'planning' } });
+  expect(await metadataOf('root')).toMatchObject({ teamMode: true, phase: 'planning' });
+  expect((await metadataOf('root')).teamBudget).toBeUndefined();
+
+  // The host's own write (authorizeTeamContinuation) is the only one that lands...
+  await sqlite.query(
+    `UPDATE ai_sessions SET metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb WHERE id = $2`,
+    [JSON.stringify({ teamBudget: { authorized: 12, extensions: 1 } }), 'root'],
+  );
+  // ...and it survives later ordinary writes and a re-issued create.
+  await store.updateMetadata('root', { metadata: { teamBudget: { authorized: 99 }, tags: ['a'] } });
+  expect(await metadataOf('root')).toMatchObject({ teamBudget: { authorized: 12, extensions: 1 }, tags: ['a'] });
+  await store.create({ id: 'root', provider: 'claude-code', workspaceId: '/p', metadata: { teamBudget: { authorized: 99 }, phase: 'implementing' } });
+  expect(await metadataOf('root')).toMatchObject({
+    teamMode: true,
+    teamBudget: { authorized: 12, extensions: 1 },
+    phase: 'implementing',
+  });
+});
+
 it('lets the user change a team root model and effort later, keeping teamMode', async () => {
   const store = createPGLiteSessionStore(sqlite);
   await store.create({ id: 'root', provider: 'claude-code', model: 'claude-code:opus', workspaceId: '/p', metadata: { teamMode: true, effortLevel: 'high' } });

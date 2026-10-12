@@ -59,6 +59,15 @@ describe('searchableTextExtractor', () => {
       expect(r).toEqual({ searchableText: null, messageKind: 'system' });
     });
 
+    it('classifies the Team checkpoint continuation notice as system, by its origin only', () => {
+      const content = JSON.stringify({ prompt: '[Checkpoint da equipe] O usuário autorizou a continuação.' });
+      expect(extractSearchable({
+        source: 'claude-code', direction: 'input', content, metadata: { promptOrigin: 'team_checkpoint' },
+      })).toEqual({ searchableText: null, messageKind: 'system' });
+      // The same text without that origin is an ordinary user prompt.
+      expect(extractSearchable({ source: 'claude-code', direction: 'input', content }).messageKind).toBe('user');
+    });
+
     it('classifies tool_result blocks as tool', () => {
       const r = extractSearchable({
         source: 'claude-code',

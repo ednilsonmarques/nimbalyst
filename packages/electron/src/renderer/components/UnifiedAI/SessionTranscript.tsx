@@ -1891,6 +1891,10 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
         refreshPendingPrompts(sessionId);
       },
 
+      // Team checkpoint: the click is the user's authorization, on its own channel.
+      teamContinue: (rootSessionId: string, checkpointLevel?: number) =>
+        window.electronAPI.invoke('team:continue', { sessionId: rootSessionId, checkpointLevel }),
+
       // Feedback request operations. Fire-and-forget: send publishes the
       // subjects the author confirmed, creates the request, and returns. The
       // turn does not wait for a recipient.
@@ -2196,6 +2200,7 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
       exitPlanModeCancel: (...args) => liveHostRef.current!.exitPlanModeCancel(...args),
       toolPermissionSubmit: (...args) => liveHostRef.current!.toolPermissionSubmit(...args),
       toolPermissionCancel: (...args) => liveHostRef.current!.toolPermissionCancel(...args),
+      teamContinue: (...args) => liveHostRef.current!.teamContinue!(...args),
       feedbackRequestSend: (...args) => liveHostRef.current!.feedbackRequestSend!(...args),
       feedbackRequestCancel: (...args) => liveHostRef.current!.feedbackRequestCancel!(...args),
       pickFeedbackDestination: (...args) => liveHostRef.current!.pickFeedbackDestination!(...args),
