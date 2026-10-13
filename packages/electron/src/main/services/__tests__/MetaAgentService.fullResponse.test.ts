@@ -204,3 +204,22 @@ describe('MetaAgentService buildSessionResultData editedFiles dedupe (#1244)', (
     expect(data.editedFiles).toEqual(['src/a.ts']);
   });
 });
+
+describe('[Child Session Update] carries a Tool Manifest whole (Phase 1A)', () => {
+  it('an architect final message of up to 7,500 characters reaches the coordinator untruncated', async () => {
+    const manifest = '```yaml\ntoolManifest: 1\nid: M-1\n' + 'x'.repeat(7400) + '\n```\nPreparation: complete';
+    expect(manifest.length).toBeLessThanOrEqual(7500);
+    vi.mocked(AgentMessagesRepository.list).mockResolvedValue([
+      { direction: 'input', content: 'prepare the task', metadata: null },
+      { direction: 'output', content: 'Reading the project.', metadata: null },
+      { direction: 'output', content: manifest, metadata: null },
+    ] as never);
+
+    const data = await (MetaAgentService.getInstance() as any).buildSessionResultData('architect-1', '/ws', PREFETCHED);
+    const outputs = data.recentMessages.filter((m: { direction: string }) => m.direction === 'output');
+
+    expect(outputs.at(-1).text).toBe(manifest);
+    expect(outputs.at(-1).text).not.toContain('[truncated');
+    expect(data.fullResponse).toContain('Preparation: complete');
+  });
+});

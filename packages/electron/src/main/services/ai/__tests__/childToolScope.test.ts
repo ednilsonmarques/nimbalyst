@@ -27,14 +27,15 @@ describe('describeChildToolScope', () => {
   });
 
   it('asserts the denial only when the provider enforces it', () => {
-    expect(describeChildToolScope('read', true)).toContain('this child had NO file-writing, shell (run_command/Bash), delegation, or app-changing tools');
+    // Since Phase 0 the read line names every denied family (skill, hook, web, external MCP), so the model cannot claim one of them was available.
+    expect(describeChildToolScope('read', true)).toContain('this child had NO file-writing, shell (run_command/Bash), delegation, skill, hook, web (WebFetch/WebSearch), external MCP (user servers, plugins, claude.ai connectors) or app-changing tools');
     expect(describeChildToolScope('write', true)).toContain('this child had NO shell (run_command/Bash) or delegation tools');
   });
 
   it('review states that its only execution was the workspace tests', () => {
     const line = describeChildToolScope('review', true)!;
     expect(line).toContain('Tool scope: review');
-    expect(line).toContain('NO file-writing, shell (run_command/Bash), delegation, or app-changing tools');
+    expect(line).toContain('NO file-writing, shell (run_command/Bash), delegation, skill, hook, web (WebFetch/WebSearch), external MCP (user servers, plugins, claude.ai connectors) or app-changing tools');
     expect(line).toContain('its only execution was the workspace\'s own tests through run_project_tests');
     expect(describeChildToolScope('review', false)).toContain('does not enforce it');
   });

@@ -1,6 +1,6 @@
 # Catálogo passivo do ECC
 
-Inventário estruturado e versionado, **somente dado**, das capacidades do ECC (Everything Claude Code): agents, skills, commands, workflows, métodos (rules) e hooks. Hoje nada no app consome estes arquivos.
+Inventário estruturado e versionado, **somente dado**, das capacidades do ECC (Everything Claude Code): agents, skills, commands, workflows, métodos (rules) e hooks. Nada no app lê estes arquivos em tempo de execução; o único consumidor é `scripts/ecc-architect-index-build.mjs`, que, em tempo de geração, deriva do JSON e de `scripts/ecc-architect-classes.json` o índice `packages/runtime/src/ai/ecc/eccCatalogIndex.generated.ts` lido pelo papel `architect` do Team Mode (classes A/B/C; hooks, memória, orquestração e entradas sem sinal nunca entram).
 
 - `ecc-2.2.3.json`: catálogo canônico (entradas ordenadas, sem timestamps).
 - `ecc-2.2.3.md`: digest legível para humanos e para prompts (a data de geração fica só aqui).

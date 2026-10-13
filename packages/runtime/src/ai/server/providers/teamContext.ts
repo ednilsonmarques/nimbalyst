@@ -8,9 +8,16 @@
  * drops them from every metadata update).
  */
 
-export type TeamRole = 'explorer' | 'implementer' | 'reviewer' | 'other';
+/**
+ * Member roles. `architect` prepares a task before anyone executes it: it
+ * reads, reasons and delivers a Tool Manifest (toolManifest.ts); it runs
+ * read-only, cannot ask the user, delegate or create tasks, and never
+ * implements. Its defaults live in teamPolicy.ts (Opus, high, read forced) and
+ * its extra tool denials in toolPolicy.ts (ARCHITECT_DENIED_TOOLS).
+ */
+export type TeamRole = 'explorer' | 'implementer' | 'reviewer' | 'architect' | 'other';
 
-export const TEAM_ROLES: readonly TeamRole[] = ['explorer', 'implementer', 'reviewer', 'other'];
+export const TEAM_ROLES: readonly TeamRole[] = ['explorer', 'implementer', 'reviewer', 'architect', 'other'];
 
 export const TEAM_MODE_METADATA_KEY = 'teamMode';
 export const TEAM_CHILD_METADATA_KEY = 'teamChild';

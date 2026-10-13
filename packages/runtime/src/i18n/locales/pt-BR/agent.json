@@ -386,6 +386,7 @@
       "explorer": "Explorer",
       "implementer": "Implementer",
       "reviewer": "Reviewer",
+      "architect": "Arquiteto",
       "other": "Membro"
     },
     "scope": {

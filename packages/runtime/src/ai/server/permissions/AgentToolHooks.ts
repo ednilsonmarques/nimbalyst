@@ -17,7 +17,8 @@ import { parseBashForFileOps } from './BashCommandAnalyzer';
 import { generateToolPattern, buildToolDescription } from './toolPermissionHelpers';
 import { getPatternDisplayName } from '../types';
 import type { TrustChecker } from '../providers/ProviderPermissionMixin';
-import { isToolDeniedForScope, type ChildToolScope } from '../providers/claudeCode/toolPolicy';
+import { isToolDeniedForScope, teamRoleDeniedTools, type ChildToolScope } from '../providers/claudeCode/toolPolicy';
+import type { TeamRole } from '../providers/teamContext';
 
 /**
  * Configuration options for AgentToolHooks service
@@ -128,6 +129,13 @@ export interface AgentToolHooksOptions {
   getToolScope?: () => Promise<ChildToolScope>;
 
   /**
+   * Frozen team role of this session, for the denials a role carries on top of
+   * its scope (the architect cannot ask the user, enter plan mode or create and
+   * assign tasks). Read alongside the scope; fail-closed the same way.
+   */
+  getTeamRole?: () => Promise<TeamRole | null>;
+
+  /**
    * History manager for creating file snapshots and tags
    * Optional - if not provided, snapshot creation will be skipped
    */
@@ -183,6 +191,7 @@ export class AgentToolHooks {
   private readonly isTeammateSession: boolean;
   private readonly permissionsPath?: string;
   private readonly getToolScope?: () => Promise<ChildToolScope>;
+  private readonly getTeamRole?: () => Promise<TeamRole | null>;
   private readonly historyManager?: {
     createSnapshot: (filePath: string, content: string, snapshotType: string, message: string, metadata?: any) => Promise<void>;
     getPendingTags: (filePath: string) => Promise<Array<{ id: string; createdAt: Date; sessionId?: string }>>;
@@ -212,6 +221,7 @@ export class AgentToolHooks {
     this.isTeammateSession = options.isTeammateSession || false;
     this.permissionsPath = options.permissionsPath;
     this.getToolScope = options.getToolScope;
+    this.getTeamRole = options.getTeamRole;
     this.historyManager = options.historyManager;
   }
 
@@ -237,8 +247,10 @@ export class AgentToolHooks {
       },
     });
     let scope: ChildToolScope;
+    let role: TeamRole | null;
     try {
       scope = await this.getToolScope();
+      role = this.getTeamRole ? await this.getTeamRole() : null;
     } catch (error) {
       this.logSecurity('[PreToolUse] Tool scope unavailable; denying the call (fail-closed)', {
         toolName,
@@ -246,7 +258,13 @@ export class AgentToolHooks {
       });
       return deny("This session's tool restrictions could not be verified, so the call was denied. Try again later.");
     }
-    if (scope === 'full' || !isToolDeniedForScope(scope, toolName)) return null;
+    if (teamRoleDeniedTools(role).includes(toolName)) {
+      this.logSecurity('[PreToolUse] Denied by team role', { toolName, role, sessionId: this.sessionId });
+      return deny(
+        `This session is the team's ${role}, which prepares work and never asks the user, delegates or creates tasks; ${toolName} is not available. Write the question or the task in your Tool Manifest instead.`,
+      );
+    }
+    if (scope === 'full' || !isToolDeniedForScope(scope, toolName, [], role)) return null;
     this.logSecurity('[PreToolUse] Denied by tool scope', { toolName, scope, sessionId: this.sessionId });
     return deny(
       `This session runs with tool scope "${scope}", which does not allow ${toolName}. Do not work around it; report what you could not do.`,
@@ -387,8 +405,9 @@ export class AgentToolHooks {
       if (this.getToolScope) {
         try {
           const scope = await this.getToolScope();
-          if (scope !== 'full' && isToolDeniedForScope(scope, toolName)) {
-            this.logSecurity('[PermissionDenied] Denied by tool scope; not re-prompting', { toolName, scope });
+          const role = this.getTeamRole ? await this.getTeamRole() : null;
+          if (isToolDeniedForScope(scope, toolName, [], role)) {
+            this.logSecurity('[PermissionDenied] Denied by tool scope; not re-prompting', { toolName, scope, role });
             return {};
           }
         } catch (error) {

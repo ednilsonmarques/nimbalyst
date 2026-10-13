@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { NO_TEAM, parseTeamChild, parseTeamRole, resolveTeamContext } from '../teamContext';
 
 describe('parseTeamRole', () => {
-  it('accepts the four roles only', () => {
-    for (const role of ['explorer', 'implementer', 'reviewer', 'other']) expect(parseTeamRole(role)).toBe(role);
+  it('accepts the five roles only', () => {
+    for (const role of ['explorer', 'implementer', 'reviewer', 'architect', 'other']) expect(parseTeamRole(role)).toBe(role);
+    expect(parseTeamRole('boss')).toBeNull();
     expect(parseTeamRole('Explorer')).toBeNull();
     expect(parseTeamRole(undefined)).toBeNull();
   });

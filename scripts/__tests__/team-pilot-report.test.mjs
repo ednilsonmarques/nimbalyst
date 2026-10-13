@@ -18,6 +18,8 @@ function fixture() {
     { id: 'exp-1', createdBySessionId: 'root-team-0001', model: 'claude-code:sonnet', status: 'idle', metadata: JSON.stringify({ teamChild: { role: 'explorer', depth: 1 }, effortLevel: 'medium', toolScope: 'read' }), createdAt: '2026-10-10T15:01:00.000Z' },
     { id: 'impl-1', createdBySessionId: 'root-team-0001', model: 'claude-code:sonnet', status: 'error', metadata: JSON.stringify({ teamChild: { role: 'implementer', depth: 1 }, effortLevel: 'high' }), createdAt: '2026-10-10T15:02:00.000Z' },
     { id: 'rev-1', createdBySessionId: 'root-team-0001', model: 'claude-code:opus', status: 'idle', metadata: JSON.stringify({ teamChild: { role: 'reviewer', depth: 1 }, effortLevel: 'high', toolScope: 'review' }), createdAt: '2026-10-10T15:03:00.000Z' },
+    // Architect on its own defaults (Opus/high/read): not a promotion.
+    { id: 'arch-1', createdBySessionId: 'root-team-0001', model: 'claude-code:opus', status: 'idle', metadata: JSON.stringify({ teamChild: { role: 'architect', depth: 1 }, effortLevel: 'high', toolScope: 'read' }), createdAt: '2026-10-10T15:00:30.000Z' },
     // Solo root.
     { id: 'root-solo-0002', createdBySessionId: null, model: 'claude-code:opus', status: 'idle', metadata: { teamMode: true, effortLevel: 'high' }, createdAt: '2026-10-11T09:00:00.000Z' },
     // Normal sessions, one of them delegating: not Team mode.
@@ -39,6 +41,10 @@ function fixture() {
     { sessionId: 'rev-1', createdAt: '2026-10-10T15:20:00.000Z', content: toolUse('mcp__nimbalyst-host__run_project_tests') },
     { sessionId: 'rev-1', createdAt: '2026-10-10T15:25:00.000Z', content: assistantText(`Verdict: blockers found. ${SECRET}`) },
     { sessionId: 'rev-1', createdAt: '2026-10-10T15:30:00.000Z', content: assistantText('Verdict: no blockers') },
+    { sessionId: 'arch-1', createdAt: '2026-10-10T15:05:00.000Z', content: assistantText(`\`\`\`yaml\\ntoolManifest: 1\\nid: M-1\\ntask: ${SECRET}\\n\`\`\`\\nPreparation: complete`) },
+    { sessionId: 'root-team-0001', createdAt: '2026-10-10T15:06:00.000Z', content: assistantText(`Team plan: TEAM — diverging from M-1 on reviewer model: ${SECRET}`) },
+    // A coordinator quoting a manifest is not a manifest.
+    { sessionId: 'root-team-0001', createdAt: '2026-10-10T15:06:30.000Z', content: assistantText('The architect wrote toolManifest: 1 in its report.') },
     { sessionId: 'root-solo-0002', createdAt: '2026-10-11T09:00:05.000Z', content: assistantText('Team plan: SOLO — trivial') },
     { sessionId: 'plain-1', createdAt: '2026-10-10T10:00:05.000Z', content: toolUse('Agent') },
   ];
@@ -55,8 +61,11 @@ test('counts Team mode roots only, solo versus team, and members per role', () =
   assert.equal(report.totals.teamRoots, 2);
   assert.equal(report.totals.solo, 1);
   assert.equal(report.totals.team, 1);
-  assert.equal(report.totals.members, 3);
-  assert.deepEqual(report.totals.membersByRole, { explorer: 1, implementer: 1, reviewer: 1, other: 0 });
+  assert.equal(report.totals.members, 4);
+  assert.deepEqual(report.totals.membersByRole, { explorer: 1, implementer: 1, reviewer: 1, architect: 1, other: 0 });
+  assert.equal(report.totals.architects, 1);
+  assert.equal(report.totals.manifests, 1);
+  assert.equal(report.totals.manifestDivergences, 1);
   // The normal session that used Agent is not part of the pilot numbers.
   assert.equal(report.totals.tools.Agent, 1);
   assert.deepEqual(report.teams.map((team) => [team.id, team.kind]), [['root-tea', 'team'], ['root-sol', 'solo']]);
@@ -69,7 +78,10 @@ test('derives tool use, review cycles, blocks, refusals, promotions, notes, erro
   assert.equal(team.reviewCycles, 2);
   assert.equal(team.scopeDenied, 1);
   assert.equal(team.limitRefusals, 1);
-  assert.deepEqual(team.declaredPlans, ['TEAM']);
+  assert.deepEqual(team.declaredPlans, ['TEAM', 'TEAM']);
+  assert.equal(team.architects, 1);
+  assert.equal(team.manifests, 1);
+  assert.deepEqual(team.manifestDecisions, ['diverged']);
   assert.deepEqual(team.promotions, [
     { role: 'implementer', model: 'claude-code:sonnet', effort: 'high', modelPromoted: false, effortPromoted: true },
     { role: 'reviewer', model: 'claude-code:opus', effort: 'high', modelPromoted: true, effortPromoted: false },
@@ -96,10 +108,13 @@ test('a metric that cannot be derived is unavailable, never zero', () => {
   assert.equal(report.totals.teamNotes, null);
   assert.equal(report.teams[0].durationMinutes, null);
   // What the session rows alone support is still reported.
-  assert.equal(report.totals.members, 3);
+  assert.equal(report.totals.members, 4);
   assert.equal(report.totals.promotions, 2);
+  assert.equal(report.totals.manifests, null);
+  assert.equal(report.totals.manifestDivergences, null);
   const markdown = renderMarkdown(report);
   assert.match(markdown, /\| Ciclos de revisão \| indisponível \|/);
+  assert.match(markdown, /\| Manifestos do Architect \| indisponível \|/);
   assert.match(markdown, /\| Chamadas create_session \| indisponível \|/);
   assert.doesNotMatch(markdown, /\| Ciclos de revisão \| 0 \|/);
 });
@@ -113,7 +128,12 @@ test('never outputs prompts, transcript text, note contents, commands or file na
     // Full session ids are shortened.
     assert.equal(output.includes('root-team-0001'), false);
   }
-  assert.deepEqual(Object.keys(extractMessageFacts(toolUse('Bash'))).sort(), ['declaredPlan', 'limitRefusals', 'scopeDenied', 'tools', 'verdicts']);
+  assert.deepEqual(Object.keys(extractMessageFacts(toolUse('Bash'))).sort(), ['declaredPlan', 'limitRefusals', 'manifestDecision', 'manifests', 'scopeDenied', 'tools', 'verdicts']);
+  const markdown = renderMarkdown(report);
+  assert.match(markdown, /\| Manifestos do Architect \| 1 \|/);
+  assert.match(markdown, /\| Divergências do Coordenador sobre manifestos \| 1 \|/);
+  assert.match(markdown, /Membros \(E\/I\/R\/A\/O\)/);
+  assert.match(markdown, /4 \(1\/1\/1\/1\/0\)/);
   // A tool that is not on the counted list is not even named.
   assert.deepEqual(extractMessageFacts(toolUse('Bash')).tools, {});
 });
@@ -130,6 +150,26 @@ test('the same words inside a file a session read are not counted as events', ()
 test('a plan quoted in a user message is not taken as a declared plan', () => {
   const facts = extractMessageFacts('{"type":"user","message":{"role":"user","content":"Team plan: TEAM"}}');
   assert.equal(facts.declaredPlan, null);
+});
+
+test('manifests and manifest decisions are read only from assistant text blocks, never from briefs, notes or thinking', () => {
+  // A brief inside a tool_use input that cites the decision.
+  const brief = '{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_2","name":"mcp__nimbalyst-host__create_session","input":{"role":"reviewer","prompt":"Team plan: TEAM — diverging from M-1 on tests: check them"}}]}}';
+  assert.equal(extractMessageFacts(brief).manifestDecision, null);
+  // A draft of the manifest in a thinking block.
+  const thinking = '{"type":"assistant","message":{"role":"assistant","content":[{"type":"thinking","thinking":"draft:\\ntoolManifest: 1\\nid: M-1"}]}}';
+  assert.equal(extractMessageFacts(thinking).manifests, 0);
+  // A Grep result quoting the marker is a user (tool_result) message.
+  assert.equal(extractMessageFacts(toolResult('toolManifest: 1')).manifests, 0);
+  // A tool whose input has a real `text` key (voice_agent_speak, a Slack MCP) is not a text block.
+  const textInput = '{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_3","name":"mcp__nimbalyst-situational__voice_agent_speak","input":{"text":"Team plan: TEAM — diverging from M-1 on x: y"}}]}}';
+  assert.equal(extractMessageFacts(textInput).manifestDecision, null);
+  assert.equal(extractMessageFacts('{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_4","name":"Write","input":{"text":"toolManifest: 1"}}]}}').manifests, 0);
+  // The real thing: a text block.
+  assert.equal(extractMessageFacts(assistantText('```yaml\\ntoolManifest: 1\\nid: M-2\\n```')).manifests, 1);
+  assert.equal(extractMessageFacts(assistantText('Team plan: SOLO — per manifest M-2. Next: ...')).manifestDecision, 'accepted');
+  // The decision needs the Team plan line; a stray mention elsewhere in the text is not a decision.
+  assert.equal(extractMessageFacts(assistantText('I recorded the note "diverging from M-1" as asked.')).manifestDecision, null);
 });
 
 test('reads a real database read-only without creating anything in it', async () => {
@@ -161,6 +201,7 @@ test('reads a real database read-only without creating anything in it', async ()
     assert.equal(report.totals.tools.create_session, 4);
     assert.equal(report.totals.tools.Agent, 1);
     assert.equal(report.totals.teamNotes, 3);
+    assert.equal(report.totals.manifests, 1);
 
     const after = new DatabaseSync(dbPath, { readOnly: true });
     assert.deepEqual(after.prepare("SELECT name FROM sqlite_master ORDER BY name").all(), tablesBefore);

@@ -499,3 +499,65 @@ describe('AgentToolHooks', () => {
     });
   });
 });
+
+describe('architect guard (PreToolUse, Phase 1A)', () => {
+  const run = (hooks: AgentToolHooks, toolName: string, toolInput: any = {}) =>
+    hooks.createPreToolUseHook()({ tool_name: toolName, tool_input: toolInput }, 'tool-use-architect', { signal: new AbortController().signal });
+  const decisionOf = (result: any) => result?.hookSpecificOutput?.permissionDecision;
+  const architect = () => createMockOptions({ getToolScope: async () => 'read', getTeamRole: async () => 'architect' });
+
+  it('denies the question, plan-mode and task-creation tools with a reason that points to the manifest', async () => {
+    const options = architect();
+    const hooks = new AgentToolHooks(options);
+    for (const tool of ['AskUserQuestion', 'EnterPlanMode', 'ExitPlanMode', 'TaskCreate', 'TaskUpdate', 'mcp__nimbalyst__AskUserQuestion', 'mcp__nimbalyst__PromptForUserInput']) {
+      const result = await run(hooks, tool, { questions: [] });
+      expect(decisionOf(result), tool).toBe('deny');
+      expect(result.hookSpecificOutput.permissionDecisionReason, tool).toMatch(/team's architect.*Tool Manifest/);
+    }
+    expect(options.logSecurity).toHaveBeenCalledWith('[PreToolUse] Denied by team role', expect.objectContaining({ role: 'architect' }));
+  });
+
+  it('keeps every delegation path closed for the architect and lets reads and bookkeeping through', async () => {
+    const hooks = new AgentToolHooks(architect());
+    for (const tool of ['Agent', 'Task', 'Workflow', 'SendMessage', 'mcp__nimbalyst-host__create_session', 'mcp__nimbalyst-host__send_prompt', 'Bash', 'Write']) {
+      expect(decisionOf(await run(hooks, tool, { prompt: 'x' })), tool).toBe('deny');
+    }
+    for (const tool of ['Read', 'Grep', 'Glob', 'ToolSearch', 'TaskList', 'TaskGet', 'TodoWrite', 'mcp__nimbalyst-trackers__tracker_get']) {
+      expect(decisionOf(await run(hooks, tool, { file_path: '/test/workspace/a.ts' })), tool).not.toBe('deny');
+    }
+  });
+
+  it('an explorer with the same read scope keeps AskUserQuestion and the task tools', async () => {
+    const hooks = new AgentToolHooks(createMockOptions({ getToolScope: async () => 'read', getTeamRole: async () => 'explorer' }));
+    for (const tool of ['AskUserQuestion', 'TaskCreate', 'TaskUpdate', 'mcp__nimbalyst__AskUserQuestion']) {
+      expect(decisionOf(await run(hooks, tool, { questions: [] })), tool).not.toBe('deny');
+    }
+    // No role getter at all (older callers): exactly the scope behavior.
+    const scopeOnly = new AgentToolHooks(createMockOptions({ getToolScope: async () => 'read' }));
+    expect(decisionOf(await run(scopeOnly, 'AskUserQuestion', { questions: [] }))).not.toBe('deny');
+  });
+
+  it('fails closed when the role cannot be read', async () => {
+    const hooks = new AgentToolHooks(createMockOptions({ getToolScope: async () => 'read', getTeamRole: async () => { throw new Error('db down'); } }));
+    const result = await run(hooks, 'Read', { file_path: '/test/workspace/a.ts' });
+    expect(decisionOf(result)).toBe('deny');
+    expect(result.hookSpecificOutput.permissionDecisionReason).toMatch(/could not be verified/);
+  });
+
+  it('an architect does not get an auto-mode re-prompt for a question tool', async () => {
+    const options = createMockOptions({
+      getToolScope: async () => 'read',
+      getTeamRole: async () => 'architect',
+      getCurrentMode: () => 'auto',
+      getPendingToolPermissions: () => new Map(),
+    });
+    const hooks = new AgentToolHooks(options);
+    const result = await hooks.createPermissionDeniedHook()(
+      { tool_name: 'AskUserQuestion', tool_input: { questions: [] }, reason: 'classifier' },
+      'tool-use-denied-architect',
+      { signal: new AbortController().signal },
+    );
+    expect(result).toEqual({});
+    expect(options.emit).not.toHaveBeenCalled();
+  });
+});

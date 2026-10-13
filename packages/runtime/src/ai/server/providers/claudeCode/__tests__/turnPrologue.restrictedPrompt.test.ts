@@ -27,6 +27,7 @@ function makeHost(overrides: Partial<TurnQueryHost> = {}): Host {
     getAgentRole: vi.fn(async () => 'standard' as const),
     getWorkflowPreset: vi.fn(async () => 'default' as any),
     getToolScope: vi.fn(async () => 'read' as const),
+    getToolPolicyRole: vi.fn(async () => null),
     ensureGitContext: vi.fn(async () => {}),
     ensureSessionDirective: vi.fn(async () => {}),
     ensureTeamContext: vi.fn(async () => {}),
@@ -125,6 +126,28 @@ describe('buildTurnQuery and slash prompts for restricted children', () => {
 
     expect(state.isSlashCommand).toBe(true);
     expect(sentMessage()).toBe('/probe:hooks-skill');
+  });
+
+  it('an architect child gets the role denials merged into disallowedTools; an explorer does not', async () => {
+    const architect = makeHost({ getToolPolicyRole: vi.fn(async () => 'architect' as const) });
+    const setup = await buildTurnQuery(architect, makeState('prepare the task'), makeParams());
+    const denied = (setup.options as any).disallowedTools as string[];
+    for (const tool of ['AskUserQuestion', 'EnterPlanMode', 'ExitPlanMode', 'TaskCreate', 'TaskUpdate', 'mcp__nimbalyst__AskUserQuestion', 'mcp__nimbalyst__PromptForUserInput', 'Agent', 'Bash', 'Write']) {
+      expect(denied, tool).toContain(tool);
+    }
+    expect(denied).not.toContain('TaskList');
+    expect(denied).not.toContain('TodoWrite');
+
+    const explorer = makeHost({ getToolPolicyRole: vi.fn(async () => 'explorer' as const) });
+    const explorerSetup = await buildTurnQuery(explorer, makeState('look around'), makeParams());
+    expect((explorerSetup.options as any).disallowedTools).not.toContain('AskUserQuestion');
+    expect((explorerSetup.options as any).disallowedTools).toContain('Agent');
+  });
+
+  it('never reads a role for the meta-agent either', async () => {
+    const host = makeHost({ getAgentRole: vi.fn(async () => 'meta-agent' as const) });
+    await buildTurnQuery(host, makeState('coordinate'), makeParams());
+    expect(host.getToolPolicyRole).not.toHaveBeenCalled();
   });
 
   it('fails closed when the scope cannot be read: nothing is emitted or built', async () => {

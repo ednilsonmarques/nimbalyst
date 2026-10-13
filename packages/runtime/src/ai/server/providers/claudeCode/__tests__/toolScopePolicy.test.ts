@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ARCHITECT_DENIED_TOOLS,
   READ_SCOPE_ALLOWED_NATIVE_TOOLS,
   RUN_PROJECT_TESTS_TOOL,
+  teamRoleDeniedTools,
   isReadScopeAllowedMcpTool,
   isToolDeniedForScope,
   mergeToolScopeDisallowedTools,
@@ -327,5 +329,59 @@ describe('RESTRICTED_SCOPE_SETTINGS', () => {
   it('turns off inline skill shell execution and every external hook for read/review children, nothing else', () => {
     expect(RESTRICTED_SCOPE_SETTINGS).toEqual({ disableSkillShellExecution: true, disableAllHooks: true });
     expect(Object.isFrozen(RESTRICTED_SCOPE_SETTINGS)).toBe(true);
+  });
+});
+
+describe('architect role denials (Phase 1A)', () => {
+  const architectOnly = ['AskUserQuestion', 'EnterPlanMode', 'ExitPlanMode', 'TaskCreate', 'TaskUpdate',
+    'mcp__nimbalyst__AskUserQuestion', 'mcp__nimbalyst__PromptForUserInput'];
+
+  it('the architect loses exactly the question, plan-mode and task-creation tools, native and first-party', () => {
+    expect([...ARCHITECT_DENIED_TOOLS].sort()).toEqual([...architectOnly].sort());
+    expect(teamRoleDeniedTools('architect')).toBe(ARCHITECT_DENIED_TOOLS);
+    for (const role of ['explorer', 'implementer', 'reviewer', 'other', null, undefined] as const) {
+      expect(teamRoleDeniedTools(role), String(role)).toEqual([]);
+    }
+  });
+
+  it('isToolDeniedForScope denies them for an architect in any scope, and nothing more than read denies otherwise', () => {
+    for (const tool of architectOnly) {
+      expect(isToolDeniedForScope('read', tool, [], 'architect'), tool).toBe(true);
+      // Even a misconfigured architect (full scope) cannot ask or create tasks.
+      expect(isToolDeniedForScope('full', tool, [], 'architect'), tool).toBe(true);
+    }
+    // What the read scope allows stays allowed for the architect: reads, discovery, bookkeeping reads, the private checklist.
+    for (const tool of ['Read', 'Grep', 'Glob', 'ToolSearch', 'TaskList', 'TaskGet', 'TodoWrite', 'TaskStop', 'mcp__nimbalyst-trackers__tracker_get', 'mcp__nimbalyst__update_session_meta', 'mcp__nimbalyst__display_to_user']) {
+      expect(isToolDeniedForScope('read', tool, [], 'architect'), tool).toBe(false);
+    }
+    // And everything the read scope denies stays denied: no delegation path at all.
+    for (const tool of ['Agent', 'Task', 'Workflow', 'SendMessage', 'TeamCreate', 'Bash', 'Write', 'Skill', 'WebFetch',
+      'mcp__nimbalyst-host__create_session', 'mcp__nimbalyst-host__spawn_session', 'mcp__nimbalyst-host__send_prompt', 'mcp__nimbalyst-host__respond_to_prompt',
+      'mcp__github__create_issue', 'mcp__nimbalyst-slides__insert', 'BrandNewNativeTool']) {
+      expect(isToolDeniedForScope('read', tool, ['nimbalyst-slides'], 'architect'), tool).toBe(true);
+    }
+  });
+
+  it('an explorer (read) and a reviewer (review) keep AskUserQuestion, plan mode and the task tools', () => {
+    for (const tool of architectOnly) {
+      expect(isToolDeniedForScope('read', tool, [], 'explorer'), tool).toBe(false);
+      expect(isToolDeniedForScope('read', tool), tool).toBe(false);
+      expect(isToolDeniedForScope('review', tool, [], 'reviewer'), tool).toBe(false);
+    }
+    expect(toolScopeDeniedTools('read')).not.toContain('AskUserQuestion');
+    expect(READ_SCOPE_ALLOWED_NATIVE_TOOLS.has('AskUserQuestion')).toBe(true);
+  });
+
+  it('mergeToolScopeDisallowedTools adds the architect denials to the read list and leaves other roles alone', () => {
+    const architect = mergeToolScopeDisallowedTools(undefined, 'read', [], 'architect') ?? [];
+    const explorer = mergeToolScopeDisallowedTools(undefined, 'read', [], 'explorer') ?? [];
+    for (const tool of architectOnly) {
+      expect(architect, tool).toContain(tool);
+      expect(explorer, tool).not.toContain(tool);
+    }
+    expect(architect.filter((tool) => !architectOnly.includes(tool)).sort()).toEqual([...explorer].sort());
+    // The role denies even without a restricting scope (defense in depth).
+    expect(mergeToolScopeDisallowedTools(undefined, 'full', [], 'architect')).toEqual(expect.arrayContaining(architectOnly));
+    expect(mergeToolScopeDisallowedTools(undefined, 'full', [], 'explorer')).toBeUndefined();
   });
 });

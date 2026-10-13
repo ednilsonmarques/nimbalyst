@@ -17,8 +17,15 @@ import {
 /** Team mode only runs on Claude Code in this phase. */
 export const TEAM_PROVIDER = 'claude-code';
 
-/** Default model for every team member; the coordinator promotes one explicitly when needed. */
+/** Default model for every team member but the architect; the coordinator promotes one explicitly when needed. */
 export const TEAM_SONNET_MODEL = 'claude-code:sonnet';
+
+/**
+ * Default model of the `architect`: it decides architecture, trade-offs and
+ * risks for the whole team from a read-only seat, so it runs on Opus at high
+ * effort. An explicit `model` from the coordinator still wins.
+ */
+export const TEAM_ARCHITECT_MODEL = 'claude-code:opus';
 
 export { TEAM_ROOT_PRESETS, isRecommendedTeamRootModel } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 
@@ -56,27 +63,24 @@ export function resolveRequestedTeamRole(raw: unknown): TeamRole {
   return role;
 }
 
-/**
- * Every role defaults to Sonnet. Kept per role so a role can get its own
- * default later without touching the caller.
- */
-export function teamRoleDefaultModel(_role: TeamRole): string {
-  return TEAM_SONNET_MODEL;
+/** Every role defaults to Sonnet, except the architect (Opus). */
+export function teamRoleDefaultModel(role: TeamRole): string {
+  return role === 'architect' ? TEAM_ARCHITECT_MODEL : TEAM_SONNET_MODEL;
 }
 
-/** Reviewers think harder (high); every other role runs at medium. */
+/** Reviewers and architects think harder (high); every other role runs at medium. */
 export function teamRoleDefaultEffort(role: TeamRole): 'medium' | 'high' {
-  return role === 'reviewer' ? 'high' : 'medium';
+  return role === 'reviewer' || role === 'architect' ? 'high' : 'medium';
 }
 
 /**
- * Tool scope a role gets when the caller does not pass one. Explorer is
- * read-only; reviewer reads and may run the workspace's tests (`review`);
- * implementer gets full tools; `other` has no role default (the caller
- * decides, as outside a team).
+ * Tool scope a role gets when the caller does not pass one. Explorer and
+ * architect are read-only; reviewer reads and may run the workspace's tests
+ * (`review`); implementer gets full tools; `other` has no role default (the
+ * caller decides, as outside a team).
  */
 export function teamRoleDefaultToolScope(role: TeamRole): 'read' | 'review' | 'full' | undefined {
-  if (role === 'explorer') return 'read';
+  if (role === 'explorer' || role === 'architect') return 'read';
   if (role === 'reviewer') return 'review';
   if (role === 'implementer') return 'full';
   return undefined;
@@ -88,6 +92,8 @@ export type StoredChildToolScope = 'read' | 'review' | 'write';
 /**
  * The scope to store for a new child, or undefined for full access.
  *
+ * - An architect is always `read`: it prepares work and never executes, so
+ *   `full`, `write`, `review` or anything else is lowered to `read`.
  * - A reviewer never gets more than `review`: `full`, `write` or anything else
  *   is lowered to `review`; only an explicit `read` (stricter) is kept.
  * - Otherwise an explicit scope wins over the role default; `full` means no
@@ -99,6 +105,7 @@ export function resolveChildToolScopeRequest(
   explicit: unknown,
   role: TeamRole | undefined,
 ): StoredChildToolScope | undefined {
+  if (role === 'architect') return 'read';
   if (role === 'reviewer') return explicit === 'read' ? 'read' : 'review';
   const requested = explicit ?? (role ? teamRoleDefaultToolScope(role) : undefined);
   if (requested === undefined || requested === null || requested === 'full') return undefined;

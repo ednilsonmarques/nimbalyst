@@ -1,0 +1,461 @@
+{
+  "_comment": "Overlay de classes para o índice do ECC Architect (scripts/ecc-architect-index-build.mjs). A = método que o Architect aplica (conteúdo somente leitura); B = recomendável a um papel executor dentro do escopo dele; C = exige autorização que a equipe não tem por padrão (MCP, rede, subagentes); D = incompatível com o Architect (nunca listado); E = só mutável/operacional (nunca listado). O overlay vence a regra automática; ids ausentes do catálogo geram aviso.",
+  "classes": {
+    "ecc:agent:code-architect": {
+      "class": "B",
+      "note": "desenho por análise do código existente; o Implementer aplica"
+    },
+    "ecc:agent:code-reviewer": {
+      "class": "B",
+      "note": "checklist para o brief do Reviewer; nunca invocado como Agent"
+    },
+    "ecc:agent:conversation-analyzer": {
+      "class": "D",
+      "note": "auxiliar do hookify (analisa conversas para gerar hooks); irmão das entradas D de hookify"
+    },
+    "ecc:agent:database-reviewer": {
+      "class": "B",
+      "note": "checklist de banco para o Reviewer"
+    },
+    "ecc:agent:doc-updater": {
+      "class": "B",
+      "note": "atualização de documentação pelo Implementer"
+    },
+    "ecc:agent:e2e-runner": {
+      "class": "B",
+      "note": "execução de E2E pelo Implementer (full)"
+    },
+    "ecc:agent:gan-evaluator": {
+      "class": "D",
+      "note": "loop gerador/avaliador"
+    },
+    "ecc:agent:pr-test-analyzer": {
+      "class": "B",
+      "note": "checklist de cobertura de testes para o Reviewer"
+    },
+    "ecc:agent:react-reviewer": {
+      "class": "B",
+      "note": "checklist por framework para o Reviewer"
+    },
+    "ecc:agent:refactor-cleaner": {
+      "class": "B",
+      "note": "limpeza de código morto pelo Implementer"
+    },
+    "ecc:agent:security-reviewer": {
+      "class": "B",
+      "note": "checklist de segurança para o Reviewer"
+    },
+    "ecc:agent:silent-failure-hunter": {
+      "class": "B",
+      "note": "checklist de falhas silenciosas para o Reviewer"
+    },
+    "ecc:agent:spec-miner": {
+      "class": "B",
+      "note": "extração de especificações do legado; útil em equivalência"
+    },
+    "ecc:agent:tdd-guide": {
+      "class": "B",
+      "note": "disciplina RED/GREEN para o Implementer"
+    },
+    "ecc:agent:typescript-reviewer": {
+      "class": "B",
+      "note": "checklist por linguagem para o Reviewer"
+    },
+    "ecc:command:aside": {
+      "class": "D",
+      "note": "utilitário de conversa"
+    },
+    "ecc:command:epic-claim": {
+      "class": "E",
+      "note": "sincroniza issues; operacional"
+    },
+    "ecc:command:epic-decompose": {
+      "class": "E",
+      "note": "sincroniza issues; operacional"
+    },
+    "ecc:command:epic-publish": {
+      "class": "E",
+      "note": "sincroniza issues; operacional"
+    },
+    "ecc:command:epic-review": {
+      "class": "E",
+      "note": "sincroniza issues; operacional"
+    },
+    "ecc:command:epic-sync": {
+      "class": "E",
+      "note": "sincroniza issues; operacional"
+    },
+    "ecc:command:epic-unblock": {
+      "class": "E",
+      "note": "sincroniza issues; operacional"
+    },
+    "ecc:command:epic-validate": {
+      "class": "E",
+      "note": "sincroniza issues; operacional"
+    },
+    "ecc:command:evolve": {
+      "class": "D",
+      "note": "memória"
+    },
+    "ecc:command:feature-dev": {
+      "class": "D",
+      "note": "executa implementação"
+    },
+    "ecc:command:gan-build": {
+      "class": "D",
+      "note": "loop gerador/avaliador"
+    },
+    "ecc:command:gan-design": {
+      "class": "D",
+      "note": "loop gerador/avaliador"
+    },
+    "ecc:command:hookify": {
+      "class": "D",
+      "note": "cria hooks"
+    },
+    "ecc:command:hookify-configure": {
+      "class": "D",
+      "note": "configura hooks"
+    },
+    "ecc:command:hookify-help": {
+      "class": "D",
+      "note": "ajuda de hooks"
+    },
+    "ecc:command:instinct-export": {
+      "class": "D",
+      "note": "memória (instincts)"
+    },
+    "ecc:command:instinct-import": {
+      "class": "D",
+      "note": "memória (instincts)"
+    },
+    "ecc:command:learn": {
+      "class": "D",
+      "note": "memória"
+    },
+    "ecc:command:learn-eval": {
+      "class": "D",
+      "note": "memória"
+    },
+    "ecc:command:loop-start": {
+      "class": "D",
+      "note": "loop autônomo"
+    },
+    "ecc:command:loop-status": {
+      "class": "D",
+      "note": "loop autônomo"
+    },
+    "ecc:command:multi-backend": {
+      "class": "D",
+      "note": "runtime multi-modelo externo"
+    },
+    "ecc:command:multi-execute": {
+      "class": "D",
+      "note": "runtime multi-modelo externo"
+    },
+    "ecc:command:multi-frontend": {
+      "class": "D",
+      "note": "runtime multi-modelo externo"
+    },
+    "ecc:command:multi-plan": {
+      "class": "D",
+      "note": "runtime multi-modelo externo"
+    },
+    "ecc:command:multi-workflow": {
+      "class": "D",
+      "note": "runtime multi-modelo externo"
+    },
+    "ecc:command:orch-add-feature": {
+      "class": "D",
+      "note": "orquestração que executa"
+    },
+    "ecc:command:orch-build-mvp": {
+      "class": "D",
+      "note": "orquestração que executa"
+    },
+    "ecc:command:orch-change-feature": {
+      "class": "D",
+      "note": "orquestração que executa"
+    },
+    "ecc:command:orch-fix-defect": {
+      "class": "D",
+      "note": "orquestração que executa"
+    },
+    "ecc:command:orch-refine-code": {
+      "class": "D",
+      "note": "orquestração que executa"
+    },
+    "ecc:command:plan-canvas": {
+      "class": "D",
+      "note": "servidor local"
+    },
+    "ecc:command:plan-prd": {
+      "class": "E",
+      "note": "grava PRD; só Implementer"
+    },
+    "ecc:command:pm2": {
+      "class": "E",
+      "note": "gera comandos de serviço; operacional"
+    },
+    "ecc:command:projects": {
+      "class": "D",
+      "note": "memória"
+    },
+    "ecc:command:promote": {
+      "class": "D",
+      "note": "memória"
+    },
+    "ecc:command:prp-implement": {
+      "class": "D",
+      "note": "executa um plano com validação; é o Implementer"
+    },
+    "ecc:command:prp-plan": {
+      "class": "E",
+      "note": "grava plano; só Implementer"
+    },
+    "ecc:command:prp-prd": {
+      "class": "E",
+      "note": "grava PRD; só Implementer"
+    },
+    "ecc:command:prune": {
+      "class": "D",
+      "note": "memória"
+    },
+    "ecc:command:resume-session": {
+      "class": "D",
+      "note": "estado de sessão em disco"
+    },
+    "ecc:command:review-pr": {
+      "class": "C",
+      "note": "orquestra subagentes de revisão; no Nimbalyst é uma sessão Reviewer"
+    },
+    "ecc:command:santa-loop": {
+      "class": "D",
+      "note": "loop adversarial com subagentes"
+    },
+    "ecc:command:save-session": {
+      "class": "D",
+      "note": "estado de sessão em disco"
+    },
+    "ecc:command:security-scan": {
+      "class": "D",
+      "note": "varre a configuração do Claude Code"
+    },
+    "ecc:command:token-card": {
+      "class": "D",
+      "note": "métrica local; fora do papel"
+    },
+    "ecc:command:update-codemaps": {
+      "class": "E",
+      "note": "gera mapas de código; só Implementer"
+    },
+    "ecc:command:update-docs": {
+      "class": "E",
+      "note": "sincroniza documentação; só Implementer"
+    },
+    "ecc:method:agents": {
+      "class": "D",
+      "note": "regras de orquestração do ECC conflitam com o Coordenador do Team Mode"
+    },
+    "ecc:method:code-review": {
+      "class": "A",
+      "note": "padrões de revisão; os comandos git citados são do Reviewer/Implementer"
+    },
+    "ecc:method:development-workflow": {
+      "class": "E",
+      "note": "prescreve commit e push; só como guia do Implementer"
+    },
+    "ecc:method:git-workflow": {
+      "class": "E",
+      "note": "só commit e PR; guia do Implementer"
+    },
+    "ecc:method:hooks": {
+      "class": "D",
+      "note": "hooks ficam desligados em read/review; não entram no manifesto"
+    },
+    "ecc:method:patterns": {
+      "class": "E",
+      "note": "manda clonar projetos de referência (rede e escrita)"
+    },
+    "ecc:method:performance": {
+      "class": "D",
+      "note": "orientação de escolha de modelo (Haiku/Sonnet) e de contexto; conflita com os padrões por papel do Team Mode"
+    },
+    "ecc:skill:agent-sort": {
+      "class": "D",
+      "note": "plano de instalação do ECC"
+    },
+    "ecc:skill:agentic-os": {
+      "class": "D",
+      "note": "sistema operacional multiagente persistente"
+    },
+    "ecc:skill:architecture-decision-records": {
+      "class": "A",
+      "note": "ADR entregue inline no manifesto, nunca como arquivo"
+    },
+    "ecc:skill:automation-audit-ops": {
+      "class": "D",
+      "note": "MCP não especificado"
+    },
+    "ecc:skill:autonomous-agent-harness": {
+      "class": "D",
+      "note": "agente autônomo com memória"
+    },
+    "ecc:skill:brand-discovery": {
+      "class": "D",
+      "note": "sessões de marca multi-sessão; fora do domínio"
+    },
+    "ecc:skill:claude-devfleet": {
+      "class": "D",
+      "note": "orquestração externa"
+    },
+    "ecc:skill:codebase-onboarding": {
+      "class": "A",
+      "note": "mapa de arquitetura; a escrita de CLAUDE.md é opcional e fica fora do papel"
+    },
+    "ecc:skill:config-gc": {
+      "class": "D",
+      "note": "altera configuração do Claude Code"
+    },
+    "ecc:skill:context-budget": {
+      "class": "D",
+      "note": "auditoria de contexto com MCP de vendor; fora do papel"
+    },
+    "ecc:skill:contract-first": {
+      "class": "A",
+      "note": "contrato como oráculo; os comandos citados são do executor"
+    },
+    "ecc:skill:council-multi-model": {
+      "class": "D",
+      "note": "envio a runtime externo"
+    },
+    "ecc:skill:ecc-recipes": {
+      "class": "D",
+      "note": "navegação do próprio ECC; o índice substitui"
+    },
+    "ecc:skill:gan-style-harness": {
+      "class": "D",
+      "note": "loop gerador/avaliador com subagentes e browser"
+    },
+    "ecc:skill:growth-log": {
+      "class": "D",
+      "note": "diário de crescimento; memória"
+    },
+    "ecc:skill:hookify-rules": {
+      "class": "D",
+      "note": "cria hooks"
+    },
+    "ecc:skill:ito-inference": {
+      "class": "C",
+      "note": "consulta serviço externo, como as skills irmãs ito-*"
+    },
+    "ecc:skill:knowledge-ops": {
+      "class": "D",
+      "note": "memória"
+    },
+    "ecc:skill:lead-intelligence": {
+      "class": "D",
+      "note": "pipeline de vendas; fora do domínio"
+    },
+    "ecc:skill:mcp-dependency-review": {
+      "class": "A",
+      "note": "revisão estática de configuração MCP; o MCP é o objeto da revisão, não um requisito"
+    },
+    "ecc:skill:operator-approval-loop": {
+      "class": "D",
+      "note": "ledger de aprovação em runtime externo"
+    },
+    "ecc:skill:orch-add-feature": {
+      "class": "D",
+      "note": "orquestração que executa"
+    },
+    "ecc:skill:orch-build-mvp": {
+      "class": "D",
+      "note": "orquestração que executa"
+    },
+    "ecc:skill:orch-change-feature": {
+      "class": "D",
+      "note": "orquestração que executa"
+    },
+    "ecc:skill:orch-fix-defect": {
+      "class": "D",
+      "note": "orquestração que executa"
+    },
+    "ecc:skill:orch-refine-code": {
+      "class": "D",
+      "note": "orquestração que executa"
+    },
+    "ecc:skill:plan-canvas": {
+      "class": "D",
+      "note": "servidor local e CLI externa"
+    },
+    "ecc:skill:plan-orchestrate": {
+      "class": "D",
+      "note": "decompõe plano em comandos ECC; orquestração própria"
+    },
+    "ecc:skill:production-audit": {
+      "class": "A",
+      "note": "checklist de prontidão; evidência local é lida, não produzida"
+    },
+    "ecc:skill:recursive-decision-ledger": {
+      "class": "E",
+      "note": "rollouts com escrita; só Implementer"
+    },
+    "ecc:skill:repo-scan": {
+      "class": "D",
+      "note": "instala skill externa por git clone"
+    },
+    "ecc:skill:santa-method": {
+      "class": "D",
+      "note": "dois revisores adversariais em subagentes; o Nimbalyst tem um Reviewer independente"
+    },
+    "ecc:skill:search-first": {
+      "class": "C",
+      "note": "pesquisa com subagente e MCP github; a árvore adotar/estender/construir vira pergunta ou mcpRecommended"
+    },
+    "ecc:skill:security-review": {
+      "class": "A",
+      "note": "checklist de segurança; o sinal de rede vem de exemplos de curl no texto, não de execução"
+    },
+    "ecc:skill:security-scan": {
+      "class": "D",
+      "note": "varre a configuração do Claude Code"
+    },
+    "ecc:skill:skill-scout": {
+      "class": "C",
+      "note": "busca em marketplaces e web"
+    },
+    "ecc:skill:skill-stocktake": {
+      "class": "D",
+      "note": "auditoria de skills do próprio ECC"
+    },
+    "ecc:skill:strategic-compact": {
+      "class": "D",
+      "note": "hook de compactação"
+    },
+    "ecc:skill:taste": {
+      "class": "D",
+      "note": "direção criativa de vídeo; fora do domínio"
+    },
+    "ecc:skill:tdd-workflow": {
+      "class": "A",
+      "note": "método RED/GREEN; os sinais de shell e rede são os comandos que o executor rodará, não o Architect"
+    },
+    "ecc:skill:team-agent-orchestration": {
+      "class": "D",
+      "note": "orquestração própria de squads"
+    },
+    "ecc:skill:team-builder": {
+      "class": "D",
+      "note": "monta squads de subagentes; orquestração própria"
+    },
+    "ecc:skill:workspace-surface-audit": {
+      "class": "D",
+      "note": "inventário de MCP e plugins; escreve"
+    },
+    "ecc:workflow:orch-review": {
+      "class": "D",
+      "note": "engine de orquestração própria"
+    }
+  }
+}

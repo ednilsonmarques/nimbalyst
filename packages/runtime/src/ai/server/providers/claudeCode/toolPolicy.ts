@@ -18,6 +18,7 @@ import {
   isExtensionServerConfigKey,
   type McpServerTopologyEntry,
 } from '../../services/mcpTopology';
+import type { TeamRole } from '../teamContext';
 
 // Internal Nimbalyst MCP tools that are auto-allowed (no permission prompt):
 // they are display-only or confirm within their own widget, and the SDK's
@@ -152,6 +153,41 @@ const OUTWARD_TOOLS: readonly string[] = ['PushNotification', 'DesignSync'];
 // CLI offers a per-session way to keep skill hooks from running, a restricted
 // child gets skill content only through its brief or system prompt.
 const SKILL_TOOLS: readonly string[] = ['Skill'];
+
+/**
+ * Tools the `architect` team member loses on top of its (forced) `read` scope.
+ * The architect prepares work and never asks the user, delegates or creates
+ * tasks, and the contract is technical, not a prompt instruction:
+ *
+ * - AskUserQuestion (native) and the first-party AskUserQuestion /
+ *   PromptForUserInput: a question from a member becomes an `ACTION REQUIRED`
+ *   for its coordinator, which inverts the authority. The architect writes its
+ *   doubts in the manifest's openQuestions instead.
+ * - EnterPlanMode / ExitPlanMode: ExitPlanMode is an approval prompt to the
+ *   user; the architect's plan is the manifest text, never a plan-mode plan.
+ * - TaskCreate / TaskUpdate: the session task list the CLI shares with Agent
+ *   Teams teammates; TaskCreate creates a work item and TaskUpdate can assign
+ *   an `owner` (SDK 0.3.284 TaskUpdateInput). Creating or assigning work is
+ *   delegation in form, even with teammates denied. TaskList and TaskGet
+ *   (reads) stay, and so does TodoWrite on paper, although CLI 2.1.284 does
+ *   not expose it next to the task tools (probe P8); Agent (alias Task),
+ *   Workflow and SendMessage are already denied by the read scope.
+ *
+ * Applied by `mergeToolScopeDisallowedTools` (SDK `disallowedTools`) and by
+ * `isToolDeniedForScope` (the PreToolUse guard) whenever the session's team
+ * role is `architect`, whatever its scope says. The probe mirrors the native
+ * names as ARCHITECT_DENY_NATIVE (two-way unit test).
+ */
+export const ARCHITECT_DENIED_TOOLS: readonly string[] = [
+  'AskUserQuestion', 'EnterPlanMode', 'ExitPlanMode', 'TaskCreate', 'TaskUpdate',
+  mcpTool(MCP_CORE, 'AskUserQuestion'),
+  mcpTool(MCP_CORE, 'PromptForUserInput'),
+];
+
+/** Extra denials a team role carries on top of its scope; only the architect has any. */
+export function teamRoleDeniedTools(role: TeamRole | null | undefined): readonly string[] {
+  return role === 'architect' ? ARCHITECT_DENIED_TOOLS : [];
+}
 
 /**
  * The `settings` overlay sdkOptionsBuilder passes for read/review children.
@@ -303,14 +339,16 @@ export function toolScopeDeniedTools(scope: ChildToolScope): readonly string[] {
  * Merge the scope's denied tools into existing SDK `disallowedTools` without
  * dropping prior entries. For `read` and `review`, per-extension Nimbalyst
  * servers (`nimbalyst-<ext>`, dynamic, not in the topology) are denied whole,
- * since their tools are not known to be read-only.
+ * since their tools are not known to be read-only. A team role adds its own
+ * denials (`teamRoleDeniedTools`) regardless of the scope.
  */
 export function mergeToolScopeDisallowedTools(
   existing: readonly string[] | undefined,
   scope: ChildToolScope,
   mcpServerKeys: readonly string[] = [],
+  role: TeamRole | null = null,
 ): string[] | undefined {
-  const denied = [...toolScopeDeniedTools(scope)];
+  const denied = [...toolScopeDeniedTools(scope), ...teamRoleDeniedTools(role)];
   if (scope === 'read' || scope === 'review') {
     denied.push(...mcpServerKeys.filter(isExtensionServerConfigKey).map((key) => `mcp__${key}`));
   }
@@ -331,19 +369,23 @@ export function isReadScopeAllowedMcpTool(toolName: string, scope: 'read' | 'rev
 
 /**
  * Call-time check for the PreToolUse guard: true when `toolName` must not run
- * under `scope`. Mirrors `mergeToolScopeDisallowedTools`, and for read/review
- * fails closed twice over: a native tool must be in
+ * under `scope` (and `role`). Mirrors `mergeToolScopeDisallowedTools`, and for
+ * read/review fails closed twice over: a native tool must be in
  * `READ_SCOPE_ALLOWED_NATIVE_TOOLS` and an `mcp__` tool in the first-party read
  * allowlist. `full` denies nothing; `write` denies only what its list says, so
- * user MCP and unlisted natives stay reachable there as today.
+ * user MCP and unlisted natives stay reachable there as today. The role's own
+ * denials (the architect's) apply before the scope, so an architect with a
+ * misconfigured scope still cannot ask or delegate.
  */
 export function isToolDeniedForScope(
   scope: ChildToolScope,
   toolName: string,
   mcpServerKeys: readonly string[] = [],
+  role: TeamRole | null = null,
 ): boolean {
+  if (teamRoleDeniedTools(role).includes(toolName)) return true;
   if (scope === 'full') return false;
-  const denied = new Set(mergeToolScopeDisallowedTools(undefined, scope, mcpServerKeys) ?? []);
+  const denied = new Set(mergeToolScopeDisallowedTools(undefined, scope, mcpServerKeys, role) ?? []);
   if (denied.has(toolName)) return true;
   if (!toolName.startsWith('mcp__')) {
     // Natives: read/review admit only the allowlist (fail-closed for a tool

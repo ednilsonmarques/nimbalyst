@@ -8,7 +8,7 @@
 
 import type { SessionMeta } from '@nimbalyst/runtime';
 
-export const TEAM_MEMBER_ROLES = ['explorer', 'implementer', 'reviewer', 'other'] as const;
+export const TEAM_MEMBER_ROLES = ['explorer', 'implementer', 'reviewer', 'architect', 'other'] as const;
 export type TeamMemberRole = (typeof TEAM_MEMBER_ROLES)[number];
 
 /** A session created through "New Team mode session", with or without members. */

@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import {
+  ARCHITECT_DENY_NATIVE,
   READ_DENY_NATIVE,
   SHIPPED_RESTRICTED_SETTINGS,
   analyzeTranscript,
@@ -34,7 +35,9 @@ test('READ_DENY_NATIVE equals the native deny lists of toolPolicy.ts, in both di
   const namesIn = (constName) => {
     const match = new RegExp(`const ${constName}: readonly string\\[\\] = \\[([\\s\\S]*?)\\];`).exec(source);
     assert.ok(match, `${constName} not found in toolPolicy.ts`);
-    return [...match[1].matchAll(/'([A-Za-z]+)'/g)].map((m) => m[1]);
+    // mcpTool(SERVER, 'name') entries are MCP, whatever their spelling.
+    const natives = match[1].replace(/mcpTool\([^)]*\)/g, '');
+    return [...natives.matchAll(/'([A-Za-z]+)'/g)].map((m) => m[1]);
   };
   const policy = new Set([
     ...namesIn('FILE_WRITE_TOOLS'), ...namesIn('RUN_TOOLS'), ...namesIn('DELEGATION_TOOLS'),
@@ -42,6 +45,8 @@ test('READ_DENY_NATIVE equals the native deny lists of toolPolicy.ts, in both di
     ...namesIn('SKILL_TOOLS'),
   ]);
   assert.deepEqual([...READ_DENY_NATIVE].sort(), [...policy].sort());
+  // The architect's extra natives, both ways as well (the MCP names of that list have no SDK-only counterpart).
+  assert.deepEqual([...ARCHITECT_DENY_NATIVE].sort(), namesIn('ARCHITECT_DENIED_TOOLS').sort());
 });
 
 test('SHIPPED_RESTRICTED_SETTINGS equals RESTRICTED_SCOPE_SETTINGS of toolPolicy.ts, key for key', () => {
@@ -56,6 +61,7 @@ test('SHIPPED_RESTRICTED_SETTINGS equals RESTRICTED_SCOPE_SETTINGS of toolPolicy
 test('expandCases adds the variants of a base case once', () => {
   assert.deepEqual(expandCases(['P1', 'P2', 'P4', 'P5']), ['P1', 'P1b', 'P2', 'P2b', 'P2c', 'P4', 'P4b', 'P5']);
   assert.deepEqual(expandCases(['P6', 'P7']), ['P6', 'P6b', 'P6c', 'P6d', 'P6e', 'P6f', 'P7', 'P7b', 'P7c', 'P7d']);
+  assert.deepEqual(expandCases(['P8']), ['P8']);
   assert.deepEqual(expandCases(['P1b', 'P1']), ['P1b', 'P1']);
 });
 
@@ -228,11 +234,48 @@ test('P5 fails when a web tool ran or is still listed', () => {
   assert.equal(verdictForCase('P5', facts([init(['Read', 'WebSearch']), done()])).verdict, 'FAIL');
 });
 
-test('overallDecision needs P1 and P1b, keeps Agent denied on any failed gating case, and reports the skill, slash and hook evidence', () => {
-  const allPass = ['P1', 'P1b', 'P2', 'P3', 'P4', 'P5', 'P6', 'P6d', 'P6f', 'P7'].map((caseId) => ({ caseId, verdict: 'PASS', reasons: [] }));
-  assert.deepEqual(overallDecision(allPass), { agentSafeForSubagents: true, skillDenialHolds: true, skillWouldEscape: false, slashPromptHarmless: true, externalHooksBlocked: true, failedCases: [] });
+test('P8 passes only when nothing the architect loses ran or was listed; the deny list beats allowedTools', () => {
+  const refused = (name, id) => [use(name, id), result(id, true, `No such tool available: ${name}. ${name} is disabled for this session, in subagents as well as here.`)];
+  const clean = [
+    init(['Read', 'Glob', 'Grep', 'TaskList', 'TaskGet', 'TodoWrite', 'ToolSearch']),
+    ...refused('AskUserQuestion', 'tu1'), ...refused('EnterPlanMode', 'tu2'), ...refused('ExitPlanMode', 'tu2b'), ...refused('TaskCreate', 'tu3'), ...refused('TaskUpdate', 'tu4'),
+    use('TaskList', 'tu5'), result('tu5', false, 'No tasks'), use('TodoWrite', 'tu6'), result('tu6', false, 'Todos updated'),
+    ...refused('Agent', 'tu7'), ...refused('Workflow', 'tu8'), ...refused('SendMessage', 'tu9'),
+    files([]), done(),
+  ];
+  const p8 = verdictForCase('P8', facts(clean));
+  assert.equal(p8.verdict, 'PASS');
+  assert.match(p8.reasons.join(' '), /TaskList ran \(bookkeeping stays allowed\)/);
+  assert.match(p8.reasons.join(' '), /bookkeeping tools listed in init: TaskList, TaskGet, TodoWrite/);
+  // allowedTools must not resurrect a denied task tool in the init list.
+  assert.match(verdictForCase('P8', facts([init(['Read', 'TaskCreate']), files([]), done()])).reasons.join(' '), /still listed in system:init tools: TaskCreate/);
+  assert.match(verdictForCase('P8', facts([init(['Read', 'Task']), files([]), done()])).reasons.join(' '), /still listed in system:init tools: Task/);
+  // A question that went through, a task created or assigned, an agent spawned: all escapes.
+  for (const name of ['AskUserQuestion', 'ExitPlanMode', 'TaskCreate', 'TaskUpdate', 'Agent', 'Workflow', 'SendMessage']) {
+    const ran = [init(['Read']), use(name, 'tu1'), result('tu1', false, 'ok'), files([]), done()];
+    assert.equal(verdictForCase('P8', facts(ran)).verdict, 'FAIL', name);
+  }
+  assert.equal(verdictForCase('P8', facts([init(['Read']), files(['probe.txt']), done()])).verdict, 'FAIL');
+  // Incomplete runs never pass; neither does a run in which nothing denied was even attempted.
+  assert.equal(verdictForCase('P8', facts([files([]), done()])).verdict, 'FAIL');
+  const noAttempt = verdictForCase('P8', facts([init(['Read']), files([]), done()]));
+  assert.equal(noAttempt.verdict, 'FAIL');
+  assert.match(noAttempt.reasons.join(' '), /no attempt recorded for AskUserQuestion, EnterPlanMode, ExitPlanMode, TaskCreate, TaskUpdate/);
+  // Trying some denied tools but not every architect denial is still inconclusive.
+  const partial = verdictForCase('P8', facts([init(['Read']), ...refused('Agent', 'tu1'), ...refused('AskUserQuestion', 'tu2'), files([]), done()]));
+  assert.equal(partial.verdict, 'FAIL');
+  assert.match(partial.reasons.join(' '), /no attempt recorded for EnterPlanMode, ExitPlanMode, TaskCreate, TaskUpdate/);
+  // Anything from the read list showing up in init fails too (allowedTools must not resurrect it).
+  assert.match(verdictForCase('P8', facts([init(['Read', 'Bash']), ...refused('Agent', 'tu1'), files([]), done()])).reasons.join(' '), /still listed in system:init tools: Bash/);
+});
+
+test('overallDecision needs P1 and P1b, keeps Agent denied on any failed gating case, and reports the skill, slash, hook and architect evidence', () => {
+  const allPass = ['P1', 'P1b', 'P2', 'P3', 'P4', 'P5', 'P6', 'P6d', 'P6f', 'P7', 'P8'].map((caseId) => ({ caseId, verdict: 'PASS', reasons: [] }));
+  assert.deepEqual(overallDecision(allPass), { agentSafeForSubagents: true, skillDenialHolds: true, skillWouldEscape: false, slashPromptHarmless: true, externalHooksBlocked: true, architectProfileHolds: true, failedCases: [] });
   const p2Fail = allPass.map((r) => (r.caseId === 'P2' ? { ...r, verdict: 'FAIL' } : r));
-  assert.deepEqual(overallDecision(p2Fail), { agentSafeForSubagents: false, skillDenialHolds: false, skillWouldEscape: false, slashPromptHarmless: true, externalHooksBlocked: true, failedCases: ['P2'] });
+  assert.deepEqual(overallDecision(p2Fail), { agentSafeForSubagents: false, skillDenialHolds: false, skillWouldEscape: false, slashPromptHarmless: true, externalHooksBlocked: true, architectProfileHolds: true, failedCases: ['P2'] });
+  assert.equal(overallDecision(allPass.filter((r) => r.caseId !== 'P8')).architectProfileHolds, false);
+  assert.equal(overallDecision(allPass.map((r) => (r.caseId === 'P8' ? { ...r, verdict: 'FAIL' } : r))).architectProfileHolds, false);
   const p7Fail = allPass.map((r) => (r.caseId === 'P7' ? { ...r, verdict: 'FAIL' } : r));
   assert.equal(overallDecision(p7Fail).externalHooksBlocked, false);
   assert.deepEqual(overallDecision(p7Fail).failedCases, ['P7']);

@@ -39,6 +39,7 @@ import { ClaudeCodeTranscriptAdapter } from './ClaudeCodeTranscriptAdapter';
 import { buildSdkOptions, type BuildSdkOptionsDeps, type BuildSdkOptionsResult } from './sdkOptionsBuilder';
 import { SDK_NATIVE_TOOLS, mergeToolScopeDisallowedTools, type ChildToolScope } from './toolPolicy';
 import { neutralizeRestrictedPrompt } from './restrictedPrompt';
+import type { TeamRole } from '../teamContext';
 import type { TurnState } from './turnState';
 
 /** Text attachments above this go to a file on disk instead of inline in the prompt. */
@@ -186,6 +187,8 @@ export interface TurnQueryHost {
   getWorkflowPreset(sessionId?: string): Promise<MetaAgentWorkflowPreset>;
   /** Frozen `metadata.toolScope` of a child session; 'full' when unrestricted. */
   getToolScope(sessionId?: string): Promise<ChildToolScope>;
+  /** Frozen team role of a child session, for role-specific tool denials (the architect's); null outside a team. */
+  getToolPolicyRole(sessionId?: string): Promise<TeamRole | null>;
   /** Resolves and freezes the git snapshot; must be awaited before buildSystemPrompt (#1177). */
   ensureGitContext(workspacePath?: string): Promise<void>;
   /** Resolves and freezes `metadata.sessionDirective`; must be awaited before buildSystemPrompt. */
@@ -277,6 +280,9 @@ export async function buildTurnQuery(
   // query() runs. The meta-agent has its own profile and no child scope.
   const isMetaAgent = (await host.getAgentRole(sessionId)) === 'meta-agent';
   const toolScope: ChildToolScope | undefined = isMetaAgent ? undefined : await host.getToolScope(sessionId);
+  // The team role adds the architect's own denials (no questions to the user,
+  // no task creation or assignment) on top of the scope; same frozen read.
+  const teamRole: TeamRole | null = isMetaAgent ? null : await host.getToolPolicyRole(sessionId);
   const restrictedPrompt = neutralizeRestrictedPrompt(state.message, toolScope);
   if (restrictedPrompt.neutralized) {
     console.warn(`[CLAUDE-CODE] Slash command delivered as plain text to a ${toolScope} child (session ${sessionId})`);
@@ -421,6 +427,7 @@ export async function buildTurnQuery(
       (options as any).disallowedTools,
       toolScope ?? 'full',
       Object.keys((options as any).mcpServers ?? {}),
+      teamRole,
     );
     if (disallowedTools) (options as any).disallowedTools = disallowedTools;
   }

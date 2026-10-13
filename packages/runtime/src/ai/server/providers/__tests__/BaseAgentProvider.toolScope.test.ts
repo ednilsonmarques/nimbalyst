@@ -3,14 +3,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AISessionsRepository } from '../../../../storage/repositories/AISessionsRepository';
 import { BaseAgentProvider } from '../BaseAgentProvider';
 
-// getToolScope only touches its own frozen map, so a bare receiver is enough.
-const getToolScope = (BaseAgentProvider.prototype as any).getToolScope as (
-  this: { frozenToolScopes: Map<string, Promise<string>> },
-  sessionId?: string,
-) => Promise<string>;
+// getToolScope and getToolPolicyRole only touch the provider's own frozen
+// policy map (through getToolPolicy on the prototype), so a prototype-backed
+// receiver carrying that map is enough.
+type Receiver = { frozenToolPolicies: Map<string, Promise<{ scope: string; role: string | null }>> };
 
-function receiver() {
-  return { frozenToolScopes: new Map<string, Promise<string>>() };
+const getToolScope = (BaseAgentProvider.prototype as any).getToolScope as (this: Receiver, sessionId?: string) => Promise<string>;
+const getToolPolicyRole = (BaseAgentProvider.prototype as any).getToolPolicyRole as (this: Receiver, sessionId?: string) => Promise<string | null>;
+
+function receiver(): Receiver {
+  const self = Object.create(BaseAgentProvider.prototype) as Receiver;
+  self.frozenToolPolicies = new Map();
+  return self;
 }
 
 const get = vi.fn();
@@ -61,9 +65,58 @@ describe('BaseAgentProvider.getToolScope', () => {
     const self = receiver();
     get.mockRejectedValue(new Error('db down'));
     await expect(getToolScope.call(self, 'child-3')).rejects.toThrow(/turn was not run/);
-    expect(self.frozenToolScopes.has('child-3')).toBe(false);
+    expect(self.frozenToolPolicies.has('child-3')).toBe(false);
 
     get.mockResolvedValue({ metadata: { toolScope: 'read' } });
     expect(await getToolScope.call(self, 'child-3')).toBe('read');
+  });
+});
+
+describe('BaseAgentProvider.getToolPolicyRole (Phase 1A: the team role rides the same frozen read)', () => {
+  beforeEach(() => {
+    get.mockReset();
+    AISessionsRepository.setStore({ get } as never);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    AISessionsRepository.clearStore();
+    vi.restoreAllMocks();
+  });
+
+  it('reads the scope and the team role from one row and freezes both', async () => {
+    get.mockResolvedValue({ agentRole: 'standard', metadata: { toolScope: 'read', teamChild: { role: 'architect', rootSessionId: 'r', depth: 1 } } });
+    const self = receiver();
+    expect(await getToolScope.call(self, 'arch')).toBe('read');
+    expect(await getToolPolicyRole.call(self, 'arch')).toBe('architect');
+    get.mockResolvedValue({ agentRole: 'standard', metadata: { toolScope: 'full', teamChild: { role: 'explorer', rootSessionId: 'r', depth: 1 } } });
+    expect(await getToolPolicyRole.call(self, 'arch')).toBe('architect');
+    expect(await getToolScope.call(self, 'arch')).toBe('read');
+    expect(get).toHaveBeenCalledTimes(1);
+  });
+
+  it('is null for a normal session, a team root, a malformed teamChild and a meta-agent', async () => {
+    get.mockResolvedValue({ agentRole: 'standard', metadata: {} });
+    expect(await getToolPolicyRole.call(receiver(), 'plain')).toBeNull();
+    get.mockResolvedValue({ agentRole: 'standard', metadata: { teamMode: true } });
+    expect(await getToolPolicyRole.call(receiver(), 'root')).toBeNull();
+    get.mockResolvedValue({ agentRole: 'standard', metadata: { teamChild: { role: 'boss', rootSessionId: 'r', depth: 1 } } });
+    expect(await getToolPolicyRole.call(receiver(), 'junk')).toBeNull();
+    get.mockResolvedValue({ agentRole: 'meta-agent', metadata: { teamChild: { role: 'architect', rootSessionId: 'r', depth: 1 } } });
+    expect(await getToolPolicyRole.call(receiver(), 'meta')).toBeNull();
+    expect(await getToolPolicyRole.call(receiver(), undefined)).toBeNull();
+  });
+
+  it('is null without a session store, as the scope is full', async () => {
+    AISessionsRepository.clearStore();
+    expect(await getToolPolicyRole.call(receiver(), 'headless')).toBeNull();
+  });
+
+  it('fails closed with the scope: a store that cannot be read rejects the turn and freezes nothing', async () => {
+    const self = receiver();
+    get.mockRejectedValue(new Error('db down'));
+    await expect(getToolPolicyRole.call(self, 'child-4')).rejects.toThrow(/turn was not run/);
+    expect(self.frozenToolPolicies.has('child-4')).toBe(false);
+    get.mockResolvedValue({ agentRole: 'standard', metadata: { toolScope: 'read', teamChild: { role: 'architect', rootSessionId: 'r', depth: 1 } } });
+    expect(await getToolPolicyRole.call(self, 'child-4')).toBe('architect');
   });
 });

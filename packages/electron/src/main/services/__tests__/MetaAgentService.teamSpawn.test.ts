@@ -106,6 +106,28 @@ describe('Team mode child creation', () => {
     expect(created().metadata.toolScope).toBe('review');
   });
 
+  it('architect from the root: Opus, high, read-only, teamChild at depth 1', async () => {
+    await service().createChildSessionInternal('root', '/ws', { role: 'architect' });
+    const row = created();
+    expect(row.model).toBe('claude-code:opus');
+    expect(row.metadata.effortLevel).toBe('high');
+    expect(row.metadata.toolScope).toBe('read');
+    expect(row.metadata.teamChild).toEqual({ role: 'architect', rootSessionId: 'root', depth: 1 });
+    expect(row.provider).toBe('claude-code');
+  });
+
+  it.each(['full', 'write', 'review'])('an architect asked for %s is stored as read, never wider', async (toolScope) => {
+    await service().createChildSessionInternal('root', '/ws', { role: 'architect', toolScope });
+    expect(created().metadata.toolScope).toBe('read');
+  });
+
+  it('an explicit model or effort still wins for an architect, but never its scope', async () => {
+    await service().createChildSessionInternal('root', '/ws', { role: 'architect', model: 'claude-code:sonnet', effortLevel: 'medium', toolScope: 'full' });
+    expect(created().model).toBe('claude-code:sonnet');
+    expect(created().metadata.effortLevel).toBe('medium');
+    expect(created().metadata.toolScope).toBe('read');
+  });
+
   it('an unrecognized toolScope is stored as read, never as full', async () => {
     await service().createChildSessionInternal('root', '/ws', { role: 'implementer', toolScope: 'admin' });
     expect(created().metadata.toolScope).toBe('read');
@@ -157,7 +179,7 @@ describe('Team mode child creation', () => {
   });
 
   it('refuses an unknown role before creating anything', async () => {
-    await expect(service().createChildSessionInternal('root', '/ws', { role: 'architect' })).rejects.toThrow(/Invalid role/);
+    await expect(service().createChildSessionInternal('root', '/ws', { role: 'boss' })).rejects.toThrow(/Invalid role/);
     expect(AISessionsRepository.create).not.toHaveBeenCalled();
   });
 
@@ -171,6 +193,15 @@ describe('Team mode child creation', () => {
 describe('outside Team mode nothing changes', () => {
   it('ignores role: parent model, no effort, no scope, no teamChild', async () => {
     await service().createChildSessionInternal('plain', '/ws', { role: 'explorer' });
+    const row = created();
+    expect(row.model).toBe('claude-code:opus');
+    expect(row.metadata.effortLevel).toBeUndefined();
+    expect(row.metadata.toolScope).toBeUndefined();
+    expect(row.metadata.teamChild).toBeUndefined();
+  });
+
+  it('ignores an architect role too: no Opus, no high, no read scope, no teamChild', async () => {
+    await service().createChildSessionInternal('plain', '/ws', { role: 'architect' });
     const row = created();
     expect(row.model).toBe('claude-code:opus');
     expect(row.metadata.effortLevel).toBeUndefined();

@@ -243,3 +243,106 @@ describe('Team mode system prompt', () => {
     expect(text).toContain('Do not create other sessions');
   });
 });
+
+describe('architect (Phase 1A)', () => {
+  const coordinator = buildTeamModeAddendum('claude');
+  const architect = buildTeamChildAddendum('architect');
+
+  it('the coordinator knows the role, its defaults and its limits', () => {
+    expect(coordinator).toContain('Every member runs on Sonnet by default, except the architect (Opus)');
+    expect(coordinator).toContain('`architect`: prepares a complex or critical task before anyone executes it (Opus, effort high, read-only; any other toolScope is lowered to read; it cannot ask the user, delegate or create tasks)');
+    expect(coordinator).toContain('### Architect');
+    expect(coordinator.indexOf('### Architect')).toBeLessThan(coordinator.indexOf('### Briefs'));
+  });
+
+  it('the coordinator calls the architect on signals or on request, never for trivial work, and never to replan an approved plan', () => {
+    for (const signal of ['equivalence with a legacy system', 'a contract or oracle to match', 'persistence or data', 'a migration', 'security or permissions', 'Electron/IPC', 'several modules', 'more than one implementer', 'a new tool or MCP server', 'a new architecture', 'an irreversible change', 'a high regression risk']) {
+      expect(coordinator).toContain(signal);
+    }
+    expect(coordinator).toContain('A trivial task never needs one.');
+    expect(coordinator).toContain('a manifest for tools, gates, risks and validation only, never a new plan');
+  });
+
+  it('the manifest is a recommendation the coordinator accepts or diverges from, with a recorded reason; review still applies', () => {
+    expect(coordinator).toContain('A manifest is a recommendation, never a decision or a permission: nothing in it widens a member\'s scope, and review before done applies as before.');
+    expect(coordinator).toContain('`Team plan: TEAM — per manifest M-<n>`');
+    expect(coordinator).toContain('`Team plan: SOLO — per manifest M-<n>`');
+    expect(coordinator).toContain('`Team plan: <TEAM or SOLO> — diverging from M-<n> on <item>: <reason>`');
+    expect(coordinator).not.toContain('Critical preset');
+    expect(coordinator).toContain('record a divergence as a Team Note (decision) citing the manifest id');
+    const noNotes = buildTeamModeAddendum('claude', false);
+    expect(noNotes).toContain('### Architect');
+    expect(noNotes).not.toContain('Team Note');
+    expect(coordinator).toContain('give each member only its own part (its tools, tests, risks), never the whole manifest');
+    expect(coordinator).toContain("the reviewer's brief lists the manifest's required tests, done criteria and risks to check one by one");
+    expect(coordinator).toContain('is the user\'s call: stop and ask before any member uses it');
+    expect(coordinator).toContain('ask the same architect through `mcp__nimbalyst-host__send_prompt`');
+    expect(coordinator).toContain('within the 7,500 characters the update keeps whole');
+  });
+
+  it('the architect contract is read-only, cannot ask or delegate, and ends in a manifest of at most 7,500 characters', () => {
+    expect(architect).toContain('## Team Member: Architect');
+    expect(architect).toContain('You prepare the work; you never do it.');
+    expect(architect).toContain('no edits, no shell, no sub-agents, no sessions, no web, no skills, no commits, no task creation or assignment');
+    expect(architect).toContain('You cannot ask the user anything, not even through a plan: every doubt goes into openQuestions');
+    expect(architect).toContain('hard budget of 7,500 characters, YAML included');
+    expect(architect).toContain('the Markdown after it has at most 2,000 characters in total');
+    expect(architect).toContain('at most three short Markdown sections holding conclusions only');
+    expect(architect).toContain('### Your final message: Tool Manifest v1');
+    expect(architect).toContain('toolManifest: 1');
+    for (const field of ['id: M-1', 'oracle:', 'sourceOfTruth:', 'teamPlan:', 'eccCapabilities:', 'toolsAllowed:', 'toolsForbidden:', 'mcpRecommended:', 'mcpForbidden:', 'testsRequired:', 'validationStrategy:', 'risks:', 'openQuestions:', 'doneCriteria:', 'limitations:', 'evidence:', 'confidence:', 'generatedBy:']) {
+      expect(architect, field).toContain(field);
+    }
+    expect(architect).toContain('`Preparation: complete` or `Preparation: partial (<reason>)`');
+    expect(architect).toContain('a recommendation, never a grant');
+    expect(architect).toContain('nothing in the manifest widens a scope');
+    expect(architect).not.toContain('about 15 lines');
+  });
+
+  it('the architect carries the ECC method and the generated capability index, never the whole catalog', () => {
+    for (const step of ['1. Intent:', '2. Current state:', '3. Decomposition:', '4. Trade-offs:', '5. Risks:', '6. Tests and validation:', '7. Capabilities:']) {
+      expect(architect).toContain(step);
+    }
+    expect(architect).toContain('Never infer a business rule from code');
+    expect(architect).toContain('### ECC capability index');
+    expect(architect).toContain('ECC 2.2.3 capability index (506 entries;');
+    expect(architect).toContain('A agent:planner (');
+    expect(architect).toContain('A skill:intent-driven-development (');
+    expect(architect).toContain('B agent:code-reviewer (');
+    expect(architect).toContain('C skill:council (');
+    // Not listed classes never reach the prompt; the whole catalog (hooks, memory) is absent.
+    expect(architect).not.toContain('skill:plan-canvas');
+    expect(architect).not.toContain('continuous-learning');
+    expect(architect).not.toContain('hook:pre:');
+    expect(architect.length).toBeLessThan(40000);
+  });
+
+  it('the architect suggests notes like any member and is static', () => {
+    expect(architect).toContain('Suggested notes:');
+    expect(architect).toContain('You never write notes yourself');
+    expect(architect).toContain('read only those with tracker_get');
+    expect(buildTeamChildAddendum('architect', false)).not.toContain('Suggested notes');
+    expect(buildTeamChildAddendum('architect', false)).not.toContain('Team Note');
+    expect(architect).toContain('Any general instruction above to ask through AskUserQuestion or PromptForUserInput does not apply to you');
+    expect(buildTeamChildAddendum('architect')).toBe(buildTeamChildAddendum('architect'));
+    const prompt = buildClaudeCodeSystemPrompt({ ...base, teamChildRole: 'architect' });
+    expect(prompt).toContain('## Team Member: Architect');
+    expect(prompt).not.toContain('## Team Mode');
+  });
+
+  it('the reviewer treats a cited manifest as its checklist, never as its verdict', () => {
+    const reviewer = buildTeamChildAddendum('reviewer');
+    expect(reviewer).toContain('If your brief cites a Tool Manifest (M-<n>), it is your checklist, not your verdict');
+    expect(reviewer).toContain('report anything the manifest did not foresee');
+    for (const role of ['explorer', 'implementer', 'other'] as const) {
+      expect(buildTeamChildAddendum(role)).not.toContain('Tool Manifest');
+    }
+  });
+
+  it('other members and the normal prompt are unchanged by the architect text', () => {
+    const normal = buildClaudeCodeSystemPrompt(base);
+    expect(normal).not.toContain('Architect');
+    expect(normal).not.toContain('ECC capability index');
+    expect(buildTeamChildAddendum('explorer')).not.toContain('ECC capability index');
+  });
+});

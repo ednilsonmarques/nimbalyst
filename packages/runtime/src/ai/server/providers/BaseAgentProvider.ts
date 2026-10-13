@@ -19,7 +19,7 @@ import { AISessionsRepository } from '../../../storage/repositories/AISessionsRe
 import { hasSessionStore } from '../../adapters/sessionStore';
 import { FrozenSessionDirectives } from './sessionDirective';
 import { resolveChildToolScope, type ChildToolScope } from './claudeCode/toolPolicy';
-import { NO_TEAM, resolveTeamContext, type TeamContext } from './teamContext';
+import { NO_TEAM, resolveTeamContext, type TeamContext, type TeamRole } from './teamContext';
 import type { MetaAgentWorkflowPreset } from '../../prompt';
 import {
   ProviderPermissionMixin,
@@ -343,39 +343,62 @@ export abstract class BaseAgentProvider extends BaseAIProvider {
     return live;
   }
 
-  private readonly frozenToolScopes = new Map<string, Promise<ChildToolScope>>();
+  /** The tool policy of a session: its scope and the team role that may add denials. */
+  private readonly frozenToolPolicies = new Map<string, Promise<{ scope: ChildToolScope; role: TeamRole | null }>>();
 
   /**
-   * `metadata.toolScope` of a child session, read on its first turn and frozen.
-   * It is written once at child creation; freezing keeps the tool list (part of
-   * the cached prompt prefix) stable across turns.
+   * `metadata.toolScope` and `metadata.teamChild.role` of a child session, read
+   * together from its row on the first turn and frozen. Both are written once
+   * at child creation; freezing keeps the tool list (part of the cached prompt
+   * prefix) stable across turns.
    *
-   * Fail-closed: toolScope is a security restriction, and a session whose row
-   * cannot be read might be a restricted child. After one retry the read error
-   * is rethrown (and not frozen), so the turn fails before query() instead of
-   * running with full tools; the next turn reads again.
+   * Fail-closed: the scope and the role are security restrictions, and a
+   * session whose row cannot be read might be a restricted child. After one
+   * retry the read error is rethrown (and not frozen), so the turn fails before
+   * query() instead of running with full tools; the next turn reads again.
    */
-  protected getToolScope(sessionId?: string): Promise<ChildToolScope> {
-    // No session store means no persisted metadata at all, so no child scope
-    // can exist (headless/test runtimes). A store that fails to read is
-    // different: that is where a restricted child could be hiding.
-    if (!sessionId || !hasSessionStore()) return Promise.resolve('full');
-    let scope = this.frozenToolScopes.get(sessionId);
-    if (!scope) {
+  private getToolPolicy(sessionId: string): Promise<{ scope: ChildToolScope; role: TeamRole | null }> {
+    let policy = this.frozenToolPolicies.get(sessionId);
+    if (!policy) {
       const read = () => AISessionsRepository.get(sessionId);
-      scope = read()
+      policy = read()
         .catch(read)
-        .then((session) => resolveChildToolScope((session?.metadata as Record<string, unknown> | undefined)?.toolScope))
+        .then((session) => {
+          const metadata = session?.metadata as Record<string, unknown> | undefined;
+          return {
+            scope: resolveChildToolScope(metadata?.toolScope),
+            role: resolveTeamContext(metadata, session?.agentRole).teamChild?.role ?? null,
+          };
+        })
         .catch((error: unknown): never => {
-          this.frozenToolScopes.delete(sessionId);
+          this.frozenToolPolicies.delete(sessionId);
           console.error(`[AGENT] Could not load tool scope for session ${sessionId}; refusing to run the turn unrestricted:`, error);
           throw new Error(
             'Could not verify this session\'s tool restrictions (session metadata unavailable), so the turn was not run. Try again.',
           );
         });
-      this.frozenToolScopes.set(sessionId, scope);
+      this.frozenToolPolicies.set(sessionId, policy);
     }
-    return scope;
+    return policy;
+  }
+
+  /** The frozen `metadata.toolScope` of a child session; `full` when unrestricted. See getToolPolicy. */
+  protected getToolScope(sessionId?: string): Promise<ChildToolScope> {
+    // No session store means no persisted metadata at all, so no child scope
+    // can exist (headless/test runtimes). A store that fails to read is
+    // different: that is where a restricted child could be hiding.
+    if (!sessionId || !hasSessionStore()) return Promise.resolve('full');
+    return this.getToolPolicy(sessionId).then((policy) => policy.scope);
+  }
+
+  /**
+   * The frozen team role of a child session for tool policy purposes (the
+   * architect's extra denials); null outside a team. Same read, same freeze
+   * and same fail-closed error as getToolScope.
+   */
+  protected getToolPolicyRole(sessionId?: string): Promise<TeamRole | null> {
+    if (!sessionId || !hasSessionStore()) return Promise.resolve(null);
+    return this.getToolPolicy(sessionId).then((policy) => policy.role);
   }
 
   private readonly frozenTeamContexts = new Map<string, Promise<TeamContext>>();

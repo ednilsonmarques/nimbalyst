@@ -1,7 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import {
+  TEAM_ARCHITECT_MODEL,
+  TEAM_LIMITS,
   buildTeamChild,
+  isTeamBudgetExhausted,
+  teamSpawnRefusal,
   resolveRequestedTeamRole,
   resolveTeamCaller,
   teamRoleDefaultEffort,
@@ -40,26 +44,31 @@ describe('resolveRequestedTeamRole', () => {
     expect(resolveRequestedTeamRole(undefined)).toBe('other');
     expect(resolveRequestedTeamRole('')).toBe('other');
     expect(resolveRequestedTeamRole('reviewer')).toBe('reviewer');
-    expect(() => resolveRequestedTeamRole('architect')).toThrow(/Invalid role "architect"/);
+    expect(resolveRequestedTeamRole('architect')).toBe('architect');
+    expect(() => resolveRequestedTeamRole('boss')).toThrow(/Invalid role "boss"/);
   });
 });
 
 describe('role defaults', () => {
-  it('model: every role defaults to Sonnet', () => {
+  it('model: every role defaults to Sonnet, except the architect (Opus)', () => {
     for (const role of ['explorer', 'implementer', 'reviewer', 'other'] as const) {
       expect(teamRoleDefaultModel(role)).toBe('claude-code:sonnet');
     }
+    expect(teamRoleDefaultModel('architect')).toBe('claude-code:opus');
+    expect(TEAM_ARCHITECT_MODEL).toBe('claude-code:opus');
   });
 
-  it('effort: reviewer high, every other role medium', () => {
+  it('effort: reviewer and architect high, every other role medium', () => {
     expect(teamRoleDefaultEffort('reviewer')).toBe('high');
+    expect(teamRoleDefaultEffort('architect')).toBe('high');
     expect(teamRoleDefaultEffort('explorer')).toBe('medium');
     expect(teamRoleDefaultEffort('implementer')).toBe('medium');
     expect(teamRoleDefaultEffort('other')).toBe('medium');
   });
 
-  it('tool scope: explorer read, reviewer review, implementer full, other left to the caller', () => {
+  it('tool scope: explorer and architect read, reviewer review, implementer full, other left to the caller', () => {
     expect(teamRoleDefaultToolScope('explorer')).toBe('read');
+    expect(teamRoleDefaultToolScope('architect')).toBe('read');
     expect(teamRoleDefaultToolScope('reviewer')).toBe('review');
     expect(teamRoleDefaultToolScope('implementer')).toBe('full');
     expect(teamRoleDefaultToolScope('other')).toBeUndefined();
@@ -79,6 +88,12 @@ describe('role defaults', () => {
         expect(resolveChildToolScopeRequest(requested, 'reviewer'), String(requested)).toBe('review');
       }
       expect(resolveChildToolScopeRequest('read', 'reviewer')).toBe('read');
+    });
+
+    it('an architect is always read: full, write, review, read, nothing or junk all store read', () => {
+      for (const requested of ['full', 'write', 'review', 'read', undefined, null, '', 'admin', 42]) {
+        expect(resolveChildToolScopeRequest(requested, 'architect'), String(requested)).toBe('read');
+      }
     });
 
     it('an explicit known scope wins for other roles; full means no restriction', () => {
@@ -168,5 +183,18 @@ describe('creation-only team metadata', () => {
     } finally {
       console.warn = warn;
     }
+  });
+});
+
+describe('architect and the team budget', () => {
+  it('counts like any other member: the budget and the active limit do not know roles', () => {
+    const team = { rootSessionId: 'root', depth: 0 };
+    // Seven members so far (an architect among them): the eighth is the last one allowed.
+    expect(teamSpawnRefusal(team, { total: 7, active: 1 })).toBeNull();
+    // Eight created, architect included: the checkpoint refuses the ninth whatever its role.
+    expect(isTeamBudgetExhausted({ total: TEAM_LIMITS.budget, active: 1 }, TEAM_LIMITS.budget)).toBe(true);
+    expect(teamSpawnRefusal(team, { total: TEAM_LIMITS.budget, active: 1 })).toMatch(/Team budget reached: this team has already created 8\/8 sessions/);
+    // An architect still thinking counts as active.
+    expect(teamSpawnRefusal(team, { total: 3, active: TEAM_LIMITS.maxActive })).toMatch(/3\/3 sessions are already active/);
   });
 });

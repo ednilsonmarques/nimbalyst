@@ -470,6 +470,9 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
       // at call time what the scope denies: a second barrier over SDK
       // `disallowedTools`. Without a session id no child scope can exist.
       getToolScope: sessionId ? () => this.getToolScope(sessionId) : undefined,
+      // The frozen team role, for the architect's extra denials (no questions
+      // to the user, no task creation or assignment). Same read as the scope.
+      getTeamRole: sessionId ? () => this.getToolPolicyRole(sessionId) : undefined,
       // Undefined on a host with no document history; AgentToolHooks guards
       // every call site and skips snapshotting rather than failing.
       historyManager: ClaudeCodeDeps.historyManager ?? undefined,
@@ -684,6 +687,7 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
           getAgentRole: (sid) => this.getAgentRole(sid),
           getWorkflowPreset: (sid) => this.getWorkflowPreset(sid),
           getToolScope: (sid) => this.getToolScope(sid),
+          getToolPolicyRole: (sid) => this.getToolPolicyRole(sid),
           ensureGitContext: (wp) => this.ensureGitContext(wp),
           ensureSessionDirective: async (sid) => { this.frozenSessionDirective = await this.getSessionDirective(sid); },
           ensureTeamContext: async (sid) => { this.frozenTeamContext = await this.getTeamContext(sid); },
