@@ -111,7 +111,7 @@ const addInto = (target, source) => {
  * @param {Array<{metadata?: object, data?: object}>|null} input.teamNotes  null when notes could not be read
  * @param {number|null} [input.since]  only roots created at or after this instant (ms)
  */
-export function summarizeTeamPilot({ sessions, messages, teamNotes, since = null }) {
+export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifests = null, since = null }) {
   const rows = sessions.map((session) => ({ ...session, metadata: parseMetadata(session.metadata) }));
   const childrenOf = new Map();
   for (const row of rows) {
@@ -172,6 +172,27 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, since = null
       const fields = data.customFields && typeof data.customFields === 'object' ? data.customFields : data;
       const rootId = fields.teamRootSession;
       if (typeof rootId === 'string') notesByRoot.set(rootId, (notesByRoot.get(rootId) ?? 0) + 1);
+    }
+  }
+
+  // Phase 1B: stored manifests per team root (teamRootSessionId is host-written provenance).
+  const manifestsByRoot = toolManifests === null ? null : new Map();
+  if (manifestsByRoot) {
+    for (const item of toolManifests) {
+      const data = parseMetadata(item.data);
+      const fields = data.customFields && typeof data.customFields === 'object' ? { ...data, ...data.customFields } : data;
+      const rootId = fields.teamRootSessionId;
+      if (typeof rootId !== 'string') continue;
+      const list = manifestsByRoot.get(rootId) ?? [];
+      list.push({
+        ref: item.localKey ?? item.id,
+        manifestId: typeof fields.manifestId === 'string' ? fields.manifestId : null,
+        declaredManifestId: typeof fields.declaredManifestId === 'string' ? fields.declaredManifestId : null,
+        status: typeof fields.status === 'string' ? fields.status : null,
+        architect: typeof fields.architectSessionId === 'string' ? fields.architectSessionId : null,
+        confidence: typeof fields.confidence === 'string' ? fields.confidence : null,
+      });
+      manifestsByRoot.set(rootId, list);
     }
   }
 
@@ -244,6 +265,7 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, since = null
       limitRefusals,
       promotions,
       teamNotes: notesByRoot ? notesByRoot.get(root.id) ?? 0 : null,
+      storedManifests: manifestsByRoot ? manifestsByRoot.get(root.id) ?? [] : null,
       errors: all.filter((session) => session.status === 'error').length,
       durationMinutes,
     };
@@ -275,6 +297,8 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, since = null
       promotions: teams.reduce((total, team) => total + team.promotions.length, 0),
       teamNotes: teamNotes === null ? null : teamNotes.length,
       teamNotesByTeams: sum((team) => team.teamNotes),
+      storedManifests: toolManifests === null ? null : toolManifests.length,
+      storedManifestsByTeams: sum((team) => (team.storedManifests === null ? null : team.storedManifests.length)),
       errors: teams.reduce((total, team) => total + team.errors, 0),
     },
     teams,
@@ -311,6 +335,8 @@ export function renderMarkdown(report) {
   row('Promoções de modelo/esforço', totals.promotions);
   row('Team Notes (total no banco)', totals.teamNotes);
   row('Team Notes atribuídas a estas raízes', totals.teamNotesByTeams);
+  row('Tool Manifests gravados (total no banco)', totals.storedManifests);
+  row('Tool Manifests gravados para estas raízes', totals.storedManifestsByTeams);
   row('Sessões em erro', totals.errors);
   lines.push('', '## Por raiz', '');
   lines.push('| Raiz | Criada | Modelo/esforço | Tipo | Membros (E/I/R/A/O) | Revisões | Manifestos | Agent | create | spawn | get_result | run_tests | Bloqueios | Recusas | Promoções | Notas | Erros | Duração (min) |');
@@ -325,6 +351,13 @@ export function renderMarkdown(report) {
       `${tool('get_session_result')} | ${tool('run_project_tests')} | ${show(team.scopeDenied)} | ${show(team.limitRefusals)} | ` +
       `${team.promotions.length} | ${show(team.teamNotes)} | ${team.errors} | ${show(team.durationMinutes)} |`,
     );
+  }
+  const storedManifests = teams.flatMap((team) => (team.storedManifests ?? []).map((manifest) => ({ team: team.id, ...manifest })));
+  if (storedManifests.length > 0) {
+    lines.push('', '## Tool Manifests gravados', '', '| Raiz | Ref | Id | Declarado | Status | Architect | Confiança |', '|---|---|---|---|---|---|---|');
+    for (const manifest of storedManifests) {
+      lines.push(`| ${manifest.team} | ${manifest.ref} | ${show(manifest.manifestId)} | ${show(manifest.declaredManifestId)} | ${show(manifest.status)} | ${show(manifest.architect)} | ${show(manifest.confidence)} |`);
+    }
   }
   const promoted = teams.flatMap((team) => team.promotions.map((promotion) => ({ team: team.id, ...promotion })));
   if (promoted.length > 0) {
@@ -402,7 +435,14 @@ export async function readPilotData(dbPath) {
     } catch {
       teamNotes = null;
     }
-    return { sessions, messages, teamNotes };
+    // Phase 1B: the architects' manifests stored as tracker items.
+    let toolManifests = null;
+    try {
+      toolManifests = db.prepare("SELECT id, local_key AS localKey, data FROM tracker_items WHERE type = 'tool-manifest' ORDER BY created").all();
+    } catch {
+      toolManifests = null;
+    }
+    return { sessions, messages, teamNotes, toolManifests };
   } finally {
     db.close();
   }

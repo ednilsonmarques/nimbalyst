@@ -31,3 +31,23 @@ export async function deletePendingChildUpdates(
     [parentSessionId, `%(${childSessionId})%`],
   );
 }
+
+/**
+ * Phase 1B: drop a child's still-pending `[Tool Manifest]` notices from its
+ * parent's queue. A newer manifest of the same architect makes them stale and
+ * the new notice says what superseded what: supersede, never append. The
+ * notice names the architect session in both UI languages.
+ */
+export async function deletePendingToolManifestNotices(
+  parentSessionId: string,
+  childSessionId: string,
+): Promise<void> {
+  await databaseWorker.query(
+    `DELETE FROM queued_prompts
+     WHERE session_id = $1
+       AND status = 'pending'
+       AND prompt LIKE '[Tool Manifest]%'
+       AND prompt LIKE $2`,
+    [parentSessionId, `%${childSessionId}%`],
+  );
+}

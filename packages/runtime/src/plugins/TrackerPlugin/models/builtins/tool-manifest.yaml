@@ -1,0 +1,139 @@
+type: tool-manifest
+displayName: Tool Manifest
+displayNamePlural: Tool Manifests
+icon: architecture
+color: "#7c3aed"
+
+# The Tool Manifest an architect member delivered to its Team mode coordinator
+# (Phase 1B of the ECC Architect). Written only by Nimbalyst when the architect
+# session completes with a valid manifest: the body is the architect's final
+# message exactly as the coordinator received it, and the provenance comes from
+# the sessions, never from an agent or a hand. Nobody edits a stored manifest;
+# the coordinator may accept it, and a newer version supersedes it. A manifest
+# is a recommendation: nothing in it grants a tool, a server, a model or a scope.
+modes:
+  inline: false
+  fullDocument: false
+
+sharing: team
+draftByDefault: false
+
+# Nobody creates one by hand: Nimbalyst writes it from the architect session.
+creatable: false
+
+idPrefix: tmf
+idFormat: ulid
+
+fields:
+  - name: title
+    type: string
+    required: true
+    displayInline: true
+
+  # M-<n>, confirmed or assigned by the host so ids stay monotonic per team.
+  - name: manifestId
+    type: string
+    displayInline: true
+    readOnly: true
+
+  - name: status
+    type: select
+    default: draft
+    options:
+      - value: draft
+        label: Draft
+        icon: edit_note
+        category: started
+      - value: accepted
+        label: Accepted
+        icon: check_circle
+        category: started
+      - value: superseded
+        label: Superseded
+        icon: history
+        category: cancelled
+
+  - name: confidence
+    type: select
+    displayInline: true
+    readOnly: true
+    options:
+      - value: high
+        label: High
+      - value: medium
+        label: Medium
+      - value: low
+        label: Low
+
+  # The manifest this one replaces (the previous current manifest of the team).
+  - name: supersedes
+    type: relationship
+    relationshipTypeKey: supersedes
+    targetTrackerTypes:
+      - tool-manifest
+    multiValue: true
+
+  # Provenance, filled by Nimbalyst from the architect session and its team (never by an agent).
+  - name: teamRootSessionId
+    type: string
+    displayInline: false
+    readOnly: true
+
+  - name: architectSessionId
+    type: string
+    displayInline: false
+    readOnly: true
+
+  - name: generatedByRole
+    type: string
+    displayInline: false
+    readOnly: true
+
+  - name: model
+    type: string
+    displayInline: false
+    readOnly: true
+
+  # Tool Manifest format version (toolManifest: 1).
+  - name: manifestVersion
+    type: string
+    displayInline: false
+    readOnly: true
+
+  # The id the architect declared when the host had to renumber it.
+  - name: declaredManifestId
+    type: string
+    displayInline: false
+    readOnly: true
+
+  # Fingerprint of the body: a replayed completion is recognized, never stored twice.
+  - name: contentHash
+    type: string
+    displayInline: false
+    readOnly: true
+
+  - name: created
+    type: datetime
+    displayInline: false
+    readOnly: true
+
+  - name: updated
+    type: datetime
+    displayInline: false
+    readOnly: true
+
+statusBarLayout:
+  - row:
+    - field: manifestId
+      width: 120
+    - field: status
+      width: 160
+    - field: confidence
+      width: 120
+
+inlineTemplate: "{icon} {manifestId} {title} {status}"
+
+roles:
+  title: title
+  workflowStatus: status
+  tags: tags

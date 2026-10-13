@@ -9,6 +9,11 @@
  * writer is `authorizeTeamContinuation` (metaAgentSessionQueries), which merges
  * it with its own statement, so no session can raise its own budget.
  *
+ * `metadata.toolManifestRef` (Phase 1B) is the team root's pointer to its
+ * current Tool Manifest item. Its only writer is `recordToolManifestRef`
+ * (services/team/toolManifests.ts), with its own statement: no session can
+ * point its team at another manifest.
+ *
  * `metadata.toolScope` and `metadata.sessionDirective` are creation-only for
  * the same reason the provider freezes them on the first turn: they are the
  * policy the creator set. A child must not widen its own scope, and nothing
@@ -21,6 +26,7 @@ import {
   TEAM_BUDGET_METADATA_KEY,
   TEAM_CHILD_METADATA_KEY,
   TEAM_MODE_METADATA_KEY,
+  TOOL_MANIFEST_REF_METADATA_KEY,
 } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 import { SESSION_DIRECTIVE_KEY } from '../extensionSessions/sessionOwnership';
 import { isRecommendedTeamRootModel } from './teamPolicy';
@@ -34,6 +40,7 @@ const CREATION_ONLY_KEYS = [
   TEAM_BUDGET_METADATA_KEY,
   TOOL_SCOPE_METADATA_KEY,
   SESSION_DIRECTIVE_KEY,
+  TOOL_MANIFEST_REF_METADATA_KEY,
 ] as const;
 
 /** Drop the creation-only team and policy keys from a metadata update. */
@@ -78,6 +85,7 @@ export function sanitizeRendererCreateTeamMetadata(
   const {
     [TEAM_CHILD_METADATA_KEY]: _child,
     [TEAM_BUDGET_METADATA_KEY]: _budget,
+    [TOOL_MANIFEST_REF_METADATA_KEY]: _manifestRef,
     [TEAM_MODE_METADATA_KEY]: teamMode,
     ...rest
   } = metadata;

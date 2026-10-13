@@ -16,6 +16,7 @@ import type { OrchestrationMessageKind } from '@nimbalyst/runtime/ai/server/type
 import { resolveCallerWorkspaceId } from "../utils/workspaceIdentity";
 import { runProjectTests } from "../services/team/projectTestRunner";
 import { getEnhancedPath } from "../services/shellEnvironment";
+import { eccCatalogLookupTool } from "../services/ecc/eccCatalogService";
 
 type CreateSessionArgs = {
   title?: string;
@@ -500,6 +501,29 @@ export const META_AGENT_TOOL_DEFS: Array<{
       },
     },
   },
+  {
+    name: "ecc_catalog_lookup",
+    description:
+      "Look up entries of the packaged ECC capability catalog (the version your index was built from) by id or by free-text query: kind, name, a short description, class (A, B, C citable; D, E not), requirements (shell, writes, network, MCP servers, sub-agents), the scopes the entry's content is executable in, and the classification confidence. Read-only passive data: it never runs, installs or authorizes anything, and a requirement it lists is not a permission. At most 8 results.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ids: {
+          type: "array",
+          items: { type: "string" },
+          description: "Catalog ids, with or without the ecc: prefix (e.g. \"skill:tdd-workflow\"). At most 8.",
+        },
+        query: {
+          type: "string",
+          description: "Free text matched against names, ids, descriptions and categories; best matches first.",
+        },
+        limit: {
+          type: "number",
+          description: "Optional. Default 5, maximum 8.",
+        },
+      },
+    },
+  },
 ];
 
 /**
@@ -633,6 +657,14 @@ export async function dispatchMetaAgentTool(
         null,
         2,
       );
+    case "ecc_catalog_lookup": {
+      // Passive catalog data, no session or workspace involved: the caller's
+      // scope policy (toolPolicy.ts) decides who may call it. A missing or
+      // corrupted catalog, or a call with nothing to look up, is a tool error.
+      const lookup = await eccCatalogLookupTool({ ids: args?.ids, query: args?.query, limit: args?.limit });
+      if ('error' in lookup) throw new Error(lookup.error);
+      return JSON.stringify(lookup, null, 2);
+    }
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

@@ -167,6 +167,9 @@ export const HOST_TOOLS: readonly string[] = [
   // Runs only the workspace's own `npm test`; the one execution a `review`
   // child (Team mode reviewer) may perform.
   'run_project_tests',
+  // Phase 1B: read-only lookup of the packaged ECC capability catalog (by id or
+  // query). Passive data: it never runs, installs or authorizes anything.
+  'ecc_catalog_lookup',
   // NOTE: `applyDiff` / `streamContent` are intentionally NOT declared here.
   // They have live CallTool handlers (httpServer switch) + renderer IPC
   // listeners, but no ListTools schema — they are deliberately unadvertised so

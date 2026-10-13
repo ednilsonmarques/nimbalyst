@@ -617,5 +617,12 @@
     "bar": "Team checkpoint: {{created}} members created. Continue the team to allow new sessions.",
     "noticeLabel": "Team checkpoint: continuation authorized",
     "notice": "[Team checkpoint] The user authorized this team to continue: it may now create up to {{authorized}} sessions in total ({{total}} created so far). The limits of {{maxActive}} active sessions at once and {{maxDepth}} levels of depth are unchanged. Continue from where you stopped, creating a new member where the work calls for one."
+  },
+  "toolManifest": {
+    "noticeLabel": "Tool Manifest stored",
+    "notice": "[Tool Manifest] {{id}} from the architect (session {{architect}}) is stored as tracker item {{ref}} (confidence: {{confidence}}). It is the manifest in the architect's report, not a new one: do not re-read it now. When you declare per manifest {{id}}, mark the item accepted with tracker_update (status only); a divergence becomes a Team Note, never an edit of the item. Later, tracker_get {{ref}} returns it.",
+    "noticeRenumbered": "The architect declared it {{declared}}; that id was already used in this team, so Nimbalyst numbered it {{id}}.",
+    "noticeSuperseded": "It supersedes {{superseded}}, now marked superseded: {{id}} is the current manifest.",
+    "noticeSupersedeFailed": "Nimbalyst could not mark {{failed}} as superseded; {{id}} is still the current manifest, as the newest id."
   }
 }

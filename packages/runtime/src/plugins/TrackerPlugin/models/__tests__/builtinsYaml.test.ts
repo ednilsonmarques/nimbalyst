@@ -31,6 +31,7 @@ const EXPECTED = [
   'citation',
   // Team mode memory (fork).
   'team-note',
+  'tool-manifest',
 ] as const;
 
 // Behavior-preserving invariants carried over from the pre-migration code array.
@@ -55,6 +56,8 @@ const INVARIANTS: Record<string, {
   citation: { idPrefix: 'cit', sharing: 'personal', draftByDefault: false },
   // Team notes are project memory: shared like decisions when the workspace syncs.
   'team-note': { idPrefix: 'nte', sharing: 'team', draftByDefault: false },
+  // Tool Manifests (Phase 1B) are the architect's deliverable: shared like notes, written only by the host.
+  'tool-manifest': { idPrefix: 'tmf', sharing: 'team', draftByDefault: false, creatable: false },
 };
 
 /** Section 3 pins `modes.fullDocument: false` on all three evidence kinds. */

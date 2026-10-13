@@ -34,6 +34,7 @@ import captureYaml from './builtins/capture.yaml?raw';
 import citationYaml from './builtins/citation.yaml?raw';
 // Team mode memory: distilled notes written by a coordinator (fork feature).
 import teamNoteYaml from './builtins/team-note.yaml?raw';
+import toolManifestYaml from './builtins/tool-manifest.yaml?raw';
 // import featureYaml from './builtins/feature.yaml?raw';
 // import automationYaml from './builtins/automation.yaml?raw';
 
@@ -55,6 +56,7 @@ export const BUILTIN_TRACKER_YAML: ReadonlyArray<{ type: string; yaml: string }>
   { type: 'capture', yaml: captureYaml },
   { type: 'citation', yaml: citationYaml },
   { type: 'team-note', yaml: teamNoteYaml },
+  { type: 'tool-manifest', yaml: toolManifestYaml },
   // { type: 'feature', yaml: featureYaml },
   // { type: 'automation', yaml: automationYaml },
 ];

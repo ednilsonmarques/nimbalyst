@@ -20,7 +20,7 @@ import type {
 } from './IRawMessageParser';
 import { stagedAttachmentRegistry } from '../../attachments/stagedAttachmentRegistry';
 import { isBackgroundedToolAck, isInteractiveWidgetTool } from '../../interactivePromptTools';
-import { TEAM_CHECKPOINT_PROMPT_ORIGIN } from '../../providers/teamContext';
+import { TEAM_CHECKPOINT_PROMPT_ORIGIN, TOOL_MANIFEST_PROMPT_ORIGIN } from '../../providers/teamContext';
 
 const ATTACHMENT_DENY_MESSAGE = 'File is in a directory that is denied by your permission settings.';
 
@@ -119,6 +119,18 @@ export class ClaudeCodeRawParser implements IRawMessageParser {
             text: parsed.prompt,
             systemType: 'status',
             reminderKind: TEAM_CHECKPOINT_PROMPT_ORIGIN,
+            searchable: false,
+            createdAt: msg.createdAt,
+          });
+        } else if (msg.metadata?.promptOrigin === TOOL_MANIFEST_PROMPT_ORIGIN) {
+          // Host notice that an architect's Tool Manifest was stored as a
+          // tracker item (Phase 1B): orchestration status, not something the
+          // user typed.
+          descriptors.push({
+            type: 'system_message',
+            text: parsed.prompt,
+            systemType: 'status',
+            reminderKind: TOOL_MANIFEST_PROMPT_ORIGIN,
             searchable: false,
             createdAt: msg.createdAt,
           });

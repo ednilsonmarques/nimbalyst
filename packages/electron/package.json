@@ -262,6 +262,13 @@
         ]
       },
       {
+        "from": "resources/ecc-catalog",
+        "to": "ecc-catalog",
+        "filter": [
+          "ecc-*.json"
+        ]
+      },
+      {
         "from": "../../node_modules/node-pty",
         "to": "node-pty"
       },

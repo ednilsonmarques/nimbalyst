@@ -163,3 +163,30 @@ test('regeneration from the committed catalog and overlay is identical to the co
     assert.equal(index.listed.find((item) => item.id === id), undefined, id);
   }
 });
+
+test('every entry gets a class for the lookup, sorted by id, and overlay notes travel with the module', () => {
+  const catalog = {
+    ecc: { version: '9.9.9', sha: 'abc' },
+    entries: [
+      entry('ecc:skill:zeta', { requires: { shell: true } }),
+      entry('ecc:skill:alpha', { executableInScope: { read: true } }),
+      entry('ecc:hook:h', { kind: 'hook', mechanics: 'hook' }),
+      entry('ecc:skill:low', { classificationConfidence: 'low' }),
+    ],
+  };
+  const overlay = { classes: { 'ecc:skill:zeta': { class: 'C', note: 'needs the exa server' }, 'ecc:skill:ghost': { class: 'A', note: 'absent' } } };
+  const index = buildIndex(catalog, overlay);
+  assert.deepEqual(index.all, [
+    { id: 'ecc:hook:h', class: 'D' },
+    { id: 'ecc:skill:alpha', class: 'A' },
+    { id: 'ecc:skill:low', class: 'low' },
+    { id: 'ecc:skill:zeta', class: 'C' },
+  ]);
+  // Notes only for entries that exist in the catalog; a ghost override is a warning, not a note.
+  assert.deepEqual(index.notes, { 'ecc:skill:zeta': 'needs the exa server' });
+  const module = renderIndexModule(index, { catalog: 'c.json', classes: 'k.json' });
+  assert.match(module, /export const ECC_CATALOG_INDEX_ALL_CLASSES: Readonly<Record<string, 'A' \| 'B' \| 'C' \| 'D' \| 'E' \| 'low'>> = Object\.freeze\(\{\n  "ecc:hook:h": "D",\n  "ecc:skill:alpha": "A",\n  "ecc:skill:low": "low",\n  "ecc:skill:zeta": "C",\n\}\);/);
+  assert.match(module, /export const ECC_CATALOG_INDEX_NOTES: Readonly<Record<string, string>> = Object\.freeze\(\{\n  "ecc:skill:zeta": "needs the exa server",\n\}\);/);
+  // The citable set is unchanged: only A, B and C.
+  assert.match(module, /ECC_CATALOG_INDEX_CLASSES: Readonly<Record<string, 'A' \| 'B' \| 'C'>> = Object\.freeze\(\{\n  "ecc:skill:alpha": "A",\n  "ecc:skill:zeta": "C",\n\}\);/);
+});

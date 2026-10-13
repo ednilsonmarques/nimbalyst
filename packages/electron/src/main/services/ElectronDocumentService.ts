@@ -44,7 +44,7 @@ import {
   readStoredFieldValue,
   writeStoredFieldValue,
 } from './tracker/relationshipFieldStorage';
-import { TEAM_NOTE_TYPE, assertTeamNoteBody, assertTeamNoteUpdate } from '@nimbalyst/runtime/plugins/TrackerPlugin/models/teamNoteRules';
+import { assertProtectedTrackerBody, assertProtectedTrackerUpdate, isProtectedTrackerType } from '@nimbalyst/tracker-core';
 import { projectionWouldChange } from './tracker/projectionUpdateGuard';
 import { assignLocalKeysToRows } from './tracker/localKeyAllocator';
 import { workspaceLocalKeyStore } from './tracker/workspaceLocalKeyStore';
@@ -2017,8 +2017,8 @@ export class ElectronDocumentService implements DocumentService {
       throw new Error(`Tracker item not found: ${itemId}`);
     }
     const data = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
-    // Snapshot for the team-note rules below (provenance must not change).
-    const teamNoteBefore = row.type === TEAM_NOTE_TYPE ? JSON.parse(JSON.stringify(data)) : null;
+    // Snapshot for the protected-type rules below (team-note provenance, tool-manifest immutables).
+    const protectedBefore = isProtectedTrackerType(row.type) ? JSON.parse(JSON.stringify(data)) : null;
 
     // Handle typeTags separately -- stored in SQL column, not JSONB
     const newTypeTags: string[] | undefined = updates.typeTags === undefined ? undefined
@@ -2071,8 +2071,9 @@ export class ElectronDocumentService implements DocumentService {
     // survives the sync re-serialization and inverse-write reads find it (NIM-1305).
     nestRelationshipFieldsIntoCustomFields(data, globalRegistry.get(row.type)?.fields ?? [], { writtenFields });
 
-    // Team-note structure applies to every edit through this funnel (UI fields, batch).
-    assertTeamNoteUpdate(row.type, updates, teamNoteBefore, data);
+    // Protected types (team-note, tool-manifest): the one rule every local write
+    // funnel applies, here for every edit through this funnel (UI fields, batch).
+    assertProtectedTrackerUpdate(row.type, updates, protectedBefore, data);
     options.beforeWrite?.(this.rowToTrackerItem({ ...row, data, type_tags: newTypeTags ?? row.type_tags }));
     if (newTypeTags) {
       await database.query(`UPDATE tracker_items SET type_tags = $1 WHERE id = $2`, [newTypeTags, row.id]);
@@ -2331,7 +2332,7 @@ export class ElectronDocumentService implements DocumentService {
     if (trackerContentMatches(row.content, content, contentJson)) {
       return;
     }
-    assertTeamNoteBody(row.type, content);
+    assertProtectedTrackerBody(row.type, content);
     const data = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
     const modifierIdentity = getCurrentIdentity(row.workspace);
     appendActivity(data, modifierIdentity, 'updated', { field: 'content' });
@@ -3034,6 +3035,19 @@ export class ElectronDocumentService implements DocumentService {
       rowToTrackerItem: (row) => this.rowToTrackerItem(row),
       notify: (change) => this.trackerItemWatchers.forEach((callback) => callback(change)),
     });
+  }
+
+  /**
+   * The host's own tracker writes (Phase 1B Tool Manifests): the same creation
+   * as createTrackerItem with host-owned provenance allowed. Not exposed over
+   * IPC or MCP; only main-process services call it.
+   */
+  async createHostOwnedTrackerItem(payload: NativeTrackerCreatePayload): Promise<TrackerItem> {
+    return createNativeTrackerItem(payload, {
+      assignLocalKeysFrom: (rows) => this.assignLocalKeysFrom(rows),
+      rowToTrackerItem: (row) => this.rowToTrackerItem(row),
+      notify: (change) => this.trackerItemWatchers.forEach((callback) => callback(change)),
+    }, { hostOwned: true });
   }
 
   /**

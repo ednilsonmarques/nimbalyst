@@ -42,6 +42,21 @@ export const TEAM_CHECKPOINT_TOOL_NAME = 'TeamCheckpoint';
  */
 export const TEAM_CHECKPOINT_PROMPT_ORIGIN = 'team_checkpoint';
 
+/**
+ * `promptOrigin` of the host notice telling a coordinator that an architect's
+ * Tool Manifest was stored as a tracker item (Phase 1B): a system status line
+ * in the transcript, never a "You" message.
+ */
+export const TOOL_MANIFEST_PROMPT_ORIGIN = 'tool_manifest';
+
+/**
+ * `metadata.toolManifestRef` of a team root: a short pointer (item id, ref,
+ * manifest id, architect session) to the team's current Tool Manifest. Written
+ * only by the host (services/team/toolManifests.ts); creation-only for every
+ * ordinary metadata write, never the manifest itself.
+ */
+export const TOOL_MANIFEST_REF_METADATA_KEY = 'toolManifestRef';
+
 export interface TeamChild {
   role: TeamRole;
   rootSessionId: string;

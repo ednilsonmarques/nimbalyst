@@ -20,7 +20,7 @@ import {
   reindexItemRelationshipsAfterWrite,
   trackerRowUpdatedToIso,
 } from './trackerRelationshipIndexStore';
-import { prepareManualTeamNoteCreate } from '@nimbalyst/runtime/plugins/TrackerPlugin/models/teamNoteRules';
+import { prepareProtectedTrackerCreate } from '@nimbalyst/tracker-core';
 
 export interface NativeTrackerCreatePayload {
   id: string;
@@ -63,18 +63,29 @@ interface CreationDependencies {
   notify: (change: TrackerItemChangeEvent) => void;
 }
 
+export interface CreationOptions {
+  /**
+   * The host itself is writing (Phase 1B Tool Manifests): host-owned
+   * provenance is allowed. Never set from a renderer or MCP payload; only
+   * ElectronDocumentService.createHostOwnedTrackerItem passes it.
+   */
+  hostOwned?: boolean;
+}
+
 export async function createNativeTrackerItem(
   payload: NativeTrackerCreatePayload,
   dependencies: CreationDependencies,
+  options: CreationOptions = {},
 ): Promise<TrackerItem> {
   return withCreationLock(payload.workspace, payload.id, () =>
-    createRow(payload, dependencies),
+    createRow(payload, dependencies, options),
   );
 }
 
 async function createRow(
   payload: NativeTrackerCreatePayload,
   dependencies: CreationDependencies,
+  options: CreationOptions,
 ): Promise<TrackerItem> {
   if (
     !payload.workspace ||
@@ -106,8 +117,10 @@ async function createRow(
     }
   }
   // Check if this type allows creation
+  // The host's own writes (Phase 1B Tool Manifests) are the one creation a
+  // `creatable: false` type allows: the flag keeps people and agents out.
   const model = globalRegistry.get(payload.type);
-  if (model && model.creatable === false) {
+  if (model && model.creatable === false && !options.hostOwned) {
     throw new Error(
       `Cannot create items of type '${payload.type}': type is not creatable`,
     );
@@ -148,9 +161,11 @@ async function createRow(
   if (payload.customFields) {
     Object.assign(data, payload.customFields);
   }
-  // A team-note created here is the user's (the agent path is the MCP tool): no
-  // provenance is invented, and createdByAgent marks it manual.
-  prepareManualTeamNoteCreate(payload.type, data, payload.content);
+  // Protected types (team-note, tool-manifest): the one rule every local write
+  // funnel applies. A team-note created here is the user's (the agent path is
+  // the MCP tool), so no provenance is accepted and it is marked manual; a
+  // tool-manifest is written only by the host from an architect session.
+  prepareProtectedTrackerCreate(payload.type, data, { hostOwned: options.hostOwned === true, body: payload.content });
 
   const source = payload.source || 'native';
   const contentJson =

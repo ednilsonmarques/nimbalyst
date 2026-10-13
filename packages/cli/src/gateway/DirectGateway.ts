@@ -14,6 +14,11 @@ import {
   dbRowToRecord,
   isLocalKeyReference,
   READINESS_FILTER_FIELD,
+  TOOL_MANIFEST_TYPE,
+  assertProtectedTrackerBody,
+  assertProtectedTrackerUpdate,
+  isProtectedTrackerType,
+  prepareProtectedTrackerCreate,
   type Readiness,
   type TrackerRecord,
   type TrackerTypeModel,
@@ -549,6 +554,20 @@ export class DirectGateway implements TrackerGateway {
     if (blocked) this.refuseWrite(humanOnlyStatusMessage(String(blocked)));
   }
 
+  /**
+   * Protected types (team-note, tool-manifest) follow one rule in every local
+   * write funnel of the app (tracker-core `protectedTrackerTypes`); offline
+   * writes are no exception. A refusal is a write-not-permitted error, like
+   * the human-only status guard.
+   */
+  private assertProtectedWrite(check: () => void): void {
+    try {
+      check();
+    } catch (err: any) {
+      this.refuseWrite(err?.message ?? String(err));
+    }
+  }
+
   async createTracker(workspace: string, input: CreateInput): Promise<TrackerRecord> {
     const identity = getCurrentIdentity(workspace);
     const id = newTrackerId(input.type);
@@ -571,9 +590,12 @@ export class DirectGateway implements TrackerGateway {
         : 'to-do';
     this.assertNotHumanOnlyStatus(statusField, input);
 
+    // A protected type (team-note, tool-manifest) defaults its own status in
+    // the shared rule applied below; the generic fallback would be refused there.
+    const statusDefault = isProtectedTrackerType(input.type) ? undefined : defaultStatus;
     const data: Record<string, any> = {
       [titleField]: input.title,
-      [statusField]: input.status || defaultStatus,
+      [statusField]: input.status || statusDefault,
       [priorityField]: input.priority || 'medium',
       created: createdDate,
       authorIdentity: identity,
@@ -601,6 +623,9 @@ export class DirectGateway implements TrackerGateway {
         data[field.name] = id;
       }
     }
+    this.assertProtectedWrite(() =>
+      prepareProtectedTrackerCreate(input.type, data, { body: description, typeTags: input.typeTags }),
+    );
     appendActivity(data, identity, 'created');
 
     const typeTags: string[] = [input.type];
@@ -661,6 +686,8 @@ export class DirectGateway implements TrackerGateway {
 
       const data: Record<string, any> =
         typeof row.data === 'string' ? JSON.parse(row.data) : row.data || {};
+      // Stored data before this write, for the protected-type rules below.
+      const before: Record<string, any> = JSON.parse(JSON.stringify(data));
       data.lastModifiedBy = identity;
 
       const rf = (role: string, fallback: string): string =>
@@ -732,6 +759,21 @@ export class DirectGateway implements TrackerGateway {
           newValue: change.to != null ? String(change.to) : undefined,
         });
       }
+
+      // Accepting (or superseding) a Tool Manifest is a decision the app
+      // attributes to a session: the owning coordinator through the agent tool,
+      // or the user in the desktop UI. An offline write has no identity, so the
+      // status does not move here at all.
+      if (row.type === TOOL_MANIFEST_TYPE && (input.status !== undefined || input.fields?.status !== undefined)) {
+        this.refuseWrite(
+          'A Tool Manifest is accepted in the app (by the coordinator of its team, or in the desktop UI); ' +
+            'offline writes carry no session identity, so its status cannot change here.',
+        );
+      }
+      this.assertProtectedWrite(() => {
+        assertProtectedTrackerUpdate(row.type, { ...input, type: newType !== row.type ? newType : undefined }, before, data);
+        if (description !== undefined) assertProtectedTrackerBody(row.type, description);
+      });
 
       if (newType !== row.type) {
         db.prepare(`UPDATE tracker_items SET type = ? WHERE id = ?`).run(newType, row.id);

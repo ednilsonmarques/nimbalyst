@@ -72,6 +72,13 @@ nim tracker import resnapshot github://owner/repo#42
 > resolved offline by reading the app-materialized `tracker_type_defs` table;
 > types the app hasn't materialized fall back to default field names.
 > `link-session` and `types define|rm` are live-only.
+>
+> **Protected types** follow the same rule offline as in the app
+> (`@nimbalyst/tracker-core` `protectedTrackerTypes`): a `tool-manifest` is written
+> only by Nimbalyst from an architect session and is never created, retyped,
+> rewritten or accepted from the terminal (accepting it is the coordinator's or
+> the desktop UI's act, inside the app); a `team-note` needs a kind, carries no
+> hand-set provenance and keeps its body cap. A refused write exits 5.
 
 ### Filters
 

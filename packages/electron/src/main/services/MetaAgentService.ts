@@ -15,7 +15,7 @@ import { AISessionsRepository } from '@nimbalyst/runtime/storage/repositories/AI
 import { AgentMessagesRepository } from '@nimbalyst/runtime/storage/repositories/AgentMessagesRepository';
 import { SessionFilesRepository } from '@nimbalyst/runtime/storage/repositories/SessionFilesRepository';
 import { getSessionStateManager } from '@nimbalyst/runtime/ai/server/SessionStateManager';
-import { getDefaultAIModel } from '../utils/store';
+import { getDefaultAIModel, isTrackersAgentToolsEnabled } from '../utils/store';
 import { resolveStoredWorkspaceId, sameWorkspaceIdentity } from '../utils/workspaceIdentity';
 import {
   assertChildSpawnCapacity,
@@ -34,13 +34,15 @@ import { gitRefWatcher } from '../file/GitRefWatcher';
 import { AIService } from './ai/AIService';
 import { setMetaAgentToolFns } from '../mcp/metaAgentServer';
 import { computeNotificationSignature } from './metaAgentNotificationSignature';
-import { deletePendingChildUpdates } from './ai/pendingChildUpdates';
+import { deletePendingChildUpdates, deletePendingToolManifestNotices } from './ai/pendingChildUpdates';
 import { inheritedOwnership, isParentNotificationSuppressed } from './extensionSessions/sessionOwnership';
 import { startExtensionSessionService } from './extensionSessions/extensionSessionsService';
 import { broadcastSessionCreated } from './session/broadcastSessionCreated';
 import { extractMessageText, extractUserPrompts } from './metaAgentMessageText';
 import { TEAM_CHILD_METADATA_KEY, resolveTeamContext } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 import { renderArchitectReportForUpdate } from '@nimbalyst/runtime/ai/server/providers/toolManifest';
+import { TOOL_MANIFEST_NOTICE_CONTEXT, buildToolManifestNotice, persistArchitectManifest } from './team/toolManifests';
+import { withToolManifestTrackerPort } from './team/toolManifestTrackerPort';
 import {
   TEAM_PROVIDER,
   buildTeamChild,
@@ -265,6 +267,10 @@ export class MetaAgentService {
   private sessionManager: SessionManager | null = null;
   private unsubscribeStateListener: (() => void) | null = null;
   private notificationSignatures = new Map<string, string>();
+  /** Phase 1B: one Tool Manifest persistence at a time per team root, so two architects settling together never both become M-1. */
+  private readonly manifestPersistenceChains = new Map<string, Promise<unknown>>();
+  /** Phase 1B: a hung tracker never holds the [Child Session Update] back; past this the update goes out without a notice. */
+  manifestPersistenceTimeoutMs = 15_000;
   private ipcHandlersRegistered = false;
   private showNotificationWithResult: ShowNotificationWithResult | null = null;
   private requestMobilePush: RequestMobilePush | null = null;
@@ -1594,6 +1600,19 @@ export class MetaAgentService {
       }
       this.notificationSignatures.set(sessionId, signature);
 
+      // Phase 1B: a valid manifest is also stored as a `tool-manifest` tracker
+      // item (content from the report, provenance from the sessions) and the
+      // coordinator gets a short notice naming the item. TOO LONG and INVALID
+      // reports are never stored, and persistence never blocks the update.
+      const manifestNotice = architectReport
+        ? await this.persistArchitectManifestNotice({
+          id: session.id,
+          model: (session as { model?: string | null }).model ?? null,
+          metadata: session.metadata,
+          agentRole: session.agentRole,
+        }, result, metaSession.workspacePath)
+        : null;
+
       if (result.pendingPrompt?.promptType === 'exit_plan_mode_request') {
         await this.ensurePlanTrackerItem(session.workspacePath, sessionId, result);
       }
@@ -1626,6 +1645,23 @@ export class MetaAgentService {
         },
       );
 
+      // Phase 1B: the notice follows the update it refers to, as a system status
+      // line (TOOL_MANIFEST_NOTICE_CONTEXT). Both ride the single queue drive
+      // below: one wake, the update's turn first (it carries the manifest), the
+      // notice chained right after it (or consumed in-turn through the inbox).
+      if (manifestNotice) {
+        // A notice the coordinator has not read yet is stale once a newer
+        // manifest of the same architect is stored: the new notice says what
+        // superseded what (the supersede-not-append rule of the update).
+        await deletePendingToolManifestNotices(session.createdBySessionId, session.id);
+        await this.aiService.queuePromptForSession(
+          session.createdBySessionId,
+          manifestNotice,
+          undefined,
+          TOOL_MANIFEST_NOTICE_CONTEXT,
+        );
+      }
+
       // Do not auto-re-drive the parent when THIS child settle was an error.
       // The [Child Session Update] notification above is still queued for
       // visibility, but re-triggering the parent's queue on every error settle
@@ -1637,6 +1673,72 @@ export class MetaAgentService {
       }
     } catch (error) {
       console.error(`[MetaAgentService] handleChildSessionEvent failed for session ${sessionId} (${eventType}):`, error);
+    }
+  }
+
+  /**
+   * Phase 1B: store a completed architect's valid manifest as a tracker item
+   * of the coordinator's workspace and return the notice for the coordinator,
+   * or null when nothing was stored (not a valid manifest, a replay, trackers
+   * disabled, a failure or a timeout; failures are logged and never reach the
+   * update). Persistence is serialized per team root and bounded in time.
+   */
+  private async persistArchitectManifestNotice(
+    session: { id: string; model?: string | null; metadata?: unknown; agentRole?: string | null },
+    result: SessionResultData,
+    workspacePath: string,
+  ): Promise<string | null> {
+    try {
+      if (!isTrackersAgentToolsEnabled(workspacePath)) return null;
+      const rootSessionId = resolveTeamContext(session.metadata as Record<string, unknown> | undefined, session.agentRole).teamChild?.rootSessionId ?? null;
+      if (!rootSessionId) return null;
+      let finalOutput: string | null = null;
+      for (let index = result.recentMessages.length - 1; index >= 0; index -= 1) {
+        if (result.recentMessages[index].direction === 'output') { finalOutput = result.recentMessages[index].text; break; }
+      }
+      const settle = {
+        sessionId: session.id,
+        rootSessionId,
+        workspacePath,
+        model: session.model ?? null,
+        finalOutput: finalOutput ?? result.fullResponse ?? null,
+      };
+      // One persistence at a time per team: the plan reads the team's items and
+      // numbers the new one, so two architects settling together must queue.
+      const previous = this.manifestPersistenceChains.get(rootSessionId) ?? Promise.resolve();
+      const chained = previous.catch(() => undefined).then(() =>
+        withToolManifestTrackerPort(workspacePath, (port) => persistArchitectManifest(settle, port)));
+      this.manifestPersistenceChains.set(rootSessionId, chained);
+      const release = () => {
+        if (this.manifestPersistenceChains.get(rootSessionId) === chained) this.manifestPersistenceChains.delete(rootSessionId);
+      };
+      chained.then(release, release);
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const timeout = new Promise<'timeout'>((resolve) => {
+        timer = setTimeout(() => resolve('timeout'), this.manifestPersistenceTimeoutMs);
+      });
+      let outcome: Awaited<typeof chained> | 'timeout';
+      try {
+        outcome = await Promise.race([chained, timeout]);
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+      if (outcome === 'timeout') {
+        // Abandon the hung chain so the next settle of this team starts afresh.
+        release();
+        console.warn(`[MetaAgentService] Tool Manifest of session ${session.id} not stored within ${this.manifestPersistenceTimeoutMs} ms; the update goes out without a notice`);
+        return null;
+      }
+      if (!outcome.persisted) {
+        if (outcome.reason === 'failed') {
+          console.error(`[MetaAgentService] Tool Manifest of session ${session.id} not stored: ${outcome.detail}`);
+        }
+        return null;
+      }
+      return buildToolManifestNotice(outcome);
+    } catch (error) {
+      console.error(`[MetaAgentService] Tool Manifest persistence failed for session ${session.id}:`, error);
+      return null;
     }
   }
 

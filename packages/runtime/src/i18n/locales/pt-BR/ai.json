@@ -617,5 +617,12 @@
     "bar": "Checkpoint da equipe: {{created}} membros criados. Continue a equipe para permitir novas sessões.",
     "noticeLabel": "Checkpoint da equipe: continuação autorizada",
     "notice": "[Checkpoint da equipe] O usuário autorizou a continuação: a equipe agora pode criar até {{authorized}} sessões no total ({{total}} criadas até aqui). Os limites de {{maxActive}} sessões ativas ao mesmo tempo e {{maxDepth}} níveis de profundidade não mudaram. Continue de onde parou, criando um novo membro onde o trabalho pedir."
+  },
+  "toolManifest": {
+    "noticeLabel": "Tool Manifest gravado",
+    "notice": "[Tool Manifest] {{id}} do architect (sessão {{architect}}) foi gravado como item {{ref}} do Tracker (confiança: {{confidence}}). É o manifesto do relatório do architect, não um novo: não o releia agora. Ao declarar per manifest {{id}}, marque o item como accepted com tracker_update (só o status); uma divergência vira Team Note, nunca edição do item. Depois, tracker_get {{ref}} o devolve.",
+    "noticeRenumbered": "O architect o declarou como {{declared}}; esse id já existia nesta equipe, então o Nimbalyst o numerou {{id}}.",
+    "noticeSuperseded": "Ele substitui {{superseded}}, agora marcado como superseded: {{id}} é o manifesto atual.",
+    "noticeSupersedeFailed": "O Nimbalyst não conseguiu marcar {{failed}} como superseded; {{id}} continua sendo o manifesto atual, por ser o id mais novo."
   }
 }

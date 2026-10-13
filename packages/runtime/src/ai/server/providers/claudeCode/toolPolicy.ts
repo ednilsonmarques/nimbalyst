@@ -58,6 +58,9 @@ export const INTERNAL_MCP_TOOLS: readonly string[] = [
   'mcp__nimbalyst-host__get_workstream_overview',
   'mcp__nimbalyst-host__list_recent_sessions',
   'mcp__nimbalyst-host__get_workstream_edited_files',
+  // Host — the packaged ECC catalog (Phase 1B): read-only passive data, no
+  // workspace access, no execution; the scope policy still decides who sees it.
+  'mcp__nimbalyst-host__ecc_catalog_lookup',
 ];
 
 export const TEAM_TOOLS: readonly string[] = [
@@ -266,7 +269,9 @@ const READ_SCOPE_ALLOWED_FIRST_PARTY_TOOLS: ReadonlySet<string> = new Set([
   ...['settings_get_overview', 'extensions_list', 'get_session_summary', 'get_session_coaching_signals',
     'get_workstream_overview', 'get_workstream_edited_files', 'list_recent_sessions', 'list_citable_inputs',
     'list_queued_prompts', 'get_session_status', 'get_session_result', 'list_spawned_sessions',
-    'list_worktrees'].map((tool) => mcpTool(MCP_HOST, tool)),
+    'list_worktrees',
+    // Phase 1B: a passive read of the packaged ECC catalog; it describes entries and grants nothing.
+    'ecc_catalog_lookup'].map((tool) => mcpTool(MCP_HOST, tool)),
   ...['tracker_list', 'tracker_ready', 'work_radar', 'tracker_get', 'tracker_get_by_urn', 'tracker_list_types',
     'tracker_importer_list', 'tracker_importer_search'].map((tool) => mcpTool(MCP_TRACKERS, tool)),
   ...['readCollabDoc', 'readCollabDocComments', 'listPages', 'findOrgMembers', 'getResourceSharingStatus',

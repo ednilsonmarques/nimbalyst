@@ -47,7 +47,7 @@ import {
 } from '@nimbalyst/runtime/plugins/TrackerPlugin/models/trackerBlockerVisibility';
 import { trackerItemToRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import { getRecordStatus, getRecordTitle, resolveRoleFieldName } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
-import { buildTrackerRadar, getRecentTeammateActivity } from '@nimbalyst/tracker-core';
+import { buildTrackerRadar, getRecentTeammateActivity, assertProtectedTrackerBody, assertProtectedTrackerUpdate, prepareProtectedTrackerCreate } from '@nimbalyst/tracker-core';
 import { getVisibleTrackerLinkedSessions, shouldPersistTrackerLinkedSessions } from '../../../shared/trackerSessionLinks';
 import { buildFullDocumentTrackerId } from '@nimbalyst/runtime/plugins/TrackerPlugin/documentHeader/frontmatterUtils';
 import { normalizeLegacyLabelValues } from '@nimbalyst/runtime/sync';
@@ -66,7 +66,9 @@ import {
 import { handleTrackerPublicationUpdate } from './trackerPublicationTool';
 import { prepareTrackerUpdateInput } from './trackerToolUpdateInput';
 import { guardTeamNoteCreate, guardTeamNoteUpdate, isTeamNoteCreate } from './teamNoteToolGuard';
+import { guardToolManifestCreate, guardToolManifestUpdate, isToolManifestCreate } from './toolManifestToolGuard';
 import { TEAM_NOTE_LIST_DEFAULT_LIMIT, TEAM_NOTE_TYPE, formatTeamNoteSummary } from '../../services/team/teamNotes';
+import { TOOL_MANIFEST_TYPE, formatToolManifestSummary } from '../../services/team/toolManifests';
 import { handleGithubIssueOverlayCreate } from './githubIssueOverlayTool';
 import {
   bodyWriteFailure,
@@ -1425,6 +1427,8 @@ export async function handleTrackerList(
     ], { canIssueKeys: listCanIssueKeys });
     const formatSummaryItem = (item: any): string => item.type === TEAM_NOTE_TYPE
       ? formatTeamNoteSummary(item, getTrackerDisplayRef(item))
+      : item.type === TOOL_MANIFEST_TYPE
+      ? formatToolManifestSummary(item, getTrackerDisplayRef(item))
       : `- [${item.type}] ${item.title} (${item.status || "no status"}, ${item.priority || "no priority"}, ${item.syncStatus}) [ref: ${getTrackerDisplayRef(item)}]${item.issueKeyStatus === 'unassigned' ? ` — ${issueKeyMessage(item, { canIssueKeys: listCanIssueKeys })}` : ''}`;
     const summary = mode === 'ready'
       ? [...readyTrackOrder.keys()]
@@ -1906,6 +1910,11 @@ export async function handleTrackerCreate(
     const humanOnly = rejectHumanOnlyStatus(args, args.type);
     if (humanOnly) return humanOnly;
 
+    // Tool Manifests: written only by Nimbalyst when an architect completes (Phase 1B).
+    if (isToolManifestCreate(args)) {
+      return guardToolManifestCreate();
+    }
+
     // Team Notes: host-owned provenance, member write gate and body cap.
     if (isTeamNoteCreate(args)) {
       const refusal = await guardTeamNoteCreate(args, sessionId);
@@ -2031,6 +2040,15 @@ export async function handleTrackerCreate(
       };
     }
     await pinCitedRevisions(db, workspacePath, id, data, globalRegistry.get(args.type)?.fields ?? []);
+
+    // Protected types (team-note, tool-manifest): the one rule every local write
+    // funnel applies, under the guards above (they decided who may call and
+    // filled a Team Note's provenance from the calling session).
+    try {
+      prepareProtectedTrackerCreate(args.type, data, { provenanceFromHost: true, body: args.description, typeTags: args.typeTags });
+    } catch (error) {
+      return { content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }], isError: true };
+    }
 
     const validationResult = globalRegistry.validate(args.type, data);
     if (!validationResult.valid) {
@@ -2290,6 +2308,10 @@ export async function handleTrackerUpdate(
       // Team Notes: members cannot write, provenance cannot be rewritten, body cap.
       const teamNoteRefusal = await guardTeamNoteUpdate(args, item.type, sessionId);
       if (teamNoteRefusal) return teamNoteRefusal;
+
+      // Tool Manifests: only the team's coordinator, only to accept (Phase 1B).
+      const manifestRefusal = await guardToolManifestUpdate(args, item, sessionId);
+      if (manifestRefusal) return manifestRefusal;
 
       if (args.published !== undefined) {
         return await handleTrackerPublicationUpdate(args, item, workspacePath, db, docService, rowToTrackerItem);
@@ -2731,6 +2753,15 @@ export async function handleTrackerUpdate(
           oldValue: change.from != null ? String(change.from) : undefined,
           newValue: change.to != null ? String(change.to) : undefined,
         });
+      }
+
+      // Protected types (team-note, tool-manifest): the one rule every local write
+      // funnel applies, under the guards above.
+      try {
+        assertProtectedTrackerUpdate(oldType, { ...args, type: primaryTypeChanged ? row.type : undefined }, oldDataSnapshot, data);
+        if (args.description !== undefined) assertProtectedTrackerBody(oldType, String(args.description).replace(/\\n/g, '\n'));
+      } catch (error) {
+        return { content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }], isError: true };
       }
 
       const tooLarge = sharedTrackerItemTooLarge(rowToTrackerItem({ ...row, data: JSON.stringify(data) }), workspacePath);
