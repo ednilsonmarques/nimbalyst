@@ -1,0 +1,524 @@
+{
+  "_comment": "Correções manuais do catálogo ECC: id -> {requires?, mechanics?, executableInScope?, note?}. Aplicadas por último; marcam overridden:true.",
+  "ecc:command:feature-dev": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "executa implementação; read:false"
+  },
+  "ecc:command:gan-build": {
+    "requires": {
+      "fork": true,
+      "writes": true
+    },
+    "note": "despacha gan-planner/generator/evaluator via Task (agents com Bash/Write); sem vínculo no registry"
+  },
+  "ecc:command:gan-design": {
+    "requires": {
+      "fork": true,
+      "writes": true
+    },
+    "note": "loop de dois agents (gan-generator/gan-evaluator, com Bash/Write); sem vínculo no registry"
+  },
+  "ecc:command:harness-audit": {
+    "mechanics": "script",
+    "requires": {
+      "scripts": true,
+      "shell": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "command que roda script node do ECC"
+  },
+  "ecc:command:multi-plan": {
+    "mechanics": "script",
+    "requires": {
+      "shell": true,
+      "network": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "runtime externo multi-modelo; fora de escopo"
+  },
+  "ecc:command:orch-add-feature": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "pipeline orch-* que executa; read:false"
+  },
+  "ecc:command:orch-build-mvp": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "pipeline orch-* que executa; read:false"
+  },
+  "ecc:command:orch-change-feature": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "pipeline orch-* que executa; read:false"
+  },
+  "ecc:command:orch-fix-defect": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "pipeline orch-* que executa; read:false"
+  },
+  "ecc:command:orch-refine-code": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "pipeline orch-* que executa; read:false"
+  },
+  "ecc:command:orch-review": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "pipeline orch-* que executa; read:false"
+  },
+  "ecc:command:plan-canvas": {
+    "mechanics": "script",
+    "requires": {
+      "scripts": true,
+      "shell": true,
+      "network": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "atalho do skill plan-canvas (servidor local); fora de escopo"
+  },
+  "ecc:command:prp-commit": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "executa (implementa/commita/abre PR); read:false"
+  },
+  "ecc:command:prp-implement": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "executa (implementa/commita/abre PR); read:false"
+  },
+  "ecc:command:prp-pr": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "executa (implementa/commita/abre PR); read:false"
+  },
+  "ecc:command:quality-gate": {
+    "mechanics": "script",
+    "requires": {
+      "scripts": true,
+      "shell": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "command que roda script node do ECC"
+  },
+  "ecc:skill:agentic-engineering": {
+    "mechanics": "instruction",
+    "executableInScope": {
+      "read": true,
+      "review": true,
+      "write": true
+    },
+    "note": "instrução; trechos de shell são exemplos"
+  },
+  "ecc:skill:architecture-decision-records": {
+    "mechanics": "instruction",
+    "executableInScope": {
+      "read": true,
+      "review": true,
+      "write": true
+    },
+    "note": "instrução; trechos de shell são exemplos"
+  },
+  "ecc:skill:blueprint": {
+    "requires": {
+      "writes": true
+    },
+    "note": "grava o plano em plans/"
+  },
+  "ecc:skill:codebase-onboarding": {
+    "mechanics": "instruction",
+    "executableInScope": {
+      "read": true,
+      "review": true,
+      "write": true
+    },
+    "note": "instrução; trechos de shell são exemplos"
+  },
+  "ecc:skill:continuous-learning": {
+    "mechanics": "memory",
+    "requires": {
+      "shell": true,
+      "scripts": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "hooks/memória persistente; fora de escopo"
+  },
+  "ecc:skill:continuous-learning-v2": {
+    "mechanics": "memory",
+    "requires": {
+      "shell": true,
+      "scripts": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "hooks/memória persistente; fora de escopo"
+  },
+  "ecc:skill:contract-first": {
+    "mechanics": "instruction",
+    "executableInScope": {
+      "read": true,
+      "review": true,
+      "write": true
+    },
+    "note": "instrução; trechos de shell são exemplos"
+  },
+  "ecc:skill:council": {
+    "requires": {
+      "fork": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "personas em subagentes (fork); não é leitura pura"
+  },
+  "ecc:skill:council-multi-model": {
+    "mechanics": "script",
+    "requires": {
+      "shell": true,
+      "network": true,
+      "scripts": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "runtime externo multi-modelo; fora de escopo"
+  },
+  "ecc:skill:delivery-gate": {
+    "mechanics": "hook",
+    "requires": {
+      "shell": true,
+      "scripts": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "vive de hooks; fora de escopo"
+  },
+  "ecc:skill:dev-team": {
+    "requires": {
+      "fork": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "personas em subagentes (fork); não é leitura pura"
+  },
+  "ecc:skill:gateguard": {
+    "mechanics": "hook",
+    "requires": {
+      "shell": true,
+      "scripts": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "vive de hooks; fora de escopo"
+  },
+  "ecc:skill:intent-driven-development": {
+    "mechanics": "instruction",
+    "executableInScope": {
+      "read": true,
+      "review": true,
+      "write": true
+    },
+    "note": "instrução; trechos de shell são exemplos"
+  },
+  "ecc:skill:mcp-dependency-review": {
+    "mechanics": "instruction",
+    "executableInScope": {
+      "read": true,
+      "review": true,
+      "write": true
+    },
+    "note": "instrução; trechos de shell são exemplos"
+  },
+  "ecc:skill:operator-approval-loop": {
+    "mechanics": "script",
+    "requires": {
+      "shell": true,
+      "network": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "runtime externo de aprovação; fora de escopo"
+  },
+  "ecc:skill:orch-add-feature": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "pipeline orch-* que executa; read:false"
+  },
+  "ecc:skill:orch-build-mvp": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "pipeline orch-* que executa; read:false"
+  },
+  "ecc:skill:orch-change-feature": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "pipeline orch-* que executa; read:false"
+  },
+  "ecc:skill:orch-fix-defect": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "pipeline orch-* que executa; read:false"
+  },
+  "ecc:skill:orch-pipeline": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "pipeline orch-* que executa; read:false"
+  },
+  "ecc:skill:orch-refine-code": {
+    "requires": {
+      "shell": true,
+      "writes": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "pipeline orch-* que executa; read:false"
+  },
+  "ecc:skill:plan-canvas": {
+    "mechanics": "script",
+    "requires": {
+      "scripts": true,
+      "shell": true,
+      "network": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "servidor local de canvas via CLI; fora de escopo"
+  },
+  "ecc:skill:production-audit": {
+    "mechanics": "instruction",
+    "executableInScope": {
+      "read": true,
+      "review": true,
+      "write": true
+    },
+    "note": "instrução prescritiva; shell só para quem executa; read como referência"
+  },
+  "ecc:skill:repo-scan": {
+    "mechanics": "script",
+    "requires": {
+      "scripts": true,
+      "shell": true,
+      "network": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "script instalador com git clone; fora de escopo"
+  },
+  "ecc:skill:safety-guard": {
+    "mechanics": "hook",
+    "requires": {
+      "shell": true,
+      "scripts": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "vive de hooks; fora de escopo"
+  },
+  "ecc:skill:search-first": {
+    "mechanics": "instruction",
+    "executableInScope": {
+      "read": true,
+      "review": true,
+      "write": true
+    },
+    "note": "instrução; trechos de shell são exemplos"
+  },
+  "ecc:skill:security-review": {
+    "mechanics": "instruction",
+    "executableInScope": {
+      "read": true,
+      "review": true,
+      "write": true
+    },
+    "note": "instrução; trechos de shell são exemplos"
+  },
+  "ecc:skill:tdd-workflow": {
+    "mechanics": "instruction",
+    "executableInScope": {
+      "read": true,
+      "review": true,
+      "write": true
+    },
+    "note": "instrução prescritiva; shell só para quem executa; read como referência"
+  },
+  "ecc:skill:unified-memory": {
+    "mechanics": "memory",
+    "requires": {
+      "shell": true,
+      "scripts": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "depende do CLI ecc-universal; fora de escopo"
+  },
+  "ecc:skill:verification-loop": {
+    "requires": {
+      "shell": true
+    },
+    "executableInScope": {
+      "read": false,
+      "review": false,
+      "write": false
+    },
+    "note": "o shell é do executor (build/test/lint)"
+  }
+}
