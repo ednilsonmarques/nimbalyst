@@ -19,8 +19,9 @@ import { getHostEnvironment } from '../../../../host/hostEnvironment';
 import { ClaudeCodeDeps } from './dependencyInjection';
 import { CLAUDE_TASK_TOOLS, createClaudeSystemPrompt } from './sdkCompatibility';
 import { resolveClaudeAgentCliPath } from './cliPathResolver';
-import { hasEnterpriseManagedMcpConfig } from './enterpriseMcpConfig';
+import { hasEnterpriseManagedHookPolicy, hasEnterpriseManagedMcpConfig, resolveEnterpriseManagedSettingsPath } from './enterpriseMcpConfig';
 import { canDisableClaudeThinking } from '../../../modelConstants';
+import { RESTRICTED_SCOPE_SETTINGS, type ChildToolScope } from './toolPolicy';
 import { type ThinkingMode } from '../../effortLevels';
 
 type SessionMode = 'planning' | 'agent' | 'auto' | undefined;
@@ -36,7 +37,7 @@ export interface BuildSdkOptionsDeps {
   getMcpServersSnapshot: (params: {
     sessionId?: string;
     workspacePath: string;
-    profile?: 'standard' | 'meta-agent';
+    profile?: 'standard' | 'meta-agent' | 'scoped';
   }) => Promise<Record<string, any>>;
   createCanUseToolHandler: (sessionId?: string, workspacePath?: string, permissionsPath?: string) => any;
   toolHooksService: {
@@ -59,6 +60,8 @@ export interface BuildSdkOptionsDeps {
    * all (NIM-2372). Injectable for tests; defaults to the real filesystem probe.
    */
   hasEnterpriseMcpLockdown?: () => boolean;
+  /** Enterprise settings that keep hooks running for a read/review child (see enterpriseMcpConfig). */
+  hasEnterpriseHookPolicy?: () => boolean;
 }
 
 export interface BuildSdkOptionsParams {
@@ -75,6 +78,12 @@ export interface BuildSdkOptionsParams {
   permissionsPath?: string;
   mcpConfigWorkspacePath?: string;
   isMetaAgent?: boolean;
+  /**
+   * Frozen `metadata.toolScope` of the session (turnPrologue resolves it
+   * before this build). `read` and `review` select the hardened MCP and skill
+   * settings below; `write`, `full` or absent leave the session alone.
+   */
+  toolScope?: ChildToolScope;
 }
 
 /**
@@ -174,6 +183,7 @@ export async function buildSdkOptions(
     config,
     abortController,
     hasEnterpriseMcpLockdown = hasEnterpriseManagedMcpConfig,
+    hasEnterpriseHookPolicy = hasEnterpriseManagedHookPolicy,
   } = deps;
 
   const mcpLockdown = hasEnterpriseMcpLockdown();
@@ -192,7 +202,34 @@ export async function buildSdkOptions(
     permissionsPath,
     mcpConfigWorkspacePath,
     isMetaAgent,
+    toolScope,
   } = params;
+
+  // A read/review child must only see Nimbalyst's own first-party MCP servers
+  // (`write` keeps its contract: it may still reach user and extension servers,
+  // see toolPolicy). Under an enterprise MCP lockdown Nimbalyst passes no
+  // servers at all and the enterprise's servers stay reachable, so the
+  // restriction cannot be enforced there: refuse the turn rather than run a
+  // "read-only" child that is not.
+  const restrictedScope = toolScope === 'read' || toolScope === 'review';
+  // Enterprise hooks follow the same rule as the MCP lockdown below: a
+  // managed-settings.json that declares hooks or re-enables them
+  // (`disableAllHooks: false`) outranks the flag-tier `disableAllHooks` this
+  // builder passes (only the file is probed, not MDM or registry policies), so
+  // those hooks would run
+  // on the child's own tool calls (scope probe P7). Refuse rather than pretend.
+  if (restrictedScope && hasEnterpriseHookPolicy()) {
+    throw new Error(
+      `This session runs with tool scope "${toolScope}", but the enterprise settings file ${resolveEnterpriseManagedSettingsPath()} ` +
+      "configures Claude Code hooks that Nimbalyst cannot keep from running during the session's tool calls. " +
+      'The turn was not run.',
+    );
+  }
+  if (restrictedScope && mcpLockdown) {
+    throw new Error(
+      `This session runs with tool scope "${toolScope}", but an enterprise MCP configuration controls MCP servers on this machine and Nimbalyst cannot isolate the session's tools from it. The turn was not run.`,
+    );
+  }
 
   let helperMethod: 'native' | 'custom' = 'native';
 
@@ -251,18 +288,25 @@ export async function buildSdkOptions(
     // Meta-agent tool availability is restricted by its profile in turnPrologue.
     ...(!isMetaAgent && { allowedTools: [...CLAUDE_TASK_TOOLS] }),
     settingSources: explicitOnly ? [] : settingSources,
-    // Headless provisioned servers must not be merged with repository or user discovery.
-    ...(explicitOnly && !mcpLockdown ? { strictMcpConfig: true } : {}),
+    // Headless provisioned servers must not be merged with repository or user
+    // discovery. Read/review children are the other exception, on purpose:
+    // with strict mode the CLI ignores plugin MCP servers, ~/.claude.json, the
+    // project .mcp.json and the claude.ai connectors, so the child sees only
+    // the `scoped` snapshot below.
+    ...((explicitOnly || restrictedScope) && !mcpLockdown ? { strictMcpConfig: true } : {}),
     // NIM-1988: this is the provider-owned, first-build snapshot, not a live
     // config read. The SDK rebuilds the API tool prefix on resumed turns, so a
     // server appearing/disappearing here would force a tools_changed miss over
     // the whole cached conversation. Do not move the live McpConfigService read
     // back into this per-turn builder; ClaudeCodeProvider freezes it once.
-    // NIM-2372: no `strictMcpConfig`. It made the SDK ignore its own discovery
-    // (~/.claude.json, project .mcp.json, enterprise config, claude.ai
-    // connectors), which silently stripped every account connector and hard-
-    // failed on managed machines. Nimbalyst's off-toggle is written into Claude
-    // Code's own `disabledMcpServers` instead — see claudeCodeDisabledServers.ts.
+    // NIM-2372: no `strictMcpConfig` for ordinary sessions. It made the SDK
+    // ignore its own discovery (~/.claude.json, project .mcp.json, enterprise
+    // config, claude.ai connectors), which silently stripped every account
+    // connector and hard-failed on managed machines. Nimbalyst's off-toggle is
+    // written into Claude Code's own `disabledMcpServers` instead — see
+    // claudeCodeDisabledServers.ts. Read/review children are the deliberate
+    // exception (`restrictedScope` above): stripping connectors is the point
+    // there, and under lockdown the turn is refused before this map is built.
     //
     // Under an enterprise MCP lockdown the binary rejects ANY dynamically-passed
     // server (the SDK serializes this map into `--mcp-config`), so we pass none
@@ -272,7 +316,7 @@ export async function buildSdkOptions(
       : await getMcpServersSnapshot({
           sessionId,
           workspacePath: mcpConfigWorkspacePath || workspacePath,
-          profile: isMetaAgent ? 'meta-agent' : 'standard',
+          profile: isMetaAgent ? 'meta-agent' : restrictedScope ? 'scoped' : 'standard',
         }),
     cwd: workspacePath,
     abortController,
@@ -301,6 +345,13 @@ export async function buildSdkOptions(
       // already 'never'; pinning it stops an inherited user or enterprise
       // settings file from turning it on underneath us. See #1549.
       askUserQuestionTimeout: 'never' as const,
+      // Read/review children: no inline skill shell execution and no external
+      // hooks. Settings, plugin and skill-frontmatter hooks run shell commands
+      // outside every denied tool, on the child's own tool calls and prompts,
+      // and a PreToolUse guard cannot stop them (scope probe P7). The SDK's
+      // own callbacks below keep running (probe P7b). See
+      // RESTRICTED_SCOPE_SETTINGS in toolPolicy.ts.
+      ...(restrictedScope && RESTRICTED_SCOPE_SETTINGS),
     },
     canUseTool: createCanUseToolHandler(sessionId, workspacePath, permissionsPath),
     hooks: {

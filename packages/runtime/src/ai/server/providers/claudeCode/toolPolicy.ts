@@ -131,11 +131,49 @@ export function resolveChildToolScope(raw: unknown): ChildToolScope {
   return 'read';
 }
 
-// Anything that runs a process or schedules one. 'PowerShell' is the CLI's
-// Windows shell tool; it is not in SDK_NATIVE_TOOLS but must be denied with Bash.
+// Anything that runs a process, schedules one, or moves the session to another
+// working tree. 'PowerShell' is the CLI's Windows shell tool; it is not in
+// SDK_NATIVE_TOOLS but must be denied with Bash. The scope probe
+// (scripts/team-scope-probe.mjs) showed ExitWorktree, ScheduleWakeup and
+// CronDelete in a restricted session's tool list, so they are named here too.
 const RUN_TOOLS: readonly string[] = [
-  'Bash', 'PowerShell', 'Monitor', 'REPL', 'EnterWorktree', 'CronCreate', 'RemoteTrigger',
+  'Bash', 'PowerShell', 'Monitor', 'REPL', 'EnterWorktree', 'ExitWorktree',
+  'CronCreate', 'CronDelete', 'ScheduleWakeup', 'RemoteTrigger',
 ];
+
+// Anything that reaches the user's other surfaces or an external design tool.
+const OUTWARD_TOOLS: readonly string[] = ['PushNotification', 'DesignSync'];
+
+// Skills. Denied to read/review children because a skill file may declare its
+// own lifecycle hooks (`hooks:` in the frontmatter), and a hook command runs
+// through the CLI, not through the Bash tool the scope denies: the scope probe
+// (scripts/team-scope-probe.mjs, case P2b, 2026-10-12) saw such a hook write a
+// file while Bash was denied and `disableSkillShellExecution` was on. Until the
+// CLI offers a per-session way to keep skill hooks from running, a restricted
+// child gets skill content only through its brief or system prompt.
+const SKILL_TOOLS: readonly string[] = ['Skill'];
+
+/**
+ * The `settings` overlay sdkOptionsBuilder passes for read/review children.
+ *
+ * - disableSkillShellExecution: a skill or command body can run shell commands
+ *   while it renders (the inline `!` form); the CLI replaces them with a
+ *   placeholder (scope probe P2c and P6b, 2026-10-13).
+ * - disableAllHooks: hooks declared in user, project and local settings, in
+ *   plugins and in skill frontmatter run shell commands outside every tool the
+ *   scope denies, triggered by the child's own allowed tool calls and even by
+ *   the prompt itself; a PreToolUse guard cannot stop them because the hook
+ *   runs whether or not the tool is denied (probe P7). With this flag the CLI
+ *   runs none of them while still honouring the SDK's own PreToolUse callbacks
+ *   and the enterprise's managed hooks (probe P7b).
+ *
+ * The probe mirrors this object as SHIPPED_RESTRICTED_SETTINGS; a two-way unit
+ * test keeps them equal.
+ */
+export const RESTRICTED_SCOPE_SETTINGS = Object.freeze({
+  disableSkillShellExecution: true,
+  disableAllHooks: true,
+});
 
 // Anything that hands work to another agent, which has its own tools and could
 // do what the scope denies this child: SDK sub-agents (denied until the SDK is
@@ -144,7 +182,7 @@ const RUN_TOOLS: readonly string[] = [
 // session gets them, see MetaAgentService createChildSessionInternal).
 const DELEGATION_TOOLS: readonly string[] = [
   'Agent', 'Task', 'Workflow',
-  'TeamCreate', 'TeammateTool', 'SendMessage',
+  'TeamCreate', 'TeamDelete', 'TeammateTool', 'SendMessage',
   mcpTool(MCP_HOST, 'create_session'),
   mcpTool(MCP_HOST, 'spawn_session'),
   mcpTool(MCP_HOST, 'send_prompt'),
@@ -152,6 +190,13 @@ const DELEGATION_TOOLS: readonly string[] = [
 ];
 
 const FILE_WRITE_TOOLS: readonly string[] = ['Write', 'Edit', 'MultiEdit', 'NotebookEdit'];
+
+// Outbound web access. Denied to read/review children: a fetch to an arbitrary
+// URL is an exfiltration channel for whatever the child has read, fetched
+// content is an injection surface, and neither is needed to investigate or
+// review a repository. A later scope may re-enable it per domain
+// (`WebFetch(domain:...)` rules); it is never on by default.
+const NETWORK_TOOLS: readonly string[] = ['WebFetch', 'WebSearch'];
 
 // Commits, and anything that changes CLI / app configuration, permissions or
 // installed code. Denied to every scoped child, write included.
@@ -198,6 +243,22 @@ function mcpTool(configKey: string, tool: string): string {
   return `mcp__${configKey}__${tool}`;
 }
 
+/**
+ * Native (non-MCP) tools a `read`/`review` child may call. The PreToolUse
+ * guard fails closed on any other native name, so a tool the CLI adds later is
+ * denied until someone lists it here; the SDK `disallowedTools` half can only
+ * name what it already knows. Read-only by construction: file and symbol
+ * reads, listings, task and todo bookkeeping, plan mode and tool discovery
+ * (ToolSearch). Skill is deliberately absent, see SKILL_TOOLS.
+ */
+export const READ_SCOPE_ALLOWED_NATIVE_TOOLS: ReadonlySet<string> = new Set([
+  'Read', 'Glob', 'Grep', 'LS', 'LSP', 'NotebookRead',
+  'ToolSearch', 'ListAgents', 'CronList', 'TaskOutput', 'TaskStop',
+  'TaskCreate', 'TaskGet', 'TaskUpdate', 'TaskList', 'TodoRead', 'TodoWrite',
+  'AskUserQuestion', 'EnterPlanMode', 'ExitPlanMode', 'ReportFindings',
+  'ListMcpResources', 'ListMcpResourcesTool', 'ReadMcpResource', 'ReadMcpResourceTool',
+]);
+
 /** Every first-party tool a `read` child may not use (topology minus the read allowlist). */
 export function readScopeDeniedFirstPartyTools(
   topology: readonly McpServerTopologyEntry[] = MCP_FIRST_PARTY_TOPOLOGY,
@@ -214,20 +275,27 @@ export const RUN_PROJECT_TESTS_TOOL = mcpTool(MCP_HOST, 'run_project_tests');
 
 /**
  * Native and Nimbalyst tools a Claude Code child must not see for its scope:
- * `read` investigates only; `review` is `read` that may also run the
- * workspace's tests (never a shell, never an edit); `write` may also edit files
- * but runs, delegates, commits and reconfigures nothing. User-configured MCP
- * servers are not covered.
+ * `read` investigates only (no web access, no skills either); `review` is
+ * `read` that may also run the workspace's tests (never a shell, never an
+ * edit); `write` may also edit files but runs, delegates, commits and
+ * reconfigures nothing.
+ *
+ * This list is the SDK `disallowedTools` half of the scope. MCP servers it
+ * cannot name in advance (user, plugin and claude.ai connector servers) are
+ * kept out of read/review sessions structurally instead: their MCP snapshot
+ * uses the `scoped` profile and the SDK runs with `strictMcpConfig`
+ * (sdkOptionsBuilder), and `isToolDeniedForScope` lets the PreToolUse guard
+ * fail closed on any `mcp__` tool outside the first-party read allowlist.
  */
 export function toolScopeDeniedTools(scope: ChildToolScope): readonly string[] {
   if (scope === 'read' || scope === 'review') {
     const denied = [...new Set([
       ...FILE_WRITE_TOOLS, ...RUN_TOOLS, ...DELEGATION_TOOLS, ...CONFIG_AND_COMMIT_TOOLS,
-      ...readScopeDeniedFirstPartyTools(),
+      ...OUTWARD_TOOLS, ...NETWORK_TOOLS, ...SKILL_TOOLS, ...readScopeDeniedFirstPartyTools(),
     ])];
     return scope === 'review' ? denied.filter((tool) => tool !== RUN_PROJECT_TESTS_TOOL) : denied;
   }
-  if (scope === 'write') return [...RUN_TOOLS, ...DELEGATION_TOOLS, ...CONFIG_AND_COMMIT_TOOLS];
+  if (scope === 'write') return [...RUN_TOOLS, ...DELEGATION_TOOLS, ...CONFIG_AND_COMMIT_TOOLS, ...OUTWARD_TOOLS];
   return [];
 }
 
@@ -248,4 +316,43 @@ export function mergeToolScopeDisallowedTools(
   }
   if (denied.length === 0) return existing ? [...existing] : undefined;
   return [...new Set([...(existing ?? []), ...denied])];
+}
+
+/**
+ * Whether a `read`/`review` child may call this MCP tool. Only the first-party
+ * read allowlist (plus the test runner for `review`) is admitted; any other
+ * `mcp__` tool (user, plugin or connector servers, per-extension servers, a
+ * first-party addition nobody listed) is denied.
+ */
+export function isReadScopeAllowedMcpTool(toolName: string, scope: 'read' | 'review'): boolean {
+  if (READ_SCOPE_ALLOWED_FIRST_PARTY_TOOLS.has(toolName)) return true;
+  return scope === 'review' && toolName === RUN_PROJECT_TESTS_TOOL;
+}
+
+/**
+ * Call-time check for the PreToolUse guard: true when `toolName` must not run
+ * under `scope`. Mirrors `mergeToolScopeDisallowedTools`, and for read/review
+ * fails closed twice over: a native tool must be in
+ * `READ_SCOPE_ALLOWED_NATIVE_TOOLS` and an `mcp__` tool in the first-party read
+ * allowlist. `full` denies nothing; `write` denies only what its list says, so
+ * user MCP and unlisted natives stay reachable there as today.
+ */
+export function isToolDeniedForScope(
+  scope: ChildToolScope,
+  toolName: string,
+  mcpServerKeys: readonly string[] = [],
+): boolean {
+  if (scope === 'full') return false;
+  const denied = new Set(mergeToolScopeDisallowedTools(undefined, scope, mcpServerKeys) ?? []);
+  if (denied.has(toolName)) return true;
+  if (!toolName.startsWith('mcp__')) {
+    // Natives: read/review admit only the allowlist (fail-closed for a tool
+    // nobody classified); write keeps its denylist contract.
+    if (scope === 'read' || scope === 'review') return !READ_SCOPE_ALLOWED_NATIVE_TOOLS.has(toolName);
+    return false;
+  }
+  const serverKey = toolName.slice('mcp__'.length).split('__')[0];
+  if (serverKey && denied.has(`mcp__${serverKey}`)) return true;
+  if (scope === 'read' || scope === 'review') return !isReadScopeAllowedMcpTool(toolName, scope);
+  return false;
 }

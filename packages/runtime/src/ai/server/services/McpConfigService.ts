@@ -94,6 +94,22 @@ export interface McpConfigServiceDeps {
 }
 
 /**
+ * Which servers a session's MCP snapshot registers.
+ *
+ * - `standard`: first-party, per-extension, extension-dev and the user's own
+ *   servers (config loader or workspace `.mcp.json`).
+ * - `meta-agent`: as standard, without the settings tools and extension-dev.
+ * - `scoped`: a read/review child. Only the first-party servers whose
+ *   tools the scope allowlist knows: core, host without settings, trackers and
+ *   situational. No per-extension servers, no extension-dev server and no
+ *   user or workspace servers: a server that is not registered cannot be
+ *   reached, whatever its tools are called. sdkOptionsBuilder pairs this with
+ *   `strictMcpConfig`, so the CLI's own discovery (plugins, ~/.claude.json,
+ *   project .mcp.json, claude.ai connectors) stays out as well.
+ */
+export type McpServersProfile = 'standard' | 'meta-agent' | 'scoped';
+
+/**
  * Service for loading and processing MCP server configurations
  */
 export class McpConfigService {
@@ -116,11 +132,12 @@ export class McpConfigService {
    * @returns Merged MCP server configuration object
    */
   async getMcpServersConfig(
-    options: { sessionId?: string; workspacePath?: string; profile?: 'standard' | 'meta-agent' }
+    options: { sessionId?: string; workspacePath?: string; profile?: McpServersProfile }
   ): Promise<Record<string, any>> {
     const { sessionId, workspacePath, profile = 'standard' } = options;
     const config: any = {};
     const isMetaAgent = profile === 'meta-agent';
+    const isScoped = profile === 'scoped';
 
     // Authorization header for the internal Nimbalyst MCP HTTP servers.
     // Issue #146: localhost MCP servers require a per-launch bearer token.
@@ -204,7 +221,7 @@ export class McpConfigService {
           return false;
         }
       })();
-      const excludeSettings = isMetaAgent || settingsKilled;
+      const excludeSettings = isMetaAgent || isScoped || settingsKilled;
       config[MCP_HOST] = {
         type: 'sse',
         transport: 'sse',
@@ -227,7 +244,9 @@ export class McpConfigService {
         ...(authHeaders ? { headers: { ...authHeaders } } : {}),
       };
 
-      if (this.deps.extensionMcpServerNamesLoader) {
+      // Per-extension servers are not registered for scoped children: their
+      // tools are not known to be read-only (toolPolicy denies them whole).
+      if (!isScoped && this.deps.extensionMcpServerNamesLoader) {
         let extensionShortNames: string[] = [];
         try {
           extensionShortNames =
@@ -255,7 +274,7 @@ export class McpConfigService {
     // connects to the unified endpoints now.
 
     // Include extension dev MCP server if it's started (provides build, install, reload tools)
-    if (!isMetaAgent && this.deps.extensionDevServerPort !== null) {
+    if (!isMetaAgent && !isScoped && this.deps.extensionDevServerPort !== null) {
       const params = workspacePath ? `?workspacePath=${encodeURIComponent(workspacePath)}` : '';
       config['nimbalyst-extension-dev'] = {
         type: 'sse',
@@ -270,7 +289,11 @@ export class McpConfigService {
 
     // Load user and workspace MCP servers using the injected loader (if available)
     // This merges user-level (global) servers with workspace-level servers
-    if (this.deps.mcpConfigLoader) {
+    if (isScoped) {
+      // Read/review children never receive user or workspace servers, from the
+      // loader or from the `.mcp.json` fallback (see McpServersProfile).
+      // `write` keeps the standard snapshot: its contract never excluded them.
+    } else if (this.deps.mcpConfigLoader) {
       try {
         const mergedServers = await this.deps.mcpConfigLoader(workspacePath);
 

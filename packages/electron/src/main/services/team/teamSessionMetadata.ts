@@ -8,6 +8,13 @@
  * the user's authorization to continue a team past a checkpoint. Its only
  * writer is `authorizeTeamContinuation` (metaAgentSessionQueries), which merges
  * it with its own statement, so no session can raise its own budget.
+ *
+ * `metadata.toolScope` and `metadata.sessionDirective` are creation-only for
+ * the same reason the provider freezes them on the first turn: they are the
+ * policy the creator set. A child must not widen its own scope, and nothing
+ * may rewrite a directive after the fact. Both are written with the row
+ * (MetaAgentService.createChildSessionInternal, the extension session broker,
+ * a renderer create) and never updated.
  */
 
 import {
@@ -15,11 +22,21 @@ import {
   TEAM_CHILD_METADATA_KEY,
   TEAM_MODE_METADATA_KEY,
 } from '@nimbalyst/runtime/ai/server/providers/teamContext';
+import { SESSION_DIRECTIVE_KEY } from '../extensionSessions/sessionOwnership';
 import { isRecommendedTeamRootModel } from './teamPolicy';
 
-const CREATION_ONLY_KEYS = [TEAM_MODE_METADATA_KEY, TEAM_CHILD_METADATA_KEY, TEAM_BUDGET_METADATA_KEY] as const;
+/** `metadata.toolScope`: a child's capability scope (see toolPolicy.ts). */
+export const TOOL_SCOPE_METADATA_KEY = 'toolScope';
 
-/** Drop the creation-only team keys from a metadata update. */
+const CREATION_ONLY_KEYS = [
+  TEAM_MODE_METADATA_KEY,
+  TEAM_CHILD_METADATA_KEY,
+  TEAM_BUDGET_METADATA_KEY,
+  TOOL_SCOPE_METADATA_KEY,
+  SESSION_DIRECTIVE_KEY,
+] as const;
+
+/** Drop the creation-only team and policy keys from a metadata update. */
 export function stripCreationOnlyTeamMetadata<T extends Record<string, unknown> | undefined>(metadata: T): T {
   if (!metadata || !CREATION_ONLY_KEYS.some((key) => key in metadata)) return metadata;
   const rest = { ...(metadata as Record<string, unknown>) };

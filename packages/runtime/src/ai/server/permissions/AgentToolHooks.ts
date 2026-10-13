@@ -17,6 +17,7 @@ import { parseBashForFileOps } from './BashCommandAnalyzer';
 import { generateToolPattern, buildToolDescription } from './toolPermissionHelpers';
 import { getPatternDisplayName } from '../types';
 import type { TrustChecker } from '../providers/ProviderPermissionMixin';
+import { isToolDeniedForScope, type ChildToolScope } from '../providers/claudeCode/toolPolicy';
 
 /**
  * Configuration options for AgentToolHooks service
@@ -116,6 +117,17 @@ export interface AgentToolHooksOptions {
   permissionsPath?: string;
 
   /**
+   * Frozen `metadata.toolScope` of this session. When present, the PreToolUse
+   * hook denies, before any other handling, every call the scope does not
+   * allow, including `mcp__` tools outside the first-party read allowlist. A
+   * second barrier over SDK `disallowedTools`, and the one that still holds
+   * for a tool the SDK exposes anyway (ToolSearch discovery, a sub-agent's
+   * inherited pool). Fail-closed: if the scope cannot be read, the call is
+   * denied.
+   */
+  getToolScope?: () => Promise<ChildToolScope>;
+
+  /**
    * History manager for creating file snapshots and tags
    * Optional - if not provided, snapshot creation will be skipped
    */
@@ -170,6 +182,7 @@ export class AgentToolHooks {
   ) => Promise<{ handled: boolean; result?: any }>;
   private readonly isTeammateSession: boolean;
   private readonly permissionsPath?: string;
+  private readonly getToolScope?: () => Promise<ChildToolScope>;
   private readonly historyManager?: {
     createSnapshot: (filePath: string, content: string, snapshotType: string, message: string, metadata?: any) => Promise<void>;
     getPendingTags: (filePath: string) => Promise<Array<{ id: string; createdAt: Date; sessionId?: string }>>;
@@ -198,7 +211,46 @@ export class AgentToolHooks {
     this.teammatePreToolHandler = options.teammatePreToolHandler;
     this.isTeammateSession = options.isTeammateSession || false;
     this.permissionsPath = options.permissionsPath;
+    this.getToolScope = options.getToolScope;
     this.historyManager = options.historyManager;
+  }
+
+  /**
+   * The tool-scope guard. Returns a PreToolUse deny when the session's frozen
+   * scope does not allow `toolName`, null when the call may proceed to the
+   * normal permission flow. Without an injected scope (no session, legacy
+   * callers) nothing changes.
+   */
+  private async denyIfOutsideToolScope(toolName: string): Promise<{
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse';
+      permissionDecision: 'deny';
+      permissionDecisionReason: string;
+    };
+  } | null> {
+    if (!this.getToolScope) return null;
+    const deny = (reason: string) => ({
+      hookSpecificOutput: {
+        hookEventName: 'PreToolUse' as const,
+        permissionDecision: 'deny' as const,
+        permissionDecisionReason: reason,
+      },
+    });
+    let scope: ChildToolScope;
+    try {
+      scope = await this.getToolScope();
+    } catch (error) {
+      this.logSecurity('[PreToolUse] Tool scope unavailable; denying the call (fail-closed)', {
+        toolName,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return deny("This session's tool restrictions could not be verified, so the call was denied. Try again later.");
+    }
+    if (scope === 'full' || !isToolDeniedForScope(scope, toolName)) return null;
+    this.logSecurity('[PreToolUse] Denied by tool scope', { toolName, scope, sessionId: this.sessionId });
+    return deny(
+      `This session runs with tool scope "${scope}", which does not allow ${toolName}. Do not work around it; report what you could not do.`,
+    );
   }
 
   /**
@@ -231,6 +283,18 @@ export class AgentToolHooks {
     return async (input: any, toolUseID: string | undefined, options: { signal: AbortSignal }) => {
       const toolName = input.tool_name;
       const toolInput = input.tool_input;
+
+      // TOOL SCOPE: a restricted child's frozen scope is checked before any
+      // other handling, so no delegation or confirmation path can admit a
+      // tool the scope denies. Only awaited when a scope is injected, so an
+      // unscoped session keeps exactly the sequencing it had before (the
+      // ExitPlanMode test observes the confirm emit after one microtask).
+      if (this.getToolScope) {
+        const scopeDenial = await this.denyIfOutsideToolScope(toolName);
+        if (scopeDenial) {
+          return scopeDenial;
+        }
+      }
 
       // TeamDelete should be validated by the SDK against active team members.
       // Do not pre-clean teammates here, or TeamDelete will incorrectly succeed.
@@ -315,6 +379,26 @@ export class AgentToolHooks {
       const toolName = input.tool_name as string;
       const toolInput = input.tool_input;
       const classifierReason = input.reason as string | undefined;
+
+      // A call the session's tool scope denies is not the user's to approve:
+      // re-prompting would offer "always" (and persist the pattern), and the
+      // retry would be denied by the PreToolUse guard anyway. The SDK's denial
+      // stays final. Fail-closed when the scope cannot be read.
+      if (this.getToolScope) {
+        try {
+          const scope = await this.getToolScope();
+          if (scope !== 'full' && isToolDeniedForScope(scope, toolName)) {
+            this.logSecurity('[PermissionDenied] Denied by tool scope; not re-prompting', { toolName, scope });
+            return {};
+          }
+        } catch (error) {
+          this.logSecurity('[PermissionDenied] Tool scope unavailable; not re-prompting (fail-closed)', {
+            toolName,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return {};
+        }
+      }
 
       const getPendingToolPermissions = this.getPendingToolPermissions;
       if (!getPendingToolPermissions) {

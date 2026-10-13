@@ -402,4 +402,100 @@ describe('AgentToolHooks', () => {
       });
     });
   });
+
+  describe('tool scope guard (PreToolUse, Phase 0 hardening)', () => {
+    const run = (hooks: AgentToolHooks, toolName: string, toolInput: any = {}) =>
+      hooks.createPreToolUseHook()({ tool_name: toolName, tool_input: toolInput }, 'tool-use-scope', { signal: new AbortController().signal });
+    const decisionOf = (result: any) => result?.hookSpecificOutput?.permissionDecision;
+
+    it('denies what a read scope denies, including MCP tools outside the first-party allowlist, with a reason', async () => {
+      const options = createMockOptions({ getToolScope: async () => 'read' });
+      const hooks = new AgentToolHooks(options);
+      for (const tool of ['Bash', 'Write', 'Agent', 'WebFetch', 'Skill', 'mcp__plugin_ecc_chrome-devtools__navigate_page',
+        'mcp__claude_ai_Supabase__execute_sql', 'mcp__nimbalyst-host__create_session', 'mcp__nimbalyst-trackers__tracker_create']) {
+        const result = await run(hooks, tool, { command: 'echo hi' });
+        expect(decisionOf(result), tool).toBe('deny');
+        expect(result.hookSpecificOutput.permissionDecisionReason, tool).toMatch(/tool scope "read"/);
+      }
+      expect(options.logSecurity).toHaveBeenCalled();
+    });
+
+    it('lets the read tools through to the normal flow', async () => {
+      const hooks = new AgentToolHooks(createMockOptions({ getToolScope: async () => 'read' }));
+      for (const tool of ['Read', 'Grep', 'Glob', 'ToolSearch', 'mcp__nimbalyst-trackers__tracker_get', 'mcp__nimbalyst__update_session_meta']) {
+        expect(decisionOf(await run(hooks, tool, { file_path: '/test/workspace/a.ts' })), tool).not.toBe('deny');
+      }
+    });
+
+    it('review may run the project tests; read may not', async () => {
+      const review = new AgentToolHooks(createMockOptions({ getToolScope: async () => 'review' }));
+      const read = new AgentToolHooks(createMockOptions({ getToolScope: async () => 'read' }));
+      expect(decisionOf(await run(review, 'mcp__nimbalyst-host__run_project_tests'))).not.toBe('deny');
+      expect(decisionOf(await run(read, 'mcp__nimbalyst-host__run_project_tests'))).toBe('deny');
+    });
+
+    it('full and absent scopes change nothing', async () => {
+      const full = new AgentToolHooks(createMockOptions({ getToolScope: async () => 'full' }));
+      const none = new AgentToolHooks(createMockOptions());
+      for (const hooks of [full, none]) {
+        expect(await run(hooks, 'Bash', { command: 'echo hi' })).toEqual({});
+        expect(await run(hooks, 'mcp__github__create_issue')).toEqual({});
+      }
+    });
+
+    it('fails closed when the scope cannot be read', async () => {
+      const hooks = new AgentToolHooks(createMockOptions({ getToolScope: async () => { throw new Error('db down'); } }));
+      const result = await run(hooks, 'Read', { file_path: '/test/workspace/a.ts' });
+      expect(decisionOf(result)).toBe('deny');
+      expect(result.hookSpecificOutput.permissionDecisionReason).toMatch(/could not be verified/);
+    });
+  });
+
+  describe('tool scope guard: interactions with delegation, plan mode and auto-mode re-prompts', () => {
+    const signal = () => new AbortController().signal;
+
+    it('denies Agent before the teammate delegation handler can see it', async () => {
+      const teammatePreToolHandler = vi.fn(async () => ({ handled: true, result: { ok: true } }));
+      const hooks = new AgentToolHooks(createMockOptions({ getToolScope: async () => 'read', teammatePreToolHandler }));
+      const result = await hooks.createPreToolUseHook()({ tool_name: 'Agent', tool_input: { prompt: 'x' } }, 'tool-use-agent', { signal: signal() });
+      expect(result?.hookSpecificOutput?.permissionDecision).toBe('deny');
+      expect(teammatePreToolHandler).not.toHaveBeenCalled();
+    });
+
+    it('a full scope still reaches the ExitPlanMode confirmation in planning mode', async () => {
+      const pending = new Map<string, { resolve: (value: { approved: boolean }) => void; reject: (error: Error) => void }>();
+      const options = createMockOptions({
+        getToolScope: async () => 'full',
+        getCurrentMode: () => 'planning',
+        getPendingExitPlanModeConfirmations: () => pending as any,
+      });
+      const hooks = new AgentToolHooks(options);
+      const resultPromise = hooks.createPreToolUseHook()(
+        { tool_name: 'ExitPlanMode', tool_input: { plan: 'Plan', planFilePath: 'plans/feature-plan.md' } },
+        'tool-use-exit-scoped',
+        { signal: signal() },
+      );
+      await new Promise((resolve) => setImmediate(resolve));
+      expect(options.emit).toHaveBeenCalledWith('exitPlanMode:confirm', expect.objectContaining({ requestId: 'tool-use-exit-scoped' }));
+      pending.get('tool-use-exit-scoped')!.resolve({ approved: true });
+      await expect(resultPromise).resolves.toEqual({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow' } });
+    });
+
+    it('a read child does not get an auto-mode re-prompt for a call its scope denies', async () => {
+      const options = createMockOptions({
+        getToolScope: async () => 'read',
+        getCurrentMode: () => 'auto',
+        getPendingToolPermissions: () => new Map(),
+      });
+      const hooks = new AgentToolHooks(options);
+      const result = await hooks.createPermissionDeniedHook()(
+        { tool_name: 'mcp__github__create_issue', tool_input: { title: 'x' }, reason: 'classifier' },
+        'tool-use-denied',
+        { signal: signal() },
+      );
+      expect(result).toEqual({});
+      expect(options.emit).not.toHaveBeenCalled();
+      expect(options.logAgentMessage).not.toHaveBeenCalled();
+    });
+  });
 });

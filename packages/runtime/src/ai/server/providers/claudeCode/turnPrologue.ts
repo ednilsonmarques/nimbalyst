@@ -38,6 +38,7 @@ import { resolveEffectiveSessionMode } from './resolveEffectiveSessionMode';
 import { ClaudeCodeTranscriptAdapter } from './ClaudeCodeTranscriptAdapter';
 import { buildSdkOptions, type BuildSdkOptionsDeps, type BuildSdkOptionsResult } from './sdkOptionsBuilder';
 import { SDK_NATIVE_TOOLS, mergeToolScopeDisallowedTools, type ChildToolScope } from './toolPolicy';
+import { neutralizeRestrictedPrompt } from './restrictedPrompt';
 import type { TurnState } from './turnState';
 
 /** Text attachments above this go to a file on disk instead of inline in the prompt. */
@@ -215,7 +216,7 @@ export interface TurnQueryHost {
   getMcpServersSnapshot(params: {
     sessionId?: string;
     workspacePath: string;
-    profile?: 'standard' | 'meta-agent';
+    profile?: 'standard' | 'meta-agent' | 'scoped';
   }): Promise<Record<string, any>>;
   createCanUseToolHandler(sessionId?: string, workspacePath?: string, permissionsPath?: string): any;
   toolHooksService: BuildSdkOptionsDeps['toolHooksService'];
@@ -267,6 +268,21 @@ export async function buildTurnQuery(
 ): Promise<TurnQuerySetup> {
   const { documentContext, sessionId, workspacePath, attachments, paths, prepared } = params;
 
+  // The child's scope is resolved before anything is built from the prompt:
+  // a read/review child must not hand the CLI a slash command, because the
+  // CLI runs skills, plugin and custom commands from the prompt outside every
+  // denied tool, frontmatter hooks included (scope probe P6). Such a prompt
+  // reaches the model as plain text instead. getToolScope throws
+  // (fail-closed) when the scope cannot be read, which ends the turn before
+  // query() runs. The meta-agent has its own profile and no child scope.
+  const isMetaAgent = (await host.getAgentRole(sessionId)) === 'meta-agent';
+  const toolScope: ChildToolScope | undefined = isMetaAgent ? undefined : await host.getToolScope(sessionId);
+  const restrictedPrompt = neutralizeRestrictedPrompt(state.message, toolScope);
+  if (restrictedPrompt.neutralized) {
+    console.warn(`[CLAUDE-CODE] Slash command delivered as plain text to a ${toolScope} child (session ${sessionId})`);
+    state.message = restrictedPrompt.message;
+  }
+
   // Append document context to message using pre-built prompts from DocumentContextService
   // Skip adding system message if the prompt starts with a slash command
   state.isSlashCommand = state.message.trimStart().startsWith('/');
@@ -309,7 +325,6 @@ export async function buildTurnQuery(
 
   // Build system prompt (no longer contains document context)
   const enableAgentTeams = settingsEnv.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS === '1';
-  const isMetaAgent = (await host.getAgentRole(sessionId)) === 'meta-agent';
   const workflowPreset = isMetaAgent ? await host.getWorkflowPreset(sessionId) : 'default';
   // Resolve-and-freeze the git snapshot before the (synchronous) prompt
   // build. First turn pays the git call; every later turn reads the frozen
@@ -355,7 +370,10 @@ export async function buildTurnQuery(
     throw new Error(unusableWorkspace ?? 'No project folder is set for this session.');
   }
 
-  // Build SDK options (settings, MCP config, env, session resumption, prompt input)
+  // Build SDK options (settings, MCP config, env, session resumption, prompt
+  // input). `toolScope`, resolved at the top of this function, selects the
+  // hardened MCP snapshot and settings for read/review children and the
+  // disallowedTools merge below.
   const sdkResult = await buildSdkOptions(
     {
       resolveModelVariant: () => host.resolveModelVariant(),
@@ -381,6 +399,7 @@ export async function buildTurnQuery(
       permissionsPath: paths.permissionsPath,
       mcpConfigWorkspacePath: paths.mcpConfigWorkspacePath,
       isMetaAgent,
+      toolScope,
     }
   );
   host.publishSdkResult(sdkResult);
@@ -396,14 +415,11 @@ export async function buildTurnQuery(
     (options as any).disallowedTools = blockedNativeTools;
     (options as any).blockedTools = blockedNativeTools;
   } else {
-    // A child created with toolScope read/write must not see the tools its
-    // scope denies; MetaAgentService tells the parent the child could not use them.
-    // getToolScope throws (fail-closed) when the scope cannot be read, which
-    // ends the turn before query() runs.
-    const toolScope = await host.getToolScope(sessionId);
+    // The scope resolved above: MetaAgentService tells the parent the child
+    // could not use what it denies.
     const disallowedTools = mergeToolScopeDisallowedTools(
       (options as any).disallowedTools,
-      toolScope,
+      toolScope ?? 'full',
       Object.keys((options as any).mcpServers ?? {}),
     );
     if (disallowedTools) (options as any).disallowedTools = disallowedTools;

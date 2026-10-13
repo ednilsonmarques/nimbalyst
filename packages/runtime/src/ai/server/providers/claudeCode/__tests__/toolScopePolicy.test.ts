@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  READ_SCOPE_ALLOWED_NATIVE_TOOLS,
   RUN_PROJECT_TESTS_TOOL,
+  isReadScopeAllowedMcpTool,
+  isToolDeniedForScope,
   mergeToolScopeDisallowedTools,
   readScopeDeniedFirstPartyTools,
   resolveChildToolScope,
   toolScopeDeniedTools,
+  RESTRICTED_SCOPE_SETTINGS,
 } from '../toolPolicy';
 
 describe('resolveChildToolScope', () => {
@@ -201,5 +205,127 @@ describe('mergeToolScopeDisallowedTools', () => {
   it('write does not deny extension servers wholesale', () => {
     const merged = mergeToolScopeDisallowedTools(undefined, 'write', ['nimbalyst-excalidraw'])!;
     expect(merged).not.toContain('mcp__nimbalyst-excalidraw');
+  });
+});
+
+describe('network tools (Phase 0 hardening)', () => {
+  it('read and review deny WebFetch and WebSearch; write and full do not', () => {
+    for (const scope of ['read', 'review'] as const) {
+      expect(toolScopeDeniedTools(scope), scope).toContain('WebFetch');
+      expect(toolScopeDeniedTools(scope), scope).toContain('WebSearch');
+    }
+    expect(toolScopeDeniedTools('write')).not.toContain('WebFetch');
+    expect(toolScopeDeniedTools('write')).not.toContain('WebSearch');
+    expect(toolScopeDeniedTools('full')).toEqual([]);
+  });
+
+  it('every restricted scope denies worktree exits, scheduled runs, cron edits, push notifications, design sync and team deletion', () => {
+    for (const scope of ['read', 'review', 'write'] as const) {
+      for (const tool of ['ExitWorktree', 'ScheduleWakeup', 'CronDelete', 'PushNotification', 'DesignSync', 'TeamDelete']) {
+        expect(toolScopeDeniedTools(scope), `${scope} ${tool}`).toContain(tool);
+      }
+    }
+    // Read-only listings stay.
+    expect(toolScopeDeniedTools('read')).not.toContain('CronList');
+    expect(toolScopeDeniedTools('read')).not.toContain('ListAgents');
+  });
+
+  it('read and review deny Skill (skill frontmatter hooks run shell commands outside Bash) but keep ToolSearch', () => {
+    for (const scope of ['read', 'review'] as const) {
+      expect(toolScopeDeniedTools(scope), scope).toContain('Skill');
+      expect(toolScopeDeniedTools(scope), scope).not.toContain('ToolSearch');
+    }
+    expect(toolScopeDeniedTools('write')).not.toContain('Skill');
+  });
+});
+
+describe('isToolDeniedForScope (PreToolUse guard)', () => {
+  it('fails closed on every MCP tool outside the first-party read allowlist', () => {
+    for (const tool of [
+      'mcp__plugin_ecc_chrome-devtools__navigate_page',
+      'mcp__claude_ai_Supabase__execute_sql',
+      'mcp__github__create_issue',
+      'mcp__nimbalyst-excalidraw__draw',
+      'mcp__nimbalyst-host__create_session',
+      'mcp__nimbalyst-trackers__tracker_create',
+      'mcp__nimbalyst-host__brand_new_tool_nobody_listed',
+    ]) {
+      expect(isToolDeniedForScope('read', tool), tool).toBe(true);
+      expect(isToolDeniedForScope('review', tool), tool).toBe(true);
+    }
+  });
+
+  it('keeps the first-party read tools, ToolSearch and plain reads, and denies Skill', () => {
+    for (const tool of [
+      'mcp__nimbalyst-trackers__tracker_get',
+      'mcp__nimbalyst-trackers__tracker_list',
+      'mcp__nimbalyst__update_session_meta',
+      'mcp__nimbalyst-host__get_session_result',
+      'Read', 'Grep', 'Glob', 'ToolSearch',
+    ]) {
+      expect(isToolDeniedForScope('read', tool), tool).toBe(false);
+      expect(isToolDeniedForScope('review', tool), tool).toBe(false);
+    }
+    expect(isToolDeniedForScope('read', 'Skill')).toBe(true);
+    expect(isToolDeniedForScope('review', 'Skill')).toBe(true);
+    expect(isToolDeniedForScope('write', 'Skill')).toBe(false);
+  });
+
+  it('review may run the project tests; read may not', () => {
+    expect(isToolDeniedForScope('review', RUN_PROJECT_TESTS_TOOL)).toBe(false);
+    expect(isToolDeniedForScope('read', RUN_PROJECT_TESTS_TOOL)).toBe(true);
+    expect(isReadScopeAllowedMcpTool(RUN_PROJECT_TESTS_TOOL, 'review')).toBe(true);
+    expect(isReadScopeAllowedMcpTool(RUN_PROJECT_TESTS_TOOL, 'read')).toBe(false);
+  });
+
+  it('denies native tools by name, including web, and whole extension servers', () => {
+    for (const tool of ['Bash', 'PowerShell', 'Agent', 'Task', 'Write', 'Edit', 'WebFetch', 'WebSearch', 'Workflow',
+      'mcp__nimbalyst__developer_git_commit_proposal']) {
+      expect(isToolDeniedForScope('read', tool), tool).toBe(true);
+    }
+    expect(isToolDeniedForScope('read', 'mcp__nimbalyst-slides__insert', ['nimbalyst-slides'])).toBe(true);
+  });
+
+  it('write denies execution and delegation but not its own writes or user MCP; full denies nothing', () => {
+    expect(isToolDeniedForScope('write', 'Bash')).toBe(true);
+    expect(isToolDeniedForScope('write', 'Agent')).toBe(true);
+    expect(isToolDeniedForScope('write', 'Write')).toBe(false);
+    expect(isToolDeniedForScope('write', 'WebFetch')).toBe(false);
+    expect(isToolDeniedForScope('write', 'mcp__github__create_issue')).toBe(false);
+    expect(isToolDeniedForScope('full', 'Bash')).toBe(false);
+    expect(isToolDeniedForScope('full', 'mcp__plugin_ecc_chrome-devtools__navigate_page')).toBe(false);
+  });
+});
+
+describe('isToolDeniedForScope native allowlist (fail-closed for read/review)', () => {
+  it('denies a native tool nobody classified, in read and review', () => {
+    for (const tool of ['BrandNewCliTool', 'Artifact', 'KillShell', 'Monitor', 'PushNotification']) {
+      expect(isToolDeniedForScope('read', tool), tool).toBe(true);
+      expect(isToolDeniedForScope('review', tool), tool).toBe(true);
+    }
+  });
+
+  it('keeps the read-only natives, none of which the deny list names', () => {
+    for (const tool of ['LS', 'LSP', 'NotebookRead', 'CronList', 'ListAgents', 'TaskStop', 'TaskOutput', 'TodoWrite', 'TaskCreate',
+      'EnterPlanMode', 'ExitPlanMode', 'ToolSearch']) {
+      expect(isToolDeniedForScope('read', tool), tool).toBe(false);
+      expect(isToolDeniedForScope('review', tool), tool).toBe(false);
+    }
+    for (const tool of READ_SCOPE_ALLOWED_NATIVE_TOOLS) {
+      expect(toolScopeDeniedTools('read'), tool).not.toContain(tool);
+    }
+  });
+
+  it('write keeps its denylist semantics for natives', () => {
+    expect(isToolDeniedForScope('write', 'BrandNewCliTool')).toBe(false);
+    expect(isToolDeniedForScope('write', 'Bash')).toBe(true);
+    expect(isToolDeniedForScope('write', 'PushNotification')).toBe(true);
+  });
+});
+
+describe('RESTRICTED_SCOPE_SETTINGS', () => {
+  it('turns off inline skill shell execution and every external hook for read/review children, nothing else', () => {
+    expect(RESTRICTED_SCOPE_SETTINGS).toEqual({ disableSkillShellExecution: true, disableAllHooks: true });
+    expect(Object.isFrozen(RESTRICTED_SCOPE_SETTINGS)).toBe(true);
   });
 });

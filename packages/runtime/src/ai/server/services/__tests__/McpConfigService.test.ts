@@ -582,4 +582,43 @@ describe('McpConfigService', () => {
       consoleWarnSpy.mockRestore();
     });
   });
+
+  describe('scoped profile (read/review/write children)', () => {
+    it('registers only the first-party servers, never user, workspace, extension or extension-dev servers', async () => {
+      const deps: McpConfigServiceDeps = {
+        ...mockDeps,
+        mcpServerPort: 3000,
+        extensionDevServerPort: 3002,
+        extensionMcpServerNamesLoader: () => ['excalidraw'],
+        mcpConfigLoader: async () => ({ github: { type: 'http', url: 'https://example.invalid/mcp' } }),
+      };
+
+      const standard = await new McpConfigService(deps).getMcpServersConfig({ workspacePath: '/ws', profile: 'standard' });
+      const scoped = await new McpConfigService(deps).getMcpServersConfig({ workspacePath: '/ws', profile: 'scoped' });
+
+      expect(Object.keys(standard)).toEqual(expect.arrayContaining(['github', 'nimbalyst-excalidraw', 'nimbalyst-extension-dev', 'nimbalyst-host']));
+      expect(Object.keys(scoped).sort()).toEqual(['nimbalyst', 'nimbalyst-host', 'nimbalyst-situational', 'nimbalyst-trackers']);
+      expect(scoped['nimbalyst-host'].url).toContain('hostExcludeSettings=1');
+      expect(standard['nimbalyst-host'].url).not.toContain('hostExcludeSettings=1');
+    });
+
+    it('does not read the workspace .mcp.json fallback for scoped children', async () => {
+      // The earlier "Workspace .mcp.json Loading" test leaves `fs`/`path`
+      // doMocks behind, so the fallback's real file read cannot be asserted
+      // here; what matters is whether the fallback is consulted at all.
+      const fallback = vi.spyOn(McpConfigService.prototype as any, 'loadWorkspaceMcpServers').mockResolvedValue(undefined);
+      try {
+        const deps: McpConfigServiceDeps = { ...mockDeps, mcpConfigLoader: null };
+
+        const scoped = await new McpConfigService(deps).getMcpServersConfig({ workspacePath: '/ws', profile: 'scoped' });
+        expect(fallback).not.toHaveBeenCalled();
+        expect(Object.keys(scoped).sort()).toEqual(['nimbalyst', 'nimbalyst-host', 'nimbalyst-situational', 'nimbalyst-trackers']);
+
+        await new McpConfigService(deps).getMcpServersConfig({ workspacePath: '/ws', profile: 'standard' });
+        expect(fallback).toHaveBeenCalledTimes(1);
+      } finally {
+        fallback.mockRestore();
+      }
+    });
+  });
 });

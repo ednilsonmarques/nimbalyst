@@ -31,6 +31,10 @@ let getSessionPhaseFn:
   | ((sessionId: string) => Promise<string | null>)
   | null = null;
 
+let getSessionToolScopeFn:
+  | ((sessionId: string) => Promise<string | null>)
+  | null = null;
+
 /**
  * Set the update function for session titles (called once at startup)
  */
@@ -74,6 +78,18 @@ export function setGetSessionPhaseFn(
   getPhaseFn: (sessionId: string) => Promise<string | null>
 ) {
   getSessionPhaseFn = getPhaseFn;
+}
+
+/**
+ * Set the function to read a session's `metadata.toolScope` (called once at
+ * startup). A restricted child (read/review/write) may name and tag itself and
+ * set its phase, but must not change `workflowPreset`: metadata that steers a
+ * session's policy stays with whoever created it.
+ */
+export function setGetSessionToolScopeFn(
+  getToolScopeFn: (sessionId: string) => Promise<string | null>
+) {
+  getSessionToolScopeFn = getToolScopeFn;
 }
 
 // ─── Shared tool surface (served by the unified MCP server) ─────────
@@ -189,6 +205,36 @@ export async function dispatchSessionMetaTool(
           ],
           isError: true,
         };
+      }
+
+      // A restricted child cannot change policy metadata. Fail closed when the
+      // scope cannot be read.
+      if (workflowPreset && getSessionToolScopeFn) {
+        let toolScope: string | null;
+        try {
+          toolScope = await getSessionToolScopeFn(aiSessionId);
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error: could not verify this session's tool scope, so "workflowPreset" was not changed: ${error instanceof Error ? error.message : "Unknown error"}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+        if (toolScope === 'read' || toolScope === 'review' || toolScope === 'write') {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error: this session runs with tool scope "${toolScope}" and cannot change "workflowPreset". Only name, tags and phase may be updated.`,
+              },
+            ],
+            isError: true,
+          };
+        }
       }
 
       // Require at least one parameter

@@ -8,6 +8,7 @@ import {
   setGetSessionTagsFn,
   setGetSessionTitleFn,
   setGetSessionPhaseFn,
+  setGetSessionToolScopeFn,
 } from '../mcp/sessionNamingServer';
 import { getDatabase } from '../database/initialize';
 import { TrayManager } from '../tray/TrayManager';
@@ -95,6 +96,14 @@ export class SessionNamingService {
         setGetSessionPhaseFn(async (sessionId: string) => {
           const session = await AISessionsRepository.get(sessionId);
           return (session?.metadata as any)?.phase || null;
+        });
+
+        // Set the tool-scope query function: update_session_meta refuses
+        // policy changes (workflowPreset) from a restricted child.
+        setGetSessionToolScopeFn(async (sessionId: string) => {
+          const session = await AISessionsRepository.get(sessionId);
+          const scope = (session?.metadata as any)?.toolScope;
+          return typeof scope === 'string' ? scope : null;
         });
 
         // MCP consolidation Phase 7: `update_session_meta` is served by the

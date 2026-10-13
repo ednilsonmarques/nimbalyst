@@ -405,7 +405,7 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
   private async getMcpServersSnapshot(options: {
     sessionId?: string;
     workspacePath: string;
-    profile?: 'standard' | 'meta-agent';
+    profile?: 'standard' | 'meta-agent' | 'scoped';
   }): Promise<Record<string, any>> {
     if (!this.mcpServersSnapshotJsonPromise) {
       this.mcpServersSnapshotJsonPromise = this.mcpConfigService
@@ -466,6 +466,10 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
         this.teammateManager.handlePreToolUse(toolName, toolInput, toolUseID, sessionId),
       isTeammateSession: !!isTeammateSession,
       permissionsPath,
+      // The frozen tool scope of this session, so the PreToolUse guard denies
+      // at call time what the scope denies: a second barrier over SDK
+      // `disallowedTools`. Without a session id no child scope can exist.
+      getToolScope: sessionId ? () => this.getToolScope(sessionId) : undefined,
       // Undefined on a host with no document history; AgentToolHooks guards
       // every call site and skips snapshotting rather than failing.
       historyManager: ClaudeCodeDeps.historyManager ?? undefined,

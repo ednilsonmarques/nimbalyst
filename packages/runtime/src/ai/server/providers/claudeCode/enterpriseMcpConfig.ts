@@ -26,6 +26,9 @@
  * Since CLI 2.1.271, unreadable or malformed managed files retain exclusive
  * control too. Fail closed unless the file is absent. The probe is cached for
  * the Nimbalyst process lifetime.
+ *
+ * `managed-settings.json` in the same roots is probed as well, for hook
+ * policies a read/review child cannot neutralise (hasEnterpriseManagedHookPolicy).
  */
 
 import { readFileSync } from 'node:fs';
@@ -81,4 +84,55 @@ export function hasEnterpriseManagedMcpConfig(deps: EnterpriseMcpConfigDeps = {}
 /** Test-only: clear the cached probe. */
 export function __resetEnterpriseManagedMcpConfigCache(): void {
   cached = undefined;
+}
+
+const MANAGED_SETTINGS_FILE_NAME = 'managed-settings.json';
+
+/** Absolute path the binary reads its enterprise settings (hooks included) from. */
+export function resolveEnterpriseManagedSettingsPath(
+  platform: NodeJS.Platform = process.platform,
+): string {
+  const dir = MANAGED_SETTINGS_DIRS[platform] ?? DEFAULT_MANAGED_SETTINGS_DIR;
+  return platform === 'win32'
+    ? path.win32.join(dir, MANAGED_SETTINGS_FILE_NAME)
+    : path.posix.join(dir, MANAGED_SETTINGS_FILE_NAME);
+}
+
+let cachedHookPolicy: boolean | undefined;
+
+/**
+ * True when the enterprise settings on this machine make hooks run that
+ * Nimbalyst cannot turn off for a read/review child: managed `hooks` run even
+ * under a non-managed `disableAllHooks`, and a managed `disableAllHooks: false`
+ * outranks the flag-tier value Nimbalyst passes. `allowManagedHooksOnly` on
+ * its own only blocks the non-managed hooks, so it is not a policy by itself.
+ * Only the managed-settings.json file is probed: MDM, registry or server-side
+ * managed settings are not read here. Unreadable or malformed files count as
+ * a policy (fail closed); only an absent file, or one without hook settings,
+ * is none.
+ */
+export function hasEnterpriseManagedHookPolicy(deps: EnterpriseMcpConfigDeps = {}): boolean {
+  if (cachedHookPolicy !== undefined) return cachedHookPolicy;
+
+  const platform = deps.platform ?? process.platform;
+  const read = deps.readFile ?? defaultReadFile;
+  try {
+    const raw = read(resolveEnterpriseManagedSettingsPath(platform));
+    if (raw === null) {
+      cachedHookPolicy = false;
+    } else {
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const hooks = parsed.hooks;
+      const declaresHooks = !!hooks && typeof hooks === 'object' && Object.keys(hooks as object).length > 0;
+      cachedHookPolicy = declaresHooks || parsed.disableAllHooks === false;
+    }
+  } catch (error) {
+    cachedHookPolicy = (error as NodeJS.ErrnoException)?.code !== 'ENOENT';
+  }
+  return cachedHookPolicy;
+}
+
+/** Test-only: clear the cached hook-policy probe. */
+export function __resetEnterpriseManagedHookPolicyCache(): void {
+  cachedHookPolicy = undefined;
 }

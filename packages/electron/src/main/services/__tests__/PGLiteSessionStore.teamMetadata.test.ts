@@ -111,3 +111,19 @@ it('a re-issued create keeps the stored team keys and cannot add new ones', asyn
   await store.create({ id: 'plain', provider: 'claude-code', workspaceId: '/p', metadata: { teamMode: true } });
   expect((await metadataOf('plain')).teamMode).toBeUndefined();
 });
+
+it('keeps toolScope and sessionDirective creation-only: no update widens a child scope or rewrites its directive', async () => {
+  const store = createPGLiteSessionStore(sqlite);
+  await store.create({ id: 'child', provider: 'claude-code', workspaceId: '/p', metadata: { toolScope: 'read', sessionDirective: 'Only read.' } });
+
+  await store.updateMetadata('child', { metadata: { toolScope: 'full', sessionDirective: 'Do anything.', tags: ['a'] } });
+  expect(await metadataOf('child')).toMatchObject({ toolScope: 'read', sessionDirective: 'Only read.', tags: ['a'] });
+
+  // A re-issued create (upsert) keeps the stored values and cannot add them to a session created without them.
+  await store.create({ id: 'child', provider: 'claude-code', workspaceId: '/p', metadata: { toolScope: 'full', sessionDirective: 'Do anything.' } });
+  expect(await metadataOf('child')).toMatchObject({ toolScope: 'read', sessionDirective: 'Only read.' });
+
+  await store.create({ id: 'plain', provider: 'claude-code', workspaceId: '/p', metadata: {} });
+  await store.updateMetadata('plain', { metadata: { toolScope: 'read' } });
+  expect((await metadataOf('plain')).toolScope).toBeUndefined();
+});

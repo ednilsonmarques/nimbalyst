@@ -228,7 +228,7 @@ export const META_AGENT_TOOL_DEFS: Array<{
           type: "string",
           enum: ["read", "review", "write", "full"],
           description:
-            "Capability scope for the child. \"read\" = read_file/list_files/search_files only (pure investigation). \"review\" = read plus run_project_tests (the workspace's own test command), no edits and no shell. \"write\" = those plus write_file but NO run_command, so the child can save a file deliverable (e.g. a report) yet cannot build/test/run anything. \"full\" (default) = all tools including run_command. Use read or write for analyze/research tasks so the child physically cannot run a build, and reserve full for tasks that must build/test.",
+            "Capability scope for the child. \"read\" = read_file/list_files/search_files only (pure investigation). \"review\" = read plus run_project_tests (the workspace's own test command), no edits and no shell. \"write\" = those plus write_file but NO run_command, so the child can save a file deliverable (e.g. a report) yet cannot build/test/run anything. \"full\" (default) = all tools including run_command. read and review also have no web access (WebFetch/WebSearch), no Skill tool (skill files can declare hooks that run shell commands), and see no MCP servers beyond Nimbalyst's own first-party ones (no user servers, plugin servers or claude.ai connectors); their settings and plugin hooks do not run, and a prompt that starts with a slash reaches them as plain text, never as a command. Use read or write for analyze/research tasks so the child physically cannot run a build, and reserve full for tasks that must build/test.",
         },
         role: {
           type: "string",

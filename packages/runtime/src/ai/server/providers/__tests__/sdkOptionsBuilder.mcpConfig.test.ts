@@ -6,6 +6,10 @@
  * (NIM-2240) and made the binary exit 1 on machines with an enterprise
  * managed-mcp.json. Nimbalyst now stays inside the ecosystem: no strict flag,
  * and "off" is written into Claude Code's own `disabledMcpServers`.
+ *
+ * Phase 0 hardening adds the one deliberate exception: read/review children
+ * run with strict mode and a first-party-only snapshot, and are refused under
+ * lockdown (see the last describe).
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -73,7 +77,7 @@ describe('buildSdkOptions MCP config (NIM-2372)', () => {
     __resetEnterpriseManagedMcpConfigCache();
   });
 
-  it('never sets strictMcpConfig, so the SDK keeps its own discovery and claude.ai connectors', async () => {
+  it('unscoped sessions never set strictMcpConfig, so the SDK keeps its own discovery and claude.ai connectors', async () => {
     const { options } = await buildSdkOptions(makeDeps(), makeParams());
 
     expect(options.strictMcpConfig).toBeUndefined();
@@ -163,5 +167,71 @@ describe('buildSdkOptions MCP config (NIM-2372)', () => {
     const { options } = await buildSdkOptions(deps, makeParams());
 
     expect(Object.keys(options.mcpServers!)).toEqual(['nimbalyst']);
+  });
+});
+
+describe('buildSdkOptions restricted tool scopes (Phase 0 hardening)', () => {
+  afterEach(() => { setHostEnvironment(null); vi.unstubAllEnvs(); });
+  beforeEach(() => { __resetEnterpriseManagedMcpConfigCache(); });
+
+  it.each(['read', 'review'] as const)('%s: scoped MCP profile, strictMcpConfig and skill shell execution off', async (toolScope) => {
+    const getMcpServersSnapshot = vi.fn(async () => ({ nimbalyst: { type: 'sse', url: 'http://127.0.0.1:1/mcp' } }));
+    const deps = makeDeps({ getMcpServersSnapshot, hasEnterpriseMcpLockdown: () => false, hasEnterpriseHookPolicy: () => false } as any);
+
+    const { options } = await buildSdkOptions(deps, makeParams({ toolScope }));
+
+    expect(options.strictMcpConfig).toBe(true);
+    expect(getMcpServersSnapshot).toHaveBeenCalledWith(expect.objectContaining({ profile: 'scoped' }));
+    expect((options.settings as Record<string, unknown>).disableSkillShellExecution).toBe(true);
+    // External hooks (settings, plugins, skill frontmatter) must not run for a read/review child (probe P7).
+    expect((options.settings as Record<string, unknown>).disableAllHooks).toBe(true);
+    expect(options.mcpServers).toEqual({ nimbalyst: { type: 'sse', url: 'http://127.0.0.1:1/mcp' } });
+  });
+
+  it.each([undefined, 'full', 'write'] as const)('%s keeps the standard profile and the CLI discovery (write never promised MCP isolation)', async (toolScope) => {
+    const getMcpServersSnapshot = vi.fn(async () => ({}));
+    const deps = makeDeps({ getMcpServersSnapshot, hasEnterpriseMcpLockdown: () => false, hasEnterpriseHookPolicy: () => false } as any);
+
+    const { options } = await buildSdkOptions(deps, makeParams({ toolScope }));
+
+    expect(options.strictMcpConfig).toBeUndefined();
+    expect(getMcpServersSnapshot).toHaveBeenCalledWith(expect.objectContaining({ profile: 'standard' }));
+    expect((options.settings as Record<string, unknown>).disableSkillShellExecution).toBeUndefined();
+    expect((options.settings as Record<string, unknown>).disableAllHooks).toBeUndefined();
+  });
+
+  it('refuses a restricted turn under enterprise MCP lockdown before any side effect; write and full still run', async () => {
+    const getMcpServersSnapshot = vi.fn(async () => ({}));
+    const deps = makeDeps({ getMcpServersSnapshot, hasEnterpriseMcpLockdown: () => true } as any);
+
+    for (const toolScope of ['read', 'review'] as const) {
+      await expect(buildSdkOptions(deps, makeParams({ toolScope, sessionId: 'locked-child' })))
+        .rejects.toThrow(new RegExp(`tool scope "${toolScope}".*enterprise MCP configuration`));
+    }
+    expect(getMcpServersSnapshot).not.toHaveBeenCalled();
+    expect(deps.teammateManager.lastUsedSessionId).toBeUndefined();
+
+    for (const toolScope of ['full', 'write'] as const) {
+      const { options } = await buildSdkOptions(deps, makeParams({ toolScope }));
+      expect(options.mcpServers).toEqual({});
+      expect(options.strictMcpConfig).toBeUndefined();
+    }
+  });
+
+  it('refuses a restricted turn when enterprise settings carry a hook policy; write and full still run', async () => {
+    const getMcpServersSnapshot = vi.fn(async () => ({}));
+    const deps = makeDeps({ getMcpServersSnapshot, hasEnterpriseMcpLockdown: () => false, hasEnterpriseHookPolicy: () => true } as any);
+
+    for (const toolScope of ['read', 'review'] as const) {
+      await expect(buildSdkOptions(deps, makeParams({ toolScope, sessionId: 'hooked-child' })))
+        .rejects.toThrow(new RegExp(`tool scope "${toolScope}".*enterprise settings file.*hooks`));
+    }
+    expect(getMcpServersSnapshot).not.toHaveBeenCalled();
+
+    for (const toolScope of ['full', 'write'] as const) {
+      const { options } = await buildSdkOptions(deps, makeParams({ toolScope }));
+      expect(options.strictMcpConfig).toBeUndefined();
+      expect((options.settings as Record<string, unknown>).disableAllHooks).toBeUndefined();
+    }
   });
 });

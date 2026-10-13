@@ -24,10 +24,10 @@ export function describeChildToolScope(
     return `Tool scope: ${toolScope} was requested, but this child's provider does not enforce it. Verify any claim that it ran, built, tested, or edited something against "Files modified" and its result.`;
   }
   if (toolScope === 'review') {
-    return `Tool scope: review (this child had NO file-writing, shell (run_command/Bash), delegation, or app-changing tools; its only execution was the workspace's own tests through run_project_tests). Any other claim it ran or built something is false unless it went through a user-configured MCP server, which the scope does not cover; "Files modified" above is the complete list of files it changed.`;
+    return `Tool scope: review (this child had NO file-writing, shell (run_command/Bash), delegation, skill, hook, web (WebFetch/WebSearch), external MCP (user servers, plugins, claude.ai connectors) or app-changing tools; its only execution was the workspace's own tests through run_project_tests). Any other claim it ran, built or fetched something is false; "Files modified" above is the complete list of files it changed.`;
   }
-  const denied = toolScope === 'read'
-    ? 'file-writing, shell (run_command/Bash), delegation, or app-changing tools'
-    : 'shell (run_command/Bash) or delegation tools';
-  return `Tool scope: ${toolScope} (this child had NO ${denied}). Any claim it ran, built, or tested anything is false unless it went through a user-configured MCP server, which the scope does not cover; "Files modified" above is the complete list of files it changed.`;
+  if (toolScope === 'read') {
+    return `Tool scope: read (this child had NO file-writing, shell (run_command/Bash), delegation, skill, hook, web (WebFetch/WebSearch), external MCP (user servers, plugins, claude.ai connectors) or app-changing tools). Any claim it ran, built, tested or fetched anything is false; "Files modified" above is the complete list of files it changed.`;
+  }
+  return `Tool scope: write (this child had NO shell (run_command/Bash) or delegation tools). Any claim it ran, built, or tested anything is false unless it went through a user-configured MCP server, which this scope does not cover; "Files modified" above is the complete list of files it changed.`;
 }
