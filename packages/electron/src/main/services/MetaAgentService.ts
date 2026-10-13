@@ -39,7 +39,8 @@ import { inheritedOwnership, isParentNotificationSuppressed } from './extensionS
 import { startExtensionSessionService } from './extensionSessions/extensionSessionsService';
 import { broadcastSessionCreated } from './session/broadcastSessionCreated';
 import { extractMessageText, extractUserPrompts } from './metaAgentMessageText';
-import { TEAM_CHILD_METADATA_KEY } from '@nimbalyst/runtime/ai/server/providers/teamContext';
+import { TEAM_CHILD_METADATA_KEY, resolveTeamContext } from '@nimbalyst/runtime/ai/server/providers/teamContext';
+import { renderArchitectReportForUpdate } from '@nimbalyst/runtime/ai/server/providers/toolManifest';
 import {
   TEAM_PROVIDER,
   buildTeamChild,
@@ -234,6 +235,26 @@ type RequestMobilePush = (
 
 /** Cap of a child's final report inside a [Child Session Update]. */
 export const CHILD_UPDATE_FINAL_REPORT_MAX_CHARS = 8000;
+
+/**
+ * Phase 1A.1: an architect's final report is its Tool Manifest. Within the
+ * 7,500-character contract it travels whole (the update's own cap is 8,000, so
+ * a valid manifest never depends on it). Above the contract the YAML is kept
+ * whole and the Markdown, with its "Preparation" line, is replaced by a notice
+ * telling the coordinator to ask for a compacted re-emission; the YAML is never
+ * cut. A final message that is not a manifest gets the ordinary cap and marker.
+ */
+export function renderArchitectFinalReport(text: string): string {
+  try {
+    return renderArchitectReportForUpdate(text, CHILD_UPDATE_FINAL_REPORT_MAX_CHARS);
+  } catch (error) {
+    // Judging the report must never cost the coordinator the report itself.
+    console.warn('[MetaAgentService] Could not judge an architect report; delivering it capped:', error);
+    return text.length > CHILD_UPDATE_FINAL_REPORT_MAX_CHARS
+      ? `${text.slice(0, CHILD_UPDATE_FINAL_REPORT_MAX_CHARS)}... [truncated: ${text.length - CHILD_UPDATE_FINAL_REPORT_MAX_CHARS} more characters; get_session_result has the full text]`
+      : text;
+  }
+}
 
 export class MetaAgentService {
   private static instance: MetaAgentService | null = null;
@@ -1535,9 +1556,31 @@ export class MetaAgentService {
       // The parent wrote the child's task (and any follow-ups); echoing them back
       // in the recap only spends the parent's context. get_session_result still
       // returns them.
+      // Phase 1A.1: an architect's settle carries its Tool Manifest; that one
+      // final message is kept whole here and judged against the manifest
+      // contract when rendered (renderArchitectFinalReport), never cut blindly.
+      const architectReport = eventType === 'session:completed'
+        && resolveTeamContext(session.metadata as Record<string, unknown> | undefined, session.agentRole).teamChild?.role === 'architect';
       const result = await this.buildSessionResultData(sessionId, session.workspacePath, undefined, false, {
         excludeInputFromSessionId: session.createdBySessionId,
+        wholeFinalOutput: architectReport,
       });
+
+      // Phase 1A.1: a tool-permission prompt is the user's decision. Waking the
+      // coordinator for it bought nothing in the pilot (six turns spent checking
+      // a prompt the user was answering) and the child's settle still arrives
+      // below. Questions and plan approvals keep waking it: those it can answer,
+      // even when an older, unanswered permission prompt sits in front of them.
+      if (eventType === 'session:waiting') {
+        const pending = await this.listPendingInteractivePrompts(sessionId);
+        const answerable = pending.find((prompt) => prompt.promptType !== 'permission_request') ?? null;
+        if (pending.length > 0 && !answerable) {
+          return;
+        }
+        if (answerable) {
+          result.pendingPrompt = answerable;
+        }
+      }
 
       // NIM-6: real dedup gate. Drop notifications whose semantic content is
       // identical to the last one delivered for this child. The previous code
@@ -1555,7 +1598,7 @@ export class MetaAgentService {
         await this.ensurePlanTrackerItem(session.workspacePath, sessionId, result);
       }
 
-      const notification = this.buildNotificationMessage(eventType, result);
+      const notification = this.buildNotificationMessage(eventType, result, architectReport);
 
       // Supersede rather than append. The signature dedup above only collapses
       // duplicates within a single child turn (it resets on
@@ -1599,7 +1642,9 @@ export class MetaAgentService {
 
   private buildNotificationMessage(
     eventType: 'session:completed' | 'session:error' | 'session:waiting' | 'session:interrupted',
-    result: SessionResultData
+    result: SessionResultData,
+    // Phase 1A.1: render the final output as an architect's manifest (see renderArchitectFinalReport).
+    architectReport: boolean = false
   ): string {
     const lines = [
       '[Child Session Update]',
@@ -1617,10 +1662,16 @@ export class MetaAgentService {
     // returns the full prompt when a parent genuinely needs it.
     if (result.recentMessages.length > 0) {
       lines.push('Recent messages:');
-      for (const message of result.recentMessages) {
-        const label = message.direction === 'input' ? 'User' : 'Assistant';
-        lines.push(`- ${label}: ${message.text}`);
+      let finalOutputIndex = -1;
+      if (architectReport) {
+        for (let index = result.recentMessages.length - 1; index >= 0; index -= 1) {
+          if (result.recentMessages[index].direction === 'output') { finalOutputIndex = index; break; }
+        }
       }
+      result.recentMessages.forEach((message, index) => {
+        const label = message.direction === 'input' ? 'User' : 'Assistant';
+        lines.push(`- ${label}: ${index === finalOutputIndex ? renderArchitectFinalReport(message.text) : message.text}`);
+      });
     } else if (result.lastResponse) {
       lines.push(`Last response: ${result.lastResponse}`);
     }
@@ -1639,7 +1690,12 @@ export class MetaAgentService {
     }
     // Keep the actionable prompt last so the parent session cannot miss the
     // question beneath ordinary recap or error text.
-    if (result.pendingPrompt) {
+    if (result.pendingPrompt && result.pendingPrompt.promptType === 'permission_request') {
+      // Phase 1A.1: a tool permission is the user's decision, never the coordinator's.
+      const toolName = result.pendingPrompt.content?.toolName || result.pendingPrompt.content?.request?.tool || 'unknown';
+      lines.push('');
+      lines.push(`WAITING ON THE USER. Tool requesting permission: ${toolName}. That permission is the user's decision; do not answer it. The member reports when it settles.`);
+    } else if (result.pendingPrompt) {
       lines.push('');
       lines.push(`ACTION REQUIRED: This session is blocked on an interactive prompt.`);
       lines.push(`Use respond_to_prompt with these arguments:`);
@@ -1663,10 +1719,6 @@ export class MetaAgentService {
           }
         }
         lines.push(`  response format: { "answers": { "<question text>": "<your answer>" } }`);
-      } else if (result.pendingPrompt.promptType === 'permission_request') {
-        const toolName = result.pendingPrompt.content?.toolName || result.pendingPrompt.content?.request?.tool || 'unknown';
-        lines.push(`  Tool requesting permission: ${toolName}`);
-        lines.push(`  response: { "decision": "allow", "scope": "session" }`);
       } else if (result.pendingPrompt.promptType === 'exit_plan_mode_request') {
         if (result.pendingPrompt.content?.planFilePath) {
           lines.push(`  Plan file: ${result.pendingPrompt.content.planFilePath}`);
@@ -1684,7 +1736,7 @@ export class MetaAgentService {
     // Skip the heavier full-turn extract when the caller only needs preview
     // fields (the list and notification paths discard fullResponse).
     includeFullResponse: boolean = true,
-    options: { excludeInputFromSessionId?: string } = {}
+    options: { excludeInputFromSessionId?: string; wholeFinalOutput?: boolean } = {}
   ): Promise<SessionResultData> {
     let sessionTitle: string;
     let sessionProvider: string;
@@ -1725,7 +1777,14 @@ export class MetaAgentService {
 
     const messages = await AgentMessagesRepository.list(sessionId, { limit: 500 });
     const userPrompts = extractUserPrompts(messages);
-    const recentMessages = this.extractRecentMessages(messages, 3, undefined, options.excludeInputFromSessionId);
+    const recentMessages = this.extractRecentMessages(
+      messages,
+      3,
+      undefined,
+      options.excludeInputFromSessionId,
+      // Phase 1A.1: an architect's final report is judged by renderArchitectFinalReport, not cut here.
+      options.wholeFinalOutput ? Number.MAX_SAFE_INTEGER : undefined,
+    );
     const pendingPrompt = await this.getPendingInteractivePrompt(sessionId);
 
     let editedFiles: string[] = [];
@@ -1769,7 +1828,9 @@ export class MetaAgentService {
     };
   }
 
-  private async getPendingInteractivePrompt(sessionId: string): Promise<PendingInteractivePrompt | null> {
+  /** Every unanswered interactive prompt of a session, oldest first (Phase 1A.1 reads the whole list). */
+  private async listPendingInteractivePrompts(sessionId: string): Promise<PendingInteractivePrompt[]> {
+    const pending: PendingInteractivePrompt[] = [];
     // Interactive prompts are persisted in three different formats:
     // 1. AskUserQuestion:  { type: "nimbalyst_tool_use", name: "AskUserQuestion", id: "...", input: { questions } }
     // 2. ToolPermission:   { type: "nimbalyst_tool_use", name: "ToolPermission", id: "...", input: { requestId, toolName, ... } }
@@ -1823,7 +1884,7 @@ export class MetaAgentService {
           }
 
           if (content.name === 'AskUserQuestion') {
-            return {
+            pending.push({
               id: row.id,
               promptId,
               promptType: 'ask_user_question_request',
@@ -1833,11 +1894,12 @@ export class MetaAgentService {
                 questions: content.input?.questions || [],
                 questionId: promptId,
               },
-            };
+            });
+            continue;
           }
 
           if (content.name === 'ToolPermission') {
-            return {
+            pending.push({
               id: row.id,
               promptId: content.input?.requestId || promptId,
               promptType: 'permission_request',
@@ -1853,7 +1915,8 @@ export class MetaAgentService {
                 warnings: content.input?.warnings || [],
                 status: 'pending',
               },
-            };
+            });
+            continue;
           }
 
           continue;
@@ -1881,20 +1944,26 @@ export class MetaAgentService {
             continue;
           }
 
-          return {
+          pending.push({
             id: row.id,
             promptId,
             promptType: 'exit_plan_mode_request',
             createdAt: toMillis(row.created_at)!,
             content,
-          };
+          });
+          continue;
         }
       } catch {
         continue;
       }
     }
 
-    return null;
+    return pending;
+  }
+
+  /** The oldest unanswered interactive prompt of a session, or null. */
+  private async getPendingInteractivePrompt(sessionId: string): Promise<PendingInteractivePrompt | null> {
+    return (await this.listPendingInteractivePrompts(sessionId))[0] ?? null;
   }
 
   /** Status read, scoped to the key the session is stored under. */

@@ -231,3 +231,43 @@ describe('resolveImmediateToolDecision', () => {
     });
   });
 });
+
+describe('team-context pre-authorization (Phase 1A.1)', () => {
+  const CREATE = 'mcp__nimbalyst-host__create_session';
+
+  it('allows a pre-authorized first-party tool in a trusted workspace, with updatedInput', async () => {
+    const teamPreauthorization = vi.fn().mockResolvedValue('team root creating a member');
+    const deps = createDeps({ teamPreauthorization });
+    const result = await resolveImmediateToolDecision(deps, createParams({ toolName: CREATE, input: { role: 'architect' } }));
+    assertZodCompliantAllow(result);
+    expect(result!.updatedInput).toEqual({ role: 'architect' });
+    expect(teamPreauthorization).toHaveBeenCalledWith(CREATE, { role: 'architect' });
+    expect(deps.logSecurity).toHaveBeenCalledWith(expect.stringContaining('Team context pre-authorizes'), expect.objectContaining({ toolName: CREATE }));
+  });
+
+  it('never consults the team context for an untrusted workspace: the deny comes first', async () => {
+    const teamPreauthorization = vi.fn().mockResolvedValue('team root creating a member');
+    const deps = createDeps({ trustChecker: vi.fn().mockReturnValue({ trusted: false, mode: 'ask' }), teamPreauthorization });
+    const result = await resolveImmediateToolDecision(deps, createParams({ toolName: CREATE, input: {} }));
+    assertZodCompliantDeny(result);
+    expect(teamPreauthorization).not.toHaveBeenCalled();
+  });
+
+  it('falls through to the ordinary prompt when the team context gives no reason, or is absent', async () => {
+    const deps = createDeps({ teamPreauthorization: vi.fn().mockResolvedValue(null) });
+    expect(await resolveImmediateToolDecision(deps, createParams({ toolName: CREATE, input: {} }))).toBeNull();
+    expect(await resolveImmediateToolDecision(deps, createParams({ toolName: 'Bash', input: { command: 'npm test' } }))).toBeNull();
+    expect(await resolveImmediateToolDecision(createDeps(), createParams({ toolName: CREATE, input: {} }))).toBeNull();
+  });
+});
+
+describe('team-context pre-authorization needs an affirmative trust check (Phase 1A.1)', () => {
+  const CREATE = 'mcp__nimbalyst-host__create_session';
+
+  it('is never consulted without a trust path or without a trust checker', async () => {
+    const teamPreauthorization = vi.fn().mockResolvedValue('team root creating a member');
+    expect(await resolveImmediateToolDecision(createDeps({ teamPreauthorization }), createParams({ toolName: CREATE, input: {}, pathForTrust: undefined }))).toBeNull();
+    expect(await resolveImmediateToolDecision(createDeps({ teamPreauthorization, trustChecker: undefined }), createParams({ toolName: CREATE, input: {} }))).toBeNull();
+    expect(teamPreauthorization).not.toHaveBeenCalled();
+  });
+});

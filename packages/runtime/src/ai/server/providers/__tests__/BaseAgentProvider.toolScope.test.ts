@@ -10,6 +10,8 @@ type Receiver = { frozenToolPolicies: Map<string, Promise<{ scope: string; role:
 
 const getToolScope = (BaseAgentProvider.prototype as any).getToolScope as (this: Receiver, sessionId?: string) => Promise<string>;
 const getToolPolicyRole = (BaseAgentProvider.prototype as any).getToolPolicyRole as (this: Receiver, sessionId?: string) => Promise<string | null>;
+const getTeamPermissionContext = (BaseAgentProvider.prototype as any).getTeamPermissionContext as (this: Receiver, sessionId?: string) => Promise<{ teamMode: boolean; role: string | null; scope: string; sessionId: string; rootSessionId: string | null } | null>;
+const isSessionInTeam = (BaseAgentProvider.prototype as any).isSessionInTeam as (this: Receiver, targetSessionId: string, rootSessionId: string) => Promise<boolean>;
 
 function receiver(): Receiver {
   const self = Object.create(BaseAgentProvider.prototype) as Receiver;
@@ -118,5 +120,78 @@ describe('BaseAgentProvider.getToolPolicyRole (Phase 1A: the team role rides the
     expect(self.frozenToolPolicies.has('child-4')).toBe(false);
     get.mockResolvedValue({ agentRole: 'standard', metadata: { toolScope: 'read', teamChild: { role: 'architect', rootSessionId: 'r', depth: 1 } } });
     expect(await getToolPolicyRole.call(self, 'child-4')).toBe('architect');
+  });
+});
+
+describe('BaseAgentProvider.getTeamPermissionContext (Phase 1A.1)', () => {
+  beforeEach(() => {
+    get.mockReset();
+    AISessionsRepository.setStore({ get } as never);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    AISessionsRepository.clearStore();
+    vi.restoreAllMocks();
+  });
+
+  it('describes a team root (full scope, no role) and a member (its scope and role), from the same frozen read', async () => {
+    get.mockResolvedValue({ agentRole: 'standard', metadata: { teamMode: true } });
+    const root = receiver();
+    expect(await getTeamPermissionContext.call(root, 'root')).toEqual({ teamMode: true, role: null, scope: 'full', sessionId: 'root', rootSessionId: 'root' });
+    expect(await getToolScope.call(root, 'root')).toBe('full');
+    expect(get).toHaveBeenCalledTimes(1);
+
+    get.mockResolvedValue({ agentRole: 'standard', metadata: { toolScope: 'review', teamChild: { role: 'reviewer', rootSessionId: 'r', depth: 1 } } });
+    expect(await getTeamPermissionContext.call(receiver(), 'member')).toEqual({ teamMode: false, role: 'reviewer', scope: 'review', sessionId: 'member', rootSessionId: 'r' });
+  });
+
+  it('is null outside a team, without a store, and when the row cannot be read (the prompt stays)', async () => {
+    get.mockResolvedValue({ agentRole: 'standard', metadata: {} });
+    expect(await getTeamPermissionContext.call(receiver(), 'plain')).toBeNull();
+    get.mockResolvedValue({ agentRole: 'meta-agent', metadata: { teamMode: true } });
+    expect(await getTeamPermissionContext.call(receiver(), 'meta')).toBeNull();
+    expect(await getTeamPermissionContext.call(receiver(), undefined)).toBeNull();
+
+    const self = receiver();
+    get.mockRejectedValue(new Error('db down'));
+    expect(await getTeamPermissionContext.call(self, 'broken')).toBeNull();
+    expect(self.frozenToolPolicies.has('broken')).toBe(false);
+
+    AISessionsRepository.clearStore();
+    expect(await getTeamPermissionContext.call(receiver(), 'headless')).toBeNull();
+  });
+});
+
+describe('BaseAgentProvider.isSessionInTeam (Phase 1A.1)', () => {
+  beforeEach(() => {
+    get.mockReset();
+    AISessionsRepository.setStore({ get } as never);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    AISessionsRepository.clearStore();
+    vi.restoreAllMocks();
+  });
+
+  it('is true for the root itself and for a member of that root, false for anyone else', async () => {
+    expect(await isSessionInTeam.call(receiver(), 'root', 'root')).toBe(true);
+    expect(get).not.toHaveBeenCalled();
+    get.mockResolvedValue({ agentRole: 'standard', metadata: { teamChild: { role: 'implementer', rootSessionId: 'root', depth: 1 } } });
+    expect(await isSessionInTeam.call(receiver(), 'member', 'root')).toBe(true);
+    get.mockResolvedValue({ agentRole: 'standard', metadata: { teamChild: { role: 'implementer', rootSessionId: 'other-root', depth: 1 } } });
+    expect(await isSessionInTeam.call(receiver(), 'foreign-member', 'root')).toBe(false);
+    get.mockResolvedValue({ agentRole: 'standard', metadata: {} });
+    expect(await isSessionInTeam.call(receiver(), 'users-own-session', 'root')).toBe(false);
+    get.mockResolvedValue(null);
+    expect(await isSessionInTeam.call(receiver(), 'missing', 'root')).toBe(false);
+  });
+
+  it('is false on any doubt: empty ids, no store, a failing read', async () => {
+    expect(await isSessionInTeam.call(receiver(), '', 'root')).toBe(false);
+    expect(await isSessionInTeam.call(receiver(), 'member', '')).toBe(false);
+    get.mockRejectedValue(new Error('db down'));
+    expect(await isSessionInTeam.call(receiver(), 'member', 'root')).toBe(false);
+    AISessionsRepository.clearStore();
+    expect(await isSessionInTeam.call(receiver(), 'member', 'root')).toBe(false);
   });
 });

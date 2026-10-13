@@ -24,6 +24,13 @@ interface ResolveImmediateToolDecisionDeps {
   setCurrentMode: (mode: 'planning' | 'agent' | 'auto') => void;
   getCurrentMode?: () => 'planning' | 'agent' | 'auto' | undefined;
   logSecurity: (message: string, data?: Record<string, unknown>) => void;
+  /**
+   * Team-context pre-authorization (Phase 1A.1): the reason a first-party host
+   * tool needs no prompt for this session and this call, or null. Consulted
+   * last, and only after the workspace was affirmatively found trusted, so no
+   * deny rule above it is weakened.
+   */
+  teamPreauthorization?: (toolName: string, input: unknown) => Promise<string | null>;
 }
 
 interface ResolveImmediateToolDecisionParams {
@@ -91,6 +98,7 @@ export async function resolveImmediateToolDecision(
     return { behavior: 'allow', updatedInput: input };
   }
 
+  let trustedWorkspace = false;
   if (pathForTrust && deps.trustChecker) {
     const trustStatus = deps.trustChecker(pathForTrust);
     if (!trustStatus.trusted) {
@@ -100,6 +108,7 @@ export async function resolveImmediateToolDecision(
         message: 'Workspace is not trusted. Please trust the workspace to use AI tools.'
       };
     }
+    trustedWorkspace = true;
 
     if (trustStatus.mode === 'bypass-all') {
       // In auto mode the SDK classifier is the decision-maker. When the
@@ -115,6 +124,14 @@ export async function resolveImmediateToolDecision(
 
     if (trustStatus.mode === 'allow-all' && ALLOW_ALL_FILE_EDIT_TOOLS.includes(toolName)) {
       deps.logSecurity('[canUseTool] Allow-all mode, auto-approving file tool:', { toolName });
+      return { behavior: 'allow', updatedInput: input };
+    }
+  }
+
+  if (trustedWorkspace && deps.teamPreauthorization) {
+    const reason = await deps.teamPreauthorization(toolName, input);
+    if (reason) {
+      deps.logSecurity('[canUseTool] Team context pre-authorizes first-party tool:', { toolName, reason });
       return { behavior: 'allow', updatedInput: input };
     }
   }

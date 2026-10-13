@@ -79,6 +79,7 @@ import {
   SDK_NATIVE_TOOLS,
   TEAM_TOOLS,
 } from './claudeCode/toolPolicy';
+import { TEAM_TARGETED_TOOLS, teamPreauthorizationReason } from './claudeCode/teamPermissionPolicy';
 import {
   buildBedrockToolErrorGuidance,
   detectResultChunkErrorFlags,
@@ -3256,7 +3257,8 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
           input,
           options,
           sessionId,
-          pathForTrust
+          pathForTrust,
+          teammateName
         );
         // In Auto mode the SDK classifier escalated this call, so the user
         // decides on the command as a whole rather than part by part.
@@ -3306,7 +3308,8 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
     input: any,
     options: ToolPermissionOptions,
     sessionId: string | undefined,
-    pathForTrust: string | undefined
+    pathForTrust: string | undefined,
+    teammateName?: string
   ): Promise<{ behavior: 'allow' | 'deny'; updatedInput?: any; message?: string } | null> {
     return resolveImmediateToolDecisionHelper(
       {
@@ -3321,6 +3324,24 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
         setCurrentMode: (mode) => { this.currentMode = mode; },
         getCurrentMode: () => this.currentMode,
         logSecurity: (message, data) => this.logSecurity(message, data),
+        // Phase 1A.1: inside a team, the coordinator's own policy tools and the
+        // team's reads need no click; any failure to read the context means
+        // the ordinary prompt.
+        teamPreauthorization: async (requestedTool, requestedInput) => {
+          try {
+            const context = await this.getTeamPermissionContext(sessionId);
+            if (!context) return null;
+            const targetId = typeof requestedInput === 'object' && requestedInput !== null && typeof (requestedInput as { sessionId?: unknown }).sessionId === 'string'
+              ? (requestedInput as { sessionId: string }).sessionId
+              : null;
+            const targetInTeam = TEAM_TARGETED_TOOLS.includes(requestedTool)
+              ? (targetId && context.rootSessionId ? await this.isSessionInTeam(targetId, context.rootSessionId) : false)
+              : null;
+            return teamPreauthorizationReason(requestedTool, context, { input: requestedInput, teammateName, targetInTeam });
+          } catch {
+            return null;
+          }
+        },
       },
       {
         toolName,

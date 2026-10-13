@@ -143,7 +143,7 @@ describe('[Child Session Update] tool scope line', () => {
   it('asserts the denial for an enforcing provider', async () => {
     const { text, result } = await notificationFor(done, childRow({ metadata: { toolScope: 'write' } }));
     expect(result.toolScopeEnforced).toBe(true);
-    expect(text).toContain('this child had NO shell (run_command/Bash) or delegation tools');
+    expect(text).toContain('this child had NO shell (run_command/Bash), test-runner (run_project_tests) or delegation tools');
   });
 
   it('does not assert a denial the provider never applied', async () => {

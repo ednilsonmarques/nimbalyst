@@ -19,6 +19,7 @@ import { AISessionsRepository } from '../../../storage/repositories/AISessionsRe
 import { hasSessionStore } from '../../adapters/sessionStore';
 import { FrozenSessionDirectives } from './sessionDirective';
 import { resolveChildToolScope, type ChildToolScope } from './claudeCode/toolPolicy';
+import type { TeamPermissionContext } from './claudeCode/teamPermissionPolicy';
 import { NO_TEAM, resolveTeamContext, type TeamContext, type TeamRole } from './teamContext';
 import type { MetaAgentWorkflowPreset } from '../../prompt';
 import {
@@ -344,7 +345,7 @@ export abstract class BaseAgentProvider extends BaseAIProvider {
   }
 
   /** The tool policy of a session: its scope and the team role that may add denials. */
-  private readonly frozenToolPolicies = new Map<string, Promise<{ scope: ChildToolScope; role: TeamRole | null }>>();
+  private readonly frozenToolPolicies = new Map<string, Promise<{ scope: ChildToolScope; role: TeamRole | null; teamMode: boolean; rootSessionId: string | null }>>();
 
   /**
    * `metadata.toolScope` and `metadata.teamChild.role` of a child session, read
@@ -357,7 +358,7 @@ export abstract class BaseAgentProvider extends BaseAIProvider {
    * retry the read error is rethrown (and not frozen), so the turn fails before
    * query() instead of running with full tools; the next turn reads again.
    */
-  private getToolPolicy(sessionId: string): Promise<{ scope: ChildToolScope; role: TeamRole | null }> {
+  private getToolPolicy(sessionId: string): Promise<{ scope: ChildToolScope; role: TeamRole | null; teamMode: boolean; rootSessionId: string | null }> {
     let policy = this.frozenToolPolicies.get(sessionId);
     if (!policy) {
       const read = () => AISessionsRepository.get(sessionId);
@@ -365,9 +366,12 @@ export abstract class BaseAgentProvider extends BaseAIProvider {
         .catch(read)
         .then((session) => {
           const metadata = session?.metadata as Record<string, unknown> | undefined;
+          const team = resolveTeamContext(metadata, session?.agentRole);
           return {
             scope: resolveChildToolScope(metadata?.toolScope),
-            role: resolveTeamContext(metadata, session?.agentRole).teamChild?.role ?? null,
+            role: team.teamChild?.role ?? null,
+            teamMode: team.teamMode,
+            rootSessionId: team.teamChild?.rootSessionId ?? null,
           };
         })
         .catch((error: unknown): never => {
@@ -399,6 +403,46 @@ export abstract class BaseAgentProvider extends BaseAIProvider {
   protected getToolPolicyRole(sessionId?: string): Promise<TeamRole | null> {
     if (!sessionId || !hasSessionStore()) return Promise.resolve(null);
     return this.getToolPolicy(sessionId).then((policy) => policy.role);
+  }
+
+  /**
+   * What the team context pre-authorizes for this session (Phase 1A.1): the
+   * frozen scope and role plus whether the session is a team root. Null outside
+   * a team, without a session store, or when the policy could not be read, so
+   * every failure means the normal permission prompt, never a silent allow.
+   */
+  protected getTeamPermissionContext(sessionId?: string): Promise<TeamPermissionContext | null> {
+    if (!sessionId || !hasSessionStore()) return Promise.resolve(null);
+    return this.getToolPolicy(sessionId)
+      .then((policy): TeamPermissionContext | null => (policy.teamMode || policy.role !== null
+        ? {
+            teamMode: policy.teamMode,
+            role: policy.role,
+            scope: policy.scope,
+            sessionId,
+            rootSessionId: policy.teamMode ? sessionId : policy.rootSessionId,
+          }
+        : null))
+      .catch(() => null);
+  }
+
+  /**
+   * Whether `targetSessionId` is this team's root or one of its members
+   * (Phase 1A.1): the condition under which a targeted host tool (send_prompt,
+   * get_session_result, ...) is pre-authorized. Read on every call, never
+   * frozen, and false on any doubt or failure.
+   */
+  protected async isSessionInTeam(targetSessionId: string, rootSessionId: string): Promise<boolean> {
+    if (!targetSessionId || !rootSessionId || !hasSessionStore()) return false;
+    if (targetSessionId === rootSessionId) return true;
+    try {
+      const target = await AISessionsRepository.get(targetSessionId);
+      if (!target) return false;
+      const team = resolveTeamContext(target.metadata as Record<string, unknown> | undefined, target.agentRole);
+      return team.teamChild?.rootSessionId === rootSessionId;
+    } catch {
+      return false;
+    }
   }
 
   private readonly frozenTeamContexts = new Map<string, Promise<TeamContext>>();

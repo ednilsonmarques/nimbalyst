@@ -29,5 +29,5 @@ export function describeChildToolScope(
   if (toolScope === 'read') {
     return `Tool scope: read (this child had NO file-writing, shell (run_command/Bash), delegation, skill, hook, web (WebFetch/WebSearch), external MCP (user servers, plugins, claude.ai connectors) or app-changing tools). Any claim it ran, built, tested or fetched anything is false; "Files modified" above is the complete list of files it changed.`;
   }
-  return `Tool scope: write (this child had NO shell (run_command/Bash) or delegation tools). Any claim it ran, built, or tested anything is false unless it went through a user-configured MCP server, which this scope does not cover; "Files modified" above is the complete list of files it changed.`;
+  return `Tool scope: write (this child had NO shell (run_command/Bash), test-runner (run_project_tests) or delegation tools). Any claim it ran, built, or tested anything is false unless it went through a user-configured MCP server, which this scope does not cover; "Files modified" above is the complete list of files it changed.`;
 }

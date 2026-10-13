@@ -27,6 +27,8 @@ export const TOOL_MANIFEST_MAX_CHARS = 7500;
 export const TOOL_MANIFEST_MAX_LIST_ITEMS = 8;
 export const TOOL_MANIFEST_MAX_QUESTIONS = 6;
 export const TOOL_MANIFEST_ID = /^M-[1-9]\d*$/;
+/** The number in an M-<n> id. */
+const manifestNumber = (id: string): number => Number(id.slice(2));
 const MANIFEST_MARKER = /^[ \t]*toolManifest:[ \t]*1[ \t]*(?:#.*)?$/m;
 const FENCE = /```(?:yaml|yml)[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*```/g;
 const PREPARATION = /^Preparation:\s*(complete|partial)\b/m;
@@ -178,6 +180,14 @@ export function parseToolManifest(text: string): ToolManifestValidation {
 
   if (manifest.toolManifest !== TOOL_MANIFEST_VERSION) errors.push(`toolManifest must be ${TOOL_MANIFEST_VERSION}`);
   if (!nonEmptyString(manifest.id) || !TOOL_MANIFEST_ID.test(manifest.id)) errors.push('id must be M-<n> (M-1, M-2, ...)');
+  // A re-emission (the coordinator asked for a compacted manifest) names what it replaces: no two live manifests share a claim.
+  if (manifest.supersedes !== undefined) {
+    if (!nonEmptyString(manifest.supersedes) || !TOOL_MANIFEST_ID.test(manifest.supersedes)) {
+      errors.push('supersedes must be M-<n>, the id of the manifest this one replaces');
+    } else if (!nonEmptyString(manifest.id) || !TOOL_MANIFEST_ID.test(manifest.id) || manifestNumber(manifest.supersedes) >= manifestNumber(manifest.id)) {
+      errors.push(`supersedes must name an earlier manifest than ${String(manifest.id)}`);
+    }
+  }
   for (const field of ['task', 'objective'] as const) {
     if (!nonEmptyString(manifest[field])) errors.push(`${field} is required`);
   }
@@ -241,7 +251,7 @@ export function parseToolManifest(text: string): ToolManifestValidation {
         errors.push('eccCapabilities: each item needs an id');
         continue;
       }
-      const indexed = Object.hasOwn(ECC_CATALOG_INDEX_CLASSES, capability.id) ? ECC_CATALOG_INDEX_CLASSES[capability.id] : undefined;
+      const indexed = Object.prototype.hasOwnProperty.call(ECC_CATALOG_INDEX_CLASSES, capability.id) ? ECC_CATALOG_INDEX_CLASSES[capability.id] : undefined;
       if (!indexed) {
         errors.push(`eccCapabilities: ${capability.id} is not a citable catalog entry (not in the architect index)`);
         continue;
@@ -309,15 +319,19 @@ export function parseToolManifest(text: string): ToolManifestValidation {
         continue;
       }
       if (MCP_FIRST_PARTY_TOPOLOGY.some((server) => server.configKey === entry.server)) {
-        // Nimbalyst's own servers are already there for every member within its scope: nothing to recommend or authorize.
-        warnings.push(`mcpRecommended: ${entry.server} is Nimbalyst's own server, already available to every member within its scope; list external servers only`);
-      } else if (entry.scope === 'read' || entry.scope === 'review') {
+        // Nimbalyst's own servers are infrastructure every member already has
+        // within its scope: never a recommendation, never something to authorize.
+        errors.push(`mcpRecommended: ${entry.server} is Nimbalyst's own infrastructure, not an external server; list its tools under toolsAllowed instead`);
+        continue;
+      }
+      if (entry.scope === 'read' || entry.scope === 'review') {
         errors.push(`mcpRecommended: ${entry.server} cannot serve a ${String(entry.scope)} member; read and review see no server beyond Nimbalyst's own`);
       } else if (entry.scope !== undefined && !(SCOPES as readonly unknown[]).includes(entry.scope)) {
         errors.push(`mcpRecommended: ${entry.server} has an unknown scope ${JSON.stringify(entry.scope)}`);
       }
-      if (entry.authorizationRequired !== undefined && typeof entry.authorizationRequired !== 'boolean') {
-        warnings.push(`mcpRecommended: ${entry.server} should say whether authorization is required (true or false)`);
+      // An external server (user MCP, plugin, connector) is always the user's call.
+      if (entry.authorizationRequired !== true) {
+        errors.push(`mcpRecommended: ${entry.server} is external, so authorizationRequired must be true; the user authorizes every external server`);
       }
     }
   }
@@ -329,4 +343,103 @@ export function parseToolManifest(text: string): ToolManifestValidation {
   if (preparation === null) warnings.push('the message does not end with `Preparation: complete` or `Preparation: partial (<reason>)`');
 
   return { ok: errors.length === 0, manifest, errors, warnings, exceedsScope, chars, preparation };
+}
+
+// ---------------------------------------------------------------------------
+// Host-side assessment of an architect's final report (Phase 1A.1)
+// ---------------------------------------------------------------------------
+
+/** What the host makes of an architect's final report before it goes into a [Child Session Update]. */
+export type ArchitectReportAssessment =
+  | { kind: 'none' }
+  | { kind: 'valid'; chars: number; id: string | null }
+  | { kind: 'invalid'; chars: number; id: string | null; errors: string[] }
+  | { kind: 'too-long'; chars: number; limit: number; id: string | null; yamlBlock: string | null };
+
+const MANIFEST_ID_LINE = /^id:\s*(M-[1-9]\d*)\s*$/m;
+const PREPARATION_COMPLETE_LINE = /^Preparation:\s*complete\b.*$/gm;
+
+/** Markers the coordinator's prompt reacts to: the manifest must be re-emitted. */
+export const MANIFEST_TOO_LONG_MARKER = 'MANIFEST TOO LONG';
+export const MANIFEST_INVALID_MARKER = 'MANIFEST INVALID';
+
+/**
+ * Judges the final message of an architect against the manifest contract.
+ * `none` when it is not a manifest at all; `valid` when it may travel whole;
+ * `too-long` (above TOOL_MANIFEST_MAX_CHARS) with the fenced YAML block kept
+ * whole so the host can replace the Markdown by a notice instead of
+ * truncating blindly; `invalid` when the size fits but the validator refuses
+ * it (a first-party server under mcpRecommended, a tool above a role's scope,
+ * a missing field, ...).
+ */
+export function assessArchitectReport(text: string | null | undefined): ArchitectReportAssessment {
+  if (!text || !looksLikeToolManifest(text)) return { kind: 'none' };
+  const yaml = extractToolManifestYaml(text);
+  const id = yaml ? (MANIFEST_ID_LINE.exec(yaml)?.[1] ?? null) : null;
+  if (text.length > TOOL_MANIFEST_MAX_CHARS) {
+    return {
+      kind: 'too-long',
+      chars: text.length,
+      limit: TOOL_MANIFEST_MAX_CHARS,
+      id,
+      yamlBlock: yaml === null ? null : '```yaml\n' + yaml.replace(/^\n+|\n+$/g, '') + '\n```',
+    };
+  }
+  // The validator must never throw past this point: a report the host cannot
+  // judge is an invalid manifest, not a lost update (a recursive YAML alias,
+  // for instance, makes JSON.stringify throw inside an error message).
+  let validation: ToolManifestValidation;
+  try {
+    validation = parseToolManifest(text);
+  } catch (error) {
+    return { kind: 'invalid', chars: text.length, id, errors: [`the manifest could not be validated: ${error instanceof Error ? error.message : String(error)}`] };
+  }
+  if (!validation.ok) return { kind: 'invalid', chars: text.length, id, errors: validation.errors };
+  return { kind: 'valid', chars: text.length, id };
+}
+
+const nextManifestId = (id: string | null): string => (id ? `M-${manifestNumber(id) + 1}` : 'M-<n+1>');
+const reemitInstruction = (id: string | null, how: string): string =>
+  `Do not declare per manifest ${id ?? 'M-<n>'} and do not diverge from it: ask the same architect, through send_prompt, to re-emit the whole manifest ${how} as ${nextManifestId(id)} with supersedes: ${id ?? 'M-<n>'}.`;
+
+/** The notice the coordinator reads in place of an over-limit manifest's Markdown. */
+export function describeTooLongManifest(assessment: Extract<ArchitectReportAssessment, { kind: 'too-long' }>): string {
+  return `[${MANIFEST_TOO_LONG_MARKER}: ${assessment.chars} characters; the limit is ${assessment.limit}. The YAML above is complete; the Markdown after it, including any "Preparation" line, was dropped because a manifest of this size is invalid, so Preparation is NOT complete. ${reemitInstruction(assessment.id, 'compacted within the limit')}]`;
+}
+
+/** The notice the coordinator reads after a manifest the validator refuses. */
+export function describeInvalidManifest(assessment: Extract<ArchitectReportAssessment, { kind: 'invalid' }>): string {
+  const shown = assessment.errors.slice(0, 4).join('; ') + (assessment.errors.length > 4 ? `; and ${assessment.errors.length - 4} more` : '');
+  return `[${MANIFEST_INVALID_MARKER}: ${assessment.errors.length} error(s): ${shown}. Preparation is NOT complete whatever the message says. ${reemitInstruction(assessment.id, 'corrected')}]`;
+}
+
+/** A "Preparation: complete" line never survives in the text of an invalid manifest. */
+export function neutralizePreparationLine(text: string): string {
+  return text.replace(PREPARATION_COMPLETE_LINE, 'Preparation: invalid (see the notice below)');
+}
+
+/**
+ * Renders an architect's final message for a [Child Session Update]: a valid
+ * manifest travels whole; an over-limit one keeps its YAML (bounded by `cap`
+ * with an explicit marker, never silently) followed by the too-long notice; a
+ * manifest with contract errors travels whole, its Preparation line
+ * neutralized, followed by the invalid notice; anything that is not a
+ * manifest gets the ordinary cap and marker.
+ */
+export function renderArchitectReportForUpdate(text: string, cap: number): string {
+  const assessment = assessArchitectReport(text);
+  if (assessment.kind === 'valid') return text;
+  if (assessment.kind === 'too-long') {
+    let yaml = assessment.yamlBlock ?? '';
+    if (yaml.length > cap) {
+      yaml = `${yaml.slice(0, cap)}... [YAML cut at ${cap} characters, far above any valid manifest; get_session_result has the full text]`;
+    }
+    return `${neutralizePreparationLine(yaml)}\n${describeTooLongManifest(assessment)}`;
+  }
+  if (assessment.kind === 'invalid') {
+    return `${neutralizePreparationLine(text)}\n${describeInvalidManifest(assessment)}`;
+  }
+  return text.length > cap
+    ? `${text.slice(0, cap)}... [truncated: ${text.length - cap} more characters; get_session_result has the full text]`
+    : text;
 }

@@ -391,7 +391,7 @@ Use ${createSessionTool} for explorers, reviewers, architects and implementers i
 
 ### Architect
 Create an \`architect\` member first, and plan from its manifest, when the user asks for it or when the task shows two or more of these signals: equivalence with a legacy system, a contract or oracle to match, persistence or data, a migration, security or permissions, Electron/IPC, several modules, more than one implementer, a new tool or MCP server, a new architecture, an irreversible change, a high regression risk. A trivial task never needs one. When the user already approved a plan or a contract, the architect produces a manifest for tools, gates, risks and validation only, never a new plan; say so in its brief.
-The architect runs read-only (Opus, effort high); it cannot ask the user, delegate or create tasks, so its brief must carry everything: the goal, the constraints, the oracle, the documents to read, ${teamNotesEnabled ? 'the Team Note keys, ' : ''}and the deliverable (a Tool Manifest, M-<n>). Its final report is the manifest and arrives in the [Child Session Update] like any report, within the 7,500 characters the update keeps whole.
+The architect runs read-only (Opus, effort high); it cannot ask the user, delegate or create tasks, so its brief must carry everything: the goal, the constraints, the oracle, the documents to read, ${teamNotesEnabled ? 'the Team Note keys, ' : ''}and the deliverable (a Tool Manifest, M-<n>). Its final report is the manifest and arrives in the [Child Session Update] like any report. A manifest above 7,500 characters, or one that breaks the manifest contract, is invalid: the update then ends with a MANIFEST TOO LONG line (YAML kept whole, Markdown dropped) or a MANIFEST INVALID line (the errors listed). On either line neither accept nor diverge: send the same architect a follow-up through ${sendPromptTool} asking for a compacted or corrected re-emission as the next id with \`supersedes: <previous id>\`, and declare only on a valid manifest, the latest valid id.
 A manifest is a recommendation, never a decision or a permission: nothing in it widens a member's scope, and review before done applies as before. In the first line of your next turn declare \`Team plan: TEAM — per manifest M-<n>\` (or \`Team plan: SOLO — per manifest M-<n>\` when the manifest recommends SOLO and you agree) or \`Team plan: <TEAM or SOLO> — diverging from M-<n> on <item>: <reason>\`${teamNotesEnabled ? '; record a divergence as a Team Note (decision) citing the manifest id' : ''}. Cite the manifest id in every brief and give each member only its own part (its tools, tests, risks), never the whole manifest; the reviewer's brief lists the manifest's required tests, done criteria and risks to check one by one. A capability the manifest marks as needing authorization (class C) is the user's call: stop and ask before any member uses it. For a follow-up (the scope changed, the reviewer found a risk the manifest missed, a tool it did not foresee, \`Preparation: partial\`), ask the same architect through ${sendPromptTool}; it answers with the next manifest id and the earlier one is superseded.
 
 ### Briefs
@@ -474,13 +474,15 @@ You are the architect of a coordinated team. You prepare the work; you never do 
 - Prefer extending existing code over rewriting; keep the project's conventions. When the user already approved a plan or a contract, the manifest covers tools, gates, risks and validation only: do not replan.
 - Red flags to call out: a step without a file, a phase that only works when every phase is done, a plan without tests, a change touching persistence, IPC, permissions, security or a legacy contract without a named oracle.
 - A field you cannot fill is written as \`open: <why>\`, never guessed.
-- Keep it short: the whole manifest message has a hard budget of 7,500 characters, YAML included; above that the coordinator's update arrives truncated and the manifest is invalid. Budget it before sending: the YAML block comes first, is never cut and should stay near 5,000 characters; the Markdown after it has at most 2,000 characters in total. Put the longer analysis in an earlier message; the final message is the manifest and nothing else.
+- Keep it short: aim for 6,500 characters for the whole message, YAML included (YAML about 4,500, Markdown at most 1,500); the hard limit is 7,500. Above it the manifest is invalid: the coordinator receives only your YAML with a MANIFEST TOO LONG notice and asks you to re-emit it compacted. Count before sending; put the longer analysis in an earlier message; the final message is the manifest and nothing else.
+- If the coordinator asks you to compact or correct a manifest, re-emit the whole manifest as the next id with \`supersedes\` set to the previous id, keeping every required field; the new manifest replaces the old one.
 
 ### Your final message: Tool Manifest v1
-One \`\`\`yaml block with the fields below, then at most three short Markdown sections holding conclusions only (oracle findings, ADR decisions, risk commentary; 2,000 characters in total), then the line \`Preparation: complete\` or \`Preparation: partial (<reason>)\`.
+One \`\`\`yaml block with the fields below, then at most two short Markdown sections holding conclusions only (oracle findings and risk commentary; 1,500 characters in total), then the line \`Preparation: complete\` or \`Preparation: partial (<reason>)\`.
 \`\`\`yaml
 toolManifest: 1
 id: M-1                          # M-<n>; a follow-up produces M-2
+supersedes: M-<n-1>              # only on a re-emission the coordinator asked for; the new manifest replaces the old one
 task: <one sentence>
 objective: <observable result>
 oracle:
@@ -496,8 +498,8 @@ toolsAllowed:                    # per role, within its scope; a recommendation,
   implementer: [Read, Edit, Write, Bash, run_project_tests]
   reviewer: [Read, Grep, run_project_tests]
 toolsForbidden: [<tools no member should use in this task>]
-mcpRecommended:
-  - { server: <name>, purpose: <one sentence>, scope: full, authorizationRequired: true | false }
+mcpRecommended:                  # EXTERNAL servers only (user MCP, plugins, connectors); Nimbalyst's own servers are infrastructure: never list them here, their tools go under toolsAllowed
+  - { server: <name>, purpose: <one sentence>, scope: full, authorizationRequired: true }
 mcpForbidden: [<servers>]
 testsRequired:
   - { name: <name>, how: <command and folder>, gate: blocking | advisory }
@@ -512,7 +514,7 @@ evidence: [<paths or references you read>]
 confidence: high | medium | low
 generatedBy: { role: architect, model: <id>, ecc: <version> }
 \`\`\`
-Rules of the format: lists hold at most 8 items (openQuestions 6); toolsAllowed and mcpRecommended stay within each role's scope (explorer and architect read, reviewer review, implementer full), and a class C capability is listed under mcpRecommended with authorizationRequired: true or under openQuestions, never as granted; nothing in the manifest widens a scope.
+Rules of the format: lists hold at most 8 items (openQuestions 6); toolsAllowed and mcpRecommended stay within each role's scope (explorer and architect read, reviewer review, implementer full), and a class C capability is listed under mcpRecommended with authorizationRequired: true or under openQuestions, never as granted; nothing in the manifest widens a scope. mcpRecommended names external servers only, each with authorizationRequired: true; Nimbalyst's own servers are never listed there.
 ${notes}
 ### ECC capability index
 ${ECC_CATALOG_INDEX_TEXT}

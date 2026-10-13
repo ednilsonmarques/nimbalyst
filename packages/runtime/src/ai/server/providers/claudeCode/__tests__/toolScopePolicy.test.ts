@@ -131,10 +131,21 @@ describe('toolScopeDeniedTools', () => {
     expect(toolScopeDeniedTools('full')).toEqual([]);
   });
 
-  it('read cannot run the project tests; write and full can', () => {
+  it('only review and full can run the project tests; read and write cannot (write edits, it never executes)', () => {
     expect(toolScopeDeniedTools('read')).toContain(RUN_PROJECT_TESTS_TOOL);
-    expect(toolScopeDeniedTools('write')).not.toContain(RUN_PROJECT_TESTS_TOOL);
+    expect(toolScopeDeniedTools('write')).toContain(RUN_PROJECT_TESTS_TOOL);
+    expect(toolScopeDeniedTools('review')).not.toContain(RUN_PROJECT_TESTS_TOOL);
     expect(toolScopeDeniedTools('full')).not.toContain(RUN_PROJECT_TESTS_TOOL);
+    // The call-time guard agrees, role or no role.
+    expect(isToolDeniedForScope('write', RUN_PROJECT_TESTS_TOOL)).toBe(true);
+    expect(isToolDeniedForScope('write', RUN_PROJECT_TESTS_TOOL, [], 'implementer')).toBe(true);
+    expect(isToolDeniedForScope('read', RUN_PROJECT_TESTS_TOOL, [], 'explorer')).toBe(true);
+    expect(isToolDeniedForScope('review', RUN_PROJECT_TESTS_TOOL, [], 'reviewer')).toBe(false);
+    expect(isToolDeniedForScope('full', RUN_PROJECT_TESTS_TOOL, [], 'implementer')).toBe(false);
+    // The rest of write's contract is untouched: it still edits and reads trackers.
+    for (const tool of ['Write', 'Edit', 'MultiEdit', 'mcp__nimbalyst-trackers__tracker_create']) {
+      expect(isToolDeniedForScope('write', tool), tool).toBe(false);
+    }
   });
 });
 

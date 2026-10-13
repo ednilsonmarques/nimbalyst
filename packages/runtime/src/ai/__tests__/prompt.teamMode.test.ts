@@ -277,7 +277,10 @@ describe('architect (Phase 1A)', () => {
     expect(coordinator).toContain("the reviewer's brief lists the manifest's required tests, done criteria and risks to check one by one");
     expect(coordinator).toContain('is the user\'s call: stop and ask before any member uses it');
     expect(coordinator).toContain('ask the same architect through `mcp__nimbalyst-host__send_prompt`');
-    expect(coordinator).toContain('within the 7,500 characters the update keeps whole');
+    expect(coordinator).toContain('A manifest above 7,500 characters, or one that breaks the manifest contract, is invalid');
+    expect(coordinator).toContain('MANIFEST TOO LONG');
+    expect(coordinator).toContain('MANIFEST INVALID');
+    expect(coordinator).toContain('asking for a compacted or corrected re-emission as the next id with `supersedes: <previous id>`');
   });
 
   it('the architect contract is read-only, cannot ask or delegate, and ends in a manifest of at most 7,500 characters', () => {
@@ -285,9 +288,14 @@ describe('architect (Phase 1A)', () => {
     expect(architect).toContain('You prepare the work; you never do it.');
     expect(architect).toContain('no edits, no shell, no sub-agents, no sessions, no web, no skills, no commits, no task creation or assignment');
     expect(architect).toContain('You cannot ask the user anything, not even through a plan: every doubt goes into openQuestions');
-    expect(architect).toContain('hard budget of 7,500 characters, YAML included');
-    expect(architect).toContain('the Markdown after it has at most 2,000 characters in total');
-    expect(architect).toContain('at most three short Markdown sections holding conclusions only');
+    expect(architect).toContain('aim for 6,500 characters for the whole message, YAML included');
+    expect(architect).toContain('the hard limit is 7,500');
+    expect(architect).toContain('at most two short Markdown sections holding conclusions only');
+    expect(architect).toContain('supersedes: M-<n-1>');
+    expect(architect).toContain('re-emit the whole manifest as the next id with `supersedes` set to the previous id');
+    expect(architect).toContain('EXTERNAL servers only');
+    expect(architect).toContain('authorizationRequired: true }');
+    expect(architect).not.toContain('authorizationRequired: true | false');
     expect(architect).toContain('### Your final message: Tool Manifest v1');
     expect(architect).toContain('toolManifest: 1');
     for (const field of ['id: M-1', 'oracle:', 'sourceOfTruth:', 'teamPlan:', 'eccCapabilities:', 'toolsAllowed:', 'toolsForbidden:', 'mcpRecommended:', 'mcpForbidden:', 'testsRequired:', 'validationStrategy:', 'risks:', 'openQuestions:', 'doneCriteria:', 'limitations:', 'evidence:', 'confidence:', 'generatedBy:']) {

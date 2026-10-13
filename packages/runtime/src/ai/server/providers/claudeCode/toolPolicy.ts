@@ -306,7 +306,11 @@ export function readScopeDeniedFirstPartyTools(
   );
 }
 
-/** The workspace test runner: the only execution `review` adds to `read`. */
+/**
+ * The workspace test runner: the only execution `review` adds to `read`.
+ * `write` never runs it either: that scope edits files and executes nothing
+ * (NIB.23, 2026-10-13), so only `review` and `full` may call it.
+ */
 export const RUN_PROJECT_TESTS_TOOL = mcpTool(MCP_HOST, 'run_project_tests');
 
 /**
@@ -314,7 +318,7 @@ export const RUN_PROJECT_TESTS_TOOL = mcpTool(MCP_HOST, 'run_project_tests');
  * `read` investigates only (no web access, no skills either); `review` is
  * `read` that may also run the workspace's tests (never a shell, never an
  * edit); `write` may also edit files but runs, delegates, commits and
- * reconfigures nothing.
+ * reconfigures nothing, not even the workspace test runner.
  *
  * This list is the SDK `disallowedTools` half of the scope. MCP servers it
  * cannot name in advance (user, plugin and claude.ai connector servers) are
@@ -331,7 +335,7 @@ export function toolScopeDeniedTools(scope: ChildToolScope): readonly string[] {
     ])];
     return scope === 'review' ? denied.filter((tool) => tool !== RUN_PROJECT_TESTS_TOOL) : denied;
   }
-  if (scope === 'write') return [...RUN_TOOLS, ...DELEGATION_TOOLS, ...CONFIG_AND_COMMIT_TOOLS, ...OUTWARD_TOOLS];
+  if (scope === 'write') return [...RUN_TOOLS, RUN_PROJECT_TESTS_TOOL, ...DELEGATION_TOOLS, ...CONFIG_AND_COMMIT_TOOLS, ...OUTWARD_TOOLS];
   return [];
 }
 
