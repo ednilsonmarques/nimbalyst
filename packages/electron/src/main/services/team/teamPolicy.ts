@@ -35,28 +35,34 @@ export const TEAM_SONNET_MODEL = 'claude-code:sonnet';
 export const TEAM_ARCHITECT_MODEL = 'claude-code:opus';
 
 /**
- * Provider of the `advisor` (Consultor Independente). The role was designed to
- * run on a provider other than the rest of the team: a second opinion from a
+ * Provider of the `advisor` (Consultor Independente). The role runs on a
+ * provider other than the rest of the team: a second opinion from a
  * different model family shares fewer blind spots with the coordinator and
  * the architect (it lowers the correlation of errors; it guarantees nothing).
- * It is the team provider for now because no other provider of this codebase
- * enforces a member's read scope and the role's tool denials
- * (teamMemberProviderReadiness in teamProviders.ts), and a second opinion the
- * host cannot keep read-only is not worth having. This constant and
- * TEAM_ADVISOR_MODEL are the whole switch: once a provider passes readiness,
- * point them at it and nothing else about the role (scope, denials, prompt,
- * mission, UI, manifest) changes. Never read the provider anywhere else to
- * decide anything about the advisor.
+ * It is OpenAI Codex because the host keeps a Codex read member read-only
+ * (teamMemberProviderReadiness in teamProviders.ts: the session-scoped MCP
+ * server plus the restricted Codex thread), and a second opinion the host
+ * could not keep read-only would not be worth having. This constant and
+ * TEAM_ADVISOR_MODEL are the whole switch: nothing else about the role
+ * (scope, denials, prompt, mission, UI, manifest) depends on the provider.
+ * Never read the provider anywhere else to decide anything about the advisor.
+ *
+ * When this provider is unavailable (not enabled, not signed in, not
+ * verifiable) the advisor is refused, explicitly, before any side effect: the
+ * host never falls back to the team provider (teamMemberProviderRefusal). A
+ * same-provider advisor is the coordinator's deliberate choice, by naming
+ * `provider` (and a model of it) explicitly, and is then reported as such.
  */
-export const TEAM_ADVISOR_PROVIDER = TEAM_PROVIDER;
+export const TEAM_ADVISOR_PROVIDER = 'openai-codex';
 
 /**
  * Default model of the `advisor`, an identifier of TEAM_ADVISOR_PROVIDER. A
  * second opinion is only worth having from a model at least as strong as the
- * one it questions (the architect runs on Opus), so it runs on Opus at high
- * effort; Fable stays an explicit promotion, as for every other role.
+ * one it questions (the architect runs on Opus), so it runs on Codex's
+ * strongest listed model at high effort (codexModelCatalog.ts knows it; the
+ * creation path refuses a model this build does not know).
  */
-export const TEAM_ADVISOR_MODEL = 'claude-code:opus';
+export const TEAM_ADVISOR_MODEL = 'openai-codex:gpt-6.1-sol';
 
 /** The defaults a role carries: where it runs and with what authority. */
 export interface TeamRoleDefaults {
@@ -206,7 +212,7 @@ export interface TeamMemberProviderCheck extends TeamMemberProviderRequest {
   role: TeamRole;
   /** Provider of the calling session; it is available by construction (the caller is running on it). */
   callerProvider: string | null;
-  /** Host-verified enforcement for `provider` (teamProviders.ts). */
+  /** Host-verified enforcement for `provider` at the member's scope (teamProviders.ts). */
   readiness: TeamProviderReadiness;
   /**
    * Whether `provider` is enabled for this workspace, when it had to be looked
@@ -214,6 +220,19 @@ export interface TeamMemberProviderCheck extends TeamMemberProviderRequest {
    * unverified is unavailable, never assumed).
    */
   enabled: boolean | null;
+  /**
+   * Whether the user is signed in to `provider`, when it had to be looked up
+   * (a provider other than the caller's): null when the host could not
+   * verify it, which refuses the member like a missing sign-in. Undefined
+   * when no check applies (the caller's own provider).
+   */
+  authenticated?: boolean | null;
+  /**
+   * The model named for the member, when one was, and whether this build
+   * knows it for `provider`: null when the provider has no static catalog to
+   * check against (the model is validated at its first turn instead).
+   */
+  model?: { id: string; known: boolean | null };
 }
 
 /**
@@ -244,15 +263,32 @@ export function teamMemberProviderRefusal(check: TeamMemberProviderCheck): strin
       ? `omit inheritModel (and model) to ${onDefault}`
       : 'this is a configuration error of the role defaults (teamPolicy.ts); report it to the user';
   const noFallback = (retry: string) => `No session was created and no fallback to another provider was applied: ${retry}.`;
+  // A refused role default is the role's own default provider being
+  // unavailable: the host substitutes nothing; a member on another provider
+  // is the caller's explicit, deliberate choice (provider and model named).
+  const defaultUnavailable = check.origin === 'default'
+    ? `the default provider of the ${label} is unavailable, so report it to the user as it is; running the ${check.role} on another provider is a deliberate choice you may only make by naming provider and model explicitly (when the user asked for or authorized it), and you must then report that the member ran on that provider`
+    : null;
   if (!check.readiness.ready) {
     return `${label} provider unavailable: ${check.provider} (${origin}) ${check.readiness.reason}, so the ${check.role} cannot run on it. ${noFallback(retryOnDefault)}`;
   }
-  if (check.callerProvider !== null && check.provider === check.callerProvider) return null;
-  if (check.enabled === true) return null;
-  if (check.enabled === false) {
-    return `${label} provider unavailable: ${check.provider} (${origin}) is not enabled in this app's AI provider settings for this workspace. ${noFallback(`the user may enable ${check.provider} in the AI provider settings, or you may name explicitly (provider and model) an enabled provider that enforces the member's scope; a member on another provider than asked is the caller's choice, never the host's`)}`;
+  if (check.model && check.model.known === false) {
+    return `${label} model unavailable: ${check.model.id} is not a model of ${check.provider} this build knows, so the ${check.role} cannot be created on it. ${noFallback(`name a model of ${check.provider} this build knows, or omit the model to get the provider's default`)}`;
   }
-  return `${label} provider unavailable: ${check.provider} (${origin}) could not be verified as available (its settings were not readable). ${noFallback('try again, or report it to the user')}`;
+  if (check.callerProvider !== null && check.provider === check.callerProvider) return null;
+  if (check.enabled === false) {
+    return `${label} provider unavailable: ${check.provider} (${origin}) is not enabled in this app's AI provider settings for this workspace. ${noFallback(`the user may enable ${check.provider} in the AI provider settings; ${defaultUnavailable ?? 'or you may name explicitly (provider and model) an enabled provider that enforces the member\'s scope; a member on another provider than asked is the caller\'s choice, never the host\'s'}`)}`;
+  }
+  if (check.enabled !== true) {
+    return `${label} provider unavailable: ${check.provider} (${origin}) could not be verified as available (its settings were not readable). ${noFallback(defaultUnavailable ? `try again; otherwise ${defaultUnavailable}` : 'try again, or report it to the user')}`;
+  }
+  if (check.authenticated === false) {
+    return `${label} provider unavailable: ${check.provider} (${origin}) is enabled but the user is not signed in to it. ${noFallback(`the user may sign in to ${check.provider} (its own login, never a key you configure); ${defaultUnavailable ?? 'or you may create the member on the role default'}`)}`;
+  }
+  if (check.authenticated === null) {
+    return `${label} provider unavailable: ${check.provider} (${origin}) could not be verified as signed in. ${noFallback(defaultUnavailable ? `try again; otherwise ${defaultUnavailable}` : 'try again, or report it to the user')}`;
+  }
+  return null;
 }
 
 /**

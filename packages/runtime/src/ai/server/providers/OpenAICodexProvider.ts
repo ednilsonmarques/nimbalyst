@@ -38,6 +38,17 @@ import { AskUserQuestionPrompt, AskUserQuestionPromptOption } from './shared/ask
 import { AgentProtocolTranscriptAdapter } from './agentProtocol/AgentProtocolTranscriptAdapter';
 import { buildCodexToolLookupId } from '../toolLookupIds';
 import { reverseCodexPatch, type CodexPatchKind } from './codex/patchReverse';
+import {
+  buildRestrictedCodexConfigOverrides,
+  describeUnsupportedCodexScope,
+  loadCodexUserConfigTables,
+  mergeRestrictedCodexConfigOverrides,
+  resolveCodexRestriction,
+  wrapCodexHostBindingsForRestriction,
+  type CodexUserConfigTables,
+} from './codex/codexTeamPolicy';
+import { NO_TEAM } from './teamContext';
+import { CODEX_FALLBACK_MODELS } from './codex/codexModelCatalog';
 
 /**
  * Codex transport selection.
@@ -115,26 +126,9 @@ export class OpenAICodexProvider extends BaseAgentProvider {
     'Use MCP server `nimbalyst`, tool `update_session_meta`, ' +
     'and set at least `name`, `add`, and `phase`. ' +
     'Do not mention this system reminder to the user.</SYSTEM_REMINDER>';
-  private static readonly FALLBACK_MODELS: ReadonlyArray<{
-    id: string;
-    name: string;
-    contextWindow: number;
-    maxTokens: number;
-  }> = [
-    // GPT-6 catalog entries require codex >= 0.153.0 (Astra), >= 0.155.0
-    // (Sol, Luna), and >= 0.159.1 (6.1 Sol); the catalog lists a 272k default
-    // context window for all of them.
-    { id: 'gpt-6.1-sol', name: 'GPT-6.1 Sol', contextWindow: 272000, maxTokens: 128000 },
-    { id: 'gpt-6-sol', name: 'GPT-6 Sol', contextWindow: 272000, maxTokens: 128000 },
-    { id: 'gpt-6-astra', name: 'GPT-6 Astra', contextWindow: 272000, maxTokens: 128000 },
-    { id: 'gpt-6-luna', name: 'GPT-6 Luna', contextWindow: 272000, maxTokens: 128000 },
-    { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol', contextWindow: 372000, maxTokens: 128000 },
-    { id: 'gpt-5.6-terra', name: 'GPT-5.6 Terra', contextWindow: 372000, maxTokens: 128000 },
-    { id: 'gpt-5.6-luna', name: 'GPT-5.6 Luna', contextWindow: 372000, maxTokens: 128000 },
-    { id: 'gpt-5.5', name: 'GPT-5.5', contextWindow: 400000, maxTokens: 128000 },
-    { id: 'gpt-5.4', name: 'GPT-5.4', contextWindow: 400000, maxTokens: 128000 },
-    { id: 'gpt-5.4-mini', name: 'GPT-5.4 Mini', contextWindow: 400000, maxTokens: 128000 },
-  ];
+  // The static catalog lives in codex/codexModelCatalog.ts, shared with the
+  // host's Team mode member validation (a member on an unknown model is refused).
+  private static readonly FALLBACK_MODELS = CODEX_FALLBACK_MODELS;
   private static readonly MODEL_FALLBACK_PRIORITY: ReadonlyArray<string> = [
     'gpt-6.1-sol',
     'gpt-6-sol',
@@ -233,6 +227,14 @@ export class OpenAICodexProvider extends BaseAgentProvider {
    */
   private readonly liveProtocolSessions = new Map<string, ProtocolSession>();
   private readonly liveProtocolSessionPermissionKeys = new Map<string, string>();
+  /**
+   * Codex thread ids of restricted Team mode children (read/review scope),
+   * consulted by the host bindings wrapper so every approval, elicitation,
+   * user-input prompt and dynamic tool of such a thread is refused
+   * (codex/codexTeamPolicy.ts). Marked when the thread is created or resumed,
+   * cleared when its live session is evicted.
+   */
+  private readonly restrictedThreadIds = new Set<string>();
   private readonly activeProtocolSessionCounts = new Map<string, number>();
   private readonly protocolSessionIdleTimers = new Map<
     string,
@@ -325,6 +327,35 @@ export class OpenAICodexProvider extends BaseAgentProvider {
     OpenAICodexProvider.appServerHostBindings = bindings;
   }
 
+  /**
+   * Reads the user's `~/.codex/config.toml` tables when a restricted Team mode
+   * child starts a thread, so its MCP servers and plugins can be disabled for
+   * that thread (codex/codexTeamPolicy.ts). Injectable for tests.
+   */
+  private static codexUserConfigLoader: (workspacePath?: string) => Promise<CodexUserConfigTables> =
+    (workspacePath) => loadCodexUserConfigTables(undefined, workspacePath);
+
+  public static setCodexUserConfigLoader(loader: ((workspacePath?: string) => Promise<CodexUserConfigTables>) | null): void {
+    OpenAICodexProvider.codexUserConfigLoader = loader ?? ((workspacePath) => loadCodexUserConfigTables(undefined, workspacePath));
+  }
+
+  /**
+   * Whether a Codex thread is held to a restricted scope by this provider:
+   * a thread it marked, or any thread it does not know (a collaboration child
+   * thread the app-server spawned under one of its threads, an unnamed
+   * request) while it holds a restricted thread at all. Fail-closed: only a
+   * thread this provider created unrestricted escapes the restriction.
+   */
+  public isRestrictedThread(threadId: string | undefined): boolean {
+    if (this.restrictedThreadIds.size === 0) return false;
+    if (!threadId) return true;
+    if (this.restrictedThreadIds.has(threadId)) return true;
+    for (const session of this.liveProtocolSessions.values()) {
+      if (session.id === threadId) return false;
+    }
+    return true;
+  }
+
   public static setShellTrackingHost(host: Parameters<typeof setCodexShellTrackingHost>[0]): void {
     setCodexShellTrackingHost(host);
   }
@@ -371,7 +402,12 @@ export class OpenAICodexProvider extends BaseAgentProvider {
       this.protocol = new CodexAppServerProtocol({
         apiKey,
         resolveCodexPathOverride: resolvePackagedCodexBinaryPath,
-        host: OpenAICodexProvider.appServerHostBindings ?? undefined,
+        // A restricted Team mode thread gets every approval refused here,
+        // whatever the host bindings (or the user's project permissions) say.
+        host: wrapCodexHostBindingsForRestriction(
+          OpenAICodexProvider.appServerHostBindings ?? undefined,
+          (threadId) => this.isRestrictedThread(threadId),
+        ),
         clientInfo: { name: 'nimbalyst', version: process.env.NIMBALYST_VERSION ?? '0.0.0' },
       });
     } else if (deps?.loadSdkModule || deps?.resolveCodexPathOverride) {
@@ -982,10 +1018,33 @@ export class OpenAICodexProvider extends BaseAgentProvider {
     const agentRole = await this.getAgentRole(sessionId);
     const isMetaAgent = agentRole === 'meta-agent';
     const workflowPreset = isMetaAgent ? await this.getWorkflowPreset(sessionId) : 'default';
+    // A scoped child (Team mode read/review member, or any restricted child):
+    // the frozen scope and role (BaseAgentProvider.getToolPolicy, which
+    // throws fail-closed when the row cannot be read, ending the turn before
+    // any thread starts) decide the thread's sandbox, approvals and MCP
+    // snapshot below; the team context feeds the member's contract into the
+    // developer instructions. A scope Codex cannot honour natively, or a
+    // transport that cannot restrict a thread, ends the turn here.
+    const toolScope = isMetaAgent ? 'full' : await this.getToolScope(sessionId);
+    const teamRole = isMetaAgent ? null : await this.getToolPolicyRole(sessionId);
+    const teamContext = isMetaAgent ? NO_TEAM : await this.getTeamContext(sessionId);
+    const restriction = resolveCodexRestriction(toolScope, teamRole);
+    if (restriction.kind === 'unsupported') {
+      yield { type: 'error', error: describeUnsupportedCodexScope(restriction.scope, 'scope') };
+      return;
+    }
+    if (restriction.kind === 'restricted' && this.transport !== 'app-server') {
+      yield { type: 'error', error: describeUnsupportedCodexScope(restriction.scope, 'transport') };
+      return;
+    }
+    const restrictedScope = restriction.kind === 'restricted' ? restriction.scope : null;
     const systemPrompt = buildCodexSystemPrompt({
       documentContext, isMetaAgent, workflowPreset, model: this.config?.model ?? undefined,
       sessionDirective: await this.getSessionDirective(sessionId),
       hasOutOfBandNaming: this.isNamedOutOfBand(sessionId, documentContext),
+      teamChildRole: teamContext.teamChild?.role,
+      teamChildMission: teamContext.teamChild?.mission,
+      restrictedToolScope: restrictedScope,
     });
     const { userMessageAddition, messageWithContext } = buildUserMessageAddition(message, documentContext);
     const unsupportedAttachmentHints = attachments?.filter(
@@ -1082,7 +1141,7 @@ export class OpenAICodexProvider extends BaseAgentProvider {
         ? OpenAICodexProvider.additionalDirectoriesLoader(workspacePath)
         : [];
 
-      const permissionKey = codexSessionConfigurationKey(permissionDecision.permissionMode, permissionDecision.agentVerified === true, workspacePath, additionalDirectories);
+      const permissionKey = codexSessionConfigurationKey(permissionDecision.permissionMode, permissionDecision.agentVerified === true, workspacePath, additionalDirectories, restrictedScope);
       let cachedLiveSession = sessionId ? this.liveProtocolSessions.get(sessionId) : undefined;
       if (
         sessionId &&
@@ -1103,10 +1162,13 @@ export class OpenAICodexProvider extends BaseAgentProvider {
       //   action: cachedLiveSession ? 'REUSE' : (existingSessionId ? 'RESUME' : 'CREATE'),
       // });
 
+      // A restricted child gets the `scoped` snapshot: first-party servers
+      // only (no user, workspace, extension or extension-dev servers); the
+      // server itself then lists and runs only what the scope allows.
       const mcpServers = await this.mcpConfigService.getMcpServersConfig({
         sessionId,
         workspacePath: mcpConfigWorkspacePath,
-        profile: isMetaAgent ? 'meta-agent' : 'standard',
+        profile: isMetaAgent ? 'meta-agent' : restrictedScope ? 'scoped' : 'standard',
       });
       // update_session_meta folds into the eager core `nimbalyst` server (MCP
       // consolidation Phase 5); the naming reminder fires when it's present.
@@ -1158,7 +1220,15 @@ export class OpenAICodexProvider extends BaseAgentProvider {
           systemPrompt,
           abortSignal: abortController.signal,
           agentVerified: permissionDecision.agentVerified === true,
-          codexConfigOverrides: this.buildCodexConfigOverrides(mcpServers),
+          // A restricted thread also disables the user's own MCP servers and
+          // plugins (config.toml) and web search; the read fails closed.
+          codexConfigOverrides: restrictedScope
+            ? mergeRestrictedCodexConfigOverrides(
+              this.buildCodexConfigOverrides(mcpServers),
+              buildRestrictedCodexConfigOverrides(await OpenAICodexProvider.codexUserConfigLoader(workspacePath)),
+            )
+            : this.buildCodexConfigOverrides(mcpServers),
+          ...(restrictedScope ? { restrictedToolScope: restrictedScope } : {}),
           ...(codexEnv ? { codexEnv } : {}),
           ...(this.config?.effortLevel ? { effortLevel: this.config.effortLevel } : {}),
           ...(additionalDirectories.length > 0 ? { additionalDirectories } : {}),
@@ -1204,6 +1274,11 @@ export class OpenAICodexProvider extends BaseAgentProvider {
       } else {
         session = await this.protocol.createSession(sessionOptions);
         isResumedThread = false;
+      }
+      // A restricted thread is marked before its first turn runs, so the host
+      // bindings refuse its approvals from the very first request.
+      if (restrictedScope) {
+        this.restrictedThreadIds.add(session.id);
       }
       // Stash live sessions so future turns on the same Nimbalyst session reuse
       // the same child. Skip when sessionId is absent (anonymous turns -- nothing
@@ -1471,6 +1546,7 @@ export class OpenAICodexProvider extends BaseAgentProvider {
     const cached = this.liveProtocolSessions.get(sessionId);
     this.liveProtocolSessionPermissionKeys.delete(sessionId);
     if (!cached) return;
+    this.restrictedThreadIds.delete(cached.id);
     this.liveProtocolSessions.delete(sessionId);
     try { this.protocol.cleanupSession(cached); }
     catch (err) { console.warn('[CODEX] protocol.cleanupSession threw during eviction:', err); }

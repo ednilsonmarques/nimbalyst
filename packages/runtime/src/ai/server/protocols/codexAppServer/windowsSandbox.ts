@@ -11,7 +11,14 @@ let setupGeneration = 0;
 export function codexSandboxSetupCompleted(): void { setupGeneration++; }
 export function getCodexSandboxGeneration(): number { return setupGeneration; }
 
-export function codexSessionConfigurationKey(mode: string | null | undefined, verified: boolean, cwd: string, roots: string[]): string {
+export function codexSessionConfigurationKey(
+  mode: string | null | undefined,
+  verified: boolean,
+  cwd: string,
+  roots: string[],
+  /** A Team mode child's restricted scope: its thread has its own sandbox and approval policy. */
+  restrictedScope: 'read' | 'review' | null = null,
+): string {
   // #1544: cached children must not retain roots or sandbox setup from a prior turn.
-  return JSON.stringify([mode, verified, cwd, [...new Set(roots)].sort(), setupGeneration]);
+  return JSON.stringify([mode, verified, cwd, [...new Set(roots)].sort(), setupGeneration, restrictedScope]);
 }

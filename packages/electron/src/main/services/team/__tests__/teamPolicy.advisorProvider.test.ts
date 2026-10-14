@@ -46,11 +46,16 @@ describe('role defaults are one table', () => {
     expect(Object.keys(TEAM_ROLE_DEFAULTS).sort()).toEqual([...TEAM_ROLES].sort());
   });
 
-  it('the advisor provider is one constant, the team provider for now, with Opus/high/read as its defaults', () => {
+  it('the advisor provider is one constant, OpenAI Codex, with gpt-6.1-sol/high/read as its defaults: an advisor without provider and model resolves to it', () => {
     expect(TEAM_ROLE_DEFAULTS.advisor).toEqual({ provider: TEAM_ADVISOR_PROVIDER, model: TEAM_ADVISOR_MODEL, effort: 'high', toolScope: 'read' });
-    expect(TEAM_ADVISOR_PROVIDER).toBe(TEAM_PROVIDER);
-    expect(TEAM_ADVISOR_MODEL).toBe('claude-code:opus');
+    expect(TEAM_ADVISOR_PROVIDER).toBe('openai-codex');
+    expect(TEAM_ADVISOR_PROVIDER).not.toBe(TEAM_PROVIDER);
+    expect(TEAM_ADVISOR_MODEL).toBe('openai-codex:gpt-6.1-sol');
     expect(TEAM_ADVISOR_MODEL.startsWith(`${TEAM_ADVISOR_PROVIDER}:`)).toBe(true);
+    expect(resolveTeamMemberProvider({ role: 'advisor', callerProvider: 'claude-code' })).toEqual({ provider: 'openai-codex', origin: 'default' });
+    expect(teamRoleDefaultModel('advisor')).toBe('openai-codex:gpt-6.1-sol');
+    expect(teamRoleDefaultEffort('advisor')).toBe('high');
+    expect(teamRoleDefaultToolScope('advisor')).toBe('read');
   });
 
   it('the other roles keep their defaults and the team provider (no regression)', () => {
@@ -105,14 +110,38 @@ describe('teamMemberProviderRefusal: explicit, fail-closed, never a fallback', (
     const message = teamMemberProviderRefusal(check({ provider: 'openai-codex', origin: 'explicit', readiness: NOT_READY, enabled: true }));
     expect(message).toMatch(/^Independent Advisor provider unavailable: openai-codex \(requested explicitly\) does not enforce a member's tool scope .*, so the advisor cannot run on it\. /);
     expect(message).toContain('No session was created and no fallback to another provider was applied');
-    expect(message).toContain('omit provider and model to create it on the role default (claude-code), and say in your report that the member ran on that provider');
+    expect(message).toContain('omit provider and model to create it on the role default (openai-codex), and say in your report that the member ran on that provider');
   });
 
   it('a model inherited from the caller names inheritModel as the cause and the way back to the role default', () => {
     const message = teamMemberProviderRefusal(check({ provider: 'openai-codex', origin: 'inherited', callerProvider: 'openai-codex', readiness: NOT_READY, enabled: true }));
     expect(message).toMatch(/^Independent Advisor provider unavailable: openai-codex \(inherited from the caller's model \(inheritModel\)\) does not enforce/);
-    expect(message).toContain('omit inheritModel (and model) to create it on the role default (claude-code)');
+    expect(message).toContain('omit inheritModel (and model) to create it on the role default (openai-codex)');
     expect(message).not.toContain('omit provider and model');
+  });
+
+  it('the advisor\'s own default provider unavailable (disabled, unverifiable, not signed in): refused as the default being unavailable, nothing created, no fallback to the team provider', () => {
+    const base = { provider: 'openai-codex', callerProvider: 'claude-code', origin: 'default', readiness: READY } as const;
+    for (const [overrides, head] of [
+      [{ enabled: false }, 'is not enabled in this app\'s AI provider settings for this workspace'],
+      [{ enabled: null }, 'could not be verified as available (its settings were not readable)'],
+      [{ enabled: true, authenticated: false }, 'is enabled but the user is not signed in to it'],
+      [{ enabled: true, authenticated: null }, 'could not be verified as signed in'],
+    ] as const) {
+      const message = teamMemberProviderRefusal(check({ ...base, ...overrides }))!;
+      expect(message, head).toContain(`Independent Advisor provider unavailable: openai-codex (the role default) ${head}. No session was created and no fallback to another provider was applied`);
+      expect(message, head).toContain('the default provider of the Independent Advisor is unavailable, so report it to the user as it is');
+      expect(message, head).toContain('a deliberate choice you may only make by naming provider and model explicitly');
+      expect(message, head).not.toContain('create the member on the role default');
+      expect(message, head).not.toContain('claude-code');
+    }
+    expect(teamMemberProviderRefusal(check({ ...base, enabled: true, authenticated: true }))).toBeNull();
+  });
+
+  it('the team provider named explicitly for the advisor stays a deliberate choice: accepted when ready and enabled, reported as same-provider by diversity', () => {
+    expect(teamMemberProviderRefusal(check({ provider: 'claude-code', callerProvider: 'claude-code', origin: 'explicit', readiness: READY, enabled: null }))).toBeNull();
+    expect(teamProviderDiversity('claude-code', 'claude-code')).toBe('same');
+    expect(teamProviderDiversity('openai-codex', 'claude-code')).toBe('diverse');
   });
 
   it('readiness is checked even for the caller\'s own provider: a team on an unready provider cannot create a member on it', () => {
@@ -121,18 +150,18 @@ describe('teamMemberProviderRefusal: explicit, fail-closed, never a fallback', (
   });
 
   it('a ready provider other than the caller\'s must be enabled: disabled and unverifiable are both refused, enabled is accepted', () => {
-    const base = { provider: 'claude-code', callerProvider: 'openai-codex', origin: 'default', readiness: READY } as const;
+    const base = { role: 'explorer', provider: 'claude-code', callerProvider: 'openai-codex', origin: 'default', readiness: READY } as const;
     expect(teamMemberProviderRefusal(check({ ...base, enabled: true }))).toBeNull();
     expect(teamMemberProviderRefusal(check({ ...base, enabled: false })))
-      .toMatch(/^Independent Advisor provider unavailable: claude-code \(the role default\) is not enabled in this app's AI provider settings for this workspace\. No session was created and no fallback/);
+      .toMatch(/^Team member \(explorer\) provider unavailable: claude-code \(the role default\) is not enabled in this app's AI provider settings for this workspace\. No session was created and no fallback/);
     expect(teamMemberProviderRefusal(check({ ...base, enabled: null })))
-      .toMatch(/^Independent Advisor provider unavailable: claude-code \(the role default\) could not be verified as available \(its settings were not readable\)\. No session was created and no fallback/);
+      .toMatch(/^Team member \(explorer\) provider unavailable: claude-code \(the role default\) could not be verified as available \(its settings were not readable\)\. No session was created and no fallback/);
   });
 
-  it('a disabled provider points at the user\'s settings or an explicit enabled provider, never at a configuration error and never at a silent switch', () => {
-    const message = teamMemberProviderRefusal(check({ provider: 'claude-code', callerProvider: 'openai-codex', origin: 'default', readiness: READY, enabled: false }))!;
+  it('a disabled explicit provider points at the user\'s settings or an explicit enabled provider, never at a configuration error and never at a silent switch', () => {
+    const message = teamMemberProviderRefusal(check({ provider: 'claude-code', callerProvider: 'openai-codex', origin: 'explicit', readiness: READY, enabled: false }))!;
     expect(message).not.toContain('configuration error');
-    expect(message).toContain('the user may enable claude-code in the AI provider settings, or you may name explicitly (provider and model) an enabled provider that enforces the member\'s scope');
+    expect(message).toContain('the user may enable claude-code in the AI provider settings; or you may name explicitly (provider and model) an enabled provider that enforces the member\'s scope');
     expect(message).toContain('a member on another provider than asked is the caller\'s choice, never the host\'s');
   });
 
@@ -150,10 +179,30 @@ describe('teamMemberProviderRefusal: explicit, fail-closed, never a fallback', (
     }
   });
 
+  it('a ready, enabled provider other than the caller\'s must also be signed in: not signed in and unverifiable are refused', () => {
+    const base = { provider: 'openai-codex', callerProvider: 'claude-code', origin: 'explicit', readiness: READY, enabled: true } as const;
+    expect(teamMemberProviderRefusal(check({ ...base, authenticated: true }))).toBeNull();
+    expect(teamMemberProviderRefusal(check({ ...base, authenticated: false })))
+      .toMatch(/^Independent Advisor provider unavailable: openai-codex \(requested explicitly\) is enabled but the user is not signed in to it\. No session was created and no fallback .*\(its own login, never a key you configure\)/);
+    expect(teamMemberProviderRefusal(check({ ...base, authenticated: null })))
+      .toMatch(/^Independent Advisor provider unavailable: openai-codex \(requested explicitly\) could not be verified as signed in\. No session was created and no fallback/);
+    // The caller's own provider needs no sign-in check at all.
+    expect(teamMemberProviderRefusal(check({ provider: 'claude-code', callerProvider: 'claude-code', authenticated: null }))).toBeNull();
+  });
+
+  it('a named model this build does not know for the provider is refused before availability is even considered', () => {
+    const unknown = check({ provider: 'openai-codex', origin: 'explicit', readiness: READY, enabled: null, authenticated: null, model: { id: 'openai-codex:gpt-9', known: false } });
+    expect(teamMemberProviderRefusal(unknown))
+      .toMatch(/^Independent Advisor model unavailable: openai-codex:gpt-9 is not a model of openai-codex this build knows, so the advisor cannot be created on it\. No session was created and no fallback .* omit the model to get the provider's default/);
+    expect(teamMemberProviderRefusal(check({ model: { id: 'claude-code:opus', known: null } }))).toBeNull();
+    expect(teamMemberProviderRefusal(check({ provider: 'openai-codex', callerProvider: 'openai-codex', model: { id: 'openai-codex:gpt-6.1-sol', known: true } }))).toBeNull();
+  });
+
   it('never silently maps a refused provider to another: the message carries no accepted provider other than the role default to retry on', () => {
     const message = teamMemberProviderRefusal(check({ provider: 'opencode', origin: 'explicit', readiness: NOT_READY, enabled: true }))!;
-    expect(message.match(/claude-code/g)).toHaveLength(1);
-    expect(message).toContain('(claude-code)');
+    expect(message.match(/openai-codex/g)).toHaveLength(1);
+    expect(message).toContain('(openai-codex)');
+    expect(message).not.toContain('claude-code');
   });
 });
 

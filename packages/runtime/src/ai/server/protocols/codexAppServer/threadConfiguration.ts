@@ -1,12 +1,20 @@
 import type { SessionOptions } from '../ProtocolInterface';
 import type { ThreadStartParams } from './types';
-import { resolveCodexPermissionProfile } from '../codexPermissionProfile';
+import { resolveCodexPermissionProfile, type CodexRestrictedToolScope } from '../codexPermissionProfile';
 import { clampEffortLevel, parseEffortLevel } from '../../effortLevels';
 
+/** The Team mode restriction a session carries into its thread, if any (providers/codex/codexTeamPolicy.ts). */
+export function readRestrictedToolScope(options: SessionOptions): CodexRestrictedToolScope | null {
+  const raw = options.raw?.restrictedToolScope;
+  return raw === 'read' || raw === 'review' ? raw : null;
+}
+
 export function buildCodexThreadStartParams(options: SessionOptions): ThreadStartParams {
+  const restrictedScope = readRestrictedToolScope(options);
   const permissionProfile = resolveCodexPermissionProfile(
     options.permissionMode,
     options.raw?.agentVerified === true,
+    restrictedScope,
   );
 
   const effortLevel = options.raw?.effortLevel as string | undefined;
@@ -18,7 +26,9 @@ export function buildCodexThreadStartParams(options: SessionOptions): ThreadStar
   );
 
   const systemPrompt = (options.raw?.systemPrompt as string | undefined) ?? options.systemPrompt;
-  const additionalDirectories = Array.isArray(options.raw?.additionalDirectories)
+  // A restricted thread never widens its sandbox to sibling roots: it reads
+  // the workspace it was created in and writes nowhere.
+  const additionalDirectories = !restrictedScope && Array.isArray(options.raw?.additionalDirectories)
     ? (options.raw?.additionalDirectories as unknown[]).filter(
         (entry): entry is string => typeof entry === 'string' && entry.length > 0,
       )

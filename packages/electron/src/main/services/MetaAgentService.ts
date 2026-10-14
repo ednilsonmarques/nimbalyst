@@ -62,6 +62,23 @@ import {
   type TeamProviderDiversity,
 } from './team/teamPolicy';
 import { describeTeamMemberProvider, teamMemberProviderReadiness } from './team/teamProviders';
+import { resolveChildToolScope, type ChildToolScope } from '@nimbalyst/runtime/ai/server/providers/claudeCode/toolPolicy';
+import { isKnownCodexModelId } from '@nimbalyst/runtime/ai/server/providers/codex/codexModelCatalog';
+
+/**
+ * The model a member creation named, for the provider check: its bare id and
+ * whether this build knows it. Only openai-codex has a static catalog to
+ * check against; claude-code variants are validated by ModelIdentifier when
+ * the identifier is normalized, and other providers at their first turn.
+ */
+function describeRequestedMemberModel(provider: string, requestedModel: unknown): { id: string; known: boolean | null } | undefined {
+  if (typeof requestedModel !== 'string' || !requestedModel) return undefined;
+  const separator = requestedModel.indexOf(':');
+  const bare = separator > 0 ? requestedModel.slice(separator + 1) : requestedModel;
+  const prefixed = separator > 0 ? requestedModel : `${provider}:${requestedModel}`;
+  if (provider === 'openai-codex') return { id: prefixed, known: isKnownCodexModelId(bare) };
+  return { id: prefixed, known: null };
+}
 import {
   TEAM_CONTINUATION_NOTICE_CONTEXT,
   buildTeamContinuationNotice,
@@ -479,11 +496,13 @@ export class MetaAgentService {
     const parentTeam = resolveTeamCaller(parentSessionId, parent.metadata, parent.agentRole);
     if (parentTeam) {
       const callerProvider = parent.provider ?? null;
-      this.assertTeamMemberProvider(
+      await this.assertTeamMemberProvider(
         'other',
         resolveTeamMemberProvider({ role: 'other', model: effectiveModel, modelInherited: !args.model && !!parent.model, callerProvider }),
         callerProvider,
         workspaceKey,
+        'full',
+        effectiveModel,
       );
     }
 
@@ -849,7 +868,15 @@ export class MetaAgentService {
       })
       : null;
     if (team) {
-      this.assertTeamMemberProvider(teamRole!, teamMemberProvider!, parentProvider, workspaceKey);
+      await this.assertTeamMemberProvider(
+        teamRole!,
+        teamMemberProvider!,
+        parentProvider,
+        workspaceKey,
+        // The scope the member will be stored with (pure; computed again below for the row).
+        resolveChildToolScope(resolveChildToolScopeRequest(args.toolScope, teamRole ?? undefined)),
+        args.model,
+      );
     }
     const provider = (teamMemberProvider?.provider ||
       args.provider ||
@@ -1041,23 +1068,29 @@ export class MetaAgentService {
   }
 
   /**
-   * Refuse a team member whose provider the host cannot run it on (not ready:
-   * teamProviders.ts) or cannot reach (not enabled, or not verifiable). Pure
-   * rule in teamPolicy.ts; this only gathers the facts. Called by both
-   * creation paths before any side effect.
+   * Refuse a team member whose provider the host cannot run it on at its
+   * scope (not ready: teamProviders.ts), cannot reach (not enabled, not
+   * signed in, or not verifiable) or whose named model this build does not
+   * know. Pure rule in teamPolicy.ts; this only gathers the facts. Called by
+   * every creation path before any side effect.
    */
-  private assertTeamMemberProvider(
+  private async assertTeamMemberProvider(
     role: TeamRole,
     request: TeamMemberProviderRequest,
     callerProvider: string | null,
     workspacePath: string,
-  ): void {
+    scope: ChildToolScope,
+    requestedModel: unknown,
+  ): Promise<void> {
+    const foreign = request.provider !== callerProvider;
     const refusal = teamMemberProviderRefusal({
       role,
       ...request,
       callerProvider,
-      readiness: teamMemberProviderReadiness(request.provider),
-      enabled: request.provider === callerProvider ? null : this.resolveProviderEnabled(request.provider, workspacePath),
+      readiness: teamMemberProviderReadiness(request.provider, scope),
+      enabled: foreign ? this.resolveProviderEnabled(request.provider, workspacePath) : null,
+      authenticated: foreign ? await this.resolveProviderAuthenticated(request.provider) : undefined,
+      model: describeRequestedMemberModel(request.provider, requestedModel),
     });
     if (refusal) throw new Error(refusal);
   }
@@ -1071,6 +1104,29 @@ export class MetaAgentService {
     if (!this.aiService) return null;
     try {
       return this.aiService.isProviderEnabledForTeamMember(provider, workspacePath) === true;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Whether the user is signed in to a provider, through the check the host
+   * wired for it (index.ts: the Codex auth service for openai-codex; claude-code
+   * signs in through its own CLI and needs none). Null when no check is wired
+   * for the provider or the check fails: unverified, which refuses the member.
+   */
+  private providerAuthenticationCheck: ((provider: string) => Promise<boolean | null>) | null = null;
+
+  /** Host wiring: how to tell whether the user is signed in to a provider. */
+  public setProviderAuthenticationCheck(check: ((provider: string) => Promise<boolean | null>) | null): void {
+    this.providerAuthenticationCheck = check;
+  }
+
+  private async resolveProviderAuthenticated(provider: string): Promise<boolean | null> {
+    if (!this.providerAuthenticationCheck) return null;
+    try {
+      const result = await this.providerAuthenticationCheck(provider);
+      return result === true ? true : result === false ? false : null;
     } catch {
       return null;
     }
@@ -1118,11 +1174,14 @@ export class MetaAgentService {
     if (parentTeam) {
       const role = resolveRequestedTeamRole(args.role);
       const callerProvider = parent.provider ?? null;
-      this.assertTeamMemberProvider(
+      await this.assertTeamMemberProvider(
         role,
         resolveTeamMemberProvider({ role, model: effectiveModel, modelInherited: !args.model && args.inheritModel === true, callerProvider }),
         callerProvider,
         workspaceKey,
+        // spawn_session passes no scope: the member gets its role default.
+        resolveChildToolScope(resolveChildToolScopeRequest(undefined, role)),
+        effectiveModel,
       );
     }
 
@@ -1905,7 +1964,7 @@ export class MetaAgentService {
         lines.push(`- ${filePath}`);
       }
     }
-    const toolScopeLine = describeChildToolScope(result.toolScope, result.toolScopeEnforced === true);
+    const toolScopeLine = describeChildToolScope(result.toolScope, result.toolScopeEnforced === true, result.provider);
     if (toolScopeLine) {
       lines.push(toolScopeLine);
     }
@@ -2064,7 +2123,7 @@ export class MetaAgentService {
       // Only a restricted scope makes enforcement a meaningful question.
       toolScopeEnforced:
         sessionToolScope === 'read' || sessionToolScope === 'review' || sessionToolScope === 'write'
-          ? isToolScopeEnforced(sessionProvider)
+          ? isToolScopeEnforced(sessionProvider, sessionToolScope)
           : undefined,
       ...(sessionTeamRole ? { teamRole: sessionTeamRole, providerDiversity: sessionProviderDiversity } : {}),
     };

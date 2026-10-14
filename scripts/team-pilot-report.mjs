@@ -22,8 +22,8 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const MEMBER_ROLES = ['explorer', 'implementer', 'reviewer', 'architect', 'advisor', 'other'];
-// Role defaults (teamPolicy.ts): Sonnet/medium, reviewer high, architect and advisor Opus/high.
-const defaultModelFor = (role) => (role === 'architect' || role === 'advisor' ? 'claude-code:opus' : 'claude-code:sonnet');
+// Role defaults (teamPolicy.ts): Sonnet/medium, reviewer high, architect Opus/high, advisor OpenAI Codex gpt-6.1-sol/high.
+const defaultModelFor = (role) => (role === 'architect' ? 'claude-code:opus' : role === 'advisor' ? 'openai-codex:gpt-6.1-sol' : 'claude-code:sonnet');
 const defaultEffortFor = (role) => (role === 'reviewer' || role === 'architect' || role === 'advisor' ? 'high' : 'medium');
 
 // Tools worth counting by name. Everything else is ignored, not listed.

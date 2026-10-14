@@ -161,6 +161,25 @@ export function getDevAgentOpenAITools(scope: DevToolScope = 'full'): MetaAgentO
   }));
 }
 
+/**
+ * The read tools (read_file, list_files, search_files) as MCP tool schemas,
+ * for the unified MCP server's core endpoint: served only to a restricted
+ * Team mode member whose provider keeps no native read tool under its scope
+ * (mcp/sessionToolPolicy.ts servesHostReadTools). Same definitions, same
+ * dispatcher, same workspace confinement as the tool-loop surface.
+ */
+export function getDevAgentReadToolSchemas(): Array<{ name: string; description: string; inputSchema: Record<string, unknown> }> {
+  return DEV_AGENT_TOOL_DEFS.filter((t) => DEV_AGENT_READ_TOOLS.has(t.name)).map((t) => ({
+    name: t.name,
+    description: t.description,
+    inputSchema: t.inputSchema as Record<string, unknown>,
+  }));
+}
+
+export function isDevAgentReadTool(name: string): boolean {
+  return DEV_AGENT_READ_TOOLS.has(name);
+}
+
 // Cap formatted tool output so a single read/list/search can't blow the model's
 // context window. The model gets a truncation note when this trips.
 const MAX_RESULT_CHARS = 48_000;

@@ -200,6 +200,7 @@ import { SessionWakeupScheduler } from './services/SessionWakeupScheduler';
 import { getSessionWakeupsStore, repositoryManager } from './services/RepositoryManager';
 import { ExtensionDevService } from './services/ExtensionDevService';
 import { MetaAgentService } from './services/MetaAgentService';
+import { setTeamProviderTransportResolver } from './services/team/teamProviders';
 import { notificationService } from './services/NotificationService';
 // SuperLoopProgressService import removed - server disabled (leaking into non-super-loop sessions)
 import { registerMockupHandlers } from './ipc/MockupHandlers';
@@ -2660,6 +2661,32 @@ app.whenReady().then(async () => {
         console.warn('[CODEX] codexAuthService.getStatus() failed in auth gate:', err);
         return { requiresOpenaiAuth: false };
       }
+    });
+
+    // Team mode: a member created on a provider other than its creator's is
+    // refused unless the user is signed in to it. Only openai-codex has a
+    // sign-in to check (the same long-lived auth child as the gate above);
+    // claude-code signs in through its own CLI and is the team default. A
+    // failed check is "unverified", which refuses the member, never allows it.
+    MetaAgentService.getInstance().setProviderAuthenticationCheck(async (provider) => {
+      if (provider === 'claude-code') return true;
+      if (provider !== 'openai-codex') return null;
+      try {
+        const status = await codexAuthService.getStatus(true);
+        // Only the user's own ChatGPT sign-in counts: an API-key account would
+        // bill per call, which a team member must never do (teamPolicy.ts).
+        return status.account?.type === 'chatgpt';
+      } catch (err) {
+        console.warn('[CODEX] codexAuthService.getStatus() failed in the team member check:', err);
+        return null;
+      }
+    });
+    // A restricted Codex thread exists only on the app-server transport; the
+    // legacy SDK transport cannot run a team member (teamProviders.ts).
+    setTeamProviderTransportResolver((provider) => {
+      if (provider !== 'openai-codex') return 'app-server';
+      const setting = getAppSetting<{ transport?: 'sdk' | 'app-server' }>('openaiCodex')?.transport;
+      return setting === 'sdk' ? 'sdk' : 'app-server';
     });
 
     // Wire shared permission infrastructure for all agent providers.

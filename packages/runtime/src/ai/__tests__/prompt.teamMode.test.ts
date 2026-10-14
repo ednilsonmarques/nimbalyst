@@ -249,7 +249,7 @@ describe('architect (Phase 1A)', () => {
   const architect = buildTeamChildAddendum('architect');
 
   it('the coordinator knows the role, its defaults and its limits', () => {
-    expect(coordinator).toContain('Every member runs on Sonnet by default, except the architect and the advisor (Opus)');
+    expect(coordinator).toContain('Every member runs on Sonnet by default, except the architect (Opus) and the advisor (OpenAI Codex, gpt-6.1-sol, its role\'s default provider)');
     expect(coordinator).toContain('`architect`: main responsibility preparing a complex or critical task before anyone executes it (Opus, effort high, read-only; any other toolScope is lowered to read; it cannot ask the user, delegate or create tasks)');
     expect(coordinator).toContain('### Architect');
     expect(coordinator.indexOf('### Architect')).toBeLessThan(coordinator.indexOf('### Briefs'));

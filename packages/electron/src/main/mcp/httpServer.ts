@@ -127,6 +127,19 @@ import {
   selectExtensionToolsForEndpoint,
   applyCoreAlwaysLoadMeta,
 } from "./mcpEndpointRouting";
+// The session's own tool scope and team role, applied by the server itself
+// (ListTools omits, CallTool refuses) for every provider on the transport.
+import {
+  filterToolsForSession,
+  isToolDeniedForSession,
+  resolveSessionToolPolicy,
+  servesHostReadTools,
+  sessionToolDenial,
+} from "./sessionToolPolicy";
+// The host's own file reads, served on the core endpoint to a restricted
+// member whose provider keeps no native read tool (an openai-codex advisor).
+import { dispatchDevAgentTool, getDevAgentReadToolSchemas, isDevAgentReadTool } from "./devAgentTools";
+import { MCP_CORE } from "@nimbalyst/runtime/ai/server/services/mcpTopology";
 
 // Re-export functions that don't need transport state
 export {
@@ -388,7 +401,9 @@ const META_AGENT_TOOL_NAMES = new Set(META_AGENT_TOOL_DEFS.map((t) => t.name));
 
 // ---- MCP Server Factory ----
 
-function createSharedMcpServer(
+// Exported for tests, which drive it over the SDK's in-memory transport to
+// inspect the real catalog a session is served and what a call gets.
+export function createSharedMcpServer(
   workspacePath: string | undefined,
   sessionId: string | undefined,
   endpoint: McpEndpointSelection = { kind: "legacy" },
@@ -420,6 +435,9 @@ function createSharedMcpServer(
   // Register tool list handler
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     let allTools: Array<{ name: string; description: string; inputSchema: any }>;
+    // Read first and fail closed: a session whose scope cannot be verified is
+    // served no tool at all (the read rejects), never the full list.
+    const sessionPolicy = await resolveSessionToolPolicy(sessionId);
 
     if (endpoint.kind === "extension") {
       // Per-extension endpoint: only this extension's tools, no first-party.
@@ -449,7 +467,10 @@ function createSharedMcpServer(
         description: tool.description,
         inputSchema: tool.inputSchema,
       }));
-      return { tools: dedupeAndWarn(allTools, serverName) };
+      // A read/review session is denied extension servers whole (their tools
+      // are not known to be read-only); the scoped MCP snapshot does not even
+      // register them, this is the server's own half.
+      return { tools: dedupeAndWarn(filterToolsForSession(allTools, sessionPolicy, endpoint), serverName) };
     }
 
     // update_session_meta carries a dynamic description (workspace tag list);
@@ -490,6 +511,11 @@ function createSharedMcpServer(
       // Core endpoint: mark the always-load subset with per-tool _meta so the
       // interactive/session tools stay eager while display/screenshot defer.
       allTools = applyCoreAlwaysLoadMeta(allTools, endpoint.configKey);
+      // Core endpoint, restricted member without native reads: the host's
+      // read_file / list_files / search_files (read-only, workspace-confined).
+      if (endpoint.configKey === MCP_CORE && servesHostReadTools(sessionPolicy)) {
+        allTools = [...allTools, ...getDevAgentReadToolSchemas()];
+      }
     } else {
       // Fallback (bare `/mcp` or an unknown `/mcp/<x>`): the consolidation is
       // complete and the legacy monolith is retired, so no first-party tools are
@@ -497,7 +523,11 @@ function createSharedMcpServer(
       allTools = [];
     }
 
-    return { tools: dedupeAndWarn(allTools, serverName) };
+    // The session's scope and team role decide what it may see: a restricted
+    // session gets the first-party read allowlist (plus the test runner for
+    // review) and loses its role's denials, by the same rule Claude Code's turn
+    // applies (toolPolicy.ts). An unrestricted session sees everything above.
+    return { tools: dedupeAndWarn(filterToolsForSession(allTools, sessionPolicy, endpoint), serverName) };
   });
 
   // Register tool execution handler. Tracker schema lookups are process-global
@@ -519,6 +549,35 @@ function createSharedMcpServer(
 
     // Strip MCP server prefix if present
     const toolName = name.replace(/^mcp__nimbalyst__/, "");
+
+    // Second barrier: a tool the session's scope or team role denies is
+    // refused here even when the call arrives anyway (a name the model
+    // remembers, an injected request, a client that ignored ListTools).
+    // The read fails closed: an unverifiable policy runs nothing.
+    const sessionPolicy = await resolveSessionToolPolicy(sessionId);
+    if (isToolDeniedForSession(sessionPolicy, endpoint, toolName)) {
+      console.warn(`[MCP:${serverName}] Tool "${toolName}" refused for session ${sessionId ?? "(none)"}: scope ${sessionPolicy.scope}, role ${sessionPolicy.role ?? "none"}`);
+      return sessionToolDenial(sessionPolicy, endpoint, toolName);
+    }
+    // The host's file reads exist only on the core endpoint and only for the
+    // sessions they are listed to (see ListTools above); any other session
+    // calling them there by name gets a refusal, never the dispatcher. On any
+    // other endpoint these names are not the host's: they fall through to the
+    // endpoint's own dispatch (an extension or backend tool of the same name),
+    // under the session policy applied above.
+    if (isDevAgentReadTool(toolName) && endpoint.kind === "firstParty" && endpoint.configKey === MCP_CORE) {
+      if (!servesHostReadTools(sessionPolicy)) {
+        return {
+          content: [{ type: "text", text: `Error: Tool "${toolName}" is served only to a read-only team member without native file reads; this session is not one. Nothing was executed.` }],
+          isError: true,
+        };
+      }
+      if (!workspacePath) {
+        return { content: [{ type: "text", text: "Error: this session has no workspace to read from." }], isError: true };
+      }
+      const text = await dispatchDevAgentTool(toolName, workspacePath, (args ?? {}) as Record<string, unknown>);
+      return { content: [{ type: "text", text }], isError: text.startsWith("Error") };
+    }
 
     try {
       switch (toolName) {

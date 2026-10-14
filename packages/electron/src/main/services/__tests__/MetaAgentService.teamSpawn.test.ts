@@ -184,8 +184,8 @@ describe('Team mode child creation', () => {
   });
 
   it('refuses a non-Claude Code team member before creating anything', async () => {
-    await expect(service().createChildSessionInternal('root', '/ws', { role: 'explorer', provider: 'openai-codex', model: 'openai-codex:gpt-5.5' }))
-      .rejects.toThrow(/^Team member \(explorer\) provider unavailable: openai-codex \(requested explicitly\) does not enforce a member's tool scope/);
+    await expect(service().createChildSessionInternal('root', '/ws', { role: 'explorer', provider: 'opencode', model: 'opencode:any' }))
+      .rejects.toThrow(/^Team member \(explorer\) provider unavailable: opencode \(requested explicitly\) does not enforce a member's read tool scope/);
     expect(AISessionsRepository.create).not.toHaveBeenCalled();
   });
 });

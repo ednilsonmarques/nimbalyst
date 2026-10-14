@@ -38,10 +38,10 @@ describe('advisor: a real team role', () => {
     expect(TEAM_ROLES.filter((role) => role.includes('advisor'))).toEqual(['advisor']);
   });
 
-  it('defaults: the same strong model as the architect, effort high, read scope', () => {
+  it('defaults: a strong model of another provider than the architect\'s (OpenAI Codex gpt-6.1-sol), effort high, read scope', () => {
     expect(teamRoleDefaultModel('advisor')).toBe(TEAM_ADVISOR_MODEL);
-    expect(TEAM_ADVISOR_MODEL).toBe('claude-code:opus');
-    expect(TEAM_ADVISOR_MODEL).toBe(TEAM_ARCHITECT_MODEL);
+    expect(TEAM_ADVISOR_MODEL).toBe('openai-codex:gpt-6.1-sol');
+    expect(TEAM_ARCHITECT_MODEL).toBe('claude-code:opus');
     expect(teamRoleDefaultEffort('advisor')).toBe('high');
     expect(teamRoleDefaultToolScope('advisor')).toBe('read');
   });
@@ -80,13 +80,13 @@ describe('advisor: a real team role', () => {
 });
 
 describe('advisor: provider is decided in one place', () => {
-  it('every role, the advisor included, runs on the team provider in this phase', () => {
+  it('every role but the advisor runs on the team provider; the advisor on its own default provider, OpenAI Codex', () => {
     for (const role of TEAM_ROLES) {
-      expect(teamRoleProvider(role), role).toBe(TEAM_PROVIDER);
+      expect(teamRoleProvider(role), role).toBe(role === 'advisor' ? 'openai-codex' : TEAM_PROVIDER);
     }
     expect(TEAM_PROVIDER).toBe('claude-code');
-    // The default model is an identifier of that provider.
-    expect(TEAM_ADVISOR_MODEL.startsWith(`${TEAM_PROVIDER}:`)).toBe(true);
+    // The default model is an identifier of the advisor's provider.
+    expect(TEAM_ADVISOR_MODEL.startsWith(`${teamRoleProvider('advisor')}:`)).toBe(true);
   });
 });
 

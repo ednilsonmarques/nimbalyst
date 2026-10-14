@@ -284,6 +284,12 @@ const CONFIG_AND_COMMIT_TOOLS: readonly string[] = [
 ];
 
 /**
+ * The host's read-only file tools (electron mcp/devAgentTools.ts), as the core
+ * MCP endpoint names them for a restricted member without native reads.
+ */
+export const HOST_READ_TOOLS: readonly string[] = ['read_file', 'list_files', 'search_files'];
+
+/**
  * First-party Nimbalyst tools a `read` child may keep: lookups, plus asking the
  * user, rendering output to them, and naming its own session (the system prompt
  * asks every session to call update_session_meta). Everything else on the
@@ -292,7 +298,13 @@ const CONFIG_AND_COMMIT_TOOLS: readonly string[] = [
  */
 const READ_SCOPE_ALLOWED_FIRST_PARTY_TOOLS: ReadonlySet<string> = new Set([
   ...['AskUserQuestion', 'PromptForUserInput', 'display_to_user', 'capture_editor_screenshot',
-    'get_session_edited_files', 'update_session_meta'].map((tool) => mcpTool(MCP_CORE, tool)),
+    'get_session_edited_files', 'update_session_meta',
+    // The host's own file reads (electron mcp/devAgentTools.ts: read_file,
+    // list_files, search_files, confined to the workspace), served on the core
+    // endpoint only to a restricted member whose provider has no native read
+    // tool the scope keeps (openai-codex: its shell is refused). Read-only by
+    // construction; Claude Code members never see them (they have Read/Grep).
+    ...HOST_READ_TOOLS].map((tool) => mcpTool(MCP_CORE, tool)),
   ...['settings_get_overview', 'extensions_list', 'get_session_summary', 'get_session_coaching_signals',
     'get_workstream_overview', 'get_workstream_edited_files', 'list_recent_sessions', 'list_citable_inputs',
     'list_queued_prompts', 'get_session_status', 'get_session_result', 'list_spawned_sessions',
