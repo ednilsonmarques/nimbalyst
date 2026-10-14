@@ -17,6 +17,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { DirectGateway } from '../DirectGateway.js';
+import { normalizeRelationshipValue } from '@nimbalyst/tracker-core';
 
 const WORKSPACE = '/tmp/fixture-protected-workspace';
 
@@ -251,5 +252,52 @@ describe('ordinary types offline (NIB.26)', () => {
     expect(rawRow('task_1').archived).toBe(1);
     await gateway().updateTracker(WORKSPACE, 'task_1', { primaryType: 'bug' });
     expect(rawRow('task_1').type).toBe('bug');
+  });
+});
+
+describe('tool-manifest supersedes offline (NIB.29)', () => {
+  /** The team's second manifest as the host stores it: the link as a target id. */
+  const SUPERSEDING = { ...MANIFEST_DATA, title: 'M-2: Make formatGreeting reject blank names', manifestId: 'M-2', supersedes: ['tool-manifest_1'] };
+  const targets = (id: string) => normalizeRelationshipValue(rawRow(id).data.customFields?.supersedes ?? rawRow(id).data.supersedes).map((entry) => entry.itemId);
+  beforeEach(() => {
+    seed({ id: 'tool-manifest_2', type: 'tool-manifest', data: SUPERSEDING, content: SUPERSEDING.description });
+  });
+
+  it('another target, one more, or none at all is refused in either shape', async () => {
+    const before = rawRow('tool-manifest_2');
+    const attempts: Array<Record<string, unknown>> = [
+      { fields: { supersedes: ['tool-manifest_0'] } },
+      { fields: { supersedes: [{ itemId: 'tool-manifest_0' }] } },
+      { fields: { supersedes: ['tool-manifest_1', 'tool-manifest_0'] } },
+      { fields: { supersedes: [] } },
+      { unsetFields: ['supersedes'] },
+    ];
+    for (const input of attempts) {
+      await expect(gateway().updateTracker(WORKSPACE, 'tool-manifest_2', input), JSON.stringify(input)).rejects.toThrow(/supersedes is set by Nimbalyst/);
+    }
+    expect(rawRow('tool-manifest_2').data).toEqual(before.data);
+    expect(targets('tool-manifest_2')).toEqual(['tool-manifest_1']);
+  });
+
+  it('entries that name no target never pass as "no link": refused on a manifest without one, and next to a real target', async () => {
+    for (const garbage of [[{ title: 'x' }], [{}], [{ itemId: '' }], ['']]) {
+      await expect(gateway().updateTracker(WORKSPACE, 'tool-manifest_1', { fields: { supersedes: garbage } }), JSON.stringify(garbage)).rejects.toThrow(/supersedes is set by Nimbalyst/);
+      await expect(gateway().updateTracker(WORKSPACE, 'tool-manifest_2', { fields: { supersedes: [{ itemId: 'tool-manifest_1' }, ...garbage] } }), JSON.stringify(garbage)).rejects.toThrow(/supersedes is set by Nimbalyst/);
+    }
+    expect(rawRow('tool-manifest_1').data.supersedes).toBeUndefined();
+    expect(targets('tool-manifest_2')).toEqual(['tool-manifest_1']);
+  });
+
+  it('the same link written in the canonical object shape is no change: the targets stay what the host recorded', async () => {
+    await gateway().updateTracker(WORKSPACE, 'tool-manifest_2', { fields: { supersedes: [{ itemId: 'tool-manifest_1' }] } });
+    expect(targets('tool-manifest_2')).toEqual(['tool-manifest_1']);
+    expect(rawRow('tool-manifest_2').data.status).toBe('draft');
+  });
+
+  it('its status still never changes from the terminal, link or no link', async () => {
+    for (const input of [{ status: 'accepted' }, { fields: { status: 'accepted' } }, { status: 'superseded' }]) {
+      await expect(gateway().updateTracker(WORKSPACE, 'tool-manifest_2', input), JSON.stringify(input)).rejects.toThrow(/offline writes carry no session identity/);
+    }
+    expect(rawRow('tool-manifest_2').data.status).toBe('draft');
   });
 });

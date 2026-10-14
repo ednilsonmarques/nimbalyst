@@ -138,6 +138,69 @@ describe("update", () => {
   });
 });
 
+describe("supersedes is compared by its targets, not by its shape (NIB.29)", () => {
+  const refused = /supersedes is set by Nimbalyst/;
+  /** The second manifest of a team, as the host stores it: the link as a target id. */
+  const superseding = { ...manifest, manifestId: "M-2", title: "M-2: task", supersedes: ["tmf-1"] };
+  const withoutLink = (({ supersedes: _link, ...rest }) => rest)(superseding);
+  const canonical = [{ itemId: "tmf-1" }];
+  const accepted = (data: Record<string, unknown>) => ({ ...data, status: "accepted" });
+
+  it("a status-only accept is allowed whatever shape the write funnel leaves the link in", () => {
+    // Shape untouched (the CLI, a plain write).
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { status: "accepted" }, superseding, accepted(superseding))).not.toThrow();
+    // The MCP funnel canonicalizes ids to objects and nests them before the rule runs (the refused accept of the 1C pilot).
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { status: "accepted" }, superseding, accepted({ ...withoutLink, customFields: { supersedes: canonical } }))).not.toThrow();
+    // The UI funnel nests the ids as they are.
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { status: "accepted" }, superseding, accepted({ ...withoutLink, customFields: { supersedes: ["tmf-1"] } }))).not.toThrow();
+    // And back: objects stored, ids written by a re-serialization.
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { status: "accepted" }, { ...withoutLink, customFields: { supersedes: canonical } }, accepted({ ...withoutLink, supersedes: ["tmf-1"] }))).not.toThrow();
+    // Duplicates and order are not a change either.
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { status: "accepted" }, { ...withoutLink, supersedes: ["tmf-1", "tmf-0"] }, accepted({ ...withoutLink, supersedes: [{ itemId: "tmf-0" }, { itemId: "tmf-1" }, "tmf-1"] }))).not.toThrow();
+  });
+
+  it("another target, one more, one fewer or none at all is a change and is refused, in either shape", () => {
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { fields: { supersedes: ["tmf-9"] } }, superseding, { ...superseding, supersedes: ["tmf-9"] })).toThrow(refused);
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { fields: { supersedes: [{ itemId: "tmf-9" }] } }, superseding, { ...superseding, supersedes: [{ itemId: "tmf-9" }] })).toThrow(refused);
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { fields: { supersedes: ["tmf-1", "tmf-2"] } }, superseding, { ...superseding, supersedes: ["tmf-1", "tmf-2"] })).toThrow(refused);
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { fields: { supersedes: [] } }, superseding, { ...superseding, supersedes: [] })).toThrow(refused);
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { unsetFields: ["supersedes"] }, superseding, withoutLink)).toThrow(refused);
+    // A manifest that replaced nothing cannot be given a link.
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { fields: { supersedes: ["tmf-1"] } }, manifest, { ...manifest, supersedes: ["tmf-1"] })).toThrow(refused);
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { fields: { supersedes: canonical } }, manifest, { ...manifest, supersedes: canonical })).toThrow(refused);
+  });
+
+  it("a top-level shadow naming other targets is refused; the same targets in another shape are not a shadow", () => {
+    const synced = { ...withoutLink, customFields: { supersedes: ["tmf-1"] } };
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { status: "accepted" }, synced, { ...synced, status: "accepted", supersedes: canonical })).not.toThrow();
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { status: "accepted" }, synced, { ...synced, status: "accepted", supersedes: ["tmf-9"] })).toThrow(refused);
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { fields: { supersedes: ["tmf-9"] } }, synced, { ...synced, supersedes: ["tmf-9"] })).toThrow(refused);
+  });
+
+  it("entries that name no target are not the same link in another shape: compared as they are, like before (reviewer case)", () => {
+    for (const garbage of [[{ title: "x" }], [{}], [123], [{ itemId: "" }], [""]]) {
+      // On a manifest without a link, garbage is not "no targets": refused, as it was before.
+      expect(() => assertProtectedTrackerUpdate("tool-manifest", { fields: { supersedes: garbage } }, manifest, { ...manifest, supersedes: garbage }), JSON.stringify(garbage)).toThrow(refused);
+      expect(() => assertProtectedTrackerUpdate("tool-manifest", { status: "accepted" }, manifest, { ...manifest, status: "accepted", customFields: { supersedes: garbage } }), JSON.stringify(garbage)).toThrow(refused);
+      // Next to a real target it is not the same link either.
+      expect(() => assertProtectedTrackerUpdate("tool-manifest", { fields: { supersedes: [canonical[0], ...garbage] } }, superseding, { ...superseding, supersedes: [canonical[0], ...garbage] }), JSON.stringify(garbage)).toThrow(refused);
+    }
+    // A value stored as is and left as is is no change, whatever it holds.
+    const odd = { ...withoutLink, supersedes: [{ title: "x" }] };
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { status: "accepted" }, odd, accepted(odd))).not.toThrow();
+  });
+
+  it("leaves the other immutable fields, the body and the lifecycle exactly as strict", () => {
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { fields: { manifestId: "M-9" } }, superseding, { ...superseding, manifestId: "M-9" })).toThrow(/manifestId is set by Nimbalyst/);
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { fields: { architectSessionId: "me" } }, superseding, { ...superseding, architectSessionId: "me" })).toThrow(/architectSessionId is set by Nimbalyst/);
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { description: "edited" }, superseding, { ...superseding, description: "edited" })).toThrow(TOOL_MANIFEST_BODY_ERROR);
+    expect(() => assertProtectedTrackerUpdate("tool-manifest", { status: "draft" }, accepted(superseding), superseding)).toThrow(/never returns to draft/);
+    // A team-note has no relationship field: its rules are untouched.
+    expect(() => assertProtectedTrackerUpdate("team-note", { fields: { sourceSession: "other" } }, note, { ...note, sourceSession: "other" })).toThrow(/sourceSession records where the note came from/);
+    expect(() => assertProtectedTrackerUpdate("team-note", { status: "resolved" }, note, { ...note, status: "resolved" })).not.toThrow();
+  });
+});
+
 describe("body and type change", () => {
   it("a team-note body is capped, a tool-manifest body is never edited, other bodies are free", () => {
     expect(() => assertProtectedTrackerBody("task", "x".repeat(50_000))).not.toThrow();

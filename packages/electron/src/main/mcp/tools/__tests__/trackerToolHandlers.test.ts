@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { AISessionsRepository } from '@nimbalyst/runtime/storage/repositories/AISessionsRepository';
+import { normalizeRelationshipValue } from '@nimbalyst/tracker-core';
 
 const {
   mockQuery,
@@ -3217,5 +3219,103 @@ describe('agent writes that would make a shared item too large for its room', ()
 
   it('tracker_add_comment refuses a comment body', async () => {
     expectRefusedBeforeAnyWrite(await handleTrackerAddComment({ trackerId: 'NIM-1', body: huge }, '/tmp/ws'));
+  });
+});
+
+describe('tracker_update of a superseding tool-manifest by its coordinator (NIB.29)', () => {
+  // Sessions as the guard reads them: the team's coordinator, another team's, a member.
+  const sessions: Record<string, unknown> = {
+    root: { agentRole: 'standard', metadata: { teamMode: true } },
+    'other-root': { agentRole: 'standard', metadata: { teamMode: true } },
+    member: { agentRole: 'standard', metadata: { teamChild: { role: 'implementer', rootSessionId: 'root', depth: 1 } } },
+  };
+  /** The second manifest of the team as the host stores it: the link to the first one as a target id, at the top level. */
+  const manifestRow = () => makeRow({
+    id: 'tool-manifest_2',
+    issue_key: null,
+    issue_number: null,
+    type: 'tool-manifest',
+    type_tags: ['tool-manifest'],
+    workspace: '/tmp/ws',
+    source: 'native',
+    document_path: '',
+    data: JSON.stringify({
+      title: 'M-2: task',
+      status: 'draft',
+      priority: 'medium',
+      description: '```yaml\ntoolManifest: 1\nid: M-2\nsupersedes: M-1\n```',
+      manifestId: 'M-2',
+      manifestVersion: '1',
+      teamRootSessionId: 'root',
+      architectSessionId: 'arch-1',
+      generatedByRole: 'architect',
+      model: 'claude-code:opus',
+      confidence: 'high',
+      contentHash: '0123456789abcdef',
+      createdByAgent: true,
+      supersedes: ['tool-manifest_1'],
+    }),
+  });
+  const targetsOf = (data: Record<string, any>) =>
+    normalizeRelationshipValue(data.customFields?.supersedes ?? data.supersedes).map((entry) => entry.itemId);
+  const updateCall = () => mockQuery.mock.calls.find((c) => String(c[0]).includes('UPDATE tracker_items SET data = $1'));
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDocumentServices.clear();
+    mockGlobalRegistry.validate.mockReturnValue({ valid: true, errors: [] });
+    vi.mocked(getEffectiveTrackerSharingPolicy).mockReturnValue({ sharing: 'personal', draftByDefault: false });
+    vi.mocked(shouldSyncTrackerItem).mockReturnValue(false);
+    vi.mocked(isTrackerSyncActive).mockReturnValue(false);
+    // The tool-manifest schema types `supersedes` as a relationship, so the
+    // handler canonicalizes it (ids -> objects, nested) before the protected rule runs.
+    (mockGlobalRegistry.get as any).mockReturnValue({
+      sharing: 'team',
+      draftByDefault: false,
+      fields: [
+        { name: 'title', type: 'string' },
+        { name: 'status', type: 'select' },
+        { name: 'supersedes', type: 'relationship', relationshipTypeKey: 'supersedes', multiValue: true },
+      ],
+    });
+    const row = manifestRow();
+    mockQuery.mockImplementation(async (sql: unknown) => {
+      const text = String(sql);
+      if (/^\s*(UPDATE|DELETE|INSERT)/i.test(text)) return { rows: [] };
+      return { rows: [row] };
+    });
+    AISessionsRepository.setStore({ get: async (id: string) => sessions[id] ?? null } as never);
+  });
+  afterEach(() => {
+    AISessionsRepository.clearStore();
+    mockQuery.mockReset();
+  });
+
+  it('accepts it with status only: the canonicalized link is the same link, not a change (the refused accept of the 1C pilot)', async () => {
+    const result = await handleTrackerUpdate({ id: 'tool-manifest_2', status: 'accepted' }, '/tmp/ws', 'root');
+    expect(result.isError, result.content[0]?.text).toBe(false);
+    const call = updateCall();
+    expect(call).toBeDefined();
+    const written = JSON.parse(call![1]![0] as string);
+    expect(written.status).toBe('accepted');
+    expect(targetsOf(written)).toEqual(['tool-manifest_1']);
+    // Provenance travelled untouched.
+    expect(written.manifestId ?? written.customFields?.manifestId).toBe('M-2');
+    expect(written.architectSessionId ?? written.customFields?.architectSessionId).toBe('arch-1');
+  });
+
+  it('still refuses anyone but the owning coordinator, and anything but the status', async () => {
+    for (const [sessionId, args] of [
+      ['member', { id: 'tool-manifest_2', status: 'accepted' }],
+      ['other-root', { id: 'tool-manifest_2', status: 'accepted' }],
+      [undefined, { id: 'tool-manifest_2', status: 'accepted' }],
+      ['root', { id: 'tool-manifest_2', status: 'accepted', fields: { supersedes: ['tool-manifest_0'] } }],
+      ['root', { id: 'tool-manifest_2', fields: { supersedes: [{ itemId: 'tool-manifest_1' }] } }],
+      ['root', { id: 'tool-manifest_2', unsetFields: ['supersedes'] }],
+    ] as Array<[string | undefined, Record<string, unknown>]>) {
+      const result = await handleTrackerUpdate(args, '/tmp/ws', sessionId);
+      expect(result.isError, JSON.stringify([sessionId, args])).toBe(true);
+    }
+    expect(updateCall()).toBeUndefined();
   });
 });

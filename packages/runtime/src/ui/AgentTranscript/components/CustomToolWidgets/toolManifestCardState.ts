@@ -10,6 +10,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAtomValue } from 'jotai';
+import { normalizeRelationshipValue } from '@nimbalyst/tracker-core';
 import { interactiveWidgetHostAtom } from '../../../../store/atoms/interactiveWidgetHost';
 import type { ToolManifestCardData, TrackerItemLike, TrackerItemsChange } from './InteractiveWidgetHost';
 
@@ -61,10 +62,9 @@ export function pickToolManifestCardData(
   );
   if (!match) return null;
 
-  const rawSupersedes = fieldOf(match, 'supersedes');
-  const supersededItemIds = Array.isArray(rawSupersedes)
-    ? rawSupersedes.filter((value): value is string => typeof value === 'string')
-    : typeof rawSupersedes === 'string' && rawSupersedes !== '' ? [rawSupersedes] : [];
+  // The link's target ids whatever shape stores them: the host writes ids, the
+  // tracker canonicalizes them to `{ itemId }` objects on its next write (NIB.29).
+  const supersededItemIds = normalizeRelationshipValue(fieldOf(match, 'supersedes')).map((entry) => entry.itemId);
   const supersedes = supersededItemIds
     .map((itemId) => manifests.find((item) => item.id === itemId))
     .map((item) => (item ? stringFieldOf(item, 'manifestId') : null))

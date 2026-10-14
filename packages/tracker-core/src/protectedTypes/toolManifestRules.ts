@@ -16,6 +16,8 @@
  * Not applied to incoming sync: refusing a remote row would break convergence.
  */
 
+import { normalizeRelationshipValue } from '../trackerRelationships.js';
+
 export const TOOL_MANIFEST_TYPE = 'tool-manifest';
 export const TOOL_MANIFEST_STATUSES = ['draft', 'accepted', 'superseded'] as const;
 export type ToolManifestStatus = (typeof TOOL_MANIFEST_STATUSES)[number];
@@ -40,6 +42,15 @@ export const TOOL_MANIFEST_IMMUTABLE_FIELDS = [
   'title',
   'description',
 ] as const;
+
+/**
+ * Immutable fields that hold a relationship. Their stored shape differs by
+ * writer (the host stores target ids; the tracker canonicalizes them to
+ * `{ itemId }` objects on its next write), so they are compared by their
+ * target ids, never by shape: the same targets in another shape is no change,
+ * while another target, one more or one fewer is a change and is refused.
+ */
+export const TOOL_MANIFEST_RELATIONSHIP_FIELDS = ['supersedes'] as const;
 
 export const TOOL_MANIFEST_HAND_CREATE_ERROR =
   'Tool Manifests are written by Nimbalyst when an architect session completes with a valid manifest; ' +
@@ -67,14 +78,46 @@ function isEmpty(value: unknown): boolean {
   return value === undefined || value === null || value === '';
 }
 
+/** The target ids a stored relationship value names, in a shape-independent order. */
+function relationshipTargets(value: unknown): string[] {
+  return normalizeRelationshipValue(value).map((entry) => entry.itemId).sort();
+}
+
+/** Entries of a raw relationship value that name no target: normalization drops them silently. */
+function relationshipEntriesWithoutTarget(value: unknown): number {
+  const list: unknown[] = Array.isArray(value) ? value : value == null ? [] : [value];
+  return list.filter((entry) => {
+    if (typeof entry === 'string') return entry === '';
+    if (!entry || typeof entry !== 'object') return true;
+    const object = entry as Record<string, unknown>;
+    const id = typeof object.itemId === 'string' ? object.itemId : typeof object.id === 'string' ? object.id : '';
+    return id === '';
+  }).length;
+}
+
+/**
+ * Equality for an immutable field: a relationship by its targets, anything
+ * else by value. A relationship value with entries that name no target is not
+ * the same link in another shape; it is compared as it is, so such a value
+ * never passes as "no targets".
+ */
+function sameImmutableValue(field: string, a: unknown, b: unknown): boolean {
+  if ((TOOL_MANIFEST_RELATIONSHIP_FIELDS as readonly string[]).includes(field)) {
+    if (relationshipEntriesWithoutTarget(a) > 0 || relationshipEntriesWithoutTarget(b) > 0) return sameValue(a, b);
+    return sameValue(relationshipTargets(a), relationshipTargets(b));
+  }
+  return sameValue(a, b);
+}
+
 /**
  * A top-level write that disagrees with the value every reader sees (the
  * nested `customFields` bag wins when present): an attempt to rewrite the
- * field in the other storage shape, refused like a change.
+ * field in the other storage shape, refused like a change. The same targets
+ * of a relationship in another shape do not disagree.
  */
 function shadowed(data: Data, name: string, effective: unknown): boolean {
   const top = data?.[name];
-  return top !== undefined && !sameValue(top, effective);
+  return top !== undefined && !sameImmutableValue(name, top, effective);
 }
 
 function sameValue(a: unknown, b: unknown): boolean {
@@ -145,7 +188,7 @@ export function validateToolManifestData(after: Data, options: ToolManifestValid
   if (transition) errors.push(transition);
   for (const field of TOOL_MANIFEST_IMMUTABLE_FIELDS) {
     const previous = readToolManifestField(options.before, field);
-    if (sameValue(previous, readToolManifestField(after, field)) && !shadowed(after, field, previous)) continue;
+    if (sameImmutableValue(field, previous, readToolManifestField(after, field)) && !shadowed(after, field, previous)) continue;
     errors.push(
       field === 'description'
         ? TOOL_MANIFEST_BODY_ERROR

@@ -79,6 +79,15 @@ describe('pickToolManifestCardData', () => {
     expect(pickToolManifestCardData(synced, 'root', 'M-1')).toMatchObject({ itemId: 'tmf-s', status: 'accepted', confidence: 'low', architectTitle: null, supersedes: [] });
   });
 
+  it('reads the link in the canonical object shape the tracker writes after an accept (NIB.29)', () => {
+    const canonical = [
+      items[0],
+      { ...items[1], customFields: { ...items[1].customFields, supersedes: [{ itemId: 'tmf-1', trackerType: 'tool-manifest' }] } },
+    ];
+    expect(pickToolManifestCardData(canonical, 'root', 'M-2')?.supersedes).toEqual(['M-1']);
+    expect(pickToolManifestCardData([items[0], { ...items[1], customFields: { ...items[1].customFields, supersedes: [{ id: 'tmf-1' }] } }], 'root', 'M-2')?.supersedes).toEqual(['M-1']);
+  });
+
   it('tolerates what it cannot interpret: unknown superseded ids, a single id, an odd confidence, no status', () => {
     const odd = [
       { id: 'tmf-a', type: 'tool-manifest', customFields: { manifestId: 'M-1', teamRootSessionId: 'root', confidence: 'certain', supersedes: 'tmf-gone' } },
