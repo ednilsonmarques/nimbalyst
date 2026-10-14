@@ -5,7 +5,6 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { activeFileRepoPathAtom } from '../../store/atoms/workspaceRepos';
 import {
   setTitleBarCreateMenuAtom,
-  type TitleBarCreateMenuItem,
 } from '../../store/atoms/titleBarCreate';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { CollapsibleGroup } from './CollapsibleGroup';
@@ -25,7 +24,9 @@ import { getTimeGroupKey, TimeGroupKey } from '../../utils/dateFormatting';
 import { getFileName } from '../../utils/pathUtils';
 import { KeyboardShortcuts, getShortcutDisplay } from '../../../shared/KeyboardShortcuts';
 import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
-import { TEAM_ROOT_PRESETS, type TeamRootPreset } from '@nimbalyst/runtime/ai/server/providers/teamContext';
+import type { TeamRootPreset } from '@nimbalyst/runtime/ai/server/providers/teamContext';
+import { buildAgentCreateMenuItems } from './agentCreateMenuItems';
+import { eccArchitectCreateOptions } from './eccArchitectAction';
 import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
@@ -365,6 +366,14 @@ const SessionHistoryComponent: React.FC = () => {
       model: preset.model,
       metadata: { teamMode: true, effortLevel: preset.effortLevel },
     });
+  };
+
+  // "Prepare with ECC Architect": the same Team mode root on the standard
+  // preset, plus a creation-only directive that tells the coordinator to begin
+  // with the architect. Nothing else happens here: the coordinator creates the
+  // architect itself, under the Team Mode rules.
+  const handleNewEccArchitectSession = () => {
+    void dispatchCreateNewSession(eccArchitectCreateOptions(t));
   };
 
   const handleNewMetaAgent = async () => {
@@ -2108,6 +2117,7 @@ const SessionHistoryComponent: React.FC = () => {
     openSuperLoopDialog,
     handleNewMetaAgent,
     handleNewTeamSession,
+    handleNewEccArchitectSession,
   });
   createHandlersRef.current = {
     onNewSession,
@@ -2117,6 +2127,7 @@ const SessionHistoryComponent: React.FC = () => {
     openSuperLoopDialog,
     handleNewMetaAgent,
     handleNewTeamSession,
+    handleNewEccArchitectSession,
   };
 
   const hasWorktreeOption = Boolean(onNewWorktreeSession);
@@ -2124,70 +2135,11 @@ const SessionHistoryComponent: React.FC = () => {
   const hasTerminalOption = Boolean(onNewTerminal);
 
   useEffect(() => {
-    const items: TitleBarCreateMenuItem[] = [];
-    if (hasWorktreeOption) {
-      items.push({
-        id: 'worktree',
-        label: t('sessionList.create.newWorktree'),
-        icon: 'account_tree',
-        testId: 'new-worktree-session-button',
-        trailing: getShortcutDisplay(KeyboardShortcuts.window.newWorktree),
-        disabled: isNotGitRepo,
-        disabledReason: t('sessionList.create.worktreeRequiresGit'),
-        onSelect: () => createHandlersRef.current.openWorktreeBaseBranchPicker(),
-      });
-    }
-    if (hasBlitzOption) {
-      items.push({
-        id: 'blitz',
-        label: t('sessionList.create.newBlitz'),
-        icon: 'bolt',
-        testId: 'new-blitz-button',
-        disabled: isNotGitRepo,
-        disabledReason: t('sessionList.create.blitzRequiresGit'),
-        onSelect: () => createHandlersRef.current.onNewBlitz?.(),
-      });
-    }
-    if (hasTerminalOption) {
-      items.push({
-        id: 'terminal',
-        label: t('sessionList.create.newTerminal'),
-        icon: 'terminal',
-        testId: 'new-terminal-button',
-        onSelect: () => createHandlersRef.current.onNewTerminal?.(),
-      });
-    }
-    if (isSuperLoopsAvailable) {
-      items.push({
-        id: 'super-loop',
-        label: t('sessionList.create.newSuperLoop'),
-        icon: 'all_inclusive',
-        testId: 'new-super-loop-button',
-        disabled: isNotGitRepo,
-        disabledReason: t('sessionList.create.superLoopRequiresGit'),
-        onSelect: () => createHandlersRef.current.openSuperLoopDialog(),
-      });
-    }
-    if (isMetaAgentEnabled) {
-      items.push({
-        id: 'meta-agent',
-        label: t('sessionList.create.newMetaAgent'),
-        icon: 'hub',
-        testId: 'new-meta-agent-button',
-        onSelect: () => { void createHandlersRef.current.handleNewMetaAgent(); },
-      });
-    }
-    if (isAgentTeamViewEnabled) {
-      for (const preset of TEAM_ROOT_PRESETS) {
-        items.push({
-          id: `team-session-${preset.id}`,
-          label: t(`sessionList.create.newTeamSession.${preset.id}`),
-          icon: 'account_tree',
-          testId: `new-team-session-${preset.id}-button`,
-          onSelect: () => createHandlersRef.current.handleNewTeamSession(preset),
-        });
-      }
-    }
+    const items = buildAgentCreateMenuItems(
+      { hasWorktreeOption, hasBlitzOption, hasTerminalOption, isSuperLoopsAvailable, isMetaAgentEnabled, isAgentTeamViewEnabled, isNotGitRepo },
+      t,
+      () => createHandlersRef.current,
+    );
 
     setTitleBarCreateMenu('agent', {
       mode: 'agent',

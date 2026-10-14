@@ -620,6 +620,28 @@
   },
   "toolManifest": {
     "noticeLabel": "Tool Manifest stored",
+    "card": {
+      "title": "Tool Manifest {{id}}",
+      "status": {
+        "draft": "Draft",
+        "accepted": "Accepted",
+        "superseded": "Superseded"
+      },
+      "confidence": "Confidence: {{level}}",
+      "confidenceLevel": {
+        "high": "high",
+        "medium": "medium",
+        "low": "low",
+        "unknown": "not stated"
+      },
+      "architect": "Architect: {{name}}",
+      "supersedes": "Supersedes {{ids}}",
+      "open": "Open manifest",
+      "openHint": "Opens the stored manifest in the Tracker",
+      "details": "Details",
+      "loading": "Loading the stored manifest…",
+      "notFound": "The stored manifest is not in this workspace's Tracker."
+    },
     "notice": "[Tool Manifest] {{id}} from the architect (session {{architect}}) is stored as tracker item {{ref}} (confidence: {{confidence}}). It is the manifest in the architect's report, not a new one: do not re-read it now. When you declare per manifest {{id}}, mark the item accepted with tracker_update (status only); a divergence becomes a Team Note, never an edit of the item. Later, tracker_get {{ref}} returns it.",
     "noticeRenumbered": "The architect declared it {{declared}}; that id was already used in this team, so Nimbalyst numbered it {{id}}.",
     "noticeSuperseded": "It supersedes {{superseded}}, now marked superseded: {{id}} is the current manifest.",

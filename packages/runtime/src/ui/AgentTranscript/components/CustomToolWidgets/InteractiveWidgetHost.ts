@@ -144,6 +144,44 @@ export interface GitCommitResponse {
 }
 
 // ============================================================
+// Tool Manifest card (Team mode, ECC Architect)
+// ============================================================
+
+/** The subset of a tracker item the Tool Manifest card reads. */
+export interface TrackerItemLike {
+  id: string;
+  type?: string;
+  typeTags?: string[];
+  status?: string;
+  title?: string;
+  customFields?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/** A Tracker change as the host reports it; any part may be absent. */
+export interface TrackerItemsChange {
+  added?: TrackerItemLike[];
+  updated?: TrackerItemLike[];
+  removed?: string[];
+}
+
+/** What the Tool Manifest card shows about one stored manifest. Read-only. */
+export interface ToolManifestCardData {
+  /** The tracker item that holds the manifest: what "Open manifest" opens. */
+  itemId: string;
+  /** M-<n>, as the host numbered it. */
+  manifestId: string;
+  /** draft, accepted or superseded: the lifecycle the domain rules allow. */
+  status: string;
+  confidence: 'high' | 'medium' | 'low' | null;
+  architectSessionId: string | null;
+  /** The architect session's title when the host knows it. */
+  architectTitle: string | null;
+  /** Manifest ids this one supersedes (M-<n>), when the host recorded them. */
+  supersedes: string[];
+}
+
+// ============================================================
 // Interactive Widget Host Interface
 // ============================================================
 
@@ -298,6 +336,22 @@ export interface InteractiveWidgetHost {
    * left behind by a level the team has already passed.
    */
   teamContinue?(rootSessionId: string, checkpointLevel?: number): Promise<TeamContinueResult>;
+
+  // ============================================================
+  // Tool Manifest card (Team mode, ECC Architect)
+  // ============================================================
+
+  /**
+   * Resolve the stored Tool Manifest a coordinator's notice names, by team
+   * root and manifest id, from the Tracker. Null when no such item exists.
+   * Optional: without it the notice stays plain text. Read-only by
+   * construction: the card never writes a manifest (the domain rules keep it
+   * host-owned, accepted only by its coordinator or in the Tracker UI).
+   */
+  resolveToolManifest?(rootSessionId: string, manifestId: string): Promise<ToolManifestCardData | null>;
+
+  /** Follow Tracker item changes; returns the unsubscribe. Optional. */
+  onTrackerItemsChanged?(listener: (change: TrackerItemsChange | undefined) => void): () => void;
 
   // ============================================================
   // Git Commit Operations

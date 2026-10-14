@@ -176,6 +176,11 @@
         "standard": "New Team mode session: Standard (Opus, high)",
         "large": "New Team mode session: Large (Fable, high)",
         "critical": "New Team mode session: Critical (Fable, max)"
+      },
+      "eccArchitect": {
+        "label": "Prepare with ECC Architect",
+        "sessionTitle": "ECC Architect",
+        "initialDraft": "Prepare this task with ECC Architect before implementation:\n\n"
       }
     },
     "errors": {

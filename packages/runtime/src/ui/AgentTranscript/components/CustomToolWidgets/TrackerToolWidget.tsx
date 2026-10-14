@@ -14,6 +14,7 @@ import React from 'react';
 import { DEFAULT_TRACKER_TYPE_COLORS } from '@nimbalyst/tracker-schema';
 import type { CustomToolWidgetProps } from './index';
 import { PageUpdateLine } from './PageUpdateWidget';
+import { navigateToTrackerItem } from './trackerItemNavigation';
 
 // ---------- Types ----------
 
@@ -119,12 +120,6 @@ function extractStructured(tool: { result?: unknown }): { structured: Structured
     // Not JSON -- old format
   }
   return null;
-}
-
-function navigateToTrackerItem(itemId: string): void {
-  window.dispatchEvent(
-    new CustomEvent('nimbalyst:navigate-tracker-item', { detail: { itemId } })
-  );
 }
 
 // ---------- Style constants ----------

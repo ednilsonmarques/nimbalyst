@@ -51,6 +51,7 @@ export { GitCommitConfirmationWidget } from './GitCommitConfirmationWidget';
 export { ExitPlanModeWidget } from './ExitPlanModeWidget';
 export { ToolPermissionWidget } from './ToolPermissionWidget';
 export { TeamCheckpointWidget } from './TeamCheckpointWidget';
+export { ToolManifestCard } from './ToolManifestCard';
 export { FileChangeWidget } from './FileChangeWidget';
 export { SuperProgressSnapshotWidget } from './SuperProgressSnapshotWidget';
 export { SuperLoopProgressWidget } from './SuperLoopProgressWidget';

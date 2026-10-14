@@ -24,6 +24,7 @@ import { setSessionIsAtBottom, getSessionIsAtBottom } from '../../../store/atoms
 import { isAppleMobileWebKit } from '../../../utils/platform';
 import { usePendingPermissionNavigation } from './usePendingPermissionNavigation';
 import { TeamCheckpointBar } from './CustomToolWidgets/TeamCheckpointWidget';
+import { ToolManifestCard } from './CustomToolWidgets/ToolManifestCard';
 import { findPendingTeamCheckpoint } from './CustomToolWidgets/teamCheckpointState';
 import { TEAM_CHECKPOINT_PROMPT_ORIGIN, TOOL_MANIFEST_PROMPT_ORIGIN } from '../../../ai/server/providers/teamContext';
 import { usePendingQuestionNavigation } from './usePendingQuestionNavigation';
@@ -422,6 +423,12 @@ const PermissionDeniedCard: React.FC<{
     </div>
   );
 };
+
+/** The host-notice kind of a system message, from the projection or the raw metadata. */
+function reminderKindOf(message: TranscriptViewMessage): string | undefined {
+  return message.systemMessage?.reminderKind
+    ?? (typeof message.metadata?.reminderKind === 'string' ? (message.metadata.reminderKind as string) : undefined);
+}
 
 const SystemReminderCard: React.FC<{
   message: TranscriptViewMessage;
@@ -2265,7 +2272,13 @@ export const RichTranscriptView = React.forwardRef<
             }
           }}
         >
-          <SystemReminderCard message={message} />
+          {reminderKindOf(message) === TOOL_MANIFEST_PROMPT_ORIGIN ? (
+            // A stored Tool Manifest: the card, or the plain notice where the
+            // host cannot read the Tracker.
+            <ToolManifestCard message={message} sessionId={sessionId} fallback={<SystemReminderCard message={message} />} />
+          ) : (
+            <SystemReminderCard message={message} />
+          )}
         </div>
       );
     }

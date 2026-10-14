@@ -19,6 +19,7 @@ import React, { useCallback, useRef, useImperativeHandle, forwardRef, useEffect,
 import { atom, useAtom, useSetAtom, useAtomValue } from 'jotai';
 import { isRecommendedTeamRootModel } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 import { store, registerInteractiveWidgetHost, unregisterInteractiveWidgetHost } from '@nimbalyst/runtime/store';
+import { pickToolManifestCardData } from '@nimbalyst/runtime/ui/AgentTranscript/components/CustomToolWidgets/toolManifestCardState';
 import type { SessionData, ChatAttachment, TranscriptViewMessage } from '@nimbalyst/runtime/ai/server/types';
 import { agentCapabilitiesForProviderType } from '@nimbalyst/runtime/ai/server/agentCapabilities';
 import type { ToolCallDiffLoadResult } from '@nimbalyst/runtime/ai/server/transcript';
@@ -1895,6 +1896,21 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
       teamContinue: (rootSessionId: string, checkpointLevel?: number) =>
         window.electronAPI.invoke('team:continue', { sessionId: rootSessionId, checkpointLevel }),
 
+      // Tool Manifest card (Phase 1C): read-only Tracker lookups for the
+      // coordinator's stored-manifest notice. The renderer never writes a
+      // manifest; the domain rules keep it host-owned.
+      resolveToolManifest: async (rootSessionId: string, manifestId: string) => {
+        const items = await window.electronAPI.invoke('document-service:tracker-items-by-type', 'tool-manifest');
+        return pickToolManifestCardData(
+          Array.isArray(items) ? items : [],
+          rootSessionId,
+          manifestId,
+          (id) => store.get(sessionRegistryAtom).get(id)?.title ?? null,
+        );
+      },
+      onTrackerItemsChanged: (listener) =>
+        window.electronAPI.on('document-service:tracker-items-changed', listener),
+
       // Feedback request operations. Fire-and-forget: send publishes the
       // subjects the author confirmed, creates the request, and returns. The
       // turn does not wait for a recipient.
@@ -2201,6 +2217,8 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
       toolPermissionSubmit: (...args) => liveHostRef.current!.toolPermissionSubmit(...args),
       toolPermissionCancel: (...args) => liveHostRef.current!.toolPermissionCancel(...args),
       teamContinue: (...args) => liveHostRef.current!.teamContinue!(...args),
+      resolveToolManifest: (...args) => liveHostRef.current!.resolveToolManifest!(...args),
+      onTrackerItemsChanged: (...args) => liveHostRef.current!.onTrackerItemsChanged!(...args),
       feedbackRequestSend: (...args) => liveHostRef.current!.feedbackRequestSend!(...args),
       feedbackRequestCancel: (...args) => liveHostRef.current!.feedbackRequestCancel!(...args),
       pickFeedbackDestination: (...args) => liveHostRef.current!.pickFeedbackDestination!(...args),

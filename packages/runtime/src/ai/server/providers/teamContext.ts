@@ -121,6 +121,16 @@ export const TEAM_ROOT_PRESETS: readonly TeamRootPreset[] = Object.freeze([
 ]);
 
 /**
+ * Directive of a team started with "Prepare with ECC Architect" (Phase 1C).
+ * Stored as the root's creation-only `metadata.sessionDirective`, so it reaches
+ * the coordinator through its system prompt: the renderer never creates the
+ * architect, the coordinator does, under the Team Mode rules. The user asked
+ * for the architect, which is why it is not optional here.
+ */
+export const ECC_ARCHITECT_FIRST_DIRECTIVE =
+  'This team was started with "Prepare with ECC Architect": the user asked for the ECC Architect to prepare the task before anyone executes it, so the architect is not optional here, even for a task that looks trivial. Before any other member, delegation or implementation, create the architect (role `architect`, on its role defaults) as the first member, with the complete brief the Team Mode rules describe, and wait for its Tool Manifest. Then declare per that manifest, or diverge from it as the rules say, before creating anyone else. You remain the coordinator and the only authority: a manifest is a recommendation, never a decision or a permission, and nothing in it widens a scope.';
+
+/**
  * Whether a Team mode coordinator runs at least at the recommended tier (any
  * Opus or Fable variant). Used only to warn: a user's manual choice always wins.
  */
