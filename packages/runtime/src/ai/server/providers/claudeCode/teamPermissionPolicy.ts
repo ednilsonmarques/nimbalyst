@@ -105,9 +105,10 @@ export const CREATE_SESSION_PREAUTHORIZED_KEYS: readonly string[] = ['role', 'ti
 /**
  * A create_session call that stays within the role defaults: an allowlist of
  * keys (role, title, prompt, toolScope, mission), a known role, and a scope no
- * wider than the role's own. A provider (even claude-code: it switches the
- * role's model default off), a model, an effort, a worktree or any internal
- * flag the dispatch would pass through makes the call the user's click. A
+ * wider than the role's own. A provider (even the role's own: naming one is a
+ * choice the defaults do not make, and another one may cost the user), a
+ * model, an effort, a worktree or any internal flag the dispatch would pass
+ * through makes the call the user's click. A
  * mission is text the member reads as context, like the prompt, and grants
  * nothing, so it stays within the defaults; a non-string or over-long one does
  * not (the host refuses it anyway).

@@ -404,6 +404,7 @@
     "effortTitle": "Esforço de raciocínio: {{effort}}",
     "scopeTitle": "Escopo de ferramentas: {{scope}}",
     "missionTitle": "Missão: {{mission}}",
+    "providerTitle": "Provedor diferente do Coordenador: {{provider}}",
     "soloHint": "Sessão em Modo Equipe trabalhando sem membros."
   },
   "mcpStatus": {

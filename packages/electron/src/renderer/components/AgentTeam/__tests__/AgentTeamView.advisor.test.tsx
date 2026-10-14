@@ -104,6 +104,33 @@ describe('Team view: the independent advisor', () => {
     expect(advisor.getByTestId('agent-team-node-scope').textContent).toBe('somente leitura');
   });
 
+  it('shows the provider only on a member whose provider differs from the coordinator\'s (provider diversity), never on a same-provider member or the root', async () => {
+    const diverse: SessionMeta[] = [
+      ...SESSIONS,
+      session('root-b', { title: 'Migração', teamMode: true, model: 'claude-code:opus', effortLevel: 'high', updatedAt: 8_000 }),
+      session('b-adv', { title: 'Segunda opinião em outro provider', createdBySessionId: 'root-b', teamRole: 'advisor', provider: 'openai-codex', model: 'openai-codex:gpt-5.5', effortLevel: 'high', toolScope: 'read', createdAt: 50 }),
+    ];
+    store.set(sessionRegistryAtom, new Map(diverse.map((s) => [s.id, s])));
+    renderView();
+    const advisor = within(node('b-adv'));
+    expect(advisor.getByTestId('agent-team-node-role').textContent).toBe('Consultor Independente');
+    const provider = advisor.getByTestId('agent-team-node-provider');
+    expect(provider.textContent).toBe('OpenAI Codex');
+    expect(provider.getAttribute('title')).toBe('Provedor diferente do Coordenador: OpenAI Codex');
+    // The rest of the card is the same role, scope and effort: the provider changes nothing else.
+    expect(advisor.getByTestId('agent-team-node-scope').textContent).toBe('somente leitura');
+    expect(advisor.getByTestId('agent-team-node-effort').textContent).toBe('high');
+    // Same provider as the root: no provider shown; the root never shows one.
+    expect(within(node('a-adv')).queryByTestId('agent-team-node-provider')).toBeNull();
+    expect(within(node('root-a')).queryByTestId('agent-team-node-provider')).toBeNull();
+    expect(within(node('root-b')).queryByTestId('agent-team-node-provider')).toBeNull();
+
+    await setLanguage('en');
+    cleanup();
+    renderView();
+    expect(within(node('b-adv')).getByTestId('agent-team-node-provider').getAttribute('title')).toBe('Provider other than the coordinator\'s: OpenAI Codex');
+  });
+
   it('the team header counts the advisors by role, in Portuguese', () => {
     renderView();
     const header = screen.getByTestId('agent-team-header-root-a');

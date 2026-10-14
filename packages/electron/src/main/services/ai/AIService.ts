@@ -821,6 +821,15 @@ export class AIService {
    */
 
   /**
+   * Whether a provider is enabled for a workspace, for Team mode member
+   * creation (MetaAgentService): a member on a provider other than its
+   * creator's is refused unless this says so. Same rule as the settings UI.
+   */
+  public isProviderEnabledForTeamMember(provider: string, workspacePath?: string): boolean {
+    return this.isProviderEnabledForWorkspace(provider, workspacePath);
+  }
+
+  /**
    * Check if a provider is enabled for a workspace, considering project-level overrides.
    */
   private isProviderEnabledForWorkspace(provider: string, workspacePath?: string): boolean {

@@ -185,7 +185,7 @@ describe('Team mode child creation', () => {
 
   it('refuses a non-Claude Code team member before creating anything', async () => {
     await expect(service().createChildSessionInternal('root', '/ws', { role: 'explorer', provider: 'openai-codex', model: 'openai-codex:gpt-5.5' }))
-      .rejects.toThrow(/Team mode supports claude-code sessions only/);
+      .rejects.toThrow(/^Team member \(explorer\) provider unavailable: openai-codex \(requested explicitly\) does not enforce a member's tool scope/);
     expect(AISessionsRepository.create).not.toHaveBeenCalled();
   });
 });

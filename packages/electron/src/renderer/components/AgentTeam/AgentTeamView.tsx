@@ -176,13 +176,17 @@ function TeamTreeBranch({
   worktrees,
   onOpen,
   isRoot,
+  rootProvider,
 }: {
   node: TeamTreeNode;
   worktrees: Map<string, TeamWorktreeInfo>;
   onOpen: (sessionId: string) => void;
   isRoot?: boolean;
+  /** Provider of the tree's root, handed down so a member on another provider can say so. */
+  rootProvider?: string;
 }) {
   const { session } = node;
+  const treeRootProvider = isRoot ? session.provider : rootProvider;
   return (
     <>
       <AgentTeamNode
@@ -191,12 +195,13 @@ function TeamTreeBranch({
         creatorOutsideView={node.creatorOutsideView}
         onOpen={onOpen}
         isRoot={isRoot}
+        rootProvider={treeRootProvider}
       />
       {node.children.length > 0 && (
         <ul>
           {node.children.map((child) => (
             <li key={child.session.id}>
-              <TeamTreeBranch node={child} worktrees={worktrees} onOpen={onOpen} />
+              <TeamTreeBranch node={child} worktrees={worktrees} onOpen={onOpen} rootProvider={treeRootProvider} />
             </li>
           ))}
         </ul>

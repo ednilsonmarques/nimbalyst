@@ -139,9 +139,9 @@ describe('create_session creates an advisor', () => {
     expect(created().metadata.toolScope).toBe('read');
   });
 
-  it('refuses a provider other than the role\'s before creating anything', async () => {
+  it('refuses a provider the host cannot keep read-only before creating anything, explicitly and without fallback', async () => {
     await expect(service().createChildSessionInternal('root', '/ws', { role: 'advisor', provider: 'openai-codex', model: 'openai-codex:gpt-5.5' }))
-      .rejects.toThrow(/Team mode supports claude-code sessions only for the advisor role/);
+      .rejects.toThrow(/^Independent Advisor provider unavailable: openai-codex \(requested explicitly\) does not enforce a member's tool scope .*No session was created and no fallback to another provider was applied/);
     expect(AISessionsRepository.create).not.toHaveBeenCalled();
   });
 

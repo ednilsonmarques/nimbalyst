@@ -115,7 +115,7 @@ describe('reviewer and advisor stay different in nature', () => {
 describe('coordinator policy: the independent advisor', () => {
   it('lists the role with its defaults and names it a non-default member', () => {
     expect(coordinator).toContain('Every member runs on Sonnet by default, except the architect and the advisor (Opus)');
-    expect(coordinator).toContain('- `advisor`: main responsibility a second, independent opinion on the direction the team took: the plan, the strategy, the implementation and the verdicts as a whole (Opus, effort high, read-only; any other toolScope is lowered to read; it cannot ask the user, delegate or create tasks). Not a second reviewer and never a default member: only when you explicitly decide, see Independent advisor below.');
+    expect(coordinator).toContain('- `advisor`: main responsibility a second, independent opinion on the direction the team took: the plan, the strategy, the implementation and the verdicts as a whole (Opus, effort high, read-only; any other toolScope is lowered to read; it cannot ask the user, delegate or create tasks; its provider is a role default of the host, see Independent advisor below). Not a second reviewer and never a default member: only when you explicitly decide, see Independent advisor below.');
     expect(coordinator).toContain('Use `mcp__nimbalyst-host__create_session` for explorers, reviewers, architects, advisors and implementers');
   });
 
@@ -177,6 +177,21 @@ describe('coordinator policy: the independent advisor', () => {
   it('never names a provider or product as the advisor', () => {
     for (const text of [coordinator, advisor, buildTeamChildAddendum('architect')]) {
       expect(text).not.toMatch(/codex advisor/i);
+      expect(text).not.toMatch(/openai|codex|gemini|gpt-/i);
     }
+  });
+
+  it('provider diversity: the host decides the provider, a refusal is reported and never worked around, and a same-provider opinion is never called provider-independent', () => {
+    const section = coordinator.slice(coordinator.indexOf('### Independent advisor'), coordinator.indexOf('### Briefs'));
+    expect(section).toContain('Provider diversity: a second opinion from a different provider (another model family) shares fewer blind spots with you and the architect; that lowers the correlation of errors and guarantees nothing, and an opinion on the same provider is still an independent opinion.');
+    expect(section).toContain('The advisor\'s provider is a role default decided by the host, never by you: omit `provider` and `model` and you get it.');
+    expect(section).toContain('Name a provider only when the user asked for it or authorized it, since it may need that provider enabled and may cost them');
+    expect(section).toContain('the host refuses a provider it cannot keep read-only, or one that is not available, with an explicit "provider unavailable" error, creates nothing and never falls back to another provider by itself');
+    expect(section).toContain('report that refusal to the user as it is, and only create the advisor on its role default when a same-provider second opinion is acceptable, saying so');
+    expect(section).toContain('The creation result (`providerDiversity`, null when the creator is not the team root) and the member\'s [Child Session Update] (its "Provider:" line, always compared against the root) say whether the advisor ran on the same provider as you');
+    expect(section).toContain('never report an opinion as "independent by provider" or "from a different model family" when it did, or when that is unknown; say it is an independent opinion on the same provider');
+    // The member's own contract is provider-neutral: the same text whatever provider runs it.
+    expect(advisor).not.toMatch(/provider/i);
+    expect(advisorWithMission).not.toMatch(/provider/i);
   });
 });

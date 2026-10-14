@@ -39,23 +39,29 @@ import { inheritedOwnership, isParentNotificationSuppressed } from './extensionS
 import { startExtensionSessionService } from './extensionSessions/extensionSessionsService';
 import { broadcastSessionCreated } from './session/broadcastSessionCreated';
 import { extractMessageText, extractUserPrompts } from './metaAgentMessageText';
-import { TEAM_CHILD_METADATA_KEY, resolveTeamContext } from '@nimbalyst/runtime/ai/server/providers/teamContext';
+import { TEAM_CHILD_METADATA_KEY, resolveTeamContext, type TeamRole } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 import { renderArchitectReportForUpdate } from '@nimbalyst/runtime/ai/server/providers/toolManifest';
 import { TOOL_MANIFEST_NOTICE_CONTEXT, buildToolManifestNotice, persistArchitectManifest } from './team/toolManifests';
 import { withToolManifestTrackerPort } from './team/toolManifestTrackerPort';
 import {
   buildTeamChild,
-  teamRoleProvider,
   resolveRequestedTeamMission,
   resolveRequestedTeamRole,
   resolveTeamCaller,
   teamRoleDefaultEffort,
   teamRoleDefaultModel,
   resolveChildToolScopeRequest,
+  resolveTeamMemberProvider,
+  teamMemberProviderRefusal,
+  teamProviderDiversity,
+  teamRoleProvider,
   TEAM_LIMITS,
   TeamBudgetReachedError,
   type TeamCaller,
+  type TeamMemberProviderRequest,
+  type TeamProviderDiversity,
 } from './team/teamPolicy';
+import { describeTeamMemberProvider, teamMemberProviderReadiness } from './team/teamProviders';
 import {
   TEAM_CONTINUATION_NOTICE_CONTEXT,
   buildTeamContinuationNotice,
@@ -105,6 +111,14 @@ interface SessionResultData {
   toolScope?: string | null;
   /** Whether the child's provider actually withholds what toolScope denies. */
   toolScopeEnforced?: boolean;
+  /** Team role of a member (metadata.teamChild.role); null or absent outside a team. */
+  teamRole?: TeamRole | null;
+  /**
+   * Whether the member's provider differs from its team root's
+   * (teamProviderDiversity); null when unknown, absent outside a team. Read
+   * from the two session rows, never stored.
+   */
+  providerDiversity?: TeamProviderDiversity | null;
 }
 
 interface CreateChildSessionArgs {
@@ -455,6 +469,24 @@ export class MetaAgentService {
     // canonicalized one the tool dispatcher handed us (#1551).
     const workspaceKey = resolveStoredWorkspaceId(parent.workspacePath, workspaceId);
 
+    // Explicit model wins; otherwise inherit caller's model (e.g. keep "opus"
+    // on "opus") rather than dropping to the global default.
+    const effectiveModel = args.model ?? parent.model ?? undefined;
+
+    // A launch from inside a team creates a team member (role `other`): its
+    // provider is refused here, before the workstream below exists, by the
+    // same rule as create_session and spawn_session.
+    const parentTeam = resolveTeamCaller(parentSessionId, parent.metadata, parent.agentRole);
+    if (parentTeam) {
+      const callerProvider = parent.provider ?? null;
+      this.assertTeamMemberProvider(
+        'other',
+        resolveTeamMemberProvider({ role: 'other', model: effectiveModel, modelInherited: !args.model && !!parent.model, callerProvider }),
+        callerProvider,
+        workspaceKey,
+      );
+    }
+
     const resolved = await this.resolveOrCreateWorkstream(parent, workspaceKey);
     const workstreamId = resolved.workstreamId;
 
@@ -465,10 +497,6 @@ export class MetaAgentService {
     // requested useWorktree and inherit the parent's worktree (the main checkout
     // for a top-level meta-agent).
     const inheritedWorktreeId = parent.worktreeId ?? undefined;
-
-    // Explicit model wins; otherwise inherit caller's model (e.g. keep "opus"
-    // on "opus") rather than dropping to the global default.
-    const effectiveModel = args.model ?? parent.model ?? undefined;
 
     // Pass prompt only when autoSubmit is true; createChildSessionInternal
     // queues + triggers only when a prompt is supplied. For prefill mode we
@@ -704,6 +732,12 @@ export class MetaAgentService {
     parentSessionId: string | null;
     /** Effort actually applied, after clamping; null when left on the app default. */
     effortLevel: string | null;
+    /**
+     * Team mode only: whether the member's provider differs from the team
+     * root's (`diverse`), is the same (`same`) or could not be compared (null).
+     * Absent outside a team.
+     */
+    providerDiversity?: TeamProviderDiversity | null;
   }> {
     if (!this.aiService) {
       throw new Error('AI service not initialized');
@@ -766,8 +800,12 @@ export class MetaAgentService {
     // and read by no rule below (model, effort, scope and role ignore it).
     const teamMission = team ? resolveRequestedTeamMission(args.mission) : undefined;
     const applyRoleModelDefaults = teamRole !== null && !args.skipTeamRoleModelDefaults;
+    // The role's model default applies when no model is named and the member
+    // stays on the role's provider (naming that same provider changes nothing);
+    // a member named onto another provider without a model gets that
+    // provider's own default below.
     const requestedModel = args.model
-      ?? (applyRoleModelDefaults && !args.provider ? teamRoleDefaultModel(teamRole!) : undefined);
+      ?? (applyRoleModelDefaults && (!args.provider || args.provider === teamRoleProvider(teamRole!)) ? teamRoleDefaultModel(teamRole!) : undefined);
     const effortLevelForChild = requestedEffortLevel
       ?? (applyRoleModelDefaults ? teamRoleDefaultEffort(teamRole!) : undefined);
 
@@ -793,15 +831,36 @@ export class MetaAgentService {
     const explicitModel = normalizeStoredChildModelIdentifier(explicitModelProvider, requestedModel ?? null);
     const model = explicitModel || defaultModel;
     const parsed = ModelIdentifier.tryParse(model);
-    const provider = (args.provider ||
+    // Team mode: the member's provider is its role default (teamPolicy.ts,
+    // TEAM_ROLE_DEFAULTS) unless the caller named one; either way it must be
+    // one whose turn the host knows enforces the member's scope and role
+    // policy (teamProviders.ts), and one that is available here. Refused
+    // before any side effect, with an explicit reason and never a fallback to
+    // another provider: a same-provider member is the caller's choice to make
+    // by calling again, not the host's to make silently. spawn_session runs
+    // the same check before its own side effects (the workstream).
+    const teamMemberProvider = team
+      ? resolveTeamMemberProvider({
+        role: teamRole!,
+        provider: args.provider,
+        model: args.model,
+        modelInherited: args.skipTeamRoleModelDefaults === true && !!args.model,
+        callerProvider: parentProvider,
+      })
+      : null;
+    if (team) {
+      this.assertTeamMemberProvider(teamRole!, teamMemberProvider!, parentProvider, workspaceKey);
+    }
+    const provider = (teamMemberProvider?.provider ||
+      args.provider ||
       parsed?.provider ||
       parentProvider ||
       'claude-code') as AIProviderType;
-    // The provider a role runs on is decided in teamPolicy.ts (teamRoleProvider),
-    // the one place that may ever differ per role; this gate only enforces it.
-    if (team && provider !== teamRoleProvider(teamRole!)) {
-      throw new Error(`Team mode supports ${teamRoleProvider(teamRole!)} sessions only for the ${teamRole} role; refusing to create a ${provider} team member.`);
-    }
+    // Provider of the team root, for the diversity of this member's provider
+    // reported to its creator: known here only when the caller is the root
+    // (creation never reads the root row; a deeper creator learns it from the
+    // member's [Child Session Update], which compares against the root).
+    const teamRootProvider = team && team.depth === 0 ? parentProvider : null;
     // Provider and model MUST agree. Otherwise a child is persisted with, e.g.,
     // provider=claude-code + an antigravity-gemini model, gets routed to the
     // Claude Code provider, is rejected ("requires a claude-code:* identifier"),
@@ -977,7 +1036,44 @@ export class MetaAgentService {
       queuedInitialPrompt: !!initialPrompt,
       parentSessionId: args.parentSessionIdOverride ?? null,
       effortLevel: childEffortLevel ?? null,
+      ...(team ? { providerDiversity: teamProviderDiversity(provider, teamRootProvider) } : {}),
     };
+  }
+
+  /**
+   * Refuse a team member whose provider the host cannot run it on (not ready:
+   * teamProviders.ts) or cannot reach (not enabled, or not verifiable). Pure
+   * rule in teamPolicy.ts; this only gathers the facts. Called by both
+   * creation paths before any side effect.
+   */
+  private assertTeamMemberProvider(
+    role: TeamRole,
+    request: TeamMemberProviderRequest,
+    callerProvider: string | null,
+    workspacePath: string,
+  ): void {
+    const refusal = teamMemberProviderRefusal({
+      role,
+      ...request,
+      callerProvider,
+      readiness: teamMemberProviderReadiness(request.provider),
+      enabled: request.provider === callerProvider ? null : this.resolveProviderEnabled(request.provider, workspacePath),
+    });
+    if (refusal) throw new Error(refusal);
+  }
+
+  /**
+   * Whether a provider is enabled for a workspace, from the AI service's
+   * settings; null when that cannot be determined (no AI service, or a read
+   * that fails), which the provider refusal treats as unavailable.
+   */
+  private resolveProviderEnabled(provider: string, workspacePath: string): boolean | null {
+    if (!this.aiService) return null;
+    try {
+      return this.aiService.isProviderEnabledForTeamMember(provider, workspacePath) === true;
+    } catch {
+      return null;
+    }
   }
 
   private async spawnSession(
@@ -1009,6 +1105,27 @@ export class MetaAgentService {
       await this.assertTeamSpawnCapacityOrShowCheckpoint(parentTeam);
     }
 
+    // Resolve effective model: explicit `model` wins; otherwise `inheritModel`
+    // copies the caller's model so the new session keeps the same provider/model
+    // (e.g. opus stays on opus). Falling through to undefined lets
+    // createChildSessionInternal use the global default.
+    const effectiveModel =
+      args.model ?? (args.inheritModel ? parent.model ?? undefined : undefined);
+
+    // A team member's provider is refused here, before the workstream below is
+    // created or the caller is promoted into one: a refusal must leave nothing
+    // behind. The authoritative check runs again in createChildSessionInternal.
+    if (parentTeam) {
+      const role = resolveRequestedTeamRole(args.role);
+      const callerProvider = parent.provider ?? null;
+      this.assertTeamMemberProvider(
+        role,
+        resolveTeamMemberProvider({ role, model: effectiveModel, modelInherited: !args.model && args.inheritModel === true, callerProvider }),
+        callerProvider,
+        workspaceKey,
+      );
+    }
+
     // Sibling mode: resolve (or create) a workstream container so the new
     // session shares files-edited, tabs, and workstream overview with the
     // caller. Isolated mode skips this entirely — the new session is a
@@ -1029,13 +1146,6 @@ export class MetaAgentService {
     // explicitly asked for a brand-new worktree (useWorktree=true).
     const inheritedWorktreeId =
       !args.useWorktree && parent.worktreeId ? parent.worktreeId : undefined;
-
-    // Resolve effective model: explicit `model` wins; otherwise `inheritModel`
-    // copies the caller's model so the new session keeps the same provider/model
-    // (e.g. opus stays on opus). Falling through to undefined lets
-    // createChildSessionInternal use the global default.
-    const effectiveModel =
-      args.model ?? (args.inheritModel ? parent.model ?? undefined : undefined);
 
     const childResult = await this.createChildSessionInternal(parentSessionId, workspaceKey, {
       title: args.title,
@@ -1799,6 +1909,12 @@ export class MetaAgentService {
     if (toolScopeLine) {
       lines.push(toolScopeLine);
     }
+    // A team member's provider and whether it differs from the coordinator's,
+    // so a same-provider second opinion is never reported as independent by provider.
+    const providerLine = describeTeamMemberProvider(result.teamRole, result.provider, result.model, result.providerDiversity);
+    if (providerLine) {
+      lines.push(providerLine);
+    }
     if (result.errorMessage) {
       lines.push(`Error: ${result.errorMessage}`);
     }
@@ -1861,6 +1977,8 @@ export class MetaAgentService {
     let sessionUpdatedAt: number;
     let sessionWorktreeId: string | null;
     let sessionToolScope: string | null = null;
+    let sessionTeamRole: TeamRole | null = null;
+    let sessionProviderDiversity: TeamProviderDiversity | null = null;
 
     if (prefetchedSession) {
       sessionTitle = prefetchedSession.title;
@@ -1887,6 +2005,15 @@ export class MetaAgentService {
       sessionWorktreeId = session.worktreeId || null;
       sessionToolScope =
         ((session.metadata as Record<string, unknown> | undefined)?.toolScope as string | undefined) ?? null;
+      // A team member reports its provider against its root's (teamProviderDiversity).
+      const teamChild = resolveTeamContext(session.metadata as Record<string, unknown> | undefined, session.agentRole).teamChild;
+      if (teamChild) {
+        sessionTeamRole = teamChild.role;
+        const rootProvider = await AISessionsRepository.get(teamChild.rootSessionId)
+          .then((root) => root?.provider ?? null)
+          .catch(() => null);
+        sessionProviderDiversity = teamProviderDiversity(sessionProvider, rootProvider);
+      }
     }
 
     const messages = await AgentMessagesRepository.list(sessionId, { limit: 500 });
@@ -1939,6 +2066,7 @@ export class MetaAgentService {
         sessionToolScope === 'read' || sessionToolScope === 'review' || sessionToolScope === 'write'
           ? isToolScopeEnforced(sessionProvider)
           : undefined,
+      ...(sessionTeamRole ? { teamRole: sessionTeamRole, providerDiversity: sessionProviderDiversity } : {}),
     };
   }
 

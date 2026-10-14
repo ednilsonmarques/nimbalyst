@@ -404,6 +404,7 @@
     "effortTitle": "Reasoning effort: {{effort}}",
     "scopeTitle": "Tool scope: {{scope}}",
     "missionTitle": "Mission: {{mission}}",
+    "providerTitle": "Provider other than the coordinator's: {{provider}}",
     "soloHint": "Team mode session working without members."
   },
   "mcpStatus": {

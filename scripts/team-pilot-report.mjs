@@ -207,6 +207,12 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifest
     const members = membersOf(root.id);
     const roles = emptyRoleCounts();
     const promotions = [];
+    // Every advisor (Consultor Independente) with where it ran and whether its
+    // provider differs from the root's (teamProviderDiversity in teamPolicy.ts):
+    // a same-provider advisor is an independent opinion, not a provider-diverse
+    // one, and the report must not suggest otherwise. The mission text itself
+    // is never carried (it is coordinator-written text), only whether one exists.
+    const advisors = [];
     for (const member of members) {
       const role = MEMBER_ROLES.includes(member.metadata.teamChild?.role) ? member.metadata.teamChild.role : 'other';
       roles[role] += 1;
@@ -215,6 +221,18 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifest
       const effortPromoted = !!effort && effort !== defaultEffortFor(role);
       if (modelPromoted || effortPromoted) {
         promotions.push({ role, model: member.model ?? null, effort, modelPromoted, effortPromoted });
+      }
+      if (role === 'advisor') {
+        const provider = member.provider ?? null;
+        advisors.push({
+          id: String(member.id).slice(0, 8),
+          provider,
+          model: member.model ?? null,
+          effort,
+          scope: member.metadata.toolScope ?? null,
+          hasMission: typeof member.metadata.teamChild?.mission === 'string' && member.metadata.teamChild.mission.length > 0,
+          providerDiversity: provider && root.provider ? (provider === root.provider ? 'same' : 'diverse') : null,
+        });
       }
     }
 
@@ -260,6 +278,7 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifest
     return {
       id: String(root.id).slice(0, 8),
       createdAt: root.createdAt ?? null,
+      provider: root.provider ?? null,
       model: root.model ?? null,
       effort: root.metadata.effortLevel ?? null,
       kind: members.length === 0 ? 'solo' : 'team',
@@ -271,6 +290,8 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifest
       manifests,
       advisors: roles.advisor,
       advisorOpinions,
+      advisorSessions: advisors,
+      advisorsProviderDiverse: advisors.filter((advisor) => advisor.providerDiversity === 'diverse').length,
       manifestDecisions,
       declaredPlans,
       tools,
@@ -304,6 +325,7 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifest
       architects: roleTotals.architect,
       advisors: roleTotals.advisor,
       advisorOpinions: sum((team) => team.advisorOpinions),
+      advisorsProviderDiverse: teams.reduce((total, team) => total + team.advisorsProviderDiverse, 0),
       manifests: sum((team) => team.manifests),
       manifestDivergences: sum((team) => (team.manifestDecisions === null ? null : team.manifestDecisions.filter((d) => d === 'diverged').length)),
       tools: toolTotals,
@@ -322,6 +344,7 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifest
       'scopeDeniedAttempts counts "No such tool available" replies in member sessions; an approximation.',
       'reviewCycles counts reviewer reports that open with a verdict.',
       'advisorOpinions counts advisor (Consultor Independente) reports that open with an independent opinion.',
+      'advisorsProviderDiverse counts advisors whose provider differs from their root\'s; a same-provider advisor is an independent opinion, not a provider-diverse one.',
       'manifests counts architect reports that carry a Tool Manifest block; manifestDivergences counts coordinator turns that diverge from a manifest.',
       'durationMinutes is the span between the first and last stored message of the team, idle time included.',
       'errors counts sessions currently in the error state; past, recovered errors are not counted.',
@@ -345,6 +368,7 @@ export function renderMarkdown(report) {
   row('Ciclos de revisão', totals.reviewCycles);
   row('Manifestos do Architect', totals.manifests);
   row('Pareceres do Consultor Independente', totals.advisorOpinions);
+  row('Consultores Independentes em provider diferente da raiz', totals.advisorsProviderDiverse);
   row('Divergências do Coordenador sobre manifestos', totals.manifestDivergences);
   for (const name of COUNTED_TOOLS) row(`Chamadas ${name}`, totals.tools ? totals.tools[name] : null);
   row('Tentativas bloqueadas por escopo (aprox.)', totals.scopeDeniedAttempts);
@@ -374,6 +398,14 @@ export function renderMarkdown(report) {
     lines.push('', '## Tool Manifests gravados', '', '| Raiz | Ref | Id | Declarado | Status | Architect | Confiança |', '|---|---|---|---|---|---|---|');
     for (const manifest of storedManifests) {
       lines.push(`| ${manifest.team} | ${manifest.ref} | ${show(manifest.manifestId)} | ${show(manifest.declaredManifestId)} | ${show(manifest.status)} | ${show(manifest.architect)} | ${show(manifest.confidence)} |`);
+    }
+  }
+  const advisors = teams.flatMap((team) => team.advisorSessions.map((advisor) => ({ team: team.id, rootProvider: team.provider, ...advisor })));
+  if (advisors.length > 0) {
+    lines.push('', '## Consultores Independentes', '', '| Raiz | Sessão | Provider | Provider da raiz | Modelo | Esforço | Escopo | Missão | Diversidade de provider |', '|---|---|---|---|---|---|---|---|---|');
+    for (const advisor of advisors) {
+      const diversity = advisor.providerDiversity === 'diverse' ? 'sim (provider diferente)' : advisor.providerDiversity === 'same' ? 'não (mesmo provider da raiz)' : 'indisponível';
+      lines.push(`| ${advisor.team} | ${advisor.id} | ${show(advisor.provider)} | ${show(advisor.rootProvider)} | ${show(advisor.model)} | ${show(advisor.effort)} | ${show(advisor.scope)} | ${advisor.hasMission ? 'sim' : 'não'} | ${diversity} |`);
     }
   }
   const promoted = teams.flatMap((team) => team.promotions.map((promotion) => ({ team: team.id, ...promotion })));
@@ -415,7 +447,7 @@ export async function readPilotData(dbPath) {
   const db = new DatabaseSync(dbPath, { readOnly: true });
   try {
     const sessions = db.prepare(
-      `SELECT id, created_by_session_id AS createdBySessionId, model, status, metadata,
+      `SELECT id, created_by_session_id AS createdBySessionId, provider, model, status, metadata,
               created_at AS createdAt, updated_at AS updatedAt
        FROM ai_sessions`,
     ).all();

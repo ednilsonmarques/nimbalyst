@@ -206,7 +206,7 @@ export const META_AGENT_TOOL_DEFS: Array<{
         provider: {
           type: "string",
           description:
-            "Optional. OMIT to inherit the calling session provider and model (recommended: a Gemini meta-agent then spawns Gemini children). Set this only to deliberately run the child on a different provider, and if you set it, also pass a matching model (e.g. provider claude-code with model claude-code:opus). Do NOT set claude-code with a non-claude-code model.",
+            "Optional. OMIT to inherit the calling session provider and model (recommended: a Gemini meta-agent then spawns Gemini children). Set this only to deliberately run the child on a different provider, and if you set it, also pass a matching model (e.g. provider claude-code with model claude-code:opus). Do NOT set claude-code with a non-claude-code model. In Team mode a member's provider is its role default unless you name one, and a named provider is accepted only when the host enforces the member's tool scope and role policy on it and it is enabled here; otherwise the call fails with an explicit \"provider unavailable\" error, creates nothing and never falls back to another provider. The result's providerDiversity says whether the member runs on a provider other than the team root's.",
         },
         model: {
           type: "string",

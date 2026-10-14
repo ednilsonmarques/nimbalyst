@@ -66,6 +66,12 @@ export interface AgentTeamNodeProps {
   onOpen: (sessionId: string) => void;
   /** Root of a team tree: the coordinator, drawn apart from its members. */
   isRoot?: boolean;
+  /**
+   * Provider of the team root this member belongs to. A member running on a
+   * different provider (e.g. an advisor chosen for provider diversity) shows
+   * its provider's name next to its model; the same provider shows nothing.
+   */
+  rootProvider?: string;
 }
 
 export const AgentTeamNode = memo(function AgentTeamNode({
@@ -74,6 +80,7 @@ export const AgentTeamNode = memo(function AgentTeamNode({
   creatorOutsideView,
   onOpen,
   isRoot,
+  rootProvider,
 }: AgentTeamNodeProps) {
   const { t } = useTranslation('agent');
   const status = useNodeStatus(session.id);
@@ -88,6 +95,11 @@ export const AgentTeamNode = memo(function AgentTeamNode({
   const scopeLabel = scopeKey && ['read', 'review', 'write', 'full'].includes(scopeKey)
     ? t(`agentTeam.scope.${scopeKey}`)
     : scopeKey;
+  // Provider diversity, read from the two sessions' providers: shown only for
+  // a member whose provider differs from its root's (never for the root itself).
+  const diverseProviderName = !isCoordinator && session.teamRole && rootProvider && provider && provider !== rootProvider
+    ? getProviderDisplayName(provider)
+    : null;
 
   return (
     <button
@@ -134,6 +146,14 @@ export const AgentTeamNode = memo(function AgentTeamNode({
       </div>
 
       <div className="flex w-full min-w-0 items-center gap-1 text-[11px] text-[var(--nim-text-faint)]">
+        {diverseProviderName && (
+          <>
+            <span className="shrink-0" title={t('agentTeam.providerTitle', { provider: diverseProviderName })} data-testid="agent-team-node-provider">
+              {diverseProviderName}
+            </span>
+            <span aria-hidden>·</span>
+          </>
+        )}
         <span className="truncate" title={session.model ?? undefined}>
           {displayModel(session.model, provider)}
         </span>

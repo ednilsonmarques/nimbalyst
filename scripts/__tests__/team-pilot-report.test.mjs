@@ -14,12 +14,12 @@ const toolResult = (text) => `{"type":"user","message":{"role":"user","content":
 function fixture() {
   const sessions = [
     // Team with three members, one promoted.
-    { id: 'root-team-0001', createdBySessionId: null, model: 'claude-code:opus', status: 'idle', metadata: JSON.stringify({ teamMode: true, effortLevel: 'high' }), createdAt: '2026-10-10T15:00:00.000Z' },
-    { id: 'exp-1', createdBySessionId: 'root-team-0001', model: 'claude-code:sonnet', status: 'idle', metadata: JSON.stringify({ teamChild: { role: 'explorer', depth: 1 }, effortLevel: 'medium', toolScope: 'read' }), createdAt: '2026-10-10T15:01:00.000Z' },
-    { id: 'impl-1', createdBySessionId: 'root-team-0001', model: 'claude-code:sonnet', status: 'error', metadata: JSON.stringify({ teamChild: { role: 'implementer', depth: 1 }, effortLevel: 'high' }), createdAt: '2026-10-10T15:02:00.000Z' },
-    { id: 'rev-1', createdBySessionId: 'root-team-0001', model: 'claude-code:opus', status: 'idle', metadata: JSON.stringify({ teamChild: { role: 'reviewer', depth: 1 }, effortLevel: 'high', toolScope: 'review' }), createdAt: '2026-10-10T15:03:00.000Z' },
-    // Advisor on its own defaults (Opus/high/read): not a promotion; it gave one opinion.
-    { id: 'adv-1', createdBySessionId: 'root-team-0001', model: 'claude-code:opus', status: 'idle', metadata: JSON.stringify({ teamChild: { role: 'advisor', depth: 1 }, effortLevel: 'high', toolScope: 'read' }), createdAt: '2026-10-10T15:04:00.000Z' },
+    { id: 'root-team-0001', createdBySessionId: null, provider: 'claude-code', model: 'claude-code:opus', status: 'idle', metadata: JSON.stringify({ teamMode: true, effortLevel: 'high' }), createdAt: '2026-10-10T15:00:00.000Z' },
+    { id: 'exp-1', createdBySessionId: 'root-team-0001', provider: 'claude-code', model: 'claude-code:sonnet', status: 'idle', metadata: JSON.stringify({ teamChild: { role: 'explorer', depth: 1 }, effortLevel: 'medium', toolScope: 'read' }), createdAt: '2026-10-10T15:01:00.000Z' },
+    { id: 'impl-1', createdBySessionId: 'root-team-0001', provider: 'claude-code', model: 'claude-code:sonnet', status: 'error', metadata: JSON.stringify({ teamChild: { role: 'implementer', depth: 1 }, effortLevel: 'high' }), createdAt: '2026-10-10T15:02:00.000Z' },
+    { id: 'rev-1', createdBySessionId: 'root-team-0001', provider: 'claude-code', model: 'claude-code:opus', status: 'idle', metadata: JSON.stringify({ teamChild: { role: 'reviewer', depth: 1 }, effortLevel: 'high', toolScope: 'review' }), createdAt: '2026-10-10T15:03:00.000Z' },
+    // Advisor on its own defaults (Opus/high/read, same provider as the root): not a promotion; it gave one opinion. Its mission is coordinator text and never leaves the database.
+    { id: 'adv-1', createdBySessionId: 'root-team-0001', provider: 'claude-code', model: 'claude-code:opus', status: 'idle', metadata: JSON.stringify({ teamChild: { role: 'advisor', depth: 1, mission: `Question the plan about ${SECRET}.` }, effortLevel: 'high', toolScope: 'read' }), createdAt: '2026-10-10T15:04:00.000Z' },
     // Architect on its own defaults (Opus/high/read): not a promotion.
     { id: 'arch-1', createdBySessionId: 'root-team-0001', model: 'claude-code:opus', status: 'idle', metadata: JSON.stringify({ teamChild: { role: 'architect', depth: 1 }, effortLevel: 'high', toolScope: 'read' }), createdAt: '2026-10-10T15:00:30.000Z' },
     // Solo root.
@@ -149,6 +149,39 @@ test('never outputs prompts, transcript text, note contents, commands or file na
   assert.deepEqual(extractMessageFacts(toolUse('Bash')).tools, {});
 });
 
+test('reports each advisor with provider, model, effort, scope, mission presence and provider diversity against its root', () => {
+  const report = summarizeTeamPilot(fixture());
+  const [team] = report.teams;
+  assert.equal(team.provider, 'claude-code');
+  assert.deepEqual(team.advisorSessions, [
+    { id: 'adv-1', provider: 'claude-code', model: 'claude-code:opus', effort: 'high', scope: 'read', hasMission: true, providerDiversity: 'same' },
+  ]);
+  assert.equal(team.advisorsProviderDiverse, 0);
+  assert.equal(report.totals.advisorsProviderDiverse, 0);
+  const markdown = renderMarkdown(report);
+  assert.match(markdown, /\| Consultores Independentes em provider diferente da raiz \| 0 \|/);
+  assert.match(markdown, /## Consultores Independentes/);
+  assert.match(markdown, /\| root-tea \| adv-1 \| claude-code \| claude-code \| claude-code:opus \| high \| read \| sim \| não \(mesmo provider da raiz\) \|/);
+  // The mission text itself is never carried, only that one exists.
+  assert.equal(JSON.stringify(report).includes(SECRET), false);
+
+  // An advisor on another provider than its root is the provider-diverse case.
+  const diverse = fixture();
+  const advisor = diverse.sessions.find((session) => session.id === 'adv-1');
+  advisor.provider = 'openai-codex';
+  advisor.model = 'openai-codex:gpt-5.5';
+  const diverseReport = summarizeTeamPilot(diverse);
+  assert.deepEqual(diverseReport.teams[0].advisorSessions[0], { id: 'adv-1', provider: 'openai-codex', model: 'openai-codex:gpt-5.5', effort: 'high', scope: 'read', hasMission: true, providerDiversity: 'diverse' });
+  assert.equal(diverseReport.totals.advisorsProviderDiverse, 1);
+  assert.match(renderMarkdown(diverseReport), /\| root-tea \| adv-1 \| openai-codex \| claude-code \| openai-codex:gpt-5.5 \| high \| read \| sim \| sim \(provider diferente\) \|/);
+
+  // Rows without a provider (older databases) report the diversity as unavailable, never as same or diverse.
+  const unknown = fixture();
+  delete unknown.sessions.find((session) => session.id === 'root-team-0001').provider;
+  assert.equal(summarizeTeamPilot(unknown).teams[0].advisorSessions[0].providerDiversity, null);
+  assert.match(renderMarkdown(summarizeTeamPilot(unknown)), /\| sim \| indisponível \|/);
+});
+
 test('the same words inside a file a session read are not counted as events', () => {
   const readResult = toolResult('1\tif (usage.total >= budget) return `Team budget reached: this team has already created`;\n2\t// No such tool available: Bash');
   const facts = extractMessageFacts(readResult);
@@ -190,13 +223,13 @@ test('reads a real database read-only without creating anything in it', async ()
   try {
     const db = new DatabaseSync(dbPath);
     db.exec(`
-      CREATE TABLE ai_sessions (id TEXT PRIMARY KEY, created_by_session_id TEXT, model TEXT, status TEXT, metadata TEXT, created_at TEXT, updated_at TEXT);
+      CREATE TABLE ai_sessions (id TEXT PRIMARY KEY, created_by_session_id TEXT, provider TEXT, model TEXT, status TEXT, metadata TEXT, created_at TEXT, updated_at TEXT);
       CREATE TABLE ai_agent_messages (id INTEGER PRIMARY KEY, session_id TEXT, created_at TEXT, content TEXT);
       CREATE TABLE tracker_items (id TEXT PRIMARY KEY, type TEXT, data TEXT);
     `);
     const data = fixture();
-    const insertSession = db.prepare('INSERT INTO ai_sessions VALUES (?, ?, ?, ?, ?, ?, ?)');
-    for (const s of data.sessions) insertSession.run(s.id, s.createdBySessionId, s.model, s.status, typeof s.metadata === 'string' ? s.metadata : JSON.stringify(s.metadata), s.createdAt, s.createdAt);
+    const insertSession = db.prepare('INSERT INTO ai_sessions VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    for (const s of data.sessions) insertSession.run(s.id, s.createdBySessionId, s.provider ?? null, s.model, s.status, typeof s.metadata === 'string' ? s.metadata : JSON.stringify(s.metadata), s.createdAt, s.createdAt);
     const insertMessage = db.prepare('INSERT INTO ai_agent_messages (session_id, created_at, content) VALUES (?, ?, ?)');
     for (const m of data.messages) insertMessage.run(m.sessionId, m.createdAt, m.content);
     const insertNote = db.prepare('INSERT INTO tracker_items VALUES (?, ?, ?)');
@@ -213,6 +246,7 @@ test('reads a real database read-only without creating anything in it', async ()
     assert.equal(report.totals.tools.Agent, 1);
     assert.equal(report.totals.teamNotes, 3);
     assert.equal(report.totals.manifests, 1);
+    assert.equal(report.teams[0].advisorSessions[0].providerDiversity, 'same');
 
     const after = new DatabaseSync(dbPath, { readOnly: true });
     assert.deepEqual(after.prepare("SELECT name FROM sqlite_master ORDER BY name").all(), tablesBefore);

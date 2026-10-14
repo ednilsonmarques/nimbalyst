@@ -16,7 +16,12 @@ import {
   type TeamRole,
 } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 
-/** Team mode only runs on Claude Code in this phase. */
+/**
+ * The provider a team runs on by default: the coordinator's presets and every
+ * role default below name models of it, unless a role says otherwise
+ * (TEAM_ROLE_DEFAULTS). It is also the only provider whose turn applies the
+ * team policy today (services/team/teamProviders.ts).
+ */
 export const TEAM_PROVIDER = 'claude-code';
 
 /** Default model for every team member but the architect and the advisor; the coordinator promotes one explicitly when needed. */
@@ -30,15 +35,54 @@ export const TEAM_SONNET_MODEL = 'claude-code:sonnet';
 export const TEAM_ARCHITECT_MODEL = 'claude-code:opus';
 
 /**
- * Temporary default model of the `advisor` (Consultor Independente). A second
- * opinion is only worth having from a model at least as strong as the one it
- * questions (the architect runs on Opus), so it runs on Opus at high effort;
- * Fable stays an explicit promotion, as for every other role. This is a
- * default of this phase, not a property of the role: the advisor is
- * provider-agnostic, and running it on another provider later means changing
- * `teamRoleProvider` and this constant, nothing else (see teamRoleProvider).
+ * Provider of the `advisor` (Consultor Independente). The role was designed to
+ * run on a provider other than the rest of the team: a second opinion from a
+ * different model family shares fewer blind spots with the coordinator and
+ * the architect (it lowers the correlation of errors; it guarantees nothing).
+ * It is the team provider for now because no other provider of this codebase
+ * enforces a member's read scope and the role's tool denials
+ * (teamMemberProviderReadiness in teamProviders.ts), and a second opinion the
+ * host cannot keep read-only is not worth having. This constant and
+ * TEAM_ADVISOR_MODEL are the whole switch: once a provider passes readiness,
+ * point them at it and nothing else about the role (scope, denials, prompt,
+ * mission, UI, manifest) changes. Never read the provider anywhere else to
+ * decide anything about the advisor.
+ */
+export const TEAM_ADVISOR_PROVIDER = TEAM_PROVIDER;
+
+/**
+ * Default model of the `advisor`, an identifier of TEAM_ADVISOR_PROVIDER. A
+ * second opinion is only worth having from a model at least as strong as the
+ * one it questions (the architect runs on Opus), so it runs on Opus at high
+ * effort; Fable stays an explicit promotion, as for every other role.
  */
 export const TEAM_ADVISOR_MODEL = 'claude-code:opus';
+
+/** The defaults a role carries: where it runs and with what authority. */
+export interface TeamRoleDefaults {
+  /** Provider the role runs on; every member of the role is created on it unless the coordinator names another one that passes the provider check. */
+  readonly provider: string;
+  /** Default model, an identifier of `provider`. */
+  readonly model: string;
+  readonly effort: 'medium' | 'high';
+  /** Scope when the caller passes none; undefined means the caller decides (full by default). */
+  readonly toolScope: 'read' | 'review' | 'full' | undefined;
+}
+
+/**
+ * Role defaults in one table: provider, model, effort and scope per role. A
+ * role is not a provider (the advisor is the same Consultor Independente on
+ * any provider); the provider is a default of the role, configured here and
+ * nowhere else. Every function below reads this table.
+ */
+export const TEAM_ROLE_DEFAULTS: Readonly<Record<TeamRole, TeamRoleDefaults>> = Object.freeze({
+  explorer: Object.freeze({ provider: TEAM_PROVIDER, model: TEAM_SONNET_MODEL, effort: 'medium', toolScope: 'read' }),
+  implementer: Object.freeze({ provider: TEAM_PROVIDER, model: TEAM_SONNET_MODEL, effort: 'medium', toolScope: 'full' }),
+  reviewer: Object.freeze({ provider: TEAM_PROVIDER, model: TEAM_SONNET_MODEL, effort: 'high', toolScope: 'review' }),
+  architect: Object.freeze({ provider: TEAM_PROVIDER, model: TEAM_ARCHITECT_MODEL, effort: 'high', toolScope: 'read' }),
+  advisor: Object.freeze({ provider: TEAM_ADVISOR_PROVIDER, model: TEAM_ADVISOR_MODEL, effort: 'high', toolScope: 'read' }),
+  other: Object.freeze({ provider: TEAM_PROVIDER, model: TEAM_SONNET_MODEL, effort: 'medium', toolScope: undefined }),
+} as const satisfies Record<TeamRole, TeamRoleDefaults>);
 
 export { TEAM_ROOT_PRESETS, isRecommendedTeamRootModel } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 
@@ -77,30 +121,25 @@ export function resolveRequestedTeamRole(raw: unknown): TeamRole {
 }
 
 /**
- * The provider a team role runs on. Every role runs on Claude Code in this
- * phase, and this is the one place that says so: the creation path refuses a
- * member whose resolved provider differs from its role's, and the role model
- * defaults below are identifiers of that provider. The `advisor` was designed
- * to run on a provider other than the rest of the team one day (an
- * independent second opinion is worth more from a different model family);
- * when that day comes, this function and `teamRoleDefaultModel` change for
- * that role, and no `role === 'advisor'` provider condition appears anywhere
- * else. Nothing about a role's scope, denials or prompt depends on its provider.
+ * The provider a team role runs on by default (TEAM_ROLE_DEFAULTS). A member
+ * is created on it unless the coordinator names another provider explicitly,
+ * and either way the creation path accepts only a provider that passes
+ * `teamMemberProviderRefusal`: host-verified enforcement of the member's
+ * scope and role policy, and availability. Nothing about a role's scope,
+ * denials or prompt depends on its provider.
  */
-export function teamRoleProvider(_role: TeamRole): string {
-  return TEAM_PROVIDER;
+export function teamRoleProvider(role: TeamRole): string {
+  return TEAM_ROLE_DEFAULTS[role].provider;
 }
 
-/** Every role defaults to Sonnet, except the architect and the advisor (Opus). */
+/** Every role defaults to Sonnet, except the architect and the advisor (Opus); always a model of the role's provider. */
 export function teamRoleDefaultModel(role: TeamRole): string {
-  if (role === 'architect') return TEAM_ARCHITECT_MODEL;
-  if (role === 'advisor') return TEAM_ADVISOR_MODEL;
-  return TEAM_SONNET_MODEL;
+  return TEAM_ROLE_DEFAULTS[role].model;
 }
 
 /** Reviewers, architects and advisors think harder (high); every other role runs at medium. */
 export function teamRoleDefaultEffort(role: TeamRole): 'medium' | 'high' {
-  return role === 'reviewer' || role === 'architect' || role === 'advisor' ? 'high' : 'medium';
+  return TEAM_ROLE_DEFAULTS[role].effort;
 }
 
 /**
@@ -110,10 +149,129 @@ export function teamRoleDefaultEffort(role: TeamRole): 'medium' | 'high' {
  * role default (the caller decides, as outside a team).
  */
 export function teamRoleDefaultToolScope(role: TeamRole): 'read' | 'review' | 'full' | undefined {
-  if (role === 'explorer' || role === 'architect' || role === 'advisor') return 'read';
-  if (role === 'reviewer') return 'review';
-  if (role === 'implementer') return 'full';
-  return undefined;
+  return TEAM_ROLE_DEFAULTS[role].toolScope;
+}
+
+/** How a role is named in a provider refusal: the advisor by its UI name, so the message reads "Independent Advisor provider unavailable". */
+function teamRoleProviderLabel(role: TeamRole): string {
+  return role === 'advisor' ? 'Independent Advisor' : `Team member (${role})`;
+}
+
+/** Whether a provider's turn is known to enforce a member's scope and role policy; the reason when it is not. */
+export type TeamProviderReadiness = { readonly ready: true } | { readonly ready: false; readonly reason: string };
+
+/**
+ * Where a member's provider came from: the role default (nothing named), a
+ * provider or model the caller named, or a model copied from the caller
+ * (spawn_session inheritModel, an Actions launch). Only the wording of a
+ * refusal depends on it; the rules do not.
+ */
+export type TeamMemberProviderOrigin = 'default' | 'explicit' | 'inherited';
+
+export interface TeamMemberProviderRequest {
+  /** The provider the member would be created on. */
+  provider: string;
+  origin: TeamMemberProviderOrigin;
+}
+
+/**
+ * The provider a member creation asks for, from the creation arguments, before
+ * anything is normalized or created: the one place both creation paths
+ * (create_session and spawn_session) agree on, so a refusal can run first on
+ * either. A named provider wins; else the prefix of a named or inherited
+ * model (a bare, prefix-less model means the caller's provider); else the
+ * role default.
+ */
+export function resolveTeamMemberProvider(input: {
+  role: TeamRole;
+  provider?: unknown;
+  model?: unknown;
+  /** The model was copied from the caller rather than chosen (inheritModel). */
+  modelInherited?: boolean;
+  callerProvider: string | null;
+}): TeamMemberProviderRequest {
+  if (typeof input.provider === 'string' && input.provider) {
+    return { provider: input.provider, origin: 'explicit' };
+  }
+  if (typeof input.model === 'string' && input.model) {
+    const separator = input.model.indexOf(':');
+    const prefix = separator > 0 ? input.model.slice(0, separator) : null;
+    const provider = prefix ?? input.callerProvider ?? teamRoleProvider(input.role);
+    return { provider, origin: input.modelInherited ? 'inherited' : 'explicit' };
+  }
+  return { provider: teamRoleProvider(input.role), origin: 'default' };
+}
+
+export interface TeamMemberProviderCheck extends TeamMemberProviderRequest {
+  role: TeamRole;
+  /** Provider of the calling session; it is available by construction (the caller is running on it). */
+  callerProvider: string | null;
+  /** Host-verified enforcement for `provider` (teamProviders.ts). */
+  readiness: TeamProviderReadiness;
+  /**
+   * Whether `provider` is enabled for this workspace, when it had to be looked
+   * up: null when the host could not verify it (then the member is refused:
+   * unverified is unavailable, never assumed).
+   */
+  enabled: boolean | null;
+}
+
+/**
+ * Why a member may not be created on a provider, or null when it may. Pure;
+ * MetaAgentService throws it before any side effect, so no session row, no
+ * workstream, no worktree and no prompt exist for a refused member.
+ *
+ * Fail-closed, never a fallback: a provider that does not enforce the
+ * member's scope and role policy is refused whatever was asked for, and a
+ * provider that is not available is refused rather than replaced by the
+ * caller's. Running the member on another provider is the coordinator's (or
+ * the user's) explicit choice, taken by calling again; the host never makes
+ * it. The message says what was refused, why, that nothing was created and
+ * that no fallback happened, so the coordinator reports it as such.
+ */
+export function teamMemberProviderRefusal(check: TeamMemberProviderCheck): string | null {
+  const label = teamRoleProviderLabel(check.role);
+  const defaultProvider = teamRoleProvider(check.role);
+  const origin = check.origin === 'explicit'
+    ? 'requested explicitly'
+    : check.origin === 'inherited'
+      ? 'inherited from the caller\'s model (inheritModel)'
+      : 'the role default';
+  const onDefault = `create it on the role default (${defaultProvider}), and say in your report that the member ran on that provider`;
+  const retryOnDefault = check.origin === 'explicit'
+    ? `omit provider and model to ${onDefault}`
+    : check.origin === 'inherited'
+      ? `omit inheritModel (and model) to ${onDefault}`
+      : 'this is a configuration error of the role defaults (teamPolicy.ts); report it to the user';
+  const noFallback = (retry: string) => `No session was created and no fallback to another provider was applied: ${retry}.`;
+  if (!check.readiness.ready) {
+    return `${label} provider unavailable: ${check.provider} (${origin}) ${check.readiness.reason}, so the ${check.role} cannot run on it. ${noFallback(retryOnDefault)}`;
+  }
+  if (check.callerProvider !== null && check.provider === check.callerProvider) return null;
+  if (check.enabled === true) return null;
+  if (check.enabled === false) {
+    return `${label} provider unavailable: ${check.provider} (${origin}) is not enabled in this app's AI provider settings for this workspace. ${noFallback(`the user may enable ${check.provider} in the AI provider settings, or you may name explicitly (provider and model) an enabled provider that enforces the member's scope; a member on another provider than asked is the caller's choice, never the host's`)}`;
+  }
+  return `${label} provider unavailable: ${check.provider} (${origin}) could not be verified as available (its settings were not readable). ${noFallback('try again, or report it to the user')}`;
+}
+
+/**
+ * Whether a member's provider differs from the team root's: `diverse` when
+ * the two differ, `same` when they are equal, null when either is unknown.
+ * This is the whole notion of provider diversity: nothing is stored (every
+ * session row has its provider), it is read when reported. A diverse advisor
+ * is a second opinion from another model family; a same-provider one is
+ * still an independent opinion (own session, context and instructions), only
+ * not independent by provider, and must never be reported as such.
+ */
+export type TeamProviderDiversity = 'diverse' | 'same';
+
+export function teamProviderDiversity(
+  memberProvider: string | null | undefined,
+  rootProvider: string | null | undefined,
+): TeamProviderDiversity | null {
+  if (!memberProvider || !rootProvider) return null;
+  return memberProvider === rootProvider ? 'same' : 'diverse';
 }
 
 /** Scopes that restrict a child and are stored in `metadata.toolScope`. */

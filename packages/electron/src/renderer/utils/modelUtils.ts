@@ -183,6 +183,9 @@ export function getProviderDisplayName(provider: string): string {
     case 'claude-code': return 'Claude Agent';
     case 'claude-code-cli': return 'Claude Code CLI';
     case 'openai': return 'OpenAI';
+    case 'openai-codex': return 'OpenAI Codex';
+    case 'openai-codex-acp': return 'OpenAI Codex (ACP)';
+    case 'opencode': return 'OpenCode';
     case 'lmstudio': return 'LMStudio';
     case 'copilot-cli': return 'GitHub Copilot';
     case 'grok-build': return 'Grok Build';
