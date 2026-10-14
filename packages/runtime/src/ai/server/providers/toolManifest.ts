@@ -41,10 +41,22 @@ const PREPARATION = /^Preparation:\s*(complete|partial)\b/m;
 export const TOOL_MANIFEST_ROLE_SCOPES: Readonly<Record<TeamRole, ChildToolScope>> = Object.freeze({
   explorer: 'read',
   architect: 'read',
+  advisor: 'read',
   reviewer: 'review',
   implementer: 'full',
   other: 'full',
 });
+
+/**
+ * `independentReview.level`: how much the architect thinks a second,
+ * independent opinion (the `advisor` member) would add before the team
+ * concludes. A recommendation to the coordinator and nothing else: no level
+ * creates a session, `required` blocks nothing, the coordinator decides and
+ * records a divergence as a Team Note. Optional: a manifest without the field
+ * is as valid as one with it.
+ */
+export const INDEPENDENT_REVIEW_LEVELS = ['none', 'optional', 'recommended', 'required'] as const;
+export type IndependentReviewLevel = (typeof INDEPENDENT_REVIEW_LEVELS)[number];
 
 const LIST_FIELDS = ['eccCapabilities', 'toolsForbidden', 'mcpRecommended', 'mcpForbidden', 'testsRequired', 'risks', 'doneCriteria', 'limitations', 'evidence'] as const;
 const TEAM_PLANS = ['TEAM', 'SOLO'] as const;
@@ -221,6 +233,9 @@ export function parseToolManifest(text: string): ToolManifestValidation {
       if (member.role === 'architect' && member.scope !== undefined && member.scope !== 'read') {
         errors.push('teamPlan.members: an architect never runs above the read scope');
       }
+      if (member.role === 'advisor' && member.scope !== undefined && member.scope !== 'read') {
+        errors.push('teamPlan.members: an advisor never runs above the read scope');
+      }
       // A suggested mission is text for the coordinator, who decides the member's
       // real mission at creation; the host never copies it anywhere. It grants
       // nothing, so a malformed one never invalidates the manifest (that would
@@ -291,6 +306,19 @@ export function parseToolManifest(text: string): ToolManifestValidation {
     errors.push('confidence must be high, medium or low');
   }
 
+  // A recommendation only (see INDEPENDENT_REVIEW_LEVELS): validated for its
+  // shape so the coordinator reads a known level, never acted on by the host.
+  const independentReview = manifest.independentReview;
+  if (independentReview !== undefined && independentReview !== null) {
+    if (!isRecord(independentReview)) {
+      errors.push(`independentReview must be a mapping with level (${INDEPENDENT_REVIEW_LEVELS.join(', ')}) and reason`);
+    } else if (!(INDEPENDENT_REVIEW_LEVELS as readonly unknown[]).includes(independentReview.level)) {
+      errors.push(`independentReview.level must be one of ${INDEPENDENT_REVIEW_LEVELS.join(', ')}`);
+    } else if (independentReview.level !== 'none' && !nonEmptyString(independentReview.reason)) {
+      warnings.push('independentReview.reason is empty: say what a second opinion should question');
+    }
+  }
+
   const toolsAllowed = manifest.toolsAllowed;
   if (toolsAllowed !== undefined && toolsAllowed !== null) {
     if (!isRecord(toolsAllowed)) {
@@ -355,6 +383,17 @@ export function parseToolManifest(text: string): ToolManifestValidation {
   if (preparation === null) warnings.push('the message does not end with `Preparation: complete` or `Preparation: partial (<reason>)`');
 
   return { ok: errors.length === 0, manifest, errors, warnings, exceedsScope, chars, preparation };
+}
+
+/**
+ * The independent-review recommendation of a parsed manifest, or null when the
+ * manifest carries none or an unreadable one. Pure; used by tooling and tests.
+ * Reading it is all anyone does with it: the host never creates an advisor.
+ */
+export function readIndependentReview(manifest: Record<string, unknown> | null | undefined): { level: IndependentReviewLevel; reason: string | null } | null {
+  const raw = manifest?.independentReview;
+  if (!isRecord(raw) || !(INDEPENDENT_REVIEW_LEVELS as readonly unknown[]).includes(raw.level)) return null;
+  return { level: raw.level as IndependentReviewLevel, reason: nonEmptyString(raw.reason) ? raw.reason.trim() : null };
 }
 
 // ---------------------------------------------------------------------------

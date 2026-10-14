@@ -21,10 +21,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const MEMBER_ROLES = ['explorer', 'implementer', 'reviewer', 'architect', 'other'];
-// Role defaults (teamPolicy.ts): Sonnet/medium, reviewer high, architect Opus/high.
-const defaultModelFor = (role) => (role === 'architect' ? 'claude-code:opus' : 'claude-code:sonnet');
-const defaultEffortFor = (role) => (role === 'reviewer' || role === 'architect' ? 'high' : 'medium');
+const MEMBER_ROLES = ['explorer', 'implementer', 'reviewer', 'architect', 'advisor', 'other'];
+// Role defaults (teamPolicy.ts): Sonnet/medium, reviewer high, architect and advisor Opus/high.
+const defaultModelFor = (role) => (role === 'architect' || role === 'advisor' ? 'claude-code:opus' : 'claude-code:sonnet');
+const defaultEffortFor = (role) => (role === 'reviewer' || role === 'architect' || role === 'advisor' ? 'high' : 'medium');
 
 // Tools worth counting by name. Everything else is ignored, not listed.
 const COUNTED_TOOLS = ['Agent', 'Task', 'create_session', 'spawn_session', 'get_session_result', 'run_project_tests', 'send_prompt'];
@@ -42,6 +42,7 @@ const LIMIT_REFUSAL = new RegExp(
 );
 const DECLARED_PLAN = /Team plan:[\s*]*(SOLO|TEAM)/;
 const REVIEW_VERDICT = /Verdict: (?:no blockers|blockers found)/g;
+// (ADVISOR_OPINION is defined below TEXT_BLOCK: it is anchored to a text block.)
 // The architect's deliverable (toolManifest.ts) and what the coordinator said
 // about it. Both are read inside a text content block (`"type":"text","text":
 // "..."`) of an assistant message only: a draft in a thinking block, a brief
@@ -51,6 +52,10 @@ const REVIEW_VERDICT = /Verdict: (?:no blockers|blockers found)/g;
 const TEXT_BLOCK = '"type":"text","text":"(?:[^"\\\\]|\\\\.)*?';
 const TOOL_MANIFEST = new RegExp(`${TEXT_BLOCK}toolManifest:\\s*1\\b`);
 const MANIFEST_DECISION = new RegExp(`${TEXT_BLOCK}Team plan:(?:[^"\\\\]|\\\\.)*?\\b(per manifest|diverging from) M-\\d+\\b`);
+// The advisor's opinion line (prompt.ts, buildAdvisorAddendum), counted like a
+// review verdict but only inside an assistant text block: a draft in a thinking
+// block or a quoted line inside a tool input never counts.
+const ADVISOR_OPINION = new RegExp(`${TEXT_BLOCK}Independent opinion: (?:no material objections|approved with reservations|correct before proceeding|reconsider the approach)`, 'g');
 
 function shortToolName(name) {
   const parts = name.split('__');
@@ -76,6 +81,7 @@ export function extractMessageFacts(content) {
     scopeDenied: (text.match(SCOPE_DENIED) ?? []).length,
     limitRefusals: (text.match(LIMIT_REFUSAL) ?? []).length,
     verdicts: isAssistant ? (text.match(REVIEW_VERDICT) ?? []).length : 0,
+    opinions: isAssistant ? (text.match(ADVISOR_OPINION) ?? []).length : 0,
     declaredPlan: plan,
     manifests: isAssistant && TOOL_MANIFEST.test(text) ? 1 : 0,
     manifestDecision: decision === 'per manifest' ? 'accepted' : decision === 'diverging from' ? 'diverged' : null,
@@ -146,13 +152,14 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifest
       const facts = extractMessageFacts(message.content);
       let entry = factsBySession.get(message.sessionId);
       if (!entry) {
-        entry = { tools: {}, scopeDenied: 0, limitRefusals: 0, verdicts: 0, declaredPlans: [], manifests: 0, manifestDecisions: [], first: null, last: null };
+        entry = { tools: {}, scopeDenied: 0, limitRefusals: 0, verdicts: 0, opinions: 0, declaredPlans: [], manifests: 0, manifestDecisions: [], first: null, last: null };
         factsBySession.set(message.sessionId, entry);
       }
       addInto(entry.tools, facts.tools);
       entry.scopeDenied += facts.scopeDenied;
       entry.limitRefusals += facts.limitRefusals;
       entry.verdicts += facts.verdicts;
+      entry.opinions += facts.opinions;
       entry.manifests += facts.manifests;
       if (facts.declaredPlan) entry.declaredPlans.push(facts.declaredPlan);
       if (facts.manifestDecision) entry.manifestDecisions.push(facts.manifestDecision);
@@ -219,6 +226,7 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifest
     let declaredPlans = null;
     let durationMinutes = null;
     let manifests = null;
+    let advisorOpinions = null;
     let manifestDecisions = null;
     if (factsBySession) {
       tools = Object.fromEntries(COUNTED_TOOLS.map((name) => [name, 0]));
@@ -226,6 +234,7 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifest
       limitRefusals = 0;
       reviewCycles = 0;
       manifests = 0;
+      advisorOpinions = 0;
       let first = null;
       let last = null;
       for (const session of all) {
@@ -236,6 +245,8 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifest
         // Only members can be scope-restricted; the root has full tools.
         if (session !== root) scopeDenied += facts.scopeDenied;
         if (session.metadata.teamChild?.role === 'reviewer') reviewCycles += facts.verdicts;
+        // Only the advisor's own opinion lines count (a coordinator quoting one does not).
+        if (session.metadata.teamChild?.role === 'advisor') advisorOpinions += facts.opinions;
         // Only the architect's own reports count as manifests (a coordinator quoting one does not).
         if (session.metadata.teamChild?.role === 'architect') manifests += facts.manifests;
         if (facts.first !== null) first = first === null ? facts.first : Math.min(first, facts.first);
@@ -258,6 +269,8 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifest
       reviewCycles,
       architects: roles.architect,
       manifests,
+      advisors: roles.advisor,
+      advisorOpinions,
       manifestDecisions,
       declaredPlans,
       tools,
@@ -289,6 +302,8 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifest
       reviewers: roleTotals.reviewer,
       reviewCycles: sum((team) => team.reviewCycles),
       architects: roleTotals.architect,
+      advisors: roleTotals.advisor,
+      advisorOpinions: sum((team) => team.advisorOpinions),
       manifests: sum((team) => team.manifests),
       manifestDivergences: sum((team) => (team.manifestDecisions === null ? null : team.manifestDecisions.filter((d) => d === 'diverged').length)),
       tools: toolTotals,
@@ -306,6 +321,7 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifest
       'Tool counts come from stored tool calls; only the names listed are counted.',
       'scopeDeniedAttempts counts "No such tool available" replies in member sessions; an approximation.',
       'reviewCycles counts reviewer reports that open with a verdict.',
+      'advisorOpinions counts advisor (Consultor Independente) reports that open with an independent opinion.',
       'manifests counts architect reports that carry a Tool Manifest block; manifestDivergences counts coordinator turns that diverge from a manifest.',
       'durationMinutes is the span between the first and last stored message of the team, idle time included.',
       'errors counts sessions currently in the error state; past, recovered errors are not counted.',
@@ -328,6 +344,7 @@ export function renderMarkdown(report) {
   for (const role of MEMBER_ROLES) row(`Membros ${role}`, totals.membersByRole[role]);
   row('Ciclos de revisão', totals.reviewCycles);
   row('Manifestos do Architect', totals.manifests);
+  row('Pareceres do Consultor Independente', totals.advisorOpinions);
   row('Divergências do Coordenador sobre manifestos', totals.manifestDivergences);
   for (const name of COUNTED_TOOLS) row(`Chamadas ${name}`, totals.tools ? totals.tools[name] : null);
   row('Tentativas bloqueadas por escopo (aprox.)', totals.scopeDeniedAttempts);
@@ -339,15 +356,15 @@ export function renderMarkdown(report) {
   row('Tool Manifests gravados para estas raízes', totals.storedManifestsByTeams);
   row('Sessões em erro', totals.errors);
   lines.push('', '## Por raiz', '');
-  lines.push('| Raiz | Criada | Modelo/esforço | Tipo | Membros (E/I/R/A/O) | Revisões | Manifestos | Agent | create | spawn | get_result | run_tests | Bloqueios | Recusas | Promoções | Notas | Erros | Duração (min) |');
-  lines.push('|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|');
+  lines.push('| Raiz | Criada | Modelo/esforço | Tipo | Membros (E/I/R/A/C/O) | Revisões | Manifestos | Pareceres | Agent | create | spawn | get_result | run_tests | Bloqueios | Recusas | Promoções | Notas | Erros | Duração (min) |');
+  lines.push('|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|');
   for (const team of teams) {
     const tool = (name) => show(team.tools ? team.tools[name] : null);
     const agentCalls = team.tools ? team.tools.Agent + team.tools.Task : null;
     lines.push(
       `| ${team.id} | ${show(team.createdAt)} | ${show(team.model)}/${show(team.effort)} | ${team.kind.toUpperCase()} | ` +
-      `${team.members} (${team.roles.explorer}/${team.roles.implementer}/${team.roles.reviewer}/${team.roles.architect}/${team.roles.other}) | ` +
-      `${show(team.reviewCycles)} | ${show(team.manifests)} | ${show(agentCalls)} | ${tool('create_session')} | ${tool('spawn_session')} | ` +
+      `${team.members} (${team.roles.explorer}/${team.roles.implementer}/${team.roles.reviewer}/${team.roles.architect}/${team.roles.advisor}/${team.roles.other}) | ` +
+      `${show(team.reviewCycles)} | ${show(team.manifests)} | ${show(team.advisorOpinions)} | ${show(agentCalls)} | ${tool('create_session')} | ${tool('spawn_session')} | ` +
       `${tool('get_session_result')} | ${tool('run_project_tests')} | ${show(team.scopeDenied)} | ${show(team.limitRefusals)} | ` +
       `${team.promotions.length} | ${show(team.teamNotes)} | ${team.errors} | ${show(team.durationMinutes)} |`,
     );

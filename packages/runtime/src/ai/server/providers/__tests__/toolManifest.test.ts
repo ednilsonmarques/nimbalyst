@@ -241,8 +241,8 @@ describe('Tool Manifest v1: validation', () => {
     }
   });
 
-  it('role scopes mirror the team policy: explorer and architect read, reviewer review, implementer and other unrestricted', () => {
-    expect(TOOL_MANIFEST_ROLE_SCOPES).toEqual({ explorer: 'read', architect: 'read', reviewer: 'review', implementer: 'full', other: 'full' });
+  it('role scopes mirror the team policy: explorer, architect and advisor read, reviewer review, implementer and other unrestricted', () => {
+    expect(TOOL_MANIFEST_ROLE_SCOPES).toEqual({ explorer: 'read', architect: 'read', advisor: 'read', reviewer: 'review', implementer: 'full', other: 'full' });
   });
 
   it('refuses a reviewer or an architect planned above their scope and warns about missing preparation and provenance', () => {

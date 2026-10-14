@@ -18,6 +18,8 @@ function fixture() {
     { id: 'exp-1', createdBySessionId: 'root-team-0001', model: 'claude-code:sonnet', status: 'idle', metadata: JSON.stringify({ teamChild: { role: 'explorer', depth: 1 }, effortLevel: 'medium', toolScope: 'read' }), createdAt: '2026-10-10T15:01:00.000Z' },
     { id: 'impl-1', createdBySessionId: 'root-team-0001', model: 'claude-code:sonnet', status: 'error', metadata: JSON.stringify({ teamChild: { role: 'implementer', depth: 1 }, effortLevel: 'high' }), createdAt: '2026-10-10T15:02:00.000Z' },
     { id: 'rev-1', createdBySessionId: 'root-team-0001', model: 'claude-code:opus', status: 'idle', metadata: JSON.stringify({ teamChild: { role: 'reviewer', depth: 1 }, effortLevel: 'high', toolScope: 'review' }), createdAt: '2026-10-10T15:03:00.000Z' },
+    // Advisor on its own defaults (Opus/high/read): not a promotion; it gave one opinion.
+    { id: 'adv-1', createdBySessionId: 'root-team-0001', model: 'claude-code:opus', status: 'idle', metadata: JSON.stringify({ teamChild: { role: 'advisor', depth: 1 }, effortLevel: 'high', toolScope: 'read' }), createdAt: '2026-10-10T15:04:00.000Z' },
     // Architect on its own defaults (Opus/high/read): not a promotion.
     { id: 'arch-1', createdBySessionId: 'root-team-0001', model: 'claude-code:opus', status: 'idle', metadata: JSON.stringify({ teamChild: { role: 'architect', depth: 1 }, effortLevel: 'high', toolScope: 'read' }), createdAt: '2026-10-10T15:00:30.000Z' },
     // Solo root.
@@ -45,6 +47,9 @@ function fixture() {
     { sessionId: 'root-team-0001', createdAt: '2026-10-10T15:06:00.000Z', content: assistantText(`Team plan: TEAM — diverging from M-1 on reviewer model: ${SECRET}`) },
     // A coordinator quoting a manifest is not a manifest.
     { sessionId: 'root-team-0001', createdAt: '2026-10-10T15:06:30.000Z', content: assistantText('The architect wrote toolManifest: 1 in its report.') },
+    // The advisor's opinion counts once; the coordinator quoting it does not.
+    { sessionId: 'adv-1', createdAt: '2026-10-10T15:21:00.000Z', content: assistantText(`Independent opinion: approved with reservations. ${SECRET}`) },
+    { sessionId: 'root-team-0001', createdAt: '2026-10-10T15:22:00.000Z', content: assistantText('The advisor said Independent opinion: approved with reservations.') },
     { sessionId: 'root-solo-0002', createdAt: '2026-10-11T09:00:05.000Z', content: assistantText('Team plan: SOLO — trivial') },
     { sessionId: 'plain-1', createdAt: '2026-10-10T10:00:05.000Z', content: toolUse('Agent') },
   ];
@@ -61,9 +66,12 @@ test('counts Team mode roots only, solo versus team, and members per role', () =
   assert.equal(report.totals.teamRoots, 2);
   assert.equal(report.totals.solo, 1);
   assert.equal(report.totals.team, 1);
-  assert.equal(report.totals.members, 4);
-  assert.deepEqual(report.totals.membersByRole, { explorer: 1, implementer: 1, reviewer: 1, architect: 1, other: 0 });
+  assert.equal(report.totals.members, 5);
+  assert.deepEqual(report.totals.membersByRole, { explorer: 1, implementer: 1, reviewer: 1, architect: 1, advisor: 1, other: 0 });
   assert.equal(report.totals.architects, 1);
+  assert.equal(report.totals.advisors, 1);
+  // Only the advisor's own opinion line counts; the coordinator quoting one does not.
+  assert.equal(report.totals.advisorOpinions, 1);
   assert.equal(report.totals.manifests, 1);
   assert.equal(report.totals.manifestDivergences, 1);
   // The normal session that used Agent is not part of the pilot numbers.
@@ -80,6 +88,8 @@ test('derives tool use, review cycles, blocks, refusals, promotions, notes, erro
   assert.equal(team.limitRefusals, 1);
   assert.deepEqual(team.declaredPlans, ['TEAM', 'TEAM']);
   assert.equal(team.architects, 1);
+  assert.equal(team.advisors, 1);
+  assert.equal(team.advisorOpinions, 1);
   assert.equal(team.manifests, 1);
   assert.deepEqual(team.manifestDecisions, ['diverged']);
   assert.deepEqual(team.promotions, [
@@ -108,7 +118,7 @@ test('a metric that cannot be derived is unavailable, never zero', () => {
   assert.equal(report.totals.teamNotes, null);
   assert.equal(report.teams[0].durationMinutes, null);
   // What the session rows alone support is still reported.
-  assert.equal(report.totals.members, 4);
+  assert.equal(report.totals.members, 5);
   assert.equal(report.totals.promotions, 2);
   assert.equal(report.totals.manifests, null);
   assert.equal(report.totals.manifestDivergences, null);
@@ -128,12 +138,13 @@ test('never outputs prompts, transcript text, note contents, commands or file na
     // Full session ids are shortened.
     assert.equal(output.includes('root-team-0001'), false);
   }
-  assert.deepEqual(Object.keys(extractMessageFacts(toolUse('Bash'))).sort(), ['declaredPlan', 'limitRefusals', 'manifestDecision', 'manifests', 'scopeDenied', 'tools', 'verdicts']);
+  assert.deepEqual(Object.keys(extractMessageFacts(toolUse('Bash'))).sort(), ['declaredPlan', 'limitRefusals', 'manifestDecision', 'manifests', 'opinions', 'scopeDenied', 'tools', 'verdicts']);
   const markdown = renderMarkdown(report);
   assert.match(markdown, /\| Manifestos do Architect \| 1 \|/);
   assert.match(markdown, /\| Divergências do Coordenador sobre manifestos \| 1 \|/);
-  assert.match(markdown, /Membros \(E\/I\/R\/A\/O\)/);
-  assert.match(markdown, /4 \(1\/1\/1\/1\/0\)/);
+  assert.match(markdown, /Membros \(E\/I\/R\/A\/C\/O\)/);
+  assert.match(markdown, /\| Pareceres do Consultor Independente \| 1 \|/);
+  assert.match(markdown, /5 \(1\/1\/1\/1\/1\/0\)/);
   // A tool that is not on the counted list is not even named.
   assert.deepEqual(extractMessageFacts(toolUse('Bash')).tools, {});
 });

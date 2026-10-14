@@ -17,7 +17,7 @@ import { parseBashForFileOps } from './BashCommandAnalyzer';
 import { generateToolPattern, buildToolDescription } from './toolPermissionHelpers';
 import { getPatternDisplayName } from '../types';
 import type { TrustChecker } from '../providers/ProviderPermissionMixin';
-import { isToolDeniedForScope, teamRoleDeniedTools, type ChildToolScope } from '../providers/claudeCode/toolPolicy';
+import { isToolDeniedForScope, teamRoleDeniedTools, teamRoleDenialReason, type ChildToolScope } from '../providers/claudeCode/toolPolicy';
 import type { TeamRole } from '../providers/teamContext';
 
 /**
@@ -258,11 +258,9 @@ export class AgentToolHooks {
       });
       return deny("This session's tool restrictions could not be verified, so the call was denied. Try again later.");
     }
-    if (teamRoleDeniedTools(role).includes(toolName)) {
+    if (role && teamRoleDeniedTools(role).includes(toolName)) {
       this.logSecurity('[PreToolUse] Denied by team role', { toolName, role, sessionId: this.sessionId });
-      return deny(
-        `This session is the team's ${role}, which prepares work and never asks the user, delegates or creates tasks; ${toolName} is not available. Write the question or the task in your Tool Manifest instead.`,
-      );
+      return deny(teamRoleDenialReason(role, toolName));
     }
     if (scope === 'full' || !isToolDeniedForScope(scope, toolName, [], role)) return null;
     this.logSecurity('[PreToolUse] Denied by tool scope', { toolName, scope, sessionId: this.sessionId });

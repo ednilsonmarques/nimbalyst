@@ -88,6 +88,7 @@ export const TEAM_TARGETED_TOOLS: readonly string[] = [
 export const TEAM_ROLE_DEFAULT_SCOPES: Readonly<Record<TeamRole, ChildToolScope>> = Object.freeze({
   explorer: 'read',
   architect: 'read',
+  advisor: 'read',
   reviewer: 'review',
   implementer: 'full',
   other: 'full',

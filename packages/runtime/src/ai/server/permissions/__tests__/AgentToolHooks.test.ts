@@ -500,6 +500,38 @@ describe('AgentToolHooks', () => {
   });
 });
 
+describe('advisor guard (PreToolUse, Consultor Independente)', () => {
+  const run = (hooks: AgentToolHooks, toolName: string, toolInput: any = {}) =>
+    hooks.createPreToolUseHook()({ tool_name: toolName, tool_input: toolInput }, 'tool-use-advisor', { signal: new AbortController().signal });
+  const decisionOf = (result: any) => result?.hookSpecificOutput?.permissionDecision;
+  const advisor = () => createMockOptions({ getToolScope: async () => 'read', getTeamRole: async () => 'advisor' });
+
+  it("denies the question, plan-mode and task-creation tools with a reason in the advisor's own terms, never the architect's", async () => {
+    const options = advisor();
+    const hooks = new AgentToolHooks(options);
+    for (const tool of ['AskUserQuestion', 'EnterPlanMode', 'ExitPlanMode', 'TaskCreate', 'TaskUpdate', 'mcp__nimbalyst__AskUserQuestion', 'mcp__nimbalyst__PromptForUserInput']) {
+      const result = await run(hooks, tool, { questions: [] });
+      expect(decisionOf(result), tool).toBe('deny');
+      expect(result.hookSpecificOutput.permissionDecisionReason, tool).toMatch(/team's advisor.*independent opinion/);
+      expect(result.hookSpecificOutput.permissionDecisionReason, tool).not.toContain('Tool Manifest');
+    }
+    expect(options.logSecurity).toHaveBeenCalledWith('[PreToolUse] Denied by team role', expect.objectContaining({ role: 'advisor' }));
+  });
+
+  it('keeps every mutable and delegating path closed for the advisor, even if its scope were misconfigured as full, and lets reads through', async () => {
+    const hooks = new AgentToolHooks(advisor());
+    for (const tool of ['Agent', 'Task', 'Workflow', 'SendMessage', 'mcp__nimbalyst-host__create_session', 'mcp__nimbalyst-host__send_prompt', 'mcp__nimbalyst-host__respond_to_prompt', 'mcp__nimbalyst-trackers__tracker_update', 'mcp__nimbalyst-host__run_project_tests', 'Bash', 'Write', 'Edit']) {
+      expect(decisionOf(await run(hooks, tool, { prompt: 'x' })), tool).toBe('deny');
+    }
+    for (const tool of ['Read', 'Grep', 'Glob', 'ToolSearch', 'TaskList', 'TaskGet', 'mcp__nimbalyst-trackers__tracker_get', 'mcp__nimbalyst-host__ecc_catalog_lookup']) {
+      expect(decisionOf(await run(hooks, tool, { file_path: '/test/workspace/a.ts' })), tool).not.toBe('deny');
+    }
+    const misconfigured = new AgentToolHooks(createMockOptions({ getToolScope: async () => 'full', getTeamRole: async () => 'advisor' }));
+    expect(decisionOf(await run(misconfigured, 'AskUserQuestion', { questions: [] }))).toBe('deny');
+    expect(decisionOf(await run(misconfigured, 'TaskCreate', { subject: 'x' }))).toBe('deny');
+  });
+});
+
 describe('architect guard (PreToolUse, Phase 1A)', () => {
   const run = (hooks: AgentToolHooks, toolName: string, toolInput: any = {}) =>
     hooks.createPreToolUseHook()({ tool_name: toolName, tool_input: toolInput }, 'tool-use-architect', { signal: new AbortController().signal });

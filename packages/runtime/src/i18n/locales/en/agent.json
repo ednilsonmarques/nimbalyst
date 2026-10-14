@@ -392,6 +392,7 @@
       "implementer": "Implementer",
       "reviewer": "Reviewer",
       "architect": "Architect",
+      "advisor": "Independent Advisor",
       "other": "Member"
     },
     "scope": {

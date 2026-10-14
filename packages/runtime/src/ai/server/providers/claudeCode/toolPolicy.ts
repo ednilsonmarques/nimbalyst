@@ -187,9 +187,36 @@ export const ARCHITECT_DENIED_TOOLS: readonly string[] = [
   mcpTool(MCP_CORE, 'PromptForUserInput'),
 ];
 
-/** Extra denials a team role carries on top of its scope; only the architect has any. */
+/**
+ * Tools the `advisor` team member (Consultor Independente) loses on top of its
+ * (forced) `read` scope: the same list as the architect, for the same reason.
+ * The advisor's authority is nil by design: it may question anything and ask
+ * its coordinator for more evidence in its report, but a question to the user
+ * (AskUserQuestion, PromptForUserInput), a plan-mode approval or a task it
+ * creates or assigns would be an operational act, which it has none of. Its
+ * doubts go into its opinion, labelled doubt. The read scope already withholds
+ * edits, shell, sub-agents, sessions, prompts to other sessions, permission
+ * answers, tracker writes, config, commits and every external MCP server.
+ */
+export const ADVISOR_DENIED_TOOLS: readonly string[] = ARCHITECT_DENIED_TOOLS;
+
+/** Extra denials a team role carries on top of its scope; the architect and the advisor have the same ones. */
 export function teamRoleDeniedTools(role: TeamRole | null | undefined): readonly string[] {
-  return role === 'architect' ? ARCHITECT_DENIED_TOOLS : [];
+  if (role === 'architect') return ARCHITECT_DENIED_TOOLS;
+  if (role === 'advisor') return ADVISOR_DENIED_TOOLS;
+  return [];
+}
+
+/**
+ * What the PreToolUse guard tells a member whose role denies `toolName`: the
+ * same denial, a reason in the role's own terms (an architect writes its
+ * question in the manifest; an advisor puts its doubt in its opinion).
+ */
+export function teamRoleDenialReason(role: TeamRole, toolName: string): string {
+  if (role === 'advisor') {
+    return `This session is the team's advisor, which gives an independent opinion and never asks the user, delegates or creates tasks; ${toolName} is not available. Put the doubt, or the request for more evidence, in your opinion instead.`;
+  }
+  return `This session is the team's ${role}, which prepares work and never asks the user, delegates or creates tasks; ${toolName} is not available. Write the question or the task in your Tool Manifest instead.`;
 }
 
 /**
@@ -383,8 +410,8 @@ export function isReadScopeAllowedMcpTool(toolName: string, scope: 'read' | 'rev
  * `READ_SCOPE_ALLOWED_NATIVE_TOOLS` and an `mcp__` tool in the first-party read
  * allowlist. `full` denies nothing; `write` denies only what its list says, so
  * user MCP and unlisted natives stay reachable there as today. The role's own
- * denials (the architect's) apply before the scope, so an architect with a
- * misconfigured scope still cannot ask or delegate.
+ * denials (the architect's and the advisor's) apply before the scope, so an
+ * architect or advisor with a misconfigured scope still cannot ask or delegate.
  */
 export function isToolDeniedForScope(
   scope: ChildToolScope,

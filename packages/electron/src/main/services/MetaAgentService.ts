@@ -44,8 +44,8 @@ import { renderArchitectReportForUpdate } from '@nimbalyst/runtime/ai/server/pro
 import { TOOL_MANIFEST_NOTICE_CONTEXT, buildToolManifestNotice, persistArchitectManifest } from './team/toolManifests';
 import { withToolManifestTrackerPort } from './team/toolManifestTrackerPort';
 import {
-  TEAM_PROVIDER,
   buildTeamChild,
+  teamRoleProvider,
   resolveRequestedTeamMission,
   resolveRequestedTeamRole,
   resolveTeamCaller,
@@ -797,8 +797,10 @@ export class MetaAgentService {
       parsed?.provider ||
       parentProvider ||
       'claude-code') as AIProviderType;
-    if (team && provider !== TEAM_PROVIDER) {
-      throw new Error(`Team mode supports ${TEAM_PROVIDER} sessions only; refusing to create a ${provider} team member.`);
+    // The provider a role runs on is decided in teamPolicy.ts (teamRoleProvider),
+    // the one place that may ever differ per role; this gate only enforces it.
+    if (team && provider !== teamRoleProvider(teamRole!)) {
+      throw new Error(`Team mode supports ${teamRoleProvider(teamRole!)} sessions only for the ${teamRole} role; refusing to create a ${provider} team member.`);
     }
     // Provider and model MUST agree. Otherwise a child is persisted with, e.g.,
     // provider=claude-code + an antigravity-gemini model, gets routed to the

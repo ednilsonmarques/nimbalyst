@@ -14,10 +14,22 @@
  * read-only, cannot ask the user, delegate or create tasks, and never
  * implements. Its defaults live in teamPolicy.ts (Opus, high, read forced) and
  * its extra tool denials in toolPolicy.ts (ARCHITECT_DENIED_TOOLS).
+ *
+ * `advisor` (UI: "Consultor Independente" / "Independent Advisor") gives a
+ * second, independent opinion on the team's direction: the architect's plan,
+ * the coordinator's strategy, the implementer's result and the reviewer's
+ * verdict. It is not a second reviewer (the reviewer checks the change against
+ * the plan; the advisor questions the plan and the conclusion themselves). Its
+ * intellectual autonomy is wide, its operational authority is none: it runs
+ * read-only like the architect (teamPolicy.ts: strong model, high effort, read
+ * forced; toolPolicy.ts: ADVISOR_DENIED_TOOLS), is created only when the
+ * coordinator explicitly decides to, and its opinion binds nobody. The role is
+ * provider-agnostic by design: which provider and model run it is decided in
+ * teamPolicy.ts alone (teamRoleProvider / teamRoleDefaultModel), never here.
  */
-export type TeamRole = 'explorer' | 'implementer' | 'reviewer' | 'architect' | 'other';
+export type TeamRole = 'explorer' | 'implementer' | 'reviewer' | 'architect' | 'advisor' | 'other';
 
-export const TEAM_ROLES: readonly TeamRole[] = ['explorer', 'implementer', 'reviewer', 'architect', 'other'];
+export const TEAM_ROLES: readonly TeamRole[] = ['explorer', 'implementer', 'reviewer', 'architect', 'advisor', 'other'];
 
 export const TEAM_MODE_METADATA_KEY = 'teamMode';
 export const TEAM_CHILD_METADATA_KEY = 'teamChild';

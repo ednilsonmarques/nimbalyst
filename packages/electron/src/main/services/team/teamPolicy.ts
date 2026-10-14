@@ -19,7 +19,7 @@ import {
 /** Team mode only runs on Claude Code in this phase. */
 export const TEAM_PROVIDER = 'claude-code';
 
-/** Default model for every team member but the architect; the coordinator promotes one explicitly when needed. */
+/** Default model for every team member but the architect and the advisor; the coordinator promotes one explicitly when needed. */
 export const TEAM_SONNET_MODEL = 'claude-code:sonnet';
 
 /**
@@ -28,6 +28,17 @@ export const TEAM_SONNET_MODEL = 'claude-code:sonnet';
  * effort. An explicit `model` from the coordinator still wins.
  */
 export const TEAM_ARCHITECT_MODEL = 'claude-code:opus';
+
+/**
+ * Temporary default model of the `advisor` (Consultor Independente). A second
+ * opinion is only worth having from a model at least as strong as the one it
+ * questions (the architect runs on Opus), so it runs on Opus at high effort;
+ * Fable stays an explicit promotion, as for every other role. This is a
+ * default of this phase, not a property of the role: the advisor is
+ * provider-agnostic, and running it on another provider later means changing
+ * `teamRoleProvider` and this constant, nothing else (see teamRoleProvider).
+ */
+export const TEAM_ADVISOR_MODEL = 'claude-code:opus';
 
 export { TEAM_ROOT_PRESETS, isRecommendedTeamRootModel } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 
@@ -65,24 +76,41 @@ export function resolveRequestedTeamRole(raw: unknown): TeamRole {
   return role;
 }
 
-/** Every role defaults to Sonnet, except the architect (Opus). */
-export function teamRoleDefaultModel(role: TeamRole): string {
-  return role === 'architect' ? TEAM_ARCHITECT_MODEL : TEAM_SONNET_MODEL;
+/**
+ * The provider a team role runs on. Every role runs on Claude Code in this
+ * phase, and this is the one place that says so: the creation path refuses a
+ * member whose resolved provider differs from its role's, and the role model
+ * defaults below are identifiers of that provider. The `advisor` was designed
+ * to run on a provider other than the rest of the team one day (an
+ * independent second opinion is worth more from a different model family);
+ * when that day comes, this function and `teamRoleDefaultModel` change for
+ * that role, and no `role === 'advisor'` provider condition appears anywhere
+ * else. Nothing about a role's scope, denials or prompt depends on its provider.
+ */
+export function teamRoleProvider(_role: TeamRole): string {
+  return TEAM_PROVIDER;
 }
 
-/** Reviewers and architects think harder (high); every other role runs at medium. */
+/** Every role defaults to Sonnet, except the architect and the advisor (Opus). */
+export function teamRoleDefaultModel(role: TeamRole): string {
+  if (role === 'architect') return TEAM_ARCHITECT_MODEL;
+  if (role === 'advisor') return TEAM_ADVISOR_MODEL;
+  return TEAM_SONNET_MODEL;
+}
+
+/** Reviewers, architects and advisors think harder (high); every other role runs at medium. */
 export function teamRoleDefaultEffort(role: TeamRole): 'medium' | 'high' {
-  return role === 'reviewer' || role === 'architect' ? 'high' : 'medium';
+  return role === 'reviewer' || role === 'architect' || role === 'advisor' ? 'high' : 'medium';
 }
 
 /**
- * Tool scope a role gets when the caller does not pass one. Explorer and
- * architect are read-only; reviewer reads and may run the workspace's tests
- * (`review`); implementer gets full tools; `other` has no role default (the
- * caller decides, as outside a team).
+ * Tool scope a role gets when the caller does not pass one. Explorer,
+ * architect and advisor are read-only; reviewer reads and may run the
+ * workspace's tests (`review`); implementer gets full tools; `other` has no
+ * role default (the caller decides, as outside a team).
  */
 export function teamRoleDefaultToolScope(role: TeamRole): 'read' | 'review' | 'full' | undefined {
-  if (role === 'explorer' || role === 'architect') return 'read';
+  if (role === 'explorer' || role === 'architect' || role === 'advisor') return 'read';
   if (role === 'reviewer') return 'review';
   if (role === 'implementer') return 'full';
   return undefined;
@@ -96,6 +124,8 @@ export type StoredChildToolScope = 'read' | 'review' | 'write';
  *
  * - An architect is always `read`: it prepares work and never executes, so
  *   `full`, `write`, `review` or anything else is lowered to `read`.
+ * - An advisor is always `read` too: it gives an opinion and never acts, so
+ *   nothing a coordinator, a mission or a brief asks for widens it.
  * - A reviewer never gets more than `review`: `full`, `write` or anything else
  *   is lowered to `review`; only an explicit `read` (stricter) is kept.
  * - Otherwise an explicit scope wins over the role default; `full` means no
@@ -107,7 +137,7 @@ export function resolveChildToolScopeRequest(
   explicit: unknown,
   role: TeamRole | undefined,
 ): StoredChildToolScope | undefined {
-  if (role === 'architect') return 'read';
+  if (role === 'architect' || role === 'advisor') return 'read';
   if (role === 'reviewer') return explicit === 'read' ? 'read' : 'review';
   const requested = explicit ?? (role ? teamRoleDefaultToolScope(role) : undefined);
   if (requested === undefined || requested === null || requested === 'full') return undefined;
