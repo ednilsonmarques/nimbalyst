@@ -16,7 +16,7 @@
  */
 
 import jsyaml from 'js-yaml';
-import { TEAM_ROLES, type TeamRole } from './teamContext';
+import { TEAM_MISSION_MAX_LENGTH, TEAM_ROLES, normalizeTeamMission, type TeamRole } from './teamContext';
 import { READ_SCOPE_ALLOWED_NATIVE_TOOLS, SDK_NATIVE_TOOLS, isToolDeniedForScope, type ChildToolScope } from './claudeCode/toolPolicy';
 import { MCP_FIRST_PARTY_TOPOLOGY } from '../services/mcpTopology';
 import { ECC_CATALOG_INDEX_CLASSES } from '../../ecc/eccCatalogIndex.generated';
@@ -220,6 +220,18 @@ export function parseToolManifest(text: string): ToolManifestValidation {
       }
       if (member.role === 'architect' && member.scope !== undefined && member.scope !== 'read') {
         errors.push('teamPlan.members: an architect never runs above the read scope');
+      }
+      // A suggested mission is text for the coordinator, who decides the member's
+      // real mission at creation; the host never copies it anywhere. It grants
+      // nothing, so a malformed one never invalidates the manifest (that would
+      // cost a re-emission for an optional field): it is a warning, like an
+      // over-long one, which the creation limit would refuse.
+      if (member.mission !== undefined) {
+        if (typeof member.mission !== 'string') {
+          warnings.push(`teamPlan.members: ${member.role} mission must be plain text; the coordinator will have to write one`);
+        } else if ((normalizeTeamMission(member.mission) ?? '').length > TEAM_MISSION_MAX_LENGTH) {
+          warnings.push(`teamPlan.members: ${member.role} mission is longer than ${TEAM_MISSION_MAX_LENGTH} characters; the coordinator will have to shorten it`);
+        }
       }
     }
   }

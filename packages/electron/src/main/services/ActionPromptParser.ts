@@ -13,6 +13,7 @@
  */
 
 import { ModelIdentifier } from '@nimbalyst/runtime/ai/server/types';
+import { t, type SupportedLanguage } from '@nimbalyst/runtime/i18n';
 
 export type ActionLaunch = 'same-session' | 'new-session';
 
@@ -307,58 +308,52 @@ export function parseActionPromptsFile(content: string): ActionPromptParseResult
   return { actions, diagnostics };
 }
 
-/** Default content seeded into ai-actions.md when the user creates the file. */
-export const DEFAULT_ACTION_PROMPTS_TEMPLATE = `# AI Action Prompts
+/**
+ * Build the default ai-actions.md content for a UI language. Prose (intro,
+ * titles, bodies) comes from the `ai:actions.defaultTemplate.*` i18n resources;
+ * the config blocks and slash commands are structural and never translated.
+ */
+export function defaultActionPromptsTemplate(language: SupportedLanguage): string {
+  const tr = (key: string): string => t(`ai:actions.defaultTemplate.${key}`, { lng: language });
+  return [
+    `${tr('intro')}
 
-This file lists reusable prompts that show up in the **Actions** dropdown in the AI composer.
-Each \`## Heading\` is one action; everything beneath it (until the next \`##\`) is the prompt that gets inserted into the draft when you pick the action.
+`,
+    `## ${tr('reviewTitle')}
+${tr('reviewBody')}
 
-Actions can also launch a brand-new sibling session in the current workstream
-instead of prefilling the current input.
+`,
+    `## ${tr('planTitle')}
+${tr('planBody')}
 
-Recognized keys: \`launch\` (same-session | new-session), \`model\`
-(provider:variant), \`foreground\` (true/false), \`autoSubmit\` (true/false),
-\`worktree\` (true/false). \`launch: same-session\` is the default; omit the
-block entirely to keep current behavior.
-
-## Review Changed Files
-/review changed files in this session and call out regression risk in the affected modules.
-
-## Plan Implementation
-Look at the active issue (linked above) and the open editor.
-
-Produce a structured plan that:
-- breaks the work into 3-5 phases
-- identifies the files I'll need to touch
-- flags any cross-cutting concerns I should think about before writing code
-
-When you're done, ask me which phase to start with.
-
-## Plan in Fresh Opus Session
+`,
+    `## ${tr('opusTitle')}
 launch: new-session
 model: claude-code:opus
 foreground: true
 autoSubmit: true
 
-Open a fresh sibling planning session.
-Look at the originating session for context, then produce a clean implementation plan in 3-5 phases.
-Call out the riskiest unknowns before suggesting code changes.
+${tr('opusBody')}
 
-## Worktree Implementation Draft
+`,
+    `## ${tr('worktreeTitle')}
 launch: new-session
 foreground: true
 autoSubmit: false
 worktree: true
 
-Open a sibling coding session in a git worktree.
-Use the originating session and current editor state for context.
-Draft the first implementation message I should send there, including the files to inspect first and the first validation step.
+${tr('worktreeBody')}
 
-## Draft Release Notes
-/release-notes from merged work since the last tag, formatted as a user-facing changelog.
+`,
+    `## ${tr('releaseTitle')}
+${tr('releaseBody')}
 
-## Inspect Current Editor
-Read the file that's currently open and tell me what you'd change. Be specific:
-- 3 concrete improvements
-- 1 thing that's already good and shouldn't change
-`;
+`,
+    `## ${tr('inspectTitle')}
+${tr('inspectBody')}
+`,
+  ].join('');
+}
+
+/** Default content seeded into ai-actions.md when the user creates the file (English variant). */
+export const DEFAULT_ACTION_PROMPTS_TEMPLATE = defaultActionPromptsTemplate('en');

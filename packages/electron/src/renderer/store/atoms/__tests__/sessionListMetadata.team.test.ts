@@ -49,3 +49,24 @@ describe('session list pipeline', () => {
     }
   });
 });
+
+describe('team mission projection', () => {
+  const base = { id: 's', createdAt: 1, updatedAt: 2, title: 'T', provider: 'claude-code' } as SessionMeta;
+
+  it('reads teamChild.mission as teamMission, only for a member, and never invents one', () => {
+    expect(readTeamSessionFields({ teamChild: { role: 'reviewer', rootSessionId: 'root', depth: 1, mission: 'Review the security.' }, toolScope: 'review' }))
+      .toEqual({ teamRole: 'reviewer', teamMission: 'Review the security.', toolScope: 'review' });
+    expect(readTeamSessionFields({ teamChild: { role: 'reviewer', rootSessionId: 'root', depth: 1 } })).toEqual({ teamRole: 'reviewer' });
+    for (const metadata of [{ teamChild: { role: 'reviewer', mission: '' } }, { teamChild: { role: 'reviewer', mission: 7 } }, { teamChild: { mission: 'x' } }, { teamMode: true, mission: 'x' }]) {
+      expect(readTeamSessionFields(metadata as never).teamMission, JSON.stringify(metadata)).toBeUndefined();
+    }
+  });
+
+  it('carries teamMission from the store entry to the registry entry, and a session without one gains nothing', () => {
+    const [projected] = projectSessionList([{ ...base, teamRole: 'explorer', teamMission: 'Map the write paths.', toolScope: 'read' }], new Map());
+    expect(projected).toMatchObject({ teamRole: 'explorer', teamMission: 'Map the write paths.' });
+    expect(sessionListMetadata(projected as never, '/ws')).toMatchObject({ teamMission: 'Map the write paths.' });
+    const [plain] = projectSessionList([{ ...base, teamRole: 'explorer' }], new Map());
+    expect(sessionListMetadata(plain as never, '/ws').teamMission).toBeUndefined();
+  });
+});

@@ -200,7 +200,22 @@
     "noSections": "<code>ai-actions.md</code> has no <code>## Heading</code> sections yet. Open the file and add one to get started.",
     "opensNewSession": "Opens new session",
     "edit": "Edit actions…",
-    "openFile": "Open ai-actions.md…"
+    "openFile": "Open ai-actions.md…",
+    "defaultTemplate": {
+      "intro": "# AI Action Prompts\n\nThis file lists reusable prompts that show up in the **Actions** dropdown in the AI composer.\nEach `## Heading` is one action; everything beneath it (until the next `##`) is the prompt that gets inserted into the draft when you pick the action.\n\nActions can also launch a brand-new sibling session in the current workstream\ninstead of prefilling the current input.\n\nRecognized keys: `launch` (same-session | new-session), `model`\n(provider:variant), `foreground` (true/false), `autoSubmit` (true/false),\n`worktree` (true/false). `launch: same-session` is the default; omit the\nblock entirely to keep current behavior.",
+      "reviewTitle": "Review Changed Files",
+      "reviewBody": "/review changed files in this session and call out regression risk in the affected modules.",
+      "planTitle": "Plan Implementation",
+      "planBody": "Look at the active issue (linked above) and the open editor.\n\nProduce a structured plan that:\n- breaks the work into 3-5 phases\n- identifies the files I'll need to touch\n- flags any cross-cutting concerns I should think about before writing code\n\nWhen you're done, ask me which phase to start with.",
+      "opusTitle": "Plan in Fresh Opus Session",
+      "opusBody": "Open a fresh sibling planning session.\nLook at the originating session for context, then produce a clean implementation plan in 3-5 phases.\nCall out the riskiest unknowns before suggesting code changes.",
+      "worktreeTitle": "Worktree Implementation Draft",
+      "worktreeBody": "Open a sibling coding session in a git worktree.\nUse the originating session and current editor state for context.\nDraft the first implementation message I should send there, including the files to inspect first and the first validation step.",
+      "releaseTitle": "Draft Release Notes",
+      "releaseBody": "/release-notes from merged work since the last tag, formatted as a user-facing changelog.",
+      "inspectTitle": "Inspect Current Editor",
+      "inspectBody": "Read the file that's currently open and tell me what you'd change. Be specific:\n- 3 concrete improvements\n- 1 thing that's already good and shouldn't change"
+    }
   },
   "claudeCli": {
     "install": "Install Claude Code",
@@ -604,6 +619,26 @@
         "asyncAgent": "Async agent"
       }
     }
+  },
+  "subagentCard": {
+    "teammateFallback": "Teammate",
+    "backgroundAgent": "Background Agent",
+    "subAgent": "Sub-Agent",
+    "status": {
+      "running": "Running",
+      "idle": "Idle",
+      "done": "Done",
+      "errored": "Errored"
+    },
+    "teammateActions": "Teammate Actions ({{n}}):",
+    "subAgentActions": "Sub-agent Actions ({{n}}):",
+    "viewFullPrompt": "View full prompt",
+    "viewResult": "View result",
+    "result": "Result",
+    "arguments": "Arguments:",
+    "waitingOnTask": "Waiting on background task: {{description}}",
+    "waitingTaskFallback": "background task",
+    "waitingOnTasks": "Waiting on {{n}} background tasks..."
   },
   "teamCheckpoint": {
     "title": "Team checkpoint",

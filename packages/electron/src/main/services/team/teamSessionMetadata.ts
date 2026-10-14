@@ -2,7 +2,9 @@
  * `metadata.teamMode` and `metadata.teamChild` are creation-only. The session
  * store drops them from every metadata update and keeps them when a create is
  * re-issued, so neither the renderer, an MCP tool, a provider nor sync can turn
- * a session into (or out of) a team after the fact.
+ * a session into (or out of) a team after the fact. `teamChild.mission` (the
+ * member's mission) travels inside `teamChild`, so it is immutable by the same
+ * rule and a renderer create can never carry one.
  *
  * `metadata.teamBudget` gets the same protection for a different reason: it is
  * the user's authorization to continue a team past a checkpoint. Its only

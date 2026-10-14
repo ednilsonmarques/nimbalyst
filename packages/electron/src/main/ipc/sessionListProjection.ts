@@ -63,6 +63,7 @@ export function projectSessionList(
       // Team mode projections (sidebar grouping and Team view)
       teamMode: entry.teamMode || undefined,
       teamRole: entry.teamRole || undefined,
+      teamMission: entry.teamMission || undefined,
       effortLevel: entry.effortLevel || undefined,
       toolScope: entry.toolScope || undefined,
       metadata: {},

@@ -35,7 +35,7 @@
  * that is, the prompt the user sees today.
  */
 import { MCP_HOST } from '../../services/mcpTopology';
-import { TEAM_ROLES, type TeamRole } from '../teamContext';
+import { TEAM_MISSION_MAX_LENGTH, TEAM_ROLES, normalizeTeamMission, type TeamRole } from '../teamContext';
 import { isToolDeniedForScope, type ChildToolScope } from './toolPolicy';
 
 export interface TeamPermissionContext {
@@ -99,14 +99,17 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** The only keys a pre-authorized create_session may carry; anything else is the user's click. */
-export const CREATE_SESSION_PREAUTHORIZED_KEYS: readonly string[] = ['role', 'title', 'prompt', 'toolScope'];
+export const CREATE_SESSION_PREAUTHORIZED_KEYS: readonly string[] = ['role', 'title', 'prompt', 'toolScope', 'mission'];
 
 /**
  * A create_session call that stays within the role defaults: an allowlist of
- * keys (role, title, prompt, toolScope), a known role, and a scope no wider
- * than the role's own. A provider (even claude-code: it switches the role's
- * model default off), a model, an effort, a worktree or any internal flag the
- * dispatch would pass through makes the call the user's click.
+ * keys (role, title, prompt, toolScope, mission), a known role, and a scope no
+ * wider than the role's own. A provider (even claude-code: it switches the
+ * role's model default off), a model, an effort, a worktree or any internal
+ * flag the dispatch would pass through makes the call the user's click. A
+ * mission is text the member reads as context, like the prompt, and grants
+ * nothing, so it stays within the defaults; a non-string or over-long one does
+ * not (the host refuses it anyway).
  */
 export function createSessionWithinDefaults(input: unknown): boolean {
   if (!isRecord(input)) return false;
@@ -117,6 +120,11 @@ export function createSessionWithinDefaults(input: unknown): boolean {
   if (typeof role !== 'string' || !(TEAM_ROLES as readonly string[]).includes(role)) return false;
   if (input.title !== undefined && typeof input.title !== 'string') return false;
   if (input.prompt !== undefined && typeof input.prompt !== 'string') return false;
+  if (input.mission !== undefined) {
+    if (typeof input.mission !== 'string') return false;
+    const mission = normalizeTeamMission(input.mission);
+    if (mission && mission.length > TEAM_MISSION_MAX_LENGTH) return false;
+  }
   if (input.toolScope !== undefined) {
     if (typeof input.toolScope !== 'string' || !(SCOPE_ORDER as readonly string[]).includes(input.toolScope)) return false;
     const requested = SCOPE_ORDER.indexOf(input.toolScope as ChildToolScope);

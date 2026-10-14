@@ -135,8 +135,8 @@ describe('Team mode system prompt', () => {
   it('states the member defaults and explicit, sparing promotion', () => {
     const text = buildTeamModeAddendum('claude');
     expect(text).toContain('Every member runs on Sonnet by default');
-    expect(text).toContain('`reviewer`: independent review of someone else\'s work (Sonnet, effort high');
-    expect(text).toContain('`implementer`: makes the changes (Sonnet, effort medium');
+    expect(text).toContain('`reviewer`: main responsibility the independent review of someone else\'s work (Sonnet, effort high');
+    expect(text).toContain('`implementer`: main responsibility making the changes (Sonnet, effort medium');
     expect(text).toContain('pass `model` and `effortLevel` explicitly');
     expect(text).toContain('Promote only when the task clearly needs it');
     expect(text).not.toContain('defaults to your model');
@@ -250,7 +250,7 @@ describe('architect (Phase 1A)', () => {
 
   it('the coordinator knows the role, its defaults and its limits', () => {
     expect(coordinator).toContain('Every member runs on Sonnet by default, except the architect (Opus)');
-    expect(coordinator).toContain('`architect`: prepares a complex or critical task before anyone executes it (Opus, effort high, read-only; any other toolScope is lowered to read; it cannot ask the user, delegate or create tasks)');
+    expect(coordinator).toContain('`architect`: main responsibility preparing a complex or critical task before anyone executes it (Opus, effort high, read-only; any other toolScope is lowered to read; it cannot ask the user, delegate or create tasks)');
     expect(coordinator).toContain('### Architect');
     expect(coordinator.indexOf('### Architect')).toBeLessThan(coordinator.indexOf('### Briefs'));
   });
@@ -285,7 +285,7 @@ describe('architect (Phase 1A)', () => {
 
   it('the architect contract is read-only, cannot ask or delegate, and ends in a manifest of at most 7,500 characters', () => {
     expect(architect).toContain('## Team Member: Architect');
-    expect(architect).toContain('You prepare the work; you never do it.');
+    expect(architect).toContain('Your main responsibility is to prepare the work, never to do it.');
     expect(architect).toContain('no edits, no shell, no sub-agents, no sessions, no web, no skills, no commits, no task creation or assignment');
     expect(architect).toContain('You cannot ask the user anything, not even through a plan: every doubt goes into openQuestions');
     expect(architect).toContain('aim for 6,500 characters for the whole message, YAML included');

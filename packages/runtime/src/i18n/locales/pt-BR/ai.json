@@ -200,7 +200,22 @@
     "noSections": "<code>ai-actions.md</code> ainda não tem seções <code>## Heading</code>. Abra o arquivo e adicione uma para começar.",
     "opensNewSession": "Abre nova sessão",
     "edit": "Editar ações…",
-    "openFile": "Abrir ai-actions.md…"
+    "openFile": "Abrir ai-actions.md…",
+    "defaultTemplate": {
+      "intro": "# Prompts de ação da IA\n\nEste arquivo lista prompts reutilizáveis que aparecem no menu **Ações** do compositor de IA.\nCada `## Heading` é uma ação; tudo que vem abaixo dele (até o próximo `##`) é o prompt inserido no rascunho quando você escolhe a ação.\n\nAs ações também podem abrir uma nova sessão irmã no fluxo de trabalho atual\nem vez de preencher o campo de entrada atual.\n\nChaves reconhecidas: `launch` (same-session | new-session), `model`\n(provider:variant), `foreground` (true/false), `autoSubmit` (true/false),\n`worktree` (true/false). `launch: same-session` é o padrão; omita o\nbloco por completo para manter o comportamento atual.",
+      "reviewTitle": "Revisar arquivos alterados",
+      "reviewBody": "/review nos arquivos alterados nesta sessão e aponte o risco de regressão nos módulos afetados.",
+      "planTitle": "Planejar implementação",
+      "planBody": "Veja a issue ativa (vinculada acima) e o editor aberto.\n\nProduza um plano estruturado que:\n- divida o trabalho em 3 a 5 fases\n- identifique os arquivos que eu precisarei alterar\n- sinalize questões transversais em que eu deva pensar antes de escrever código\n\nQuando terminar, pergunte por qual fase devo começar.",
+      "opusTitle": "Planejar em nova sessão Opus",
+      "opusBody": "Abra uma nova sessão irmã de planejamento.\nConsulte a sessão de origem para obter contexto e produza um plano de implementação limpo em 3 a 5 fases.\nAponte as incógnitas mais arriscadas antes de sugerir mudanças no código.",
+      "worktreeTitle": "Rascunho de implementação na worktree",
+      "worktreeBody": "Abra uma sessão irmã de código em uma git worktree.\nUse a sessão de origem e o estado atual do editor como contexto.\nRascunhe a primeira mensagem de implementação que devo enviar lá, incluindo os arquivos a inspecionar primeiro e o primeiro passo de validação.",
+      "releaseTitle": "Rascunhar notas de versão",
+      "releaseBody": "/release-notes a partir do trabalho integrado desde a última tag, formatado como um changelog voltado ao usuário.",
+      "inspectTitle": "Inspecionar editor atual",
+      "inspectBody": "Leia o arquivo que está aberto no momento e diga o que você mudaria. Seja específico:\n- 3 melhorias concretas\n- 1 coisa que já está boa e não deve mudar"
+    }
   },
   "claudeCli": {
     "install": "Instalar o Claude Code",
@@ -604,6 +619,26 @@
         "asyncAgent": "Agente assíncrono"
       }
     }
+  },
+  "subagentCard": {
+    "teammateFallback": "Colega de equipe",
+    "backgroundAgent": "Agente em segundo plano",
+    "subAgent": "Subagente",
+    "status": {
+      "running": "Em execução",
+      "idle": "Ocioso",
+      "done": "Concluído",
+      "errored": "Com erro"
+    },
+    "teammateActions": "Ações do colega de equipe ({{n}}):",
+    "subAgentActions": "Ações do subagente ({{n}}):",
+    "viewFullPrompt": "Ver prompt completo",
+    "viewResult": "Ver resultado",
+    "result": "Resultado",
+    "arguments": "Argumentos:",
+    "waitingOnTask": "Aguardando tarefa em segundo plano: {{description}}",
+    "waitingTaskFallback": "tarefa em segundo plano",
+    "waitingOnTasks": "Aguardando {{n}} tarefas em segundo plano..."
   },
   "teamCheckpoint": {
     "title": "Checkpoint da equipe",

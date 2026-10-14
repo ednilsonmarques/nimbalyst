@@ -36,6 +36,7 @@ export function sessionListMetadata(
     // Team mode projections (sidebar grouping and Team view)
     ...(s.teamMode && { teamMode: true }),
     ...(s.teamRole && { teamRole: s.teamRole }),
+    ...(s.teamMission && { teamMission: s.teamMission }),
     ...(s.effortLevel && { effortLevel: s.effortLevel }),
     ...(s.toolScope && { toolScope: s.toolScope }),
     ...(s.agentRole && { agentRole: s.agentRole }),

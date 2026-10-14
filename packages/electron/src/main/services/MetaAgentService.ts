@@ -46,6 +46,7 @@ import { withToolManifestTrackerPort } from './team/toolManifestTrackerPort';
 import {
   TEAM_PROVIDER,
   buildTeamChild,
+  resolveRequestedTeamMission,
   resolveRequestedTeamRole,
   resolveTeamCaller,
   teamRoleDefaultEffort,
@@ -122,6 +123,8 @@ interface CreateChildSessionArgs {
   effortLevel?: string;
   /** Team mode role (explorer | implementer | reviewer | other); ignored outside a team. */
   role?: string;
+  /** Team mode mission of the member (stored on teamChild.mission); ignored outside a team. */
+  mission?: string;
 }
 
 /**
@@ -208,6 +211,8 @@ interface SpawnSessionArgs {
   effortLevel?: string;
   /** Team mode role (explorer | implementer | reviewer | other); ignored outside a team. */
   role?: string;
+  /** Team mode mission of the member (stored on teamChild.mission); ignored outside a team. */
+  mission?: string;
 }
 
 interface NotifyUserArgs {
@@ -756,6 +761,10 @@ export class MetaAgentService {
     // any side effect. Outside a team (team === null) none of this applies, and
     // an explicit model / effortLevel always wins over the role default.
     const teamRole = team ? resolveRequestedTeamRole(args.role) : null;
+    // The mission is context for the member (its system prompt) and nothing
+    // else: validated here so an over-long one fails before any side effect,
+    // and read by no rule below (model, effort, scope and role ignore it).
+    const teamMission = team ? resolveRequestedTeamMission(args.mission) : undefined;
     const applyRoleModelDefaults = teamRole !== null && !args.skipTeamRoleModelDefaults;
     const requestedModel = args.model
       ?? (applyRoleModelDefaults && !args.provider ? teamRoleDefaultModel(teamRole!) : undefined);
@@ -905,7 +914,7 @@ export class MetaAgentService {
       ...(childEffortLevel ? { effortLevel: childEffortLevel } : {}),
       ...(args.notifyParent === false ? { notifyParent: false } : {}),
       // Written with the row (creation-only); the store refuses to change it later.
-      ...(team && teamRole ? { [TEAM_CHILD_METADATA_KEY]: buildTeamChild(team, teamRole) } : {}),
+      ...(team && teamRole ? { [TEAM_CHILD_METADATA_KEY]: buildTeamChild(team, teamRole, teamMission) } : {}),
     };
 
     const sessionId = randomUUID();
@@ -1034,6 +1043,7 @@ export class MetaAgentService {
       model: effectiveModel,
       effortLevel: args.effortLevel,
       role: args.role,
+      mission: args.mission,
       // inheritModel is an explicit choice: keep the caller's model, no role defaults.
       skipTeamRoleModelDefaults: !args.model && args.inheritModel === true,
       parentSessionIdOverride: workstreamId,

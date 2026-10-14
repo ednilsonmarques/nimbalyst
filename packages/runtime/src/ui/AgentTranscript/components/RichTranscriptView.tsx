@@ -1201,6 +1201,7 @@ export const RichTranscriptView = React.forwardRef<
   { scrollToMessage: (index: number) => void; scrollToTop: () => void },
   RichTranscriptViewProps
 >(({ sessionId, sessionStatus, isProcessing, hasPendingInteractivePrompt, messages, provider, settings: propsSettings, onSettingsChange, showSettings, documentContext, workspacePath, renderEmptyExtra, hideEmptyHelp, readFile, onOpenFile, onOpenSession, onCompact, promptAdditions, currentTeammates, waitingForNoun, backgroundTasks, appStartTime, renderEmbeddedFile, canEmbedFile, loadToolCallDiffs, onSearchBarVisibilityChange, persistScrollState = true }, ref) => {
+  const { t } = useTranslation('ai');
   const [collapsedMessages, setCollapsedMessages] = useState<Set<number>>(new Set());
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
   const scrollButtonRef = useRef<HTMLDivElement>(null);
@@ -1419,8 +1420,8 @@ export const RichTranscriptView = React.forwardRef<
     if (!isWaitingForResponse) return '';
     if (backgroundTasks?.length) {
       return backgroundTasks.length === 1
-        ? `Waiting on background task: ${backgroundTasks[0].description || 'background task'}`
-        : `Waiting on ${backgroundTasks.length} background tasks...`;
+        ? t('subagentCard.waitingOnTask', { description: backgroundTasks[0].description || t('subagentCard.waitingTaskFallback') })
+        : t('subagentCard.waitingOnTasks', { n: backgroundTasks.length });
     }
     if (runningTeammates.length > 0 && !isProcessing && sessionStatus !== 'running') {
       const singular = waitingForNoun || 'agent';
@@ -1429,7 +1430,7 @@ export const RichTranscriptView = React.forwardRef<
       return `Waiting for ${runningTeammates.length} ${label} to complete...`;
     }
     return 'Thinking...';
-  }, [isProcessing, isWaitingForResponse, runningTeammates, sessionStatus, waitingForNoun, backgroundTasks]);
+  }, [isProcessing, isWaitingForResponse, runningTeammates, sessionStatus, waitingForNoun, backgroundTasks, t]);
 
   // Compute effective target index for prompt additions display
   // Use the stored messageIndex if valid, otherwise find the last user message
@@ -1867,9 +1868,9 @@ export const RichTranscriptView = React.forwardRef<
             )}
             <span className="rich-transcript-tool-name font-mono text-sm text-[var(--nim-text)] font-medium" title={tool.toolName || undefined}>
               {isTeammate
-                ? (toolMsg.subagent?.teammateName || 'Teammate')
+                ? (toolMsg.subagent?.teammateName || t('subagentCard.teammateFallback'))
                 : isSubAgent
-                  ? (toolArgs?.run_in_background ? 'Background Agent' : 'Sub-Agent')
+                  ? (toolArgs?.run_in_background ? t('subagentCard.backgroundAgent') : t('subagentCard.subAgent'))
                   : toolDisplayName}
               {isTeammate && toolMsg.subagent?.teammateMode && (
                 <span className="rich-transcript-tool-subagent-type text-[var(--nim-text-muted)] font-normal text-xs ml-1">({toolMsg.subagent?.teammateMode})</span>
@@ -1936,7 +1937,7 @@ export const RichTranscriptView = React.forwardRef<
                 return (
                   <span className="flex items-center gap-1 shrink-0">
                     <span className="inline-block w-3 h-3 border-2 border-[var(--nim-bg-tertiary)] border-t-[var(--nim-primary)] rounded-full animate-spin" />
-                    <span className="text-[11px] text-[var(--nim-text-muted)]">Running</span>
+                    <span className="text-[11px] text-[var(--nim-text-muted)]">{t('subagentCard.status.running')}</span>
                   </span>
                 );
               }
@@ -1944,7 +1945,7 @@ export const RichTranscriptView = React.forwardRef<
                 return (
                   <span className="flex items-center gap-1 shrink-0">
                     <span className="text-[var(--nim-primary)] text-[10px]">&#9675;</span>
-                    <span className="text-[11px] text-[var(--nim-text-muted)]">Idle</span>
+                    <span className="text-[11px] text-[var(--nim-text-muted)]">{t('subagentCard.status.idle')}</span>
                   </span>
                 );
               }
@@ -1952,7 +1953,7 @@ export const RichTranscriptView = React.forwardRef<
                 return (
                   <span className="flex items-center gap-1 shrink-0">
                     <MaterialSymbol icon="check_circle" size={14} className="text-[var(--nim-success)]" />
-                    <span className="text-[11px] text-[var(--nim-text-muted)]">Done</span>
+                    <span className="text-[11px] text-[var(--nim-text-muted)]">{t('subagentCard.status.done')}</span>
                   </span>
                 );
               }
@@ -1960,7 +1961,7 @@ export const RichTranscriptView = React.forwardRef<
                 return (
                   <span className="flex items-center gap-1 shrink-0">
                     <MaterialSymbol icon="cancel" size={14} className="text-[var(--nim-error)]" />
-                    <span className="text-[11px] text-[var(--nim-text-muted)]">Errored</span>
+                    <span className="text-[11px] text-[var(--nim-text-muted)]">{t('subagentCard.status.errored')}</span>
                   </span>
                 );
               }
@@ -1969,7 +1970,7 @@ export const RichTranscriptView = React.forwardRef<
                 return (
                   <span className="flex items-center gap-1 shrink-0">
                     <span className="inline-block w-3 h-3 border-2 border-[var(--nim-primary)] border-t-transparent rounded-full animate-spin" />
-                    <span className="text-[11px] text-[var(--nim-text-muted)]">Running</span>
+                    <span className="text-[11px] text-[var(--nim-text-muted)]">{t('subagentCard.status.running')}</span>
                   </span>
                 );
               }
@@ -1999,7 +2000,7 @@ export const RichTranscriptView = React.forwardRef<
               {/* Show prompt for sub-agents (collapsable) */}
               {isSubAgent && prompt && (
                 <details className="rich-transcript-tool-details my-2">
-                  <summary className="rich-transcript-tool-details-summary text-xs text-[var(--nim-text-faint)] cursor-pointer py-1 select-none hover:text-[var(--nim-text-muted)]">View full prompt</summary>
+                  <summary className="rich-transcript-tool-details-summary text-xs text-[var(--nim-text-faint)] cursor-pointer py-1 select-none hover:text-[var(--nim-text-muted)]">{t('subagentCard.viewFullPrompt')}</summary>
                   <div className="rich-transcript-tool-details-content mt-1 text-sm">
                     <MarkdownRenderer content={prompt} isUser={false} onOpenFile={onOpenFile} onOpenSession={onOpenSession} />
                   </div>
@@ -2009,7 +2010,7 @@ export const RichTranscriptView = React.forwardRef<
               {/* Show regular tool arguments (not for sub-agents) */}
               {!isSubAgent && tool.arguments && Object.keys(tool.arguments).length > 0 && (
                 <div className="rich-transcript-tool-section mb-1.5">
-                  <div className="rich-transcript-tool-section-label text-[var(--nim-text-faint)] mb-0.5 text-xs">Arguments:</div>
+                  <div className="rich-transcript-tool-section-label text-[var(--nim-text-faint)] mb-0.5 text-xs">{t('subagentCard.arguments')}</div>
                   <JSONViewer data={tool.arguments} maxHeight="16rem" />
                 </div>
               )}
@@ -2018,7 +2019,7 @@ export const RichTranscriptView = React.forwardRef<
               {hasChildren && (
                 <div className="rich-transcript-tool-section mb-1.5">
                   <div className="rich-transcript-tool-section-label text-[var(--nim-text-faint)] mb-0.5 text-xs">
-                    {isTeammate ? 'Teammate' : 'Sub-agent'} Actions ({(toolMsg.subagent?.childEvents ?? []).length}):
+                    {t(isTeammate ? 'subagentCard.teammateActions' : 'subagentCard.subAgentActions', { n: (toolMsg.subagent?.childEvents ?? []).length })}
                   </div>
                   <div className="rich-transcript-subagent-children flex flex-col gap-1 mt-2">
                     {(toolMsg.subagent?.childEvents ?? []).map((childMsg: TranscriptViewMessage, childIdx: number) =>
@@ -2032,7 +2033,7 @@ export const RichTranscriptView = React.forwardRef<
               {isSubAgent && !tool.result && tool.progress.length > 0 && (
                 <div className="rich-transcript-tool-section mb-1.5 flex items-center gap-2 text-xs text-[var(--nim-text-muted)]">
                   <span className="inline-block w-3 h-3 border-2 border-[var(--nim-primary)] border-t-transparent rounded-full animate-spin" />
-                  <span>Running <span className="font-mono text-[var(--nim-text)]">{tool.progress[tool.progress.length - 1]?.progressContent}</span></span>
+                  <span>{t('subagentCard.status.running')} <span className="font-mono text-[var(--nim-text)]">{tool.progress[tool.progress.length - 1]?.progressContent}</span></span>
                   <span>({Math.round(tool.progress[tool.progress.length - 1]?.elapsedSeconds ?? 0)}s)</span>
                 </div>
               )}
@@ -2041,7 +2042,7 @@ export const RichTranscriptView = React.forwardRef<
               {tool.result && (
                 <details className="rich-transcript-tool-details my-2" open={!isSubAgent}>
                   <summary className="rich-transcript-tool-details-summary text-xs text-[var(--nim-text-faint)] cursor-pointer py-1 select-none hover:text-[var(--nim-text-muted)]">
-                    {isSubAgent ? 'View result' : 'Result'}
+                    {isSubAgent ? t('subagentCard.viewResult') : t('subagentCard.result')}
                   </summary>
                   <div className="rich-transcript-tool-details-content mt-1 text-sm">
                     {resultText ? (

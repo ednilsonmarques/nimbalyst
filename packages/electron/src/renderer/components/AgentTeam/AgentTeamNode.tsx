@@ -161,6 +161,19 @@ export const AgentTeamNode = memo(function AgentTeamNode({
         )}
       </div>
 
+      {/* The member's mission (teamChild.mission): one truncated line, the whole
+          text in the tooltip. Display only; the role and scope above are the policy. */}
+      {roleKey && !isCoordinator && session.teamMission && (
+        <div
+          className="flex w-full min-w-0 items-center gap-1 text-[11px] text-[var(--nim-text-muted)]"
+          title={t('agentTeam.missionTitle', { mission: session.teamMission })}
+          data-testid="agent-team-node-mission"
+        >
+          <span aria-hidden className="flex shrink-0"><MaterialSymbol icon="flag" size={12} /></span>
+          <span className="truncate">{session.teamMission}</span>
+        </div>
+      )}
+
       {session.worktreeId && worktreeLabel && (
         <div className="flex w-full min-w-0 items-center gap-1 text-[11px] text-[var(--nim-text-faint)]" title={worktreeLabel}>
           <span aria-hidden className="flex shrink-0"><WorktreeIcon size={12} /></span>

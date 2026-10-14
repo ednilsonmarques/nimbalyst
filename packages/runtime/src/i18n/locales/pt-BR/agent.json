@@ -402,6 +402,7 @@
     },
     "effortTitle": "Esforço de raciocínio: {{effort}}",
     "scopeTitle": "Escopo de ferramentas: {{scope}}",
+    "missionTitle": "Missão: {{mission}}",
     "soloHint": "Sessão em Modo Equipe trabalhando sem membros."
   },
   "mcpStatus": {

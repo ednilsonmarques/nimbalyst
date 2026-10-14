@@ -57,11 +57,40 @@ export const TOOL_MANIFEST_PROMPT_ORIGIN = 'tool_manifest';
  */
 export const TOOL_MANIFEST_REF_METADATA_KEY = 'toolManifestRef';
 
+/**
+ * Longest mission a team member may be created with. A mission is one or two
+ * plain sentences of focus, never a brief: the brief is the first prompt.
+ */
+export const TEAM_MISSION_MAX_LENGTH = 400;
+
 export interface TeamChild {
   role: TeamRole;
   rootSessionId: string;
   /** Root is 0, its children 1, grandchildren 2. */
   depth: number;
+  /**
+   * The member's mission: what this particular session must do, set by the
+   * coordinator at creation (`create_session.mission`) and immutable with the
+   * rest of `teamChild`. Plain text, at most TEAM_MISSION_MAX_LENGTH
+   * characters, whitespace collapsed. It reaches the member through its system
+   * prompt as context, next to its role; it is never a permission: the scope
+   * (toolScope), the role's denials, the model and the effort are decided by
+   * their own policy and read none of this text. Absent on members created
+   * before missions existed and on members created without one.
+   */
+  mission?: string;
+}
+
+/**
+ * A mission as stored: trimmed, every run of whitespace (newlines included)
+ * collapsed to one space. Undefined for anything that is not a non-blank
+ * string. Length is not judged here: the creation path refuses an over-long
+ * mission (teamPolicy.ts), and a reader never truncates what the host stored.
+ */
+export function normalizeTeamMission(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const mission = raw.replace(/\s+/g, ' ').trim();
+  return mission ? mission : undefined;
 }
 
 export interface TeamContext {
@@ -84,7 +113,10 @@ export function parseTeamChild(raw: unknown): TeamChild | null {
   const rootSessionId = typeof record.rootSessionId === 'string' && record.rootSessionId ? record.rootSessionId : null;
   const depth = typeof record.depth === 'number' && Number.isInteger(record.depth) && record.depth > 0 ? record.depth : null;
   if (!role || !rootSessionId || depth === null) return null;
-  return { role, rootSessionId, depth };
+  // A malformed mission never invalidates the member: role, root and depth
+  // are the policy; the mission is context and is simply absent.
+  const mission = normalizeTeamMission(record.mission);
+  return mission ? { role, rootSessionId, depth, mission } : { role, rootSessionId, depth };
 }
 
 /**

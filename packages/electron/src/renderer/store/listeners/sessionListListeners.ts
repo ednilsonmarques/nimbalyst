@@ -91,6 +91,7 @@ export function initSessionListListeners(): () => void {
         ...(updates.isPinned !== undefined && { isPinned: updates.isPinned as boolean }),
         ...(updates.teamMode === true && { teamMode: true }),
         ...(typeof updates.teamRole === 'string' && { teamRole: updates.teamRole }),
+        ...(typeof updates.teamMission === 'string' && { teamMission: updates.teamMission }),
         ...(typeof updates.effortLevel === 'string' && { effortLevel: updates.effortLevel }),
         ...(typeof updates.toolScope === 'string' && { toolScope: updates.toolScope }),
       });

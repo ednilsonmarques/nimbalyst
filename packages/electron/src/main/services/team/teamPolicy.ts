@@ -7,7 +7,9 @@
 
 import {
   TEAM_BUDGET_METADATA_KEY,
+  TEAM_MISSION_MAX_LENGTH,
   TEAM_ROLES,
+  normalizeTeamMission,
   parseTeamRole,
   resolveTeamContext,
   type TeamChild,
@@ -113,8 +115,31 @@ export function resolveChildToolScopeRequest(
   return 'read';
 }
 
-export function buildTeamChild(team: TeamCaller, role: TeamRole): TeamChild {
-  return { role, rootSessionId: team.rootSessionId, depth: team.depth + 1 };
+/**
+ * Mission requested for a team child: absent, null or blank means none; a
+ * non-string or an over-long one is refused before any side effect. The text
+ * is stored normalized (whitespace collapsed). Nothing here reads the mission
+ * for policy: role, scope, model and effort are resolved by their own rules.
+ */
+export function resolveRequestedTeamMission(raw: unknown): string | undefined {
+  if (raw === undefined || raw === null || raw === '') return undefined;
+  if (typeof raw !== 'string') {
+    throw new Error('Invalid mission: expected plain text.');
+  }
+  const mission = normalizeTeamMission(raw);
+  if (!mission) return undefined;
+  if (mission.length > TEAM_MISSION_MAX_LENGTH) {
+    throw new Error(
+      `Mission too long (${mission.length} characters; at most ${TEAM_MISSION_MAX_LENGTH}). ` +
+      'A mission is one or two sentences of focus; the details belong in the prompt.',
+    );
+  }
+  return mission;
+}
+
+export function buildTeamChild(team: TeamCaller, role: TeamRole, mission?: string): TeamChild {
+  const child: TeamChild = { role, rootSessionId: team.rootSessionId, depth: team.depth + 1 };
+  return mission ? { ...child, mission } : child;
 }
 
 /** Runtime-enforced Team mode limits. SDK sub-agents are not sessions and never count. */

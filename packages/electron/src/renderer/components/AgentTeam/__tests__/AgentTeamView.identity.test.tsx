@@ -50,7 +50,7 @@ const SESSIONS: SessionMeta[] = [
   session('root-a', { title: 'Sistema Construtivo 2.0 retomada', teamMode: true, model: 'claude-code:opus', effortLevel: 'high', updatedAt: 9_000 }),
   session('a-exp', { title: 'S2-0 análise', createdBySessionId: 'root-a', teamRole: 'explorer', effortLevel: 'medium', toolScope: 'read', createdAt: 10 }),
   session('a-impl', { title: 'S2-0 sondas', createdBySessionId: 'root-a', teamRole: 'implementer', effortLevel: 'medium', createdAt: 20 }),
-  session('a-rev', { title: 'Revisão sondas', createdBySessionId: 'root-a', teamRole: 'reviewer', effortLevel: 'high', toolScope: 'review', createdAt: 30 }),
+  session('a-rev', { title: 'Revisão sondas', createdBySessionId: 'root-a', teamRole: 'reviewer', effortLevel: 'high', toolScope: 'review', teamMission: 'Validar a segurança do Tracker e questionar a arquitetura se necessário.', createdAt: 30 }),
   session('root-b', { title: 'Auditoria Mayer', teamMode: true, model: 'claude-code:fable', effortLevel: 'max', updatedAt: 5_000 }),
   session('b-exp', { title: 'Estrutura', createdBySessionId: 'root-b', teamRole: 'explorer', effortLevel: 'medium', toolScope: 'read', createdAt: 40 }),
   session('root-solo', { title: 'Mensagem de erro do subtotal', teamMode: true, model: 'claude-code:opus', effortLevel: 'high', updatedAt: 2_000 }),
@@ -133,11 +133,18 @@ describe('Team view identity', () => {
     expect(reviewer.getByTestId('agent-team-node-scope').getAttribute('title')).toBe('Escopo de ferramentas: revisão');
     expect(node('a-rev').getAttribute('data-status')).toBe('running');
     expect(reviewer.getByText('Em execução')).toBeTruthy();
+    // The mission (teamChild.mission) is one line under the identity, whole in the tooltip, in Portuguese.
+    const mission = reviewer.getByTestId('agent-team-node-mission');
+    expect(mission.textContent).toBe('Validar a segurança do Tracker e questionar a arquitetura se necessário.');
+    expect(mission.getAttribute('title')).toBe('Missão: Validar a segurança do Tracker e questionar a arquitetura se necessário.');
 
     const explorer = within(node('a-exp'));
     expect(explorer.getByTestId('agent-team-node-role').textContent).toBe('Explorer');
     expect(explorer.getByTestId('agent-team-node-scope').textContent).toBe('somente leitura');
     expect(node('a-exp').getAttribute('data-status')).toBe('idle');
+    // A member without a mission shows no mission line; a root never does.
+    expect(explorer.queryByTestId('agent-team-node-mission')).toBeNull();
+    expect(within(node('root-a')).queryByTestId('agent-team-node-mission')).toBeNull();
 
     // No stored scope on a member means full tools.
     const implementer = within(node('a-impl'));
@@ -176,7 +183,7 @@ describe('Team view identity', () => {
       for (const member of group.members) {
         expect(block.getByTestId(`agent-team-node-${member.id}`)).toBeTruthy();
       }
-      expect(block.getAllByTestId(/^agent-team-node-(?!role|effort|scope)/)).toHaveLength(group.members.length + 1);
+      expect(block.getAllByTestId(/^agent-team-node-(?!role|effort|scope|mission)/)).toHaveLength(group.members.length + 1);
     }
   });
 });

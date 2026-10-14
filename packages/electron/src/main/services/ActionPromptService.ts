@@ -10,12 +10,13 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { getLanguage } from '@nimbalyst/runtime/i18n';
 import * as workspaceEventBus from '../file/WorkspaceEventBus';
 import {
   parseActionPromptsFile,
   type ActionPrompt,
   type ActionPromptParseDiagnostic,
-  DEFAULT_ACTION_PROMPTS_TEMPLATE,
+  defaultActionPromptsTemplate,
 } from './ActionPromptParser';
 
 const ACTION_PROMPTS_RELATIVE_PATH = 'nimbalyst-local/ai-actions.md';
@@ -92,7 +93,7 @@ export class ActionPromptService {
     } catch {
       const dir = path.dirname(this.absoluteFilePath);
       await fs.mkdir(dir, { recursive: true });
-      await fs.writeFile(this.absoluteFilePath, DEFAULT_ACTION_PROMPTS_TEMPLATE, 'utf-8');
+      await fs.writeFile(this.absoluteFilePath, defaultActionPromptsTemplate(getLanguage()), 'utf-8');
     }
     return this.absoluteFilePath;
   }

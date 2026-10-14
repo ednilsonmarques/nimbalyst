@@ -10,7 +10,9 @@ vi.mock('../../file/WorkspaceEventBus', () => ({
   unsubscribe: vi.fn(),
 }));
 
+import { setLanguage } from '@nimbalyst/runtime/i18n';
 import { ActionPromptService } from '../ActionPromptService';
+import { DEFAULT_ACTION_PROMPTS_TEMPLATE, parseActionPromptsFile } from '../ActionPromptParser';
 
 describe('ActionPromptService', () => {
   let workspacePath: string;
@@ -21,7 +23,8 @@ describe('ActionPromptService', () => {
     actionsFile = path.join(workspacePath, 'nimbalyst-local', 'ai-actions.md');
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await setLanguage('en');
     fs.rmSync(workspacePath, { recursive: true, force: true });
   });
 
@@ -78,6 +81,43 @@ describe('ActionPromptService', () => {
     const content = await fsp.readFile(filePath, 'utf8');
     expect(content).toContain('## Review Changed Files');
     expect(content).toContain('## Plan Implementation');
+  });
+
+  it('ensureFileExists() seeds the pt-BR template when the UI language is pt-BR', async () => {
+    await setLanguage('pt-BR');
+    const service = new ActionPromptService(workspacePath);
+    const content = await fsp.readFile(await service.ensureFileExists(), 'utf8');
+    for (const heading of [
+      'Revisar arquivos alterados',
+      'Planejar implementação',
+      'Planejar em nova sessão Opus',
+      'Rascunho de implementação na worktree',
+      'Rascunhar notas de versão',
+      'Inspecionar editor atual',
+    ]) {
+      expect(content).toContain(`## ${heading}\n`);
+    }
+    expect(content).toContain('/review nos arquivos');
+    expect(content).toContain('/release-notes a partir');
+    expect(content).toContain('launch: new-session\nmodel: claude-code:opus\nforeground: true\nautoSubmit: true\n');
+    expect(content).not.toContain('## Review Changed Files');
+
+    const { actions, diagnostics } = parseActionPromptsFile(content);
+    expect(diagnostics).toEqual([]);
+    expect(actions).toHaveLength(6);
+    const opus = actions.find(a => a.label === 'Planejar em nova sessão Opus');
+    expect(opus?.config).toMatchObject({ launch: 'new-session', model: 'claude-code:opus', foreground: true, autoSubmit: true });
+    const wt = actions.find(a => a.label === 'Rascunho de implementação na worktree');
+    expect(wt?.config).toMatchObject({ launch: 'new-session', autoSubmit: false, worktree: true });
+  });
+
+  it('ensureFileExists() seeds exactly DEFAULT_ACTION_PROMPTS_TEMPLATE when the UI language is en', async () => {
+    await setLanguage('en');
+    const service = new ActionPromptService(workspacePath);
+    const content = await fsp.readFile(await service.ensureFileExists(), 'utf8');
+    expect(content).toBe(DEFAULT_ACTION_PROMPTS_TEMPLATE);
+    expect(content).toContain('## Review Changed Files\n/review changed files in this session');
+    expect(parseActionPromptsFile(content).actions).toHaveLength(6);
   });
 
   it('ensureFileExists() leaves an existing file untouched', async () => {

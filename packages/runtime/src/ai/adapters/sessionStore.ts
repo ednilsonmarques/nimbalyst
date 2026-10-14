@@ -51,6 +51,8 @@ export interface SessionMeta {
   teamMode?: boolean;
   /** Role of a team member (metadata.teamChild.role). */
   teamRole?: string;
+  /** Mission of a team member (metadata.teamChild.mission): the focus of this session, display only. */
+  teamMission?: string;
   /** Reasoning effort the session was created with (metadata.effortLevel). */
   effortLevel?: string;
   /** Restricted tool scope of a child session (metadata.toolScope); absent means full. */
@@ -64,11 +66,12 @@ export interface SessionMeta {
 /** Team-mode fields of a session row's metadata, as carried on SessionMeta. */
 export function readTeamSessionFields(
   metadata: Record<string, unknown> | null | undefined,
-): Pick<SessionMeta, 'teamMode' | 'teamRole' | 'effortLevel' | 'toolScope'> {
-  const child = metadata?.teamChild as { role?: unknown } | null | undefined;
+): Pick<SessionMeta, 'teamMode' | 'teamRole' | 'teamMission' | 'effortLevel' | 'toolScope'> {
+  const child = metadata?.teamChild as { role?: unknown; mission?: unknown } | null | undefined;
   return {
     ...(metadata?.teamMode === true && { teamMode: true }),
     ...(child && typeof child.role === 'string' && { teamRole: child.role }),
+    ...(child && typeof child.role === 'string' && typeof child.mission === 'string' && child.mission && { teamMission: child.mission }),
     ...(typeof metadata?.effortLevel === 'string' && { effortLevel: metadata.effortLevel }),
     ...(typeof metadata?.toolScope === 'string' && { toolScope: metadata.toolScope }),
   };

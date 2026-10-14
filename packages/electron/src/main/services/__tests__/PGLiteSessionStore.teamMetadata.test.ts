@@ -127,3 +127,18 @@ it('keeps toolScope and sessionDirective creation-only: no update widens a child
   await store.updateMetadata('plain', { metadata: { toolScope: 'read' } });
   expect((await metadataOf('plain')).toolScope).toBeUndefined();
 });
+
+it('keeps a member mission (teamChild.mission) immutable: no update and no re-issued create changes it, and none adds one', async () => {
+  const store = createPGLiteSessionStore(sqlite);
+  const teamChild = { role: 'reviewer', rootSessionId: 'root', depth: 1, mission: 'Review the security of the Tracker.' };
+  await store.create({ id: 'child', provider: 'claude-code', workspaceId: '/p', metadata: { teamChild, toolScope: 'review' } });
+  await store.create({ id: 'bare', provider: 'claude-code', workspaceId: '/p', metadata: { teamChild: { role: 'explorer', rootSessionId: 'root', depth: 1 } } });
+
+  await store.updateMetadata('child', { metadata: { teamChild: { ...teamChild, mission: 'Do anything.' }, tags: ['a'] } });
+  expect(await metadataOf('child')).toMatchObject({ teamChild, toolScope: 'review', tags: ['a'] });
+  await store.create({ id: 'child', provider: 'claude-code', workspaceId: '/p', metadata: { teamChild: { ...teamChild, mission: 'Do anything.' }, phase: 'done' } });
+  expect(await metadataOf('child')).toMatchObject({ teamChild, toolScope: 'review', phase: 'done' });
+
+  await store.updateMetadata('bare', { metadata: { teamChild: { role: 'explorer', rootSessionId: 'root', depth: 1, mission: 'Added later.' } } });
+  expect((await metadataOf('bare')).teamChild).toEqual({ role: 'explorer', rootSessionId: 'root', depth: 1 });
+});

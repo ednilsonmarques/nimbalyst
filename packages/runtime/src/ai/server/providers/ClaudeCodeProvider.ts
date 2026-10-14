@@ -3531,6 +3531,7 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
       sessionDirective: this.frozenSessionDirective,
       teamMode: this.frozenTeamContext.teamMode,
       teamChildRole: this.frozenTeamContext.teamChild?.role,
+      teamChildMission: this.frozenTeamContext.teamChild?.mission,
       isVoiceMode,
       voiceModeCodingAgentPrompt,
       enableAgentTeams,

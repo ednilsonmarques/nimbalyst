@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_ACTION_PROMPTS_TEMPLATE,
+  defaultActionPromptsTemplate,
   parseActionPromptsFile,
 } from '../ActionPromptParser';
 
@@ -321,5 +322,28 @@ Body.
       worktree: true,
     });
     expect(worktreeLauncher?.body).toContain('Open a sibling coding session in a git worktree.');
+  });
+});
+
+describe('localized default template', () => {
+  it('pt-BR parses into the same six actions with the same config blocks and slash commands as en', () => {
+    const en = parseActionPromptsFile(defaultActionPromptsTemplate('en'));
+    const pt = parseActionPromptsFile(defaultActionPromptsTemplate('pt-BR'));
+    expect(defaultActionPromptsTemplate('en')).toBe(DEFAULT_ACTION_PROMPTS_TEMPLATE);
+    expect(pt.diagnostics).toEqual([]);
+    expect(pt.actions).toHaveLength(6);
+    expect(pt.actions.map((a) => a.label)).toEqual([
+      'Revisar arquivos alterados',
+      'Planejar implementação',
+      'Planejar em nova sessão Opus',
+      'Rascunho de implementação na worktree',
+      'Rascunhar notas de versão',
+      'Inspecionar editor atual',
+    ]);
+    expect(pt.actions.map((a) => a.config)).toEqual(en.actions.map((a) => a.config));
+    expect(pt.actions[2].config).toMatchObject({ launch: 'new-session', model: 'claude-code:opus', foreground: true, autoSubmit: true });
+    expect(pt.actions[3].config).toMatchObject({ launch: 'new-session', worktree: true, autoSubmit: false });
+    expect(pt.actions[0].body.startsWith('/review ')).toBe(true);
+    expect(pt.actions[4].body.startsWith('/release-notes ')).toBe(true);
   });
 });
