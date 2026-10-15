@@ -205,7 +205,9 @@ describe('anti-sycophancy without manufactured opposition', () => {
 
   it('N2: a material ambiguity is a user gate, a minor one is an assumption', () => {
     expect(coordinator).toMatch(/the objective or a material requirement too ambiguous to proceed safely/);
-    expect(coordinator).toMatch(/could change the result, the scope, a business rule, a relevant architecture, the completion criterion, the authority or the expected behavior/);
+    // The list of what makes an ambiguity material lives once, in Mission readiness.
+    expect(coordinator).toMatch(/meaning a hard blocker of Mission readiness above, at the start or discovered during the work/);
+    expect(coordinator).toMatch(/could materially change a business rule, the expected behavior, the source of truth, the scope, an architecture choice that is the user's to make \(see Architecture below\), the completion criterion, the authority/);
     expect(coordinator).toMatch(/a minor ambiguity is recorded as an assumption and the work goes on/);
   });
 

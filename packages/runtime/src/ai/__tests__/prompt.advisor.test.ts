@@ -215,7 +215,7 @@ describe('coordinator policy: the independent advisor', () => {
     // The example missions ask for a test of the conclusion, never for a verdict decided in advance (no "prove it wrong").
     expect(coordinator).toContain('"Read the Tool Manifest, the implementation and the reviewer\'s verdict and test whether the team\'s conclusion holds."');
     expect(coordinator).not.toMatch(/prove (the team's|it) (conclusion )?wrong/);
-    expect(coordinator).toContain('a compact brief with references, never a dump: the goal of the task, the current manifest id, the relevant decisions, a summary of the implementation, the reviewer\'s verdict, the tests and their result, the known risks, the important files, the Team Note keys');
+    expect(coordinator).toContain('a compact brief with references, never a dump: the goal of the task and the core of the execution contract, the current manifest id, the relevant decisions, a summary of the implementation, the reviewer\'s verdict, the tests and their result, the known risks, the important files, the Team Note keys');
     expect(coordinator).toContain('Do not paste a whole transcript, the whole catalog, every file or every note');
     expect(coordinator).toContain('Do not tell it what to find.');
     expect(coordinator).toContain('Create it once the work it must judge exists (usually after the review) and wait for its opinion before you conclude');
