@@ -1424,12 +1424,12 @@ export const RichTranscriptView = React.forwardRef<
         : t('subagentCard.waitingOnTasks', { n: backgroundTasks.length });
     }
     if (runningTeammates.length > 0 && !isProcessing && sessionStatus !== 'running') {
-      const singular = waitingForNoun || 'agent';
-      const plural = singular.endsWith('s') ? singular : `${singular}s`;
-      const label = runningTeammates.length === 1 ? singular : plural;
-      return `Waiting for ${runningTeammates.length} ${label} to complete...`;
+      // `waitingForNoun` is a code constant ('agent' | 'session'), never model
+      // text: it selects the i18n key, whose plural forms are the locale's.
+      const key = waitingForNoun === 'session' ? 'transcript.waitingForSessions' : 'transcript.waitingForAgents';
+      return t(key, { count: runningTeammates.length });
     }
-    return 'Thinking...';
+    return t('transcript.thinking');
   }, [isProcessing, isWaitingForResponse, runningTeammates, sessionStatus, waitingForNoun, backgroundTasks, t]);
 
   // Compute effective target index for prompt additions display

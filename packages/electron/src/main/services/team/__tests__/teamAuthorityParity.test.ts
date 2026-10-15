@@ -27,11 +27,11 @@ import { filterToolsForSession, isToolDeniedForSession, servesHostReadTools } fr
 import { isToolScopeEnforced } from '../../ai/childToolScope';
 import { teamMemberProviderReadiness } from '../teamProviders';
 
-const ADVISOR = { scope: 'read', role: 'advisor', provider: 'claude-code' } as const;
-const ADVISOR_CODEX = { scope: 'read', role: 'advisor', provider: 'openai-codex' } as const;
+const ADVISOR = { scope: 'read', role: 'advisor', provider: 'claude-code', workspaceRoot: null } as const;
+const ADVISOR_CODEX = { scope: 'read', role: 'advisor', provider: 'openai-codex', workspaceRoot: null } as const;
 
 /** The first-party MCP surface (every topology tool) as the host serves it to a session. */
-function hostSurfaceFor(policy: { scope: 'read' | 'review' | 'write' | 'full'; role: 'advisor' | null; provider: string | null }): string[] {
+function hostSurfaceFor(policy: { scope: 'read' | 'review' | 'write' | 'full'; role: 'advisor' | null; provider: string | null; workspaceRoot: string | null }): string[] {
   return MCP_FIRST_PARTY_TOPOLOGY.flatMap((server) =>
     filterToolsForSession(server.tools.map((name) => ({ name })), policy, { kind: 'firstParty', configKey: server.configKey })
       .map((tool) => `mcp__${server.configKey}__${tool.name}`),
@@ -74,7 +74,7 @@ describe('the host surface of a read advisor is one surface, whatever the provid
     const parity: Array<{ capability: string; claude: boolean; codex: boolean }> = [
       // File writes: Claude's native Write/Edit are SDK-denied; Codex's apply_patch needs an approval the host refuses, in a read-only sandbox.
       { capability: 'write files', claude: denied('Write') && denied('Edit') && denied('MultiEdit'), codex: profile.sandboxMode === 'read-only' && profile.approvalPolicy === 'untrusted' },
-      // Shell: Claude's Bash/PowerShell are SDK-denied; Codex's commands run only from its known-safe read set, anything else is an approval the host refuses.
+      // Shell: Claude's Bash/PowerShell are SDK-denied; Codex's shell tool is switched off in the process (verified through config/read), and any approval is refused anyway.
       { capability: 'arbitrary shell', claude: denied('Bash') && denied('PowerShell'), codex: profile.approvalPolicy === 'untrusted' && profile.sandboxMode === 'read-only' },
       // Delegation: both reach it only through the host's own tools, withheld by the same policy.
       { capability: 'delegate / create sessions', claude: denied('Agent') && denied('mcp__nimbalyst-host__create_session') && denied('mcp__nimbalyst-host__spawn_session'), codex: hostDenied('nimbalyst-host', 'create_session') && hostDenied('nimbalyst-host', 'spawn_session') },
@@ -121,9 +121,9 @@ describe('the host surface of a read advisor is one surface, whatever the provid
     expect(servesHostReadTools(ADVISOR_CODEX)).toBe(true);
     // Never listed for Claude Code (any scope), a full session or an unknown provider: the allowlist names them, the server decides who sees them.
     expect(servesHostReadTools(ADVISOR)).toBe(false);
-    expect(servesHostReadTools({ scope: 'review', role: 'reviewer', provider: 'claude-code' })).toBe(false);
-    expect(servesHostReadTools({ scope: 'full', role: null, provider: 'openai-codex' })).toBe(false);
-    expect(servesHostReadTools({ scope: 'read', role: 'advisor', provider: null })).toBe(false);
+    expect(servesHostReadTools({ scope: 'review', role: 'reviewer', provider: 'claude-code', workspaceRoot: null })).toBe(false);
+    expect(servesHostReadTools({ scope: 'full', role: null, provider: 'openai-codex', workspaceRoot: null })).toBe(false);
+    expect(servesHostReadTools({ scope: 'read', role: 'advisor', provider: null, workspaceRoot: null })).toBe(false);
   });
 
   it('the host declares both providers ready for a read member, and neither for a scope it cannot enforce on Codex', () => {

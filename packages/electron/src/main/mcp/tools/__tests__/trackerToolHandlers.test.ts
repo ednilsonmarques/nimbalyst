@@ -220,6 +220,7 @@ import {
   rowToTrackerItem,
 } from '../trackerToolHandlers';
 import { getTrackerDisplayRef, issueKeyMessage, issueKeyStatus } from '../trackerToolResult';
+import { trackerItemReference } from '../../../services/team/toolManifestTrackerPort';
 import { isTrackerSyncActive, isTrackerSyncConfigured, syncTrackerItem } from '../../../services/TrackerSyncManager';
 import { assignLocalKeysToRows } from '../../../services/tracker/localKeyAllocator';
 import { getEffectiveTrackerSharingPolicy, shouldSyncTrackerItem } from '../../../services/TrackerPolicyService';
@@ -3315,6 +3316,105 @@ describe('tracker_update of a superseding tool-manifest by its coordinator (NIB.
     ] as Array<[string | undefined, Record<string, unknown>]>) {
       const result = await handleTrackerUpdate(args, '/tmp/ws', sessionId);
       expect(result.isError, JSON.stringify([sessionId, args])).toBe(true);
+    }
+    expect(updateCall()).toBeUndefined();
+  });
+});
+
+describe('the Tool Manifest reference the host emits resolves in tracker_get / tracker_update (pilot G: "Tracker item not found: WOK.1")', () => {
+  const sessions: Record<string, unknown> = { root: { agentRole: 'standard', metadata: { teamMode: true } } };
+  // The coordinator ran in a worktree: its tracker tools are scoped to that path.
+  const WORKTREE = '/tmp/ws_worktrees/team-g';
+  const PROJECT = '/tmp/ws';
+  const manifestRow = (overrides: Record<string, unknown> = {}): Record<string, any> => makeRow({
+    id: 'tool-manifest_1792006788175_mitmzg',
+    issue_key: null,
+    issue_number: null,
+    local_key: 'WOK.1',
+    type: 'tool-manifest',
+    type_tags: ['tool-manifest'],
+    workspace: WORKTREE,
+    source: 'native',
+    document_path: '',
+    data: JSON.stringify({
+      title: 'M-1: task', status: 'draft', priority: 'medium',
+      description: '```yaml\ntoolManifest: 1\nid: M-1\n```',
+      manifestId: 'M-1', manifestVersion: '1', teamRootSessionId: 'root', architectSessionId: 'arch-1',
+      generatedByRole: 'architect', contentHash: '0123456789abcdef', createdByAgent: true,
+    }),
+    ...overrides,
+  });
+  const updateCall = () => mockQuery.mock.calls.find((c) => String(c[0]).includes('UPDATE tracker_items SET data = $1'));
+  let row: ReturnType<typeof manifestRow>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDocumentServices.clear();
+    mockGlobalRegistry.validate.mockReturnValue({ valid: true, errors: [] });
+    vi.mocked(getEffectiveTrackerSharingPolicy).mockReturnValue({ sharing: 'personal', draftByDefault: false });
+    vi.mocked(shouldSyncTrackerItem).mockReturnValue(false);
+    vi.mocked(isTrackerSyncActive).mockReturnValue(false);
+    (mockGlobalRegistry.get as any).mockReturnValue({ sharing: 'team', draftByDefault: false, fields: [{ name: 'title', type: 'string' }, { name: 'status', type: 'select' }] });
+    row = manifestRow();
+    // The reference lookups as the real SQL scopes them: id or issue key, local
+    // number, each within the caller's workspace (trackerToolItemAccess.ts).
+    mockQuery.mockImplementation(async (sql: unknown, params: unknown[] = []) => {
+      const text = String(sql);
+      if (/^\s*(UPDATE|DELETE|INSERT)/i.test(text)) return { rows: [] };
+      const inWorkspace = params[1] === undefined || params[1] === row.workspace;
+      if (text.includes('WHERE (id = $1 OR issue_key = $1)')) {
+        return { rows: (params[0] === row.id || (row.issue_key && params[0] === row.issue_key)) && inWorkspace ? [row] : [] };
+      }
+      if (text.includes('WHERE local_key = $1')) return { rows: params[0] === row.local_key && inWorkspace ? [row] : [] };
+      if (text.includes("source = 'frontmatter'")) return { rows: [] };
+      return { rows: [row] };
+    });
+    AISessionsRepository.setStore({ get: async (id: string) => sessions[id] ?? null } as never);
+  });
+  afterEach(() => {
+    AISessionsRepository.clearStore();
+    mockQuery.mockReset();
+  });
+
+  const emitted = () => trackerItemReference({ id: row.id, issueKey: row.issue_key });
+
+  it('B/C/G: no issue key, so the reference is the id; tracker_get returns the item and the accept moves it draft -> accepted', async () => {
+    expect(emitted()).toBe('tool-manifest_1792006788175_mitmzg');
+    // tracker_get reads through the document service of the caller's workspace (the worktree's here).
+    const scopedDocService = {
+      ...mockDocService,
+      getTrackerItemById: vi.fn(async (id: string) => (id === row.id
+        ? { id: row.id, type: 'tool-manifest', title: 'M-1: task', status: 'draft', workspace: WORKTREE, localKey: 'WOK.1', customFields: { manifestId: 'M-1' } }
+        : null)),
+      listTrackerItems: vi.fn(async () => []),
+    };
+    mockDocumentServices.set(WORKTREE, scopedDocService);
+    const got = await handleTrackerGet({ id: emitted() }, WORKTREE);
+    expect(got.isError, got.content[0]?.text).toBeFalsy();
+    expect(got.content[0]?.text).toContain('M-1: task');
+    expect(scopedDocService.getTrackerItemById).toHaveBeenCalledWith('tool-manifest_1792006788175_mitmzg');
+    mockDocumentServices.clear();
+
+    const accepted = await handleTrackerUpdate({ id: emitted(), status: 'accepted' }, WORKTREE, 'root');
+    expect(accepted.isError, accepted.content[0]?.text).toBe(false);
+    const written = JSON.parse(updateCall()![1]![0] as string);
+    expect(written.status).toBe('accepted');
+  });
+
+  it('A/G: a published issue key is the reference, and the accept works through it too', async () => {
+    row = manifestRow({ issue_key: 'NIM-9', issue_number: 9 });
+    expect(emitted()).toBe('NIM-9');
+    const accepted = await handleTrackerUpdate({ id: emitted(), status: 'accepted' }, WORKTREE, 'root');
+    expect(accepted.isError, accepted.content[0]?.text).toBe(false);
+    expect(JSON.parse(updateCall()![1]![0] as string).status).toBe('accepted');
+  });
+
+  it('the pilot G failure: an item stored under the project is not found from the coordinator\'s worktree, by local number or by id', async () => {
+    row = manifestRow({ workspace: PROJECT });
+    for (const reference of ['WOK.1', row.id as string]) {
+      const result = await handleTrackerUpdate({ id: reference, status: 'accepted' }, WORKTREE, 'root');
+      expect(result.isError).toBe(true);
+      expect(result.content[0]?.text).toBe(`Tracker item not found: ${reference}`);
     }
     expect(updateCall()).toBeUndefined();
   });

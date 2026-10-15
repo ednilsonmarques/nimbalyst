@@ -293,6 +293,19 @@ export async function persistArchitectManifest(
  * language (the user reads it as a system status line); short, and never the
  * manifest itself: the [Child Session Update] already carries that.
  */
+/**
+ * One line for the [Child Session Update] of the architect that produced a
+ * stored manifest (NIB.25): the coordinator learns the item reference in the
+ * same turn as the manifest, whatever the queue does with the notice row
+ * (which still renders the Tool Manifest card). Reference only, never the body.
+ */
+export function buildToolManifestReference(result: Extract<ToolManifestPersistence, { persisted: true }>): string {
+  const superseded = result.superseded.length > 0
+    ? `; supersedes ${result.superseded.map((item) => `${item.manifestId ?? 'M-?'} (${item.ref})`).join(', ')}`
+    : '';
+  return `Tool Manifest stored: ${result.manifestId} as tracker item ${result.ref} (status draft${superseded}). Accept it with tracker_update { id: "${result.ref}", status: "accepted" }; the item is the manifest of record, this update carries its text.`;
+}
+
 export function buildToolManifestNotice(result: Extract<ToolManifestPersistence, { persisted: true }>): string {
   const parts = [
     t('ai:toolManifest.notice', {

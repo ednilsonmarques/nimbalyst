@@ -572,10 +572,16 @@ export function createSharedMcpServer(
           isError: true,
         };
       }
-      if (!workspacePath) {
-        return { content: [{ type: "text", text: "Error: this session has no workspace to read from." }], isError: true };
+      // The root is the one the session row authorizes (its worktree, else
+      // its workspace), never the transport's query parameter (NIB.46 7.1).
+      const authorizedRoot = sessionPolicy.workspaceRoot;
+      if (!authorizedRoot) {
+        return { content: [{ type: "text", text: "Error: this session has no authorized workspace on record to read from." }], isError: true };
       }
-      const text = await dispatchDevAgentTool(toolName, workspacePath, (args ?? {}) as Record<string, unknown>);
+      if (workspacePath && path.resolve(workspacePath).toLowerCase() !== path.resolve(authorizedRoot).toLowerCase()) {
+        console.warn(`[MCP:${serverName}] host read for session ${sessionId}: transport workspace ${workspacePath} differs from the authorized root ${authorizedRoot}; using the authorized root`);
+      }
+      const text = await dispatchDevAgentTool(toolName, authorizedRoot, (args ?? {}) as Record<string, unknown>);
       return { content: [{ type: "text", text }], isError: text.startsWith("Error") };
     }
 

@@ -100,6 +100,7 @@ function service(aiService: Record<string, unknown> = {}, authenticated: ((provi
   const svc = MetaAgentService.getInstance();
   (svc as any).aiService = { queuePromptForSession: vi.fn(), triggerQueuedPromptProcessingForSession: vi.fn(), ...aiService };
   svc.setProviderAuthenticationCheck(authenticated);
+  svc.setProviderVersionCheck(null);
   return svc as any;
 }
 
@@ -435,9 +436,9 @@ describe('structural pilot: coordinator -> advisor -> opinion -> observability, 
     expect(result.toolScopeEnforced).toBe(true);
     expect(result.providerDiversity).toBe('diverse');
     const update: string = svc.buildNotificationMessage('session:completed', result);
-    // On Codex the read member reads through its shell's known-safe commands: the line says so instead of "no shell".
-    expect(update).toContain('Tool scope: read (this child had NO file-writing, shell (every command, patch and approval of this child was refused by the host');
-    expect(update).toContain('it read files through the host\'s read_file, list_files and search_files tools), delegation');
+    // On Codex the read member has its shell switched off and verified off; it reads through the host's confined read tools.
+    expect(update).toContain('Tool scope: read (this child had NO file-writing, shell (its Codex shell tool was switched off and verified off by the host');
+    expect(update).toContain('it read files only through the host\'s workspace-confined read_file, list_files and search_files tools), delegation');
     expect(update).toContain('Provider: openai-codex (openai-codex:gpt-6.1-sol), a different provider from the coordinator\'s. This second opinion is independent by provider as well as by session');
   });
 
@@ -479,6 +480,81 @@ describe('structural pilot: coordinator -> advisor -> opinion -> observability, 
     }
     for (const tool of ['Read', 'Glob', 'Grep', 'mcp__nimbalyst-trackers__tracker_get', 'mcp__nimbalyst-trackers__tracker_list', 'mcp__nimbalyst-host__get_session_result']) {
       expect(isToolDeniedForScope('read', tool, ['some-user-server'], 'advisor'), tool).toBe(false);
+    }
+  });
+});
+
+describe('NIB.46 items 7.6 and 7.8 through the creation path', () => {
+  it('7.6: an advisor named onto claude-code without a model gets Opus even when the coordinator runs Sonnet; a named model still wins', async () => {
+    vi.mocked(AISessionsRepository.get).mockImplementation(async (id: string) => (id === 'root-sonnet'
+      ? { ...ROOT, id: 'root-sonnet', model: 'claude-code:sonnet' }
+      : null) as never);
+    await service().createChildSessionInternal('root-sonnet', '/ws', { role: 'advisor', provider: 'claude-code', mission: MISSION });
+    expect(created().provider).toBe('claude-code');
+    expect(created().model).toBe('claude-code:opus');
+    expect(created().metadata.effortLevel).toBe('high');
+    await service().createChildSessionInternal('root-sonnet', '/ws', { role: 'advisor', provider: 'claude-code', model: 'claude-code:fable' });
+    expect(created().model).toBe('claude-code:fable');
+    // Other roles named onto their own provider keep their own default, not the coordinator's model.
+    await service().createChildSessionInternal('root-sonnet', '/ws', { role: 'architect', provider: 'claude-code' });
+    expect(created().model).toBe('claude-code:opus');
+    await service().createChildSessionInternal('root-sonnet', '/ws', { role: 'explorer', provider: 'claude-code' });
+    expect(created().model).toBe('claude-code:sonnet');
+  });
+
+  it('7.8: the Codex CLI version is checked before the advisor is created: too old or unknown refuses it with nothing created, a supported one passes', async () => {
+    const svc = service({ isProviderEnabledForTeamMember: () => true }, SIGNED_IN);
+    svc.setProviderVersionCheck(async (provider: string) => (provider === 'openai-codex' ? '0.150.0' : undefined));
+    await expect(svc.createChildSessionInternal('root', '/ws', { role: 'advisor', mission: MISSION }))
+      .rejects.toThrow(/its CLI is version 0\.150\.0, older than the minimum 0\.159\.1/);
+    expect(AISessionsRepository.create).not.toHaveBeenCalled();
+    svc.setProviderVersionCheck(async () => null);
+    await expect(svc.createChildSessionInternal('root', '/ws', { role: 'advisor' })).rejects.toThrow(/its CLI version could not be verified/);
+    svc.setProviderVersionCheck(async () => { throw new Error('auth child died'); });
+    await expect(svc.createChildSessionInternal('root', '/ws', { role: 'advisor' })).rejects.toThrow(/its CLI version could not be verified/);
+    expect(AISessionsRepository.create).not.toHaveBeenCalled();
+    svc.setProviderVersionCheck(async () => '0.159.2');
+    await svc.createChildSessionInternal('root', '/ws', { role: 'advisor' });
+    expect(created().provider).toBe('openai-codex');
+    // The check never touches a claude-code member.
+    svc.setProviderVersionCheck(async () => '0.1.0');
+    await svc.createChildSessionInternal('root', '/ws', { role: 'explorer' });
+    expect(created().provider).toBe('claude-code');
+    svc.setProviderVersionCheck(null);
+  });
+});
+
+describe('NIB.31: the folder a session may run its project tests in comes from its own row', () => {
+  it('worktree first, else workspace; a folder gone from disk, a relative path or an unknown session is refused', async () => {
+    const fs = await import('node:fs');
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'nib31-'));
+    const workspace = path.join(tmp, 'repo');
+    const worktreeA = path.join(tmp, 'repo_worktrees', 'team-a');
+    const worktreeB = path.join(tmp, 'repo_worktrees', 'team-b');
+    for (const dir of [workspace, worktreeA, worktreeB]) fs.mkdirSync(dir, { recursive: true });
+    const rows: Record<string, unknown> = {
+      'reviewer-a': { id: 'reviewer-a', workspacePath: workspace, worktreePath: worktreeA },
+      'reviewer-b': { id: 'reviewer-b', workspacePath: workspace, worktreePath: worktreeB },
+      shared: { id: 'shared', workspacePath: workspace, worktreePath: null },
+      gone: { id: 'gone', workspacePath: workspace, worktreePath: path.join(tmp, 'repo_worktrees', 'deleted') },
+      relative: { id: 'relative', workspacePath: 'repo', worktreePath: null },
+    };
+    vi.mocked(AISessionsRepository.get).mockImplementation(async (id: string) => (rows[id] ?? null) as never);
+    const svc = service();
+    try {
+      expect(await svc.resolveSessionWorkspaceRoot('reviewer-a')).toBe(worktreeA);
+      expect(await svc.resolveSessionWorkspaceRoot('reviewer-b')).toBe(worktreeB);
+      expect(await svc.resolveSessionWorkspaceRoot('shared')).toBe(workspace);
+      expect(await svc.resolveSessionWorkspaceRoot('gone')).toBeNull();
+      expect(await svc.resolveSessionWorkspaceRoot('relative')).toBeNull();
+      expect(await svc.resolveSessionWorkspaceRoot('unknown')).toBeNull();
+      expect(await svc.resolveSessionWorkspaceRoot('')).toBeNull();
+      vi.mocked(AISessionsRepository.get).mockImplementation(async () => { throw new Error('db locked'); });
+      expect(await svc.resolveSessionWorkspaceRoot('reviewer-a')).toBeNull();
+    } finally {
+      try { fs.rmSync(tmp, { recursive: true, force: true }); } catch { /* Windows may hold the dir briefly */ }
     }
   });
 });

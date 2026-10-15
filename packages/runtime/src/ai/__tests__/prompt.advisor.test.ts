@@ -128,14 +128,15 @@ describe('coordinator policy: the independent advisor', () => {
     expect(coordinator).toContain('it may question the manifest itself');
     expect(coordinator).toContain('It replaces neither the architect (it plans nothing) nor the reviewer (review before done applies as before), and it never implements or corrects anything');
     expect(coordinator).toContain('It gains no authority by disagreeing');
-    expect(coordinator).toContain('Create one only when you explicitly decide a second opinion is worth its cost, never by default or on every task');
-    for (const signal of ['a critical task', 'an architecture change', 'security or permissions', 'persistence or data', 'a migration', 'a public contract', 'an irreversible behavior', 'a conflict between members\' findings', 'or the user asked for a second opinion']) {
+    expect(coordinator).toContain('Create one only when a second opinion is worth its cost, never on every task and never for trivialities. You MUST create an advisor before concluding, unless it is explicitly impossible (its provider unavailable, the budget exhausted; say which), in any of these situations: a material architecture change; a change of a public contract; a migration of data or formats; security or authorization; persistence or concurrency; a promotion from shadow to production; a risk of divergence from a legacy system or oracle; a material conflict between the architect and the reviewer; a Tool Manifest with `independentReview` level `required`; or the user asked for a second opinion.');
+    expect(coordinator).toContain('When the manifest says `recommended`, create the advisor by default and diverge only with a recorded justification; `optional` is your call; `none` needs nothing.');
+    for (const signal of ['a material architecture change', 'a change of a public contract', 'a migration of data or formats', 'security or authorization', 'persistence or concurrency', 'a promotion from shadow to production', 'a risk of divergence from a legacy system or oracle', 'a material conflict between the architect and the reviewer', 'a Tool Manifest with `independentReview` level `required`', 'or the user asked for a second opinion']) {
       expect(coordinator, signal).toContain(signal);
     }
   });
 
   it('independentReview in a manifest is a recommendation: no level creates a session, required blocks nothing, a divergence is recorded', () => {
-    expect(coordinator).toContain('A manifest may carry `independentReview` (level none, optional, recommended or required, with a reason): that is the architect\'s recommendation and nothing more; no level creates an advisor, `required` blocks nothing');
+    expect(coordinator).toContain("A manifest's `independentReview` is the architect's recommendation and nothing more: no level creates an advisor by itself, `required` blocks nothing in the host");
     expect(coordinator).toContain('when you decide against a recommended or required one, say so in one line and record it as a Team Note (decision)');
     const noNotes = buildTeamModeAddendum('claude', false);
     expect(noNotes).toContain('### Independent advisor');
@@ -191,7 +192,10 @@ describe('coordinator policy: the independent advisor', () => {
     expect(section).toContain('The advisor\'s provider is a role default decided by the host, never by you: omit `provider` and `model` and you get it.');
     expect(section).toContain('Name a provider only when the user asked for it or authorized it, since it may need that provider enabled and may cost them');
     expect(section).toContain('the host accepts only a provider it can keep read-only (today `claude-code` and `openai-codex`, the latter only when the user has enabled it and is signed in to it, on its own login, never a key), and refuses any other, or one that is not available, with an explicit "provider unavailable" error, creates nothing and never falls back to another provider by itself');
-    expect(section).toContain('report that refusal to the user as it is, and only create the advisor on its role default when a same-provider second opinion is acceptable, saying so');
+    // Codex unavailable: fail-closed, reported, never silently replaced by Claude (item 9).
+    expect(section).toContain('When the advisor\'s default provider is unavailable, report that refusal to the user as it is and do not substitute another provider silently');
+    expect(section).toContain('a same-provider second opinion (`provider` `claude-code` with model `claude-code:opus`) is a deliberate choice you make only when the user asked for or authorized it, and you then say it ran on the same provider');
+    expect(section).not.toContain('only create the advisor on its role default');
     expect(section).toContain('The creation result (`providerDiversity`, null when the creator is not the team root) and the member\'s [Child Session Update] (its "Provider:" line, always compared against the root) say whether the advisor ran on the same provider as you');
     expect(section).toContain('never report an opinion as "independent by provider" or "from a different model family" when it did, or when that is unknown; say it is an independent opinion on the same provider');
     // The member's own contract is provider-neutral: the same text whatever provider runs it.

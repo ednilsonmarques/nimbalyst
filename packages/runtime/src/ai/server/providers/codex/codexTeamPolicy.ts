@@ -64,24 +64,17 @@ export function describeUnsupportedCodexScope(scope: ChildToolScope, reason: 'sc
 }
 
 /**
- * Codex's own fixed set of commands it runs without asking under the
- * `untrusted` approval policy (its "known safe" list: reads and listings
- * only). Named in the member's instructions so a read member knows how it
- * reads on this provider, and in the coordinator's update so nobody is told
- * the member had no shell at all.
- */
-export const CODEX_KNOWN_SAFE_READ_COMMANDS = 'ls, cat, head, tail, wc, nl, pwd, grep, rg, find, sed -n, git status / log / diff / show';
-
-/**
  * The provider adapter's transport note for a restricted member: how the
  * provider-neutral contract ("read-only tools, no shell, no edits") maps onto
- * this provider, where reading IS the shell tool. Behaviour only: the host
- * refuses everything else whether or not the model reads this.
+ * this provider. The member's Codex process runs with its shell tool switched
+ * off on every OS (codexRestrictedProcess.ts, verified through config/read),
+ * so reading is the host's workspace-confined read tools. Behaviour only: the
+ * host refuses everything else whether or not the model reads this.
  */
 export function buildCodexReadAccessNote(scope: CodexRestrictedToolScope): string {
   return `
 ### Reading on this provider
-Read files with the Nimbalyst tools \`read_file\`, \`list_files\` and \`search_files\` (MCP server \`nimbalyst\`): they are your read access here, confined to the workspace, and they need no approval. Do not use your shell to read: on this host every command of yours is refused (at most Codex's own known-safe read-only commands, ${CODEX_KNOWN_SAFE_READ_COMMANDS}, may run on some platforms, never anything else). Everything beyond reading is withheld by the host and never granted: any command, any file change or patch, any permission escalation and any approval request are refused automatically, no dialog ever reaches the user, so do not wait for one and do not ask for one; web search is off; the Nimbalyst tools listed to you are the complete set${scope === 'review' ? ' (the workspace test runner among them)' : ''}. A refused command was outside your access, not a failure to retry.`;
+Read files with the Nimbalyst tools \`read_file\`, \`list_files\` and \`search_files\` (MCP server \`nimbalyst\`): they are your read access here, confined to the workspace, and they need no approval. You have no shell on this host: it is switched off for read members, so do not try to run commands. Everything beyond reading is withheld by the host and never granted: any file change or patch, any permission escalation and any approval request are refused automatically, no dialog ever reaches the user, so do not wait for one and do not ask for one; web search is off; the Nimbalyst tools listed to you are the complete set${scope === 'review' ? ' (the workspace test runner among them)' : ''}. A refused request was outside your access, not a failure to retry.`;
 }
 
 // ---- The user's own Codex configuration ----

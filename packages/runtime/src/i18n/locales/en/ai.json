@@ -78,7 +78,14 @@
     "expandRawTerminal": "Expand raw terminal",
     "rawTerminal": "Raw terminal",
     "waitForTurnToSwitchModel": "Wait for the current turn to finish before switching models",
-    "teamModelBelowRecommended": "Team mode coordinator is below the recommended model (Opus or Fable)."
+    "teamModelBelowRecommended": "Team mode coordinator is below the recommended model (Opus or Fable).",
+    "thinking": "Thinking...",
+    "waitingForAgents_zero": "Waiting for {{count}} agents to complete...",
+    "waitingForAgents_one": "Waiting for {{count}} agent to complete...",
+    "waitingForAgents_other": "Waiting for {{count}} agents to complete...",
+    "waitingForSessions_zero": "Waiting for {{count}} sessions to complete...",
+    "waitingForSessions_one": "Waiting for {{count}} session to complete...",
+    "waitingForSessions_other": "Waiting for {{count}} sessions to complete..."
   },
   "modelPicker": {
     "selectModel": "Select Model",

@@ -153,27 +153,28 @@ test('reports each advisor with provider, model, effort, scope, mission presence
   const report = summarizeTeamPilot(fixture());
   const [team] = report.teams;
   assert.equal(team.provider, 'claude-code');
+  // The advisor on its role default (OpenAI Codex) under a claude-code root: provider-diverse.
   assert.deepEqual(team.advisorSessions, [
-    { id: 'adv-1', provider: 'claude-code', model: 'claude-code:opus', effort: 'high', scope: 'read', hasMission: true, providerDiversity: 'same' },
+    { id: 'adv-1', provider: 'openai-codex', model: 'openai-codex:gpt-6.1-sol', effort: 'high', scope: 'read', hasMission: true, providerDiversity: 'diverse' },
   ]);
-  assert.equal(team.advisorsProviderDiverse, 0);
-  assert.equal(report.totals.advisorsProviderDiverse, 0);
+  assert.equal(team.advisorsProviderDiverse, 1);
+  assert.equal(report.totals.advisorsProviderDiverse, 1);
   const markdown = renderMarkdown(report);
-  assert.match(markdown, /\| Consultores Independentes em provider diferente da raiz \| 0 \|/);
+  assert.match(markdown, /\| Consultores Independentes em provider diferente da raiz \| 1 \|/);
   assert.match(markdown, /## Consultores Independentes/);
-  assert.match(markdown, /\| root-tea \| adv-1 \| claude-code \| claude-code \| claude-code:opus \| high \| read \| sim \| não \(mesmo provider da raiz\) \|/);
+  assert.match(markdown, /\| root-tea \| adv-1 \| openai-codex \| claude-code \| openai-codex:gpt-6\.1-sol \| high \| read \| sim \| sim \(provider diferente\) \|/);
   // The mission text itself is never carried, only that one exists.
   assert.equal(JSON.stringify(report).includes(SECRET), false);
 
-  // An advisor on another provider than its root is the provider-diverse case.
-  const diverse = fixture();
-  const advisor = diverse.sessions.find((session) => session.id === 'adv-1');
-  advisor.provider = 'openai-codex';
-  advisor.model = 'openai-codex:gpt-5.5';
-  const diverseReport = summarizeTeamPilot(diverse);
-  assert.deepEqual(diverseReport.teams[0].advisorSessions[0], { id: 'adv-1', provider: 'openai-codex', model: 'openai-codex:gpt-5.5', effort: 'high', scope: 'read', hasMission: true, providerDiversity: 'diverse' });
-  assert.equal(diverseReport.totals.advisorsProviderDiverse, 1);
-  assert.match(renderMarkdown(diverseReport), /\| root-tea \| adv-1 \| openai-codex \| claude-code \| openai-codex:gpt-5.5 \| high \| read \| sim \| sim \(provider diferente\) \|/);
+  // An advisor deliberately put on the root's provider is the same-provider case, reported as such.
+  const same = fixture();
+  const advisor = same.sessions.find((session) => session.id === 'adv-1');
+  advisor.provider = 'claude-code';
+  advisor.model = 'claude-code:opus';
+  const sameReport = summarizeTeamPilot(same);
+  assert.deepEqual(sameReport.teams[0].advisorSessions[0], { id: 'adv-1', provider: 'claude-code', model: 'claude-code:opus', effort: 'high', scope: 'read', hasMission: true, providerDiversity: 'same' });
+  assert.equal(sameReport.totals.advisorsProviderDiverse, 0);
+  assert.match(renderMarkdown(sameReport), /\| root-tea \| adv-1 \| claude-code \| claude-code \| claude-code:opus \| high \| read \| sim \| não \(mesmo provider da raiz\) \|/);
 
   // Rows without a provider (older databases) report the diversity as unavailable, never as same or diverse.
   const unknown = fixture();
@@ -246,7 +247,7 @@ test('reads a real database read-only without creating anything in it', async ()
     assert.equal(report.totals.tools.Agent, 1);
     assert.equal(report.totals.teamNotes, 3);
     assert.equal(report.totals.manifests, 1);
-    assert.equal(report.teams[0].advisorSessions[0].providerDiversity, 'same');
+    assert.equal(report.teams[0].advisorSessions[0].providerDiversity, 'diverse');
 
     const after = new DatabaseSync(dbPath, { readOnly: true });
     assert.deepEqual(after.prepare("SELECT name FROM sqlite_master ORDER BY name").all(), tablesBefore);

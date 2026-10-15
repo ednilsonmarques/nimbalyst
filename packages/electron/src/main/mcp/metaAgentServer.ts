@@ -148,6 +148,12 @@ interface MetaAgentToolFns {
     metaSessionId: string,
     workspaceId: string
   ) => Promise<string>;
+  /**
+   * The folder a session is authorized to run the project's tests in: its own
+   * worktree, else its workspace, from the session row (NIB.31). Null when the
+   * session is unknown or has no workspace, which refuses the run.
+   */
+  resolveSessionWorkspaceRoot: (sessionId: string) => Promise<string | null>;
 }
 
 let toolFns: MetaAgentToolFns | null = null;
@@ -655,11 +661,17 @@ export async function dispatchMetaAgentTool(
       return toolFns.respondToPrompt(aiSessionId, effectiveWorkspaceId, (args ?? {}) as RespondToPromptArgs);
     case "list_spawned_sessions":
       return toolFns.listSpawnedSessions(aiSessionId, effectiveWorkspaceId);
-    case "run_project_tests":
-      // Runs in the caller's own directory (a worktree caller passes its
-      // worktree), never a path the agent supplies.
+    case "run_project_tests": {
+      // Runs in the folder the SESSION ROW authorizes (its worktree, else its
+      // workspace), never a path the agent supplies and never the transport's
+      // query parameter: a reviewer attached to a team worktree tests that
+      // worktree (NIB.31), and a session the host cannot resolve runs nothing.
+      const authorizedRoot = await toolFns.resolveSessionWorkspaceRoot(aiSessionId);
+      if (!authorizedRoot) {
+        return JSON.stringify({ status: 'unavailable', reason: 'The calling session has no authorized workspace on record, so no test command can run.' }, null, 2);
+      }
       return JSON.stringify(
-        await runProjectTests(aiSessionId, workspaceId, {
+        await runProjectTests(aiSessionId, authorizedRoot, {
           projectPath: args?.projectPath,
           testPath: args?.testPath,
           timeoutSeconds: args?.timeoutSeconds,
@@ -667,6 +679,7 @@ export async function dispatchMetaAgentTool(
         null,
         2,
       );
+    }
     case "ecc_catalog_lookup": {
       // Passive catalog data, no session or workspace involved: the caller's
       // scope policy (toolPolicy.ts) decides who may call it. A missing or

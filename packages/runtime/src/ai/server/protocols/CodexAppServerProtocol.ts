@@ -1,5 +1,19 @@
-import { buildCodexThreadStartParams } from './codexAppServer/threadConfiguration';
+import { buildCodexThreadStartParams, readRestrictedToolScope } from './codexAppServer/threadConfiguration';
 import { validateCodexSandbox } from './codexAppServer/validateCodexSandbox';
+import {
+  RestrictedCodexRespawn,
+  buildRestrictedCodexProcessOverrides,
+  codexProcessOverrideArgs,
+  describeRestrictedCodexViolation,
+  isOnlyEnablementViolations,
+  mergeCodexUserConfigTables,
+  readRestrictedUserTables,
+  stillEnabledCodexUserEntries,
+  verifyCodexCliVersion,
+  verifyRestrictedCodexEffectiveConfig,
+  verifyRestrictedCodexHooks,
+  verifyRestrictedCodexThreadStart,
+} from '../providers/codex/codexRestrictedProcess';
 import { previewForLog, summarizeNotificationParams, extractNotificationRouting } from './codexAppServer/notificationDiagnostics';
 /**
  * OpenAI Codex app-server Protocol Adapter
@@ -165,10 +179,11 @@ export class CodexAppServerProtocol implements AgentProtocol {
    * start a fresh thread. Each `ProtocolSession` owns its child process.
    */
   async createSession(options: SessionOptions): Promise<ProtocolSession> {
-    const raw = await this.spawnAndInit(options);
+    const raw = await this.spawnAndInitRestricted(options);
     const startParams = buildCodexThreadStartParams(raw.options);
     const startResponse = await raw.client.request<ThreadStartResponse>('thread/start', startParams).then(async response => {
       await validateCodexSandbox(response.sandbox, startParams.sandbox, raw.client);
+      this.assertRestrictedThreadEcho(raw, response);
       return response;
     }).catch(error => {
       this.killChild(raw);
@@ -202,7 +217,7 @@ export class CodexAppServerProtocol implements AgentProtocol {
    * Nimbalyst-internal tool that ships through the nimbalyst MCP servers.
    */
   async resumeSession(sessionId: string, options: SessionOptions): Promise<ProtocolSession> {
-    const raw = await this.spawnAndInit(options);
+    const raw = await this.spawnAndInitRestricted(options);
     const startParams = buildCodexThreadStartParams(raw.options);
     // ThreadResumeParams accepts the same surface as ThreadStartParams minus
     // `ephemeral`. Drop it and replace `model: null` with omission so codex
@@ -218,6 +233,7 @@ export class CodexAppServerProtocol implements AgentProtocol {
     try {
       const resumeResponse = await raw.client.request<ThreadResumeResponse>('thread/resume', resumeParams);
       await validateCodexSandbox(resumeResponse.sandbox, startParams.sandbox, raw.client);
+      this.assertRestrictedThreadEcho(raw, resumeResponse);
       raw.threadId = resumeResponse?.thread?.id ?? sessionId;
       // console.log('[CODEX][APPSERVER] thread resumed:', raw.threadId);
       return { id: raw.threadId, platform: this.platform, raw: raw as unknown as ProtocolSession['raw'] };
@@ -469,12 +485,56 @@ export class CodexAppServerProtocol implements AgentProtocol {
     return raw;
   }
 
+  /**
+   * A restricted thread (Team mode read/review member) runs only when the
+   * app-server's own echo says so: `untrusted` approvals, read-only sandbox
+   * without network, the member's model, and a CLI version this integration
+   * was verified with. Throws (the caller kills the child) otherwise.
+   */
+  private assertRestrictedThreadEcho(raw: AppServerSessionRaw, response: ThreadStartResponse): void {
+    if (!readRestrictedToolScope(raw.options)) return;
+    const expectedModel = typeof raw.options.raw?.restrictedExpectedModel === 'string' ? raw.options.raw.restrictedExpectedModel : null;
+    const violations = verifyRestrictedCodexThreadStart(response, expectedModel);
+    if (violations.length > 0) {
+      throw new Error(`[CodexAppServer] ${describeRestrictedCodexViolation('thread', violations)}`);
+    }
+    const version = verifyCodexCliVersion(response, raw.initResponse?.userAgent);
+    if (version.violation) {
+      throw new Error(`[CodexAppServer] ${describeRestrictedCodexViolation('version', [version.violation])}`);
+    }
+  }
+
   private killChild(raw: AppServerSessionRaw): void {
     if (raw.cleanupStarted) return;
     raw.cleanupStarted = true;
     raw.shellTracking?.dispose();
     try { raw.client.close('cleanup'); } catch { /* noop */ }
     this.terminateProcessTree(raw.child);
+  }
+
+  /**
+   * spawnAndInit, with one respawn for a restricted child whose effective
+   * configuration revealed user servers/plugins the host's disabled set
+   * missed (codexRestrictedProcess.ts): the second child is spawned with the
+   * union and verified again; it is never retried a second time.
+   */
+  private async spawnAndInitRestricted(options: SessionOptions): Promise<AppServerSessionRaw> {
+    try {
+      return await this.spawnAndInit(options);
+    } catch (error) {
+      if (!(error instanceof RestrictedCodexRespawn)) throw error;
+      const tables = mergeCodexUserConfigTables(readRestrictedUserTables(options.raw), error.discovered);
+      console.warn('[CodexAppServer] restricted child respawned once with a completed disabled set:', JSON.stringify(error.discovered));
+      return this.spawnAndInit({
+        ...options,
+        raw: {
+          ...options.raw,
+          restrictedUserTables: tables,
+          codexProcessOverrides: buildRestrictedCodexProcessOverrides(tables),
+          restrictedRespawned: true,
+        },
+      });
+    }
   }
 
   private async spawnAndInit(options: SessionOptions): Promise<AppServerSessionRaw> {
@@ -488,7 +548,13 @@ export class CodexAppServerProtocol implements AgentProtocol {
     //   cwd,
     //   helperPathEntries: getCodexVendorPathEntries(binary),
     // });
-    const child = spawn(binary, [...(tracking?.args ?? []), 'app-server', '--listen', 'stdio://'], {
+    // A restricted Team mode member's process-level overrides (`-c key=value`,
+    // codexRestrictedProcess.ts) bind the whole child; they are verified
+    // through `config/read` right after initialize, below.
+    const processOverrides = Array.isArray(options.raw?.codexProcessOverrides)
+      ? (options.raw?.codexProcessOverrides as unknown[]).filter((entry): entry is string => typeof entry === 'string')
+      : [];
+    const child = spawn(binary, [...(tracking?.args ?? []), 'app-server', '--listen', 'stdio://', ...codexProcessOverrideArgs(processOverrides)], {
       env,
       cwd,
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -538,6 +604,44 @@ export class CodexAppServerProtocol implements AgentProtocol {
       const rawError = `${err instanceof Error ? err.message : String(err)}${tail ? `\nstderr tail: ${tail}` : ''}`;
       const configHint = describeCodexConfigError(rawError);
       throw new Error(`[CodexAppServer] initialize failed: ${rawError}${configHint ? `\n\n${configHint}` : ''}`);
+    }
+    // A restricted thread runs only in a process whose effective configuration
+    // shows the restriction in force: no notify hook, no hooks, no web search,
+    // no collaboration sub-agents, every user MCP server and plugin disabled.
+    // Fail-closed: a configuration that cannot be read or that still enables
+    // any of them ends the session before any thread exists.
+    if (readRestrictedToolScope(options)) {
+      let violations: string[];
+      let effectiveConfig: unknown = null;
+      try {
+        const effective = await client.request<{ config?: unknown }>('config/read', {});
+        effectiveConfig = effective?.config;
+        violations = verifyRestrictedCodexEffectiveConfig(effectiveConfig);
+      } catch (error) {
+        violations = [`config/read failed: ${error instanceof Error ? error.message : String(error)}`];
+      }
+      // Only user servers/plugins left enabled (a bundled plugin no config
+      // file names): respawn ONCE with them added to the disabled set. Any
+      // other violation, or the second attempt, is a refusal.
+      if (isOnlyEnablementViolations(violations) && options.raw?.restrictedRespawned !== true) {
+        try { client.close('restricted configuration incomplete; respawning'); } catch { /* noop */ }
+        this.terminateProcessTree(child);
+        tracking?.registration.dispose();
+        throw new RestrictedCodexRespawn(stillEnabledCodexUserEntries(effectiveConfig));
+      }
+      if (violations.length === 0) {
+        try {
+          violations = verifyRestrictedCodexHooks(await client.request('hooks/list', { cwds: [cwd] }));
+        } catch (error) {
+          violations = [`hooks/list failed: ${error instanceof Error ? error.message : String(error)}`];
+        }
+      }
+      if (violations.length > 0) {
+        try { client.close('restricted configuration not in effect'); } catch { /* noop */ }
+        this.terminateProcessTree(child);
+        tracking?.registration.dispose();
+        throw new Error(`[CodexAppServer] ${describeRestrictedCodexViolation('process', violations)}`);
+      }
     }
     this.registerSkillRoots(client, cwd);
     const raw: AppServerSessionRaw = {

@@ -1,6 +1,6 @@
 import { usesHostSuppliedToolLoop } from './providerResolution';
 import type { ChildToolScope } from '@nimbalyst/runtime/ai/server/providers/claudeCode/toolPolicy';
-import { CODEX_ENFORCED_TOOL_SCOPES, CODEX_KNOWN_SAFE_READ_COMMANDS } from '@nimbalyst/runtime/ai/server/providers/codex/codexTeamPolicy';
+import { CODEX_ENFORCED_TOOL_SCOPES } from '@nimbalyst/runtime/ai/server/providers/codex/codexTeamPolicy';
 
 /**
  * Whether the child's provider actually withholds the tools its `toolScope`
@@ -31,8 +31,8 @@ export function isToolScopeEnforced(provider: string | null | undefined, scope?:
 
 /**
  * The tool-scope line of a [Child Session Update]. Null for full/absent scopes.
- * On openai-codex a read/review child reads through its shell's known-safe
- * commands, so the line says that instead of "no shell": the coordinator is
+ * On openai-codex a read/review child has its shell switched off and reads
+ * through the host's read tools; the line says so: the coordinator is
  * never told something false about what the member could do.
  */
 export function describeChildToolScope(
@@ -45,7 +45,7 @@ export function describeChildToolScope(
     return `Tool scope: ${toolScope} was requested, but this child's provider does not enforce it. Verify any claim that it ran, built, tested, or edited something against "Files modified" and its result.`;
   }
   const shell = provider === 'openai-codex'
-    ? `shell (every command, patch and approval of this child was refused by the host, at most Codex's own known-safe read-only commands, ${CODEX_KNOWN_SAFE_READ_COMMANDS}, could run; it read files through the host's read_file, list_files and search_files tools)`
+    ? 'shell (its Codex shell tool was switched off and verified off by the host; every patch and approval was refused; it read files only through the host\'s workspace-confined read_file, list_files and search_files tools)'
     : 'shell (run_command/Bash)';
   if (toolScope === 'review') {
     return `Tool scope: review (this child had NO file-writing, ${shell}, delegation, skill, hook, web (WebFetch/WebSearch), external MCP (user servers, plugins, claude.ai connectors) or app-changing tools; its only execution was the workspace's own tests through run_project_tests). Any other claim it ran, built or fetched something is false; "Files modified" above is the complete list of files it changed.`;

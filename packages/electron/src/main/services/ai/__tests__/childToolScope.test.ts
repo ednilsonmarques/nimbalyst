@@ -51,11 +51,12 @@ describe('describeChildToolScope', () => {
     expect(describeChildToolScope('review', false)).toContain('does not enforce it');
   });
 
-  it('on openai-codex a read or review child is described with its shell\'s known-safe read commands, never as having no shell', () => {
+  it('on openai-codex a read or review child is described as having its shell switched off and verified off, reading only through the host\'s confined read tools', () => {
     const read = describeChildToolScope('read', true, 'openai-codex')!;
-    expect(read).toContain('Tool scope: read (this child had NO file-writing, shell (every command, patch and approval of this child was refused by the host, at most Codex\'s own known-safe read-only commands, ls, cat, head, tail, wc, nl, pwd, grep, rg, find, sed -n, git status / log / diff / show, could run; it read files through the host\'s read_file, list_files and search_files tools), delegation, skill, hook, web');
+    expect(read).toContain('Tool scope: read (this child had NO file-writing, shell (its Codex shell tool was switched off and verified off by the host; every patch and approval was refused; it read files only through the host\'s workspace-confined read_file, list_files and search_files tools), delegation, skill, hook, web');
+    expect(read).not.toContain('known-safe');
     expect(read).not.toContain('shell (run_command/Bash)');
-    expect(describeChildToolScope('review', true, 'openai-codex')).toContain('it read files through the host\'s read_file, list_files and search_files tools');
+    expect(describeChildToolScope('review', true, 'openai-codex')).toContain('it read files only through the host\'s workspace-confined read_file, list_files and search_files tools');
     expect(describeChildToolScope('read', true, 'claude-code')).toContain('shell (run_command/Bash)');
     expect(describeChildToolScope('read', true)).toContain('shell (run_command/Bash)');
   });

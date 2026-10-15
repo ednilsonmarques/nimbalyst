@@ -138,9 +138,41 @@ export function teamRoleProvider(role: TeamRole): string {
   return TEAM_ROLE_DEFAULTS[role].provider;
 }
 
-/** Every role defaults to Sonnet, except the architect and the advisor (Opus); always a model of the role's provider. */
+/** Every role defaults to Sonnet, except the architect (Opus) and the advisor (Codex); always a model of the role's provider. */
 export function teamRoleDefaultModel(role: TeamRole): string {
   return TEAM_ROLE_DEFAULTS[role].model;
+}
+
+/**
+ * The checkout a new child runs in, decided by the host from the caller's
+ * persisted session row, never from text the agent wrote (NIB.49): the
+ * caller's worktree when it has one, the main checkout otherwise. Only a
+ * request for a brand-new worktree of its own (spawn_session `useWorktree`)
+ * opts out. create_session of a Team mode member and spawn_session both go
+ * through here, so a member never lands in the main checkout while its team
+ * works in a worktree.
+ */
+export function callerWorktreeRequest(
+  callerWorktreeId: string | null | undefined,
+  ownNewWorktree: boolean,
+): { useWorktree: boolean; worktreeId: string | undefined } {
+  if (ownNewWorktree) return { useWorktree: true, worktreeId: undefined };
+  return { useWorktree: false, worktreeId: callerWorktreeId || undefined };
+}
+
+/**
+ * The model a role gets on a given provider when the caller names the
+ * provider but no model (NIB.46 item 7.6). On the role's own provider it is
+ * the role default. For the advisor named onto the team provider (a same-
+ * provider second opinion, a deliberate choice) it is the architect's model,
+ * Opus: a second opinion must be at least as strong as what it questions,
+ * never the caller's Sonnet or whatever the coordinator happens to run. Any
+ * other provider: null, the provider's own default applies.
+ */
+export function teamRoleModelForProvider(role: TeamRole, provider: string | null | undefined): string | null {
+  if (!provider || provider === teamRoleProvider(role)) return teamRoleDefaultModel(role);
+  if (role === 'advisor' && provider === TEAM_PROVIDER) return TEAM_ARCHITECT_MODEL;
+  return null;
 }
 
 /** Reviewers, architects and advisors think harder (high); every other role runs at medium. */
@@ -163,8 +195,16 @@ function teamRoleProviderLabel(role: TeamRole): string {
   return role === 'advisor' ? 'Independent Advisor' : `Team member (${role})`;
 }
 
-/** Whether a provider's turn is known to enforce a member's scope and role policy; the reason when it is not. */
-export type TeamProviderReadiness = { readonly ready: true } | { readonly ready: false; readonly reason: string };
+/**
+ * Whether a provider's turn is known to enforce a member's scope and role
+ * policy; the reason when it is not, and its cause: `scope`/`policy` are
+ * facts about the host's code (a role default pointing at such a provider is
+ * a configuration error of teamPolicy.ts), `transport` is the user's setting
+ * (the provider could restrict a thread on its other transport).
+ */
+export type TeamProviderReadiness =
+  | { readonly ready: true }
+  | { readonly ready: false; readonly reason: string; readonly cause?: 'scope' | 'policy' | 'transport' };
 
 /**
  * Where a member's provider came from: the role default (nothing named), a
@@ -233,6 +273,13 @@ export interface TeamMemberProviderCheck extends TeamMemberProviderRequest {
    * check against (the model is validated at its first turn instead).
    */
   model?: { id: string; known: boolean | null };
+  /**
+   * The provider's CLI version as the host could learn it before creating the
+   * member, and the minimum this integration needs (NIB.46 item 7.8). Absent
+   * when no version check applies to the provider; a null `version` means the
+   * host could not learn it, which refuses the member like a missing sign-in.
+   */
+  cliVersion?: { version: string | null; minimum: string; supported: boolean | null };
 }
 
 /**
@@ -257,11 +304,14 @@ export function teamMemberProviderRefusal(check: TeamMemberProviderCheck): strin
       ? 'inherited from the caller\'s model (inheritModel)'
       : 'the role default';
   const onDefault = `create it on the role default (${defaultProvider}), and say in your report that the member ran on that provider`;
+  const readinessCause = check.readiness.ready ? null : check.readiness.cause ?? null;
   const retryOnDefault = check.origin === 'explicit'
     ? `omit provider and model to ${onDefault}`
     : check.origin === 'inherited'
       ? `omit inheritModel (and model) to ${onDefault}`
-      : 'this is a configuration error of the role defaults (teamPolicy.ts); report it to the user';
+      : readinessCause === 'transport'
+        ? `the default provider of the ${label} (${check.provider}) is configured on a transport that cannot keep a Team mode member read-only; the user may switch that provider's transport setting, and until then report to the user that the ${label}'s default provider is unavailable`
+        : 'this is a configuration error of the role defaults (teamPolicy.ts); report it to the user';
   const noFallback = (retry: string) => `No session was created and no fallback to another provider was applied: ${retry}.`;
   // A refused role default is the role's own default provider being
   // unavailable: the host substitutes nothing; a member on another provider
@@ -288,6 +338,12 @@ export function teamMemberProviderRefusal(check: TeamMemberProviderCheck): strin
   if (check.authenticated === null) {
     return `${label} provider unavailable: ${check.provider} (${origin}) could not be verified as signed in. ${noFallback(defaultUnavailable ? `try again; otherwise ${defaultUnavailable}` : 'try again, or report it to the user')}`;
   }
+  if (check.cliVersion && check.cliVersion.supported !== true) {
+    const detail = check.cliVersion.version
+      ? `its CLI is version ${check.cliVersion.version}, older than the minimum ${check.cliVersion.minimum} this integration was verified with`
+      : `its CLI version could not be verified (minimum ${check.cliVersion.minimum})`;
+    return `${label} provider unavailable: ${check.provider} (${origin}) ${detail}. ${noFallback(`the user may update ${check.provider} (nothing is installed or updated automatically); ${defaultUnavailable ?? 'or you may create the member on the role default'}`)}`;
+  }
   return null;
 }
 
@@ -300,15 +356,8 @@ export function teamMemberProviderRefusal(check: TeamMemberProviderCheck): strin
  * still an independent opinion (own session, context and instructions), only
  * not independent by provider, and must never be reported as such.
  */
-export type TeamProviderDiversity = 'diverse' | 'same';
-
-export function teamProviderDiversity(
-  memberProvider: string | null | undefined,
-  rootProvider: string | null | undefined,
-): TeamProviderDiversity | null {
-  if (!memberProvider || !rootProvider) return null;
-  return memberProvider === rootProvider ? 'same' : 'diverse';
-}
+export type { TeamProviderDiversity } from '@nimbalyst/runtime/ai/server/providers/teamProviderDiversity.mjs';
+export { teamProviderDiversity } from '@nimbalyst/runtime/ai/server/providers/teamProviderDiversity.mjs';
 
 /** Scopes that restrict a child and are stored in `metadata.toolScope`. */
 export type StoredChildToolScope = 'read' | 'review' | 'write';

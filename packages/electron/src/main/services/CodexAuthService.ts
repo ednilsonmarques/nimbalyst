@@ -21,6 +21,7 @@ import {
   resolveCodexBinaryPath,
 } from '@nimbalyst/runtime/ai/server/protocols/codexAppServer/codexAppServerBinary';
 import { resolvePackagedCodexBinaryPath } from '@nimbalyst/runtime/ai/server/providers/codex/codexBinaryPath';
+import { parseCodexCliVersion } from '@nimbalyst/runtime/ai/server/providers/codex/codexRestrictedProcess';
 import type {
   AccountAuthMode,
   AccountKind,
@@ -96,6 +97,30 @@ class CodexAuthServiceImpl {
   async getRateLimits(): Promise<AccountRateLimitsReadResponse> {
     const client = await this.ensureChild();
     return client.request<AccountRateLimitsReadResponse>('account/rateLimits/read', {});
+  }
+
+  private cliUserAgent: string | null = null;
+
+  /**
+   * The Codex CLI version, parsed from the long-lived child's `initialize`
+   * user agent (Team mode readiness, NIB.46 item 7.8). Null when the child
+   * could not be started or reported no version: unverified, never assumed.
+   */
+  async getCliVersion(): Promise<string | null> {
+    await this.ensureChild();
+    return parseCodexCliVersion(this.cliUserAgent);
+  }
+
+  /**
+   * The effective configuration of the user's Codex (`config/read` on the
+   * long-lived child): the authoritative list of the user's MCP servers and
+   * plugins, bundled ones included, which the TOML files alone do not show.
+   * Throws when it cannot be read; the caller decides what that means.
+   */
+  async readEffectiveConfig(): Promise<unknown> {
+    const client = await this.ensureChild();
+    const response = await client.request<{ config?: unknown }>('config/read', {});
+    return response?.config ?? null;
   }
 
   onRateLimitsUpdated(listener: () => void): () => void {
@@ -191,10 +216,13 @@ class CodexAuthServiceImpl {
       });
       client.onNotification((method, params) => this.handleNotification(method, params));
       try {
-        await client.request<InitializeResponse>('initialize', {
+        const init = await client.request<InitializeResponse>('initialize', {
           clientInfo: { name: 'nimbalyst-auth', version: process.env.NIMBALYST_VERSION ?? '0.0.0' },
           capabilities: { experimentalApi: true },
         });
+        // `nimbalyst-auth/0.159.2 (Windows ...)`: the CLI's own version, the
+        // only cheap way to learn it before a Team mode member is created.
+        this.cliUserAgent = typeof init?.userAgent === 'string' ? init.userAgent : null;
         client.notify('initialized', {});
       } catch (err) {
         try { client.close('init failed'); } catch { /* noop */ }

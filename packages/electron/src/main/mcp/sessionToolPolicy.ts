@@ -42,12 +42,32 @@ export interface SessionToolPolicy {
   role: TeamRole | null;
   /** The session's provider (`ai_sessions.provider`); null when unknown. */
   provider: string | null;
+  /**
+   * The folder the session is authorized to read through the host's file
+   * reads: its worktree, else its workspace, from the session row (NIB.46
+   * item 7.1). Never the transport's query parameter. Null when unknown,
+   * which refuses the reads.
+   */
+  workspaceRoot: string | null;
 }
 
 /** No scope, no team role: every tool of the endpoint, as before this module. */
-export const UNRESTRICTED_TOOL_POLICY: Readonly<SessionToolPolicy> = Object.freeze({ scope: 'full', role: null, provider: null });
+export const UNRESTRICTED_TOOL_POLICY: Readonly<SessionToolPolicy> = Object.freeze({ scope: 'full', role: null, provider: null, workspaceRoot: null });
 
-type SessionRowLike = { metadata?: unknown; agentRole?: string | null; provider?: string | null } | null | undefined;
+type SessionRowLike = {
+  metadata?: unknown;
+  agentRole?: string | null;
+  provider?: string | null;
+  workspacePath?: string | null;
+  worktreePath?: string | null;
+} | null | undefined;
+
+/** The folder a session row authorizes: its worktree, else its workspace; null when it has neither. */
+export function sessionAuthorizedRoot(row: SessionRowLike): string | null {
+  const worktree = typeof row?.worktreePath === 'string' && row.worktreePath ? row.worktreePath : null;
+  const workspace = typeof row?.workspacePath === 'string' && row.workspacePath ? row.workspacePath : null;
+  return worktree ?? workspace;
+}
 type SessionRowReader = (sessionId: string) => Promise<SessionRowLike>;
 
 const defaultReader: SessionRowReader = (sessionId) => AISessionsRepository.get(sessionId) as Promise<SessionRowLike>;
@@ -101,6 +121,7 @@ export function resolveSessionToolPolicy(sessionId: string | undefined): Promise
           scope: resolveChildToolScope(metadata?.toolScope),
           role: team.teamChild?.role ?? null,
           provider: typeof session.provider === 'string' && session.provider ? session.provider : null,
+          workspaceRoot: sessionAuthorizedRoot(session),
         };
       })
       .catch((error: unknown): never => {

@@ -12,7 +12,7 @@ import {
   readToolManifestField,
   type ToolManifestStatus,
 } from '@nimbalyst/runtime/plugins/TrackerPlugin/models/toolManifestRules';
-import { getTrackerDisplayRef } from '../../mcp/tools/trackerToolResult';
+import { isLocalIssueKey, isLocalKeyReference } from '../../../shared/localIssueKey';
 import type { NativeTrackerCreatePayload } from '../tracker/createNativeTrackerItem';
 import type { StoredToolManifest, ToolManifestCreatePayload, ToolManifestTrackerPort } from './toolManifests';
 
@@ -28,10 +28,27 @@ function stringField(item: TrackerItem, name: string): string | null {
   return typeof value === 'string' && value ? value : null;
 }
 
+/**
+ * The reference the host hands the coordinator for a manifest item: the one
+ * tracker_get / tracker_update resolve for it. The published issue key when
+ * the item has one (global), else the item id. Never the local number
+ * (`WOK.1`): it resolves only together with the workspace that numbered it
+ * and changes when the workspace prefix is reassigned, so it is a display
+ * label, not a reference (pilot G, 2026-10-14). Fail-closed: an item with
+ * neither has no reference, and none is invented.
+ */
+export function trackerItemReference(item: { id?: unknown; issueKey?: unknown }): string {
+  const issueKey = typeof item.issueKey === 'string' ? item.issueKey.trim() : '';
+  if (issueKey && !isLocalIssueKey(issueKey) && !isLocalKeyReference(issueKey)) return issueKey;
+  const id = typeof item.id === 'string' ? item.id.trim() : '';
+  if (id) return id;
+  throw new Error('tracker item has neither an issue key nor an id to reference');
+}
+
 export function toStoredToolManifest(item: TrackerItem): StoredToolManifest {
   return {
     itemId: item.id,
-    ref: getTrackerDisplayRef(item),
+    ref: trackerItemReference(item),
     manifestId: stringField(item, 'manifestId'),
     status: typeof item.status === 'string' ? item.status : null,
     architectSessionId: stringField(item, 'architectSessionId'),
@@ -64,7 +81,7 @@ export function buildToolManifestTrackerPort(docService: ManifestDocumentService
         description: payload.description,
         customFields: payload.customFields,
       });
-      return { itemId: item.id, ref: getTrackerDisplayRef(item) };
+      return { itemId: item.id, ref: trackerItemReference(item) };
     },
     async setStatus(itemId: string, status: ToolManifestStatus): Promise<void> {
       await docService.updateTrackerItem(itemId, { status });

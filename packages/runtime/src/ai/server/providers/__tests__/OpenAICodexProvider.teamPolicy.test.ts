@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { OpenAICodexProvider } from '../OpenAICodexProvider';
 import { configureMcpServers } from '../../services/mcpServerConfig';
 import { AISessionsRepository } from '../../../../storage/repositories/AISessionsRepository';
+import { AgentMessagesRepository } from '../../../../storage/repositories/AgentMessagesRepository';
 
 vi.mock('openai', () => ({
   default: class {
@@ -28,8 +29,11 @@ const ROWS: Record<string, { agentRole: string; metadata: Record<string, unknown
   plain: { agentRole: 'standard', metadata: {} },
 };
 
-function makeProvider(transport: 'app-server' | 'sdk') {
-  const createSession = vi.fn(async (_options: any) => ({ id: 'thread-under-test', platform: 'mock', raw: {} }));
+function makeProvider(
+  transport: 'app-server' | 'sdk',
+  createSessionImpl: (options: any) => Promise<unknown> = async () => ({ id: 'thread-under-test', platform: 'mock', raw: {} }),
+) {
+  const createSession = vi.fn(createSessionImpl);
   const protocol = {
     platform: 'mock',
     createSession,
@@ -105,10 +109,15 @@ describe('OpenAICodexProvider: a restricted Team mode member', () => {
     expect(options.raw.systemPrompt).toContain('## Team Member: Independent Advisor');
     expect(options.raw.systemPrompt).toContain(MISSION);
     expect(options.raw.systemPrompt).toContain('You have read-only tools and nothing else');
-    // The provider adapter's transport note: reading on Codex is the shell's known-safe commands.
+    // The provider adapter's transport note: no shell on this provider, reading is the host's tools.
     expect(options.raw.systemPrompt).toContain('### Reading on this provider');
     expect(options.raw.systemPrompt).toContain('Read files with the Nimbalyst tools `read_file`, `list_files` and `search_files`');
-    expect(options.raw.systemPrompt).toContain('Do not use your shell to read: on this host every command of yours is refused');
+    expect(options.raw.systemPrompt).toContain('You have no shell on this host: it is switched off for read members');
+    // The process-level restriction the protocol spawns the child with and verifies (NIB.46 7.2/7.4/7.5).
+    expect(options.raw.codexProcessOverrides).toEqual(expect.arrayContaining(['features.shell_tool=false', 'features.unified_exec=false', 'notify=[]', 'hooks={}', 'web_search="disabled"', 'features.multi_agent=false', 'mcp_servers={"node_repl"={enabled=false}}', 'plugins={"browser@openai-bundled"={enabled=false},"computer-use@openai-bundled"={enabled=false}}']));
+    // The tables the overrides were built from, for the protocol's single respawn.
+    expect(options.raw.restrictedUserTables).toEqual({ mcpServerNames: ['node_repl'], pluginIds: ['browser@openai-bundled', 'computer-use@openai-bundled'] });
+    expect(options.raw.restrictedExpectedModel).toBeTruthy();
     expect(options.raw.systemPrompt.indexOf('## Team Member: Independent Advisor')).toBeLessThan(options.raw.systemPrompt.indexOf('### Reading on this provider'));
     expect(provider.isRestrictedThread('thread-under-test')).toBe(true);
     // Fail-closed while a restricted thread exists: an unknown thread (a
@@ -174,5 +183,67 @@ describe('OpenAICodexProvider: a restricted Team mode member', () => {
     const chunks = await drain(provider, 'adv');
     expect(chunks.some((chunk) => chunk.type === 'error' && String(chunk.error).includes('Could not read the Codex configuration'))).toBe(true);
     expect(createSession).not.toHaveBeenCalled();
+  });
+});
+
+describe('OpenAICodexProvider: a refused restricted member leaves the error in its own transcript', () => {
+  // A background member has no window for the ai:error event; its coordinator
+  // reads the transcript (pilot G, 2026-10-14: the refusal was invisible).
+  let rows: Array<{ sessionId: string; direction: string; content: string }>;
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    configureMcpServers({ mcpServerPort: 41001, extensionDevServerPort: null });
+    OpenAICodexProvider.setCodexTransportResolver(null);
+    OpenAICodexProvider.setCodexAuthGate(null);
+    OpenAICodexProvider.setTrustChecker(() => ({ trusted: true, mode: 'bypass-all' as any, allowAllUsesClassifier: true }));
+    OpenAICodexProvider.setSecurityLogger(() => {});
+    OpenAICodexProvider.setCodexUserConfigLoader(async () => ({ mcpServerNames: [], pluginIds: ['browser@openai-bundled'] }));
+    AISessionsRepository.setStore({ get: async (id: string) => ROWS[id] ?? null } as never);
+    rows = [];
+    AgentMessagesRepository.setStore({ create: async (message: any) => { rows.push(message); } } as never);
+  });
+
+  afterEach(() => {
+    AgentMessagesRepository.clearStore();
+    AISessionsRepository.clearStore();
+    OpenAICodexProvider.setCodexUserConfigLoader(null);
+    OpenAICodexProvider.setTrustChecker(null as never);
+  });
+
+  function errorRows(sessionId: string) {
+    return rows
+      .filter((row) => row.sessionId === sessionId && row.direction === 'output')
+      .map((row) => JSON.parse(row.content))
+      .filter((content) => content.method === 'error');
+  }
+
+  it('the protocol\'s process-verification refusal is persisted as an error row the transcript and get_session_result read', async () => {
+    const refusal = '[CodexAppServer] Restricted Team mode member refused: the Codex process did not take the restricted configuration (plugins.computer-use@openai-bundled is still enabled). No turn was run; update or reconfigure Codex and try again.';
+    const { provider, createSession } = makeProvider('app-server', async () => { throw new Error(refusal); });
+    await provider.initialize({ apiKey: 'test-key', model: 'openai-codex:gpt-6.1-sol' });
+    const chunks = await drain(provider, 'adv');
+    expect(createSession).toHaveBeenCalledTimes(1);
+    expect(chunks).toContainEqual({ type: 'error', error: refusal });
+    expect(errorRows('adv')).toEqual([{ method: 'error', params: { error: { message: refusal } }, error: refusal }]);
+  });
+
+  it('a scope Codex cannot enforce is persisted too, before any thread starts', async () => {
+    const { provider, createSession } = makeProvider('app-server');
+    await provider.initialize({ apiKey: 'test-key', model: 'openai-codex:gpt-6.1-sol' });
+    await drain(provider, 'writer');
+    expect(createSession).not.toHaveBeenCalled();
+    const persisted = errorRows('writer');
+    expect(persisted).toHaveLength(1);
+    expect(persisted[0].error).toContain('cannot be enforced on OpenAI Codex');
+  });
+
+  it('the legacy SDK transport refusal is persisted too', async () => {
+    const { provider } = makeProvider('sdk');
+    await provider.initialize({ apiKey: 'test-key', model: 'openai-codex:gpt-6.1-sol' });
+    await drain(provider, 'adv');
+    const persisted = errorRows('adv');
+    expect(persisted).toHaveLength(1);
+    expect(persisted[0].error).toContain('only through the app-server transport');
   });
 });

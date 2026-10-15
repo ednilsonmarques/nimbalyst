@@ -64,17 +64,18 @@ export function teamMemberProviderReadiness(
   if (scope === 'full' ? !isToolScopeEnforced(provider) : !isToolScopeEnforced(provider, scope)) {
     return {
       ready: false,
+      cause: 'scope',
       reason: scope === 'full'
         ? 'does not enforce every member tool scope in Team mode, so a full-tools member cannot run on it (it may run only members at a scope it enforces)'
         : `does not enforce a member's ${scope} tool scope in Team mode: only a provider that withholds the denied tools can run a member at that scope`,
     };
   }
   if (!isTeamRolePolicyEnforced(provider)) {
-    return { ready: false, reason: 'does not apply the team role policy in its turn (the role\'s tool denials and the member contract in the system prompt)' };
+    return { ready: false, cause: 'policy', reason: 'does not apply the team role policy in its turn (the role\'s tool denials and the member contract in the system prompt)' };
   }
   const transport = resolveTeamProviderTransport(provider);
   if (provider === 'openai-codex' && transport !== 'app-server') {
-    return { ready: false, reason: `runs on the "${transport}" transport, and only its app-server transport can restrict a thread (switch the OpenAI Codex transport setting to app-server)` };
+    return { ready: false, cause: 'transport', reason: `runs on the "${transport}" transport, and only its app-server transport can restrict a thread (switch the OpenAI Codex transport setting to app-server)` };
   }
   return { ready: true };
 }

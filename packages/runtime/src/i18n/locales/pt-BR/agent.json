@@ -405,7 +405,30 @@
     "scopeTitle": "Escopo de ferramentas: {{scope}}",
     "missionTitle": "Missão: {{mission}}",
     "providerTitle": "Provedor diferente do Coordenador: {{provider}}",
-    "soloHint": "Sessão em Modo Equipe trabalhando sem membros."
+    "soloHint": "Sessão em Modo Equipe trabalhando sem membros.",
+    "roleCounts": {
+      "coordinator_zero": "{{count}} Coordenadores",
+      "coordinator_one": "{{count}} Coordenador",
+      "coordinator_other": "{{count}} Coordenadores",
+      "explorer_zero": "{{count}} Explorers",
+      "explorer_one": "{{count}} Explorer",
+      "explorer_other": "{{count}} Explorers",
+      "implementer_zero": "{{count}} Implementers",
+      "implementer_one": "{{count}} Implementer",
+      "implementer_other": "{{count}} Implementers",
+      "reviewer_zero": "{{count}} Reviewers",
+      "reviewer_one": "{{count}} Reviewer",
+      "reviewer_other": "{{count}} Reviewers",
+      "architect_zero": "{{count}} Arquitetos",
+      "architect_one": "{{count}} Arquiteto",
+      "architect_other": "{{count}} Arquitetos",
+      "advisor_zero": "{{count}} Consultores Independentes",
+      "advisor_one": "{{count}} Consultor Independente",
+      "advisor_other": "{{count}} Consultores Independentes",
+      "other_zero": "{{count}} Membros",
+      "other_one": "{{count}} Membro",
+      "other_other": "{{count}} Membros"
+    }
   },
   "mcpStatus": {
     "secondsAgo": "há {{count}} s",

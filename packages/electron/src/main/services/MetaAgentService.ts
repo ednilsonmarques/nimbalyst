@@ -1,5 +1,8 @@
 import type { OrchestrationMessageKind } from '@nimbalyst/runtime/ai/server/types';
 import path from 'path';
+import * as fs from 'fs';
+import { CODEX_MIN_CLI_VERSION, isCodexCliVersionSupported } from '@nimbalyst/runtime/ai/server/providers/codex/codexRestrictedProcess';
+import { sessionAuthorizedRoot } from '../mcp/sessionToolPolicy';
 import { BrowserWindow } from 'electron';
 import { randomUUID } from 'crypto';
 import { safeHandle } from '../utils/ipcRegistry';
@@ -41,10 +44,11 @@ import { broadcastSessionCreated } from './session/broadcastSessionCreated';
 import { extractMessageText, extractUserPrompts } from './metaAgentMessageText';
 import { TEAM_CHILD_METADATA_KEY, resolveTeamContext, type TeamRole } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 import { renderArchitectReportForUpdate } from '@nimbalyst/runtime/ai/server/providers/toolManifest';
-import { TOOL_MANIFEST_NOTICE_CONTEXT, buildToolManifestNotice, persistArchitectManifest } from './team/toolManifests';
+import { TOOL_MANIFEST_NOTICE_CONTEXT, buildToolManifestNotice, buildToolManifestReference, persistArchitectManifest } from './team/toolManifests';
 import { withToolManifestTrackerPort } from './team/toolManifestTrackerPort';
 import {
   buildTeamChild,
+  callerWorktreeRequest,
   resolveRequestedTeamMission,
   resolveRequestedTeamRole,
   resolveTeamCaller,
@@ -55,6 +59,8 @@ import {
   teamMemberProviderRefusal,
   teamProviderDiversity,
   teamRoleProvider,
+  teamRoleModelForProvider,
+  type TeamMemberProviderCheck,
   TEAM_LIMITS,
   TeamBudgetReachedError,
   type TeamCaller,
@@ -64,6 +70,15 @@ import {
 import { describeTeamMemberProvider, teamMemberProviderReadiness } from './team/teamProviders';
 import { resolveChildToolScope, type ChildToolScope } from '@nimbalyst/runtime/ai/server/providers/claudeCode/toolPolicy';
 import { isKnownCodexModelId } from '@nimbalyst/runtime/ai/server/providers/codex/codexModelCatalog';
+
+function isExistingDirectory(candidate: string | null | undefined): boolean {
+  if (!candidate) return false;
+  try {
+    return fs.statSync(candidate).isDirectory();
+  } catch {
+    return false;
+  }
+}
 
 /**
  * The model a member creation named, for the provider check: its bare id and
@@ -393,6 +408,7 @@ export class MetaAgentService {
           this.respondToPrompt(workspaceId, args),
         listSpawnedSessions: (metaSessionId, workspaceId) =>
           this.listSpawnedSessionsJson(metaSessionId, workspaceId),
+        resolveSessionWorkspaceRoot: (sessionId) => this.resolveSessionWorkspaceRoot(sessionId),
       });
 
       // MCP consolidation Phase 7: meta-agent tools are served by the unified
@@ -585,7 +601,16 @@ export class MetaAgentService {
     workspaceId: string,
     args: CreateChildSessionArgs
   ): Promise<string> {
-    const result = await this.createChildSessionInternal(metaSessionId, workspaceId, args);
+    // NIB.49: a Team mode member runs in its caller's checkout, as with
+    // spawn_session. The worktree comes from the caller's persisted row; a
+    // worktree id or a new-worktree request in the agent's arguments is
+    // ignored, so no text can move a member to another checkout.
+    const caller = await AISessionsRepository.get(metaSessionId);
+    const team = caller ? resolveTeamCaller(metaSessionId, caller.metadata, caller.agentRole) : null;
+    const effectiveArgs = team
+      ? { ...args, ...callerWorktreeRequest((caller as { worktreeId?: string | null }).worktreeId, false) }
+      : args;
+    const result = await this.createChildSessionInternal(metaSessionId, workspaceId, effectiveArgs);
     return JSON.stringify(result, null, 2);
   }
 
@@ -823,8 +848,11 @@ export class MetaAgentService {
     // stays on the role's provider (naming that same provider changes nothing);
     // a member named onto another provider without a model gets that
     // provider's own default below.
+    // A provider named without a model gets the role's model FOR THAT
+    // PROVIDER (teamRoleModelForProvider in teamPolicy.ts decides it per
+    // role), never the caller's model (NIB.46 item 7.6).
     const requestedModel = args.model
-      ?? (applyRoleModelDefaults && (!args.provider || args.provider === teamRoleProvider(teamRole!)) ? teamRoleDefaultModel(teamRole!) : undefined);
+      ?? (applyRoleModelDefaults ? teamRoleModelForProvider(teamRole!, args.provider || null) ?? undefined : undefined);
     const effortLevelForChild = requestedEffortLevel
       ?? (applyRoleModelDefaults ? teamRoleDefaultEffort(teamRole!) : undefined);
 
@@ -927,6 +955,12 @@ export class MetaAgentService {
       }
       if (existingWorktree.isArchived) {
         throw new Error(`Worktree ${args.worktreeId} is archived`);
+      }
+      // NIB.49: a team's worktree that is gone from disk refuses the member
+      // instead of letting it run somewhere else; never a silent fallback to
+      // the main checkout.
+      if (team && !isExistingDirectory(existingWorktree.path)) {
+        throw new Error(`The team's worktree ${existingWorktree.path} no longer exists on disk, so the member was not created; it is never moved to the main checkout instead.`);
       }
 
       worktreeId = existingWorktree.id;
@@ -1091,6 +1125,7 @@ export class MetaAgentService {
       enabled: foreign ? this.resolveProviderEnabled(request.provider, workspacePath) : null,
       authenticated: foreign ? await this.resolveProviderAuthenticated(request.provider) : undefined,
       model: describeRequestedMemberModel(request.provider, requestedModel),
+      cliVersion: await this.resolveProviderCliVersion(request.provider),
     });
     if (refusal) throw new Error(refusal);
   }
@@ -1130,6 +1165,48 @@ export class MetaAgentService {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Host wiring: the CLI version of a provider, when the integration needs a
+   * minimum (NIB.46 item 7.8). `undefined` means no check applies to the
+   * provider; null means the host could not learn it (refused as unverified).
+   */
+  private providerVersionCheck: ((provider: string) => Promise<string | null | undefined>) | null = null;
+
+  public setProviderVersionCheck(check: ((provider: string) => Promise<string | null | undefined>) | null): void {
+    this.providerVersionCheck = check;
+  }
+
+  private async resolveProviderCliVersion(provider: string): Promise<TeamMemberProviderCheck['cliVersion']> {
+    if (provider !== 'openai-codex') return undefined;
+    if (!this.providerVersionCheck) return undefined;
+    let version: string | null | undefined;
+    try {
+      version = await this.providerVersionCheck(provider);
+    } catch {
+      version = null;
+    }
+    if (version === undefined) return undefined;
+    return { version, minimum: CODEX_MIN_CLI_VERSION, supported: version ? isCodexCliVersionSupported(version) : null };
+  }
+
+  /**
+   * The folder a session is authorized to run the project's tests in: its own
+   * worktree, else its workspace, from the session row; never a path the
+   * agent or the transport supplies (NIB.31). Null when the session is
+   * unknown, has no workspace on record, or that folder is not on disk.
+   */
+  public async resolveSessionWorkspaceRoot(sessionId: string): Promise<string | null> {
+    let session: { workspacePath?: string | null; worktreePath?: string | null } | null = null;
+    try {
+      session = await AISessionsRepository.get(sessionId);
+    } catch {
+      return null;
+    }
+    const root = sessionAuthorizedRoot(session);
+    if (!root || !path.isAbsolute(root)) return null;
+    return isExistingDirectory(root) ? root : null;
   }
 
   private async spawnSession(
@@ -1202,15 +1279,15 @@ export class MetaAgentService {
     // work in the same checkout I'm in"; without this, a child created from a
     // worktree-resident parent silently lands in the project root and any edits
     // it makes go to the wrong tree. Skip inheritance only when the caller
-    // explicitly asked for a brand-new worktree (useWorktree=true).
-    const inheritedWorktreeId =
-      !args.useWorktree && parent.worktreeId ? parent.worktreeId : undefined;
+    // explicitly asked for a brand-new worktree (useWorktree=true). Same rule
+    // as create_session of a Team mode member (callerWorktreeRequest).
+    const worktreeRequest = callerWorktreeRequest(parent.worktreeId, !!args.useWorktree);
 
     const childResult = await this.createChildSessionInternal(parentSessionId, workspaceKey, {
       title: args.title,
       prompt: args.prompt,
-      useWorktree: !!args.useWorktree,
-      worktreeId: inheritedWorktreeId,
+      useWorktree: worktreeRequest.useWorktree,
+      worktreeId: worktreeRequest.worktreeId,
       model: effectiveModel,
       effortLevel: args.effortLevel,
       role: args.role,
@@ -1785,20 +1862,29 @@ export class MetaAgentService {
       // item (content from the report, provenance from the sessions) and the
       // coordinator gets a short notice naming the item. TOO LONG and INVALID
       // reports are never stored, and persistence never blocks the update.
-      const manifestNotice = architectReport
+      const manifestStored = architectReport
         ? await this.persistArchitectManifestNotice({
           id: session.id,
           model: (session as { model?: string | null }).model ?? null,
           metadata: session.metadata,
           agentRole: session.agentRole,
-        }, result, metaSession.workspacePath)
+        }, result, metaSession.workspacePath,
+        // The coordinator's tracker tools are scoped to the workspace its
+        // turns run in (its worktree when it has one, MessageStreamingHandler),
+        // so the item is stored there or tracker_get/update cannot find it
+        // (pilot G, 2026-10-14: stored under the project, looked up under the worktree).
+        (await this.resolveSessionWorkspaceRoot(metaSession.id)) ?? metaSession.workspacePath)
         : null;
+      const manifestNotice = manifestStored?.notice ?? null;
 
       if (result.pendingPrompt?.promptType === 'exit_plan_mode_request') {
         await this.ensurePlanTrackerItem(session.workspacePath, sessionId, result);
       }
 
-      const notification = this.buildNotificationMessage(eventType, result, architectReport);
+      // NIB.25: the update itself names the stored item, so the coordinator
+      // has the reference in the same turn as the manifest; the notice row
+      // below still renders the Tool Manifest card.
+      const notification = this.buildNotificationMessage(eventType, result, architectReport, manifestStored?.reference ?? null);
 
       // Supersede rather than append. The signature dedup above only collapses
       // duplicates within a single child turn (it resets on
@@ -1827,9 +1913,12 @@ export class MetaAgentService {
       );
 
       // Phase 1B: the notice follows the update it refers to, as a system status
-      // line (TOOL_MANIFEST_NOTICE_CONTEXT). Both ride the single queue drive
-      // below: one wake, the update's turn first (it carries the manifest), the
-      // notice chained right after it (or consumed in-turn through the inbox).
+      // line (TOOL_MANIFEST_NOTICE_CONTEXT) that renders the Tool Manifest card.
+      // Both ride the single queue drive below: one wake, the update's turn
+      // first. A system row never coalesces with agent rows nor enters the
+      // inbox (coalesceQueuedPrompts.ts, sessionInbox.ts), so the notice is
+      // its own short turn after the update; the coordinator already has the
+      // item reference from the update itself (NIB.25), so nothing waits on it.
       if (manifestNotice) {
         // A notice the coordinator has not read yet is stale once a newer
         // manifest of the same architect is stored: the new notice says what
@@ -1868,7 +1957,9 @@ export class MetaAgentService {
     session: { id: string; model?: string | null; metadata?: unknown; agentRole?: string | null },
     result: SessionResultData,
     workspacePath: string,
-  ): Promise<string | null> {
+    /** Where the item is stored: the workspace the coordinator's tracker tools resolve references in. */
+    trackerWorkspacePath: string = workspacePath,
+  ): Promise<{ notice: string; reference: string } | null> {
     try {
       if (!isTrackersAgentToolsEnabled(workspacePath)) return null;
       const rootSessionId = resolveTeamContext(session.metadata as Record<string, unknown> | undefined, session.agentRole).teamChild?.rootSessionId ?? null;
@@ -1880,7 +1971,7 @@ export class MetaAgentService {
       const settle = {
         sessionId: session.id,
         rootSessionId,
-        workspacePath,
+        workspacePath: trackerWorkspacePath,
         model: session.model ?? null,
         finalOutput: finalOutput ?? result.fullResponse ?? null,
       };
@@ -1888,7 +1979,7 @@ export class MetaAgentService {
       // numbers the new one, so two architects settling together must queue.
       const previous = this.manifestPersistenceChains.get(rootSessionId) ?? Promise.resolve();
       const chained = previous.catch(() => undefined).then(() =>
-        withToolManifestTrackerPort(workspacePath, (port) => persistArchitectManifest(settle, port)));
+        withToolManifestTrackerPort(trackerWorkspacePath, (port) => persistArchitectManifest(settle, port)));
       this.manifestPersistenceChains.set(rootSessionId, chained);
       const release = () => {
         if (this.manifestPersistenceChains.get(rootSessionId) === chained) this.manifestPersistenceChains.delete(rootSessionId);
@@ -1916,7 +2007,7 @@ export class MetaAgentService {
         }
         return null;
       }
-      return buildToolManifestNotice(outcome);
+      return { notice: buildToolManifestNotice(outcome), reference: buildToolManifestReference(outcome) };
     } catch (error) {
       console.error(`[MetaAgentService] Tool Manifest persistence failed for session ${session.id}:`, error);
       return null;
@@ -1927,7 +2018,9 @@ export class MetaAgentService {
     eventType: 'session:completed' | 'session:error' | 'session:waiting' | 'session:interrupted',
     result: SessionResultData,
     // Phase 1A.1: render the final output as an architect's manifest (see renderArchitectFinalReport).
-    architectReport: boolean = false
+    architectReport: boolean = false,
+    // NIB.25: the stored manifest's reference line, when one was stored for this update.
+    manifestReference: string | null = null,
   ): string {
     const lines = [
       '[Child Session Update]',
@@ -1935,6 +2028,7 @@ export class MetaAgentService {
       `Status: ${result.status}`,
       `Event: ${eventType}`,
     ];
+    if (manifestReference) lines.push(manifestReference);
 
     // The original task is deliberately not repeated here. This notification is
     // only ever queued to the child's `createdBySessionId`, which is the session

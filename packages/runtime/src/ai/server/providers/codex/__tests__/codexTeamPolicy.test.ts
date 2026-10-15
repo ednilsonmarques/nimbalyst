@@ -10,7 +10,6 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   CODEX_ENFORCED_TOOL_SCOPES,
-  CODEX_KNOWN_SAFE_READ_COMMANDS,
   buildCodexReadAccessNote,
   buildRestrictedCodexConfigOverrides,
   describeUnsupportedCodexScope,
@@ -81,8 +80,8 @@ describe('resolveCodexRestriction', () => {
     const note = buildCodexReadAccessNote('read');
     expect(note).toContain('### Reading on this provider');
     expect(note).toContain('Read files with the Nimbalyst tools `read_file`, `list_files` and `search_files` (MCP server `nimbalyst`)');
-    expect(note).toContain('Do not use your shell to read: on this host every command of yours is refused');
-    expect(note).toContain(CODEX_KNOWN_SAFE_READ_COMMANDS);
+    expect(note).toContain('You have no shell on this host: it is switched off for read members, so do not try to run commands.');
+    expect(note).not.toContain('known-safe');
     expect(note).toContain('refused automatically, no dialog ever reaches the user, so do not wait for one and do not ask for one');
     expect(note).toContain('web search is off');
     expect(note).not.toMatch(/advisor|architect|reviewer|explorer/i);

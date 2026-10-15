@@ -82,6 +82,11 @@ export function observeCodexShellTracking(
 export async function prepareCodexShellTracking(options: SessionOptions) {
   const id = options.raw?.nimbalystSessionId;
   if (!host || typeof id !== 'string' || !id || !options.workspacePath) return undefined;
+  // A restricted Team mode member has no shell and runs no hooks at all
+  // (codexRestrictedProcess.ts): there is nothing to attribute, and these
+  // hooks would be exactly the side channel the restriction removes.
+  const restricted = options.raw?.restrictedToolScope;
+  if (restricted === 'read' || restricted === 'review') return undefined;
   const registration = await host(id, options.workspacePath);
   if (!registration) return undefined;
   const matcher = '^(Bash|apply_patch|mcp__.*)$';

@@ -45,7 +45,9 @@ export const TeamSummaryLine = memo(function TeamSummaryLine({ members, showRole
     if (activeCount > 0) parts.push(t('agentTeam.activeCount', { count: activeCount }));
     if (showRoles) {
       for (const { role, count } of summary.roles) {
-        parts.push(t('agentTeam.roleCount', { count, role: t(`agentTeam.roles.${role}`) }));
+        // Pluralized per role by i18next (`roleCounts.<role>_one` / `_other`):
+        // "2 Consultores Independentes", never a concatenated "s".
+        parts.push(t(`agentTeam.roleCounts.${role}`, { count, defaultValue: t('agentTeam.roleCount', { count, role: t(`agentTeam.roles.${role}`) }) }));
       }
     }
   }

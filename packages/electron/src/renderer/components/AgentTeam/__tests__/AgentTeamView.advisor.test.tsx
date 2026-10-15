@@ -134,7 +134,8 @@ describe('Team view: the independent advisor', () => {
   it('the team header counts the advisors by role, in Portuguese', () => {
     renderView();
     const header = screen.getByTestId('agent-team-header-root-a');
-    expect(header.textContent).toContain('2 Consultor Independente');
+    expect(header.textContent).toContain('2 Consultores Independentes');
+    expect(header.textContent).not.toContain('2 Consultor Independente');
     expect(header.textContent).toContain('1 Reviewer');
   });
 

@@ -1,4 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 
 // Phase 1B: when an architect settles with a valid Tool Manifest, the host
 // stores it as a `tool-manifest` tracker item and the coordinator gets, after
@@ -225,6 +228,9 @@ describe('architect settle with a Tool Manifest (Phase 1B)', () => {
     expect(updateCall[0]).toBe('parent-1');
     expect(updateCall[1]).toMatch(/^\[Child Session Update\]/);
     expect(updateCall[1]).toContain(message);
+    // NIB.25: the reference travels in the update itself, so the coordinator has it in the same turn as the manifest.
+    expect(updateCall[1]).toContain('Tool Manifest stored: M-1 as tracker item NIB.31 (status draft). Accept it with tracker_update { id: "NIB.31", status: "accepted" }');
+    expect(updateCall[1].indexOf('Tool Manifest stored:')).toBeLessThan(updateCall[1].indexOf('Recent messages:'));
     expect(updateCall[3]).toMatchObject({ promptProvenance: { actor: 'agent', origin: 'child-session-update', messageKind: 'report', originSessionId: 'child-1' } });
     expect(noticeCall[0]).toBe('parent-1');
     expect(noticeCall[1]).toMatch(/^\[Tool Manifest\] M-1 from the architect \(session child-1\) is stored as tracker item NIB\.31 \(confidence: high\)/);
@@ -253,6 +259,8 @@ describe('architect settle with a Tool Manifest (Phase 1B)', () => {
     expect(tracker.created).toHaveLength(1);
     expect(queued).toHaveBeenCalledTimes(1);
     expect(queued.mock.calls[0][1]).toMatch(/^\[Child Session Update\]/);
+    // NIB.25: nothing was stored again, so the replayed update names no stored item either.
+    expect(queued.mock.calls[0][1]).not.toContain('Tool Manifest stored:');
     expect(triggered).toHaveBeenCalledTimes(1);
     expect(deletePendingToolManifestNotices).toHaveBeenCalledTimes(1);
   });
@@ -268,6 +276,8 @@ describe('architect settle with a Tool Manifest (Phase 1B)', () => {
     expect(queued).toHaveBeenCalledTimes(2);
     expect(queued.mock.calls[1][1]).toContain('[Tool Manifest] M-2 from the architect');
     expect(queued.mock.calls[1][1]).toContain('It supersedes M-1 (NIB.31), now marked superseded: M-2 is the current manifest.');
+    // NIB.25: the update of M-2 already names the new item and what it superseded.
+    expect(queued.mock.calls[0][1]).toMatch(/Tool Manifest stored: M-2 as tracker item \S+ \(status draft; supersedes M-1 \(NIB\.31\)\)/);
   });
 
   it('a TOO LONG or INVALID report is never stored; the update still carries the notice line of 1A.1', async () => {
@@ -275,11 +285,13 @@ describe('architect settle with a Tool Manifest (Phase 1B)', () => {
     expect(tracker.created).toHaveLength(0);
     expect(queued).toHaveBeenCalledTimes(1);
     expect(queued.mock.calls[0][1]).toContain('MANIFEST TOO LONG');
+    expect(queued.mock.calls[0][1]).not.toContain('Tool Manifest stored:');
     queued.mockClear();
     await settle(manifestMessage(VALID_YAML.replace('confidence: high', 'confidence: certain')));
     expect(tracker.created).toHaveLength(0);
     expect(queued).toHaveBeenCalledTimes(1);
     expect(queued.mock.calls[0][1]).toContain('MANIFEST INVALID');
+    expect(queued.mock.calls[0][1]).not.toContain('Tool Manifest stored:');
   });
 
   it('only an architect\'s settle is a manifest: an implementer reporting the same text stores nothing', async () => {
@@ -300,6 +312,24 @@ describe('architect settle with a Tool Manifest (Phase 1B)', () => {
     await settle(manifestMessage(), row({ workspacePath: '/elsewhere' }));
     expect(tracker.created).toHaveLength(1);
     expect(tracker.workspaces).toEqual(['/ws']);
+  });
+
+  it('a coordinator running in a worktree gets the item stored in that worktree, where its tracker tools resolve references (pilot G)', async () => {
+    const worktree = fs.mkdtempSync(path.join(os.tmpdir(), 'team-root-worktree-'));
+    try {
+      const worktreeParent = { ...parentRow, worktreeId: 'wt-1', worktreePath: worktree };
+      vi.mocked(AISessionsRepository.get).mockImplementation(async (id: string) => (id === 'parent-1' ? worktreeParent : row()) as never);
+      vi.mocked(AgentMessagesRepository.list).mockResolvedValue([
+        { direction: 'input', content: 'TASK', metadata: fromParent },
+        { direction: 'output', content: manifestMessage(), metadata: null },
+      ] as never);
+      await service.handleChildSessionEvent('child-1', 'session:completed');
+      expect(tracker.created).toHaveLength(1);
+      expect(tracker.workspaces).toEqual([worktree]);
+      expect(queued.mock.calls[0][1]).toContain('Tool Manifest stored: M-1 as tracker item NIB.31 (status draft)');
+    } finally {
+      fs.rmSync(worktree, { recursive: true, force: true });
+    }
   });
 
   it('two architects of one team settling together are numbered in turn: M-1 then M-2, never two M-1', async () => {

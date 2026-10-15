@@ -20,6 +20,8 @@
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { teamProviderDiversity } from '../packages/runtime/src/ai/server/providers/teamProviderDiversity.mjs';
+import { REVIEW_VERDICT_PATTERN, ADVISOR_OPINION_PATTERN } from '../packages/runtime/src/ai/server/providers/teamReportMarkers.mjs';
 
 const MEMBER_ROLES = ['explorer', 'implementer', 'reviewer', 'architect', 'advisor', 'other'];
 // Role defaults (teamPolicy.ts): Sonnet/medium, reviewer high, architect Opus/high, advisor OpenAI Codex gpt-6.1-sol/high.
@@ -41,7 +43,7 @@ const LIMIT_REFUSAL = new RegExp(
   'g',
 );
 const DECLARED_PLAN = /Team plan:[\s*]*(SOLO|TEAM)/;
-const REVIEW_VERDICT = /Verdict: (?:no blockers|blockers found)/g;
+const REVIEW_VERDICT = new RegExp(REVIEW_VERDICT_PATTERN, 'g');
 // (ADVISOR_OPINION is defined below TEXT_BLOCK: it is anchored to a text block.)
 // The architect's deliverable (toolManifest.ts) and what the coordinator said
 // about it. Both are read inside a text content block (`"type":"text","text":
@@ -55,7 +57,7 @@ const MANIFEST_DECISION = new RegExp(`${TEXT_BLOCK}Team plan:(?:[^"\\\\]|\\\\.)*
 // The advisor's opinion line (prompt.ts, buildAdvisorAddendum), counted like a
 // review verdict but only inside an assistant text block: a draft in a thinking
 // block or a quoted line inside a tool input never counts.
-const ADVISOR_OPINION = new RegExp(`${TEXT_BLOCK}Independent opinion: (?:no material objections|approved with reservations|correct before proceeding|reconsider the approach)`, 'g');
+const ADVISOR_OPINION = new RegExp(`${TEXT_BLOCK}${ADVISOR_OPINION_PATTERN}`, 'g');
 
 function shortToolName(name) {
   const parts = name.split('__');
@@ -231,7 +233,7 @@ export function summarizeTeamPilot({ sessions, messages, teamNotes, toolManifest
           effort,
           scope: member.metadata.toolScope ?? null,
           hasMission: typeof member.metadata.teamChild?.mission === 'string' && member.metadata.teamChild.mission.length > 0,
-          providerDiversity: provider && root.provider ? (provider === root.provider ? 'same' : 'diverse') : null,
+          providerDiversity: teamProviderDiversity(provider, root.provider),
         });
       }
     }

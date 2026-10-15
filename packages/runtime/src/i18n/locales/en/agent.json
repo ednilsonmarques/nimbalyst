@@ -405,7 +405,30 @@
     "scopeTitle": "Tool scope: {{scope}}",
     "missionTitle": "Mission: {{mission}}",
     "providerTitle": "Provider other than the coordinator's: {{provider}}",
-    "soloHint": "Team mode session working without members."
+    "soloHint": "Team mode session working without members.",
+    "roleCounts": {
+      "coordinator_zero": "{{count}} Coordinators",
+      "coordinator_one": "{{count}} Coordinator",
+      "coordinator_other": "{{count}} Coordinators",
+      "explorer_zero": "{{count}} Explorers",
+      "explorer_one": "{{count}} Explorer",
+      "explorer_other": "{{count}} Explorers",
+      "implementer_zero": "{{count}} Implementers",
+      "implementer_one": "{{count}} Implementer",
+      "implementer_other": "{{count}} Implementers",
+      "reviewer_zero": "{{count}} Reviewers",
+      "reviewer_one": "{{count}} Reviewer",
+      "reviewer_other": "{{count}} Reviewers",
+      "architect_zero": "{{count}} Architects",
+      "architect_one": "{{count}} Architect",
+      "architect_other": "{{count}} Architects",
+      "advisor_zero": "{{count}} Independent Advisors",
+      "advisor_one": "{{count}} Independent Advisor",
+      "advisor_other": "{{count}} Independent Advisors",
+      "other_zero": "{{count}} Members",
+      "other_one": "{{count}} Member",
+      "other_other": "{{count}} Members"
+    }
   },
   "mcpStatus": {
     "secondsAgo": "{{count}}s ago",

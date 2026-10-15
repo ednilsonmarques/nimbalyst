@@ -78,7 +78,14 @@
     "expandRawTerminal": "Expandir terminal bruto",
     "rawTerminal": "Terminal bruto",
     "waitForTurnToSwitchModel": "Aguarde o turno atual terminar antes de trocar de modelo",
-    "teamModelBelowRecommended": "O orquestrador do Modo Equipe está abaixo do modelo recomendado (Opus ou Fable)."
+    "teamModelBelowRecommended": "O orquestrador do Modo Equipe está abaixo do modelo recomendado (Opus ou Fable).",
+    "thinking": "Pensando...",
+    "waitingForAgents_zero": "Aguardando {{count}} agentes...",
+    "waitingForAgents_one": "Aguardando {{count}} agente...",
+    "waitingForAgents_other": "Aguardando {{count}} agentes...",
+    "waitingForSessions_zero": "Aguardando {{count}} sessões...",
+    "waitingForSessions_one": "Aguardando {{count}} sessão...",
+    "waitingForSessions_other": "Aguardando {{count}} sessões..."
   },
   "modelPicker": {
     "selectModel": "Selecionar modelo",

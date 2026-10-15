@@ -45,6 +45,7 @@ import { useDialog } from '../../contexts/DialogContext';
 import { FileGutter } from '../AIChat/FileGutter';
 import { recordClaudeActivity } from '../../store/listeners/claudeUsageListeners';
 import { recordCodexActivity } from '../../store/listeners/codexUsageListeners';
+import { subscribeTrackerItemsChanged } from '../../store/listeners/trackerItemsChangedListeners';
 import { PendingReviewBanner } from '../AIChat/PendingReviewBanner';
 import { WakeupBanner } from '../AIChat/WakeupBanner';
 import { McpLockdownBanner } from '../AIChat/McpLockdownBanner';
@@ -1908,8 +1909,10 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
           (id) => store.get(sessionRegistryAtom).get(id)?.title ?? null,
         );
       },
+      // Through the store, never a component-level IPC subscription
+      // (docs/IPC_LISTENERS.md): the central listener bumps an atom.
       onTrackerItemsChanged: (listener) =>
-        window.electronAPI.on('document-service:tracker-items-changed', listener),
+        subscribeTrackerItemsChanged((payload) => listener(payload as Parameters<typeof listener>[0])),
 
       // Feedback request operations. Fire-and-forget: send publishes the
       // subjects the author confirmed, creates the request, and returns. The

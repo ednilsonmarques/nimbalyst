@@ -29,10 +29,10 @@ const HOST: McpEndpointSelection = { kind: 'firstParty', configKey: 'nimbalyst-h
 const CORE: McpEndpointSelection = { kind: 'firstParty', configKey: 'nimbalyst' };
 const TRACKERS: McpEndpointSelection = { kind: 'firstParty', configKey: 'nimbalyst-trackers' };
 const EXTENSION: McpEndpointSelection = { kind: 'extension', extensionShortName: 'browser' };
-const ADVISOR_READ = { scope: 'read', role: 'advisor', provider: 'claude-code' } as const;
-const ADVISOR_CODEX = { scope: 'read', role: 'advisor', provider: 'openai-codex' } as const;
-const REVIEWER = { scope: 'review', role: 'reviewer', provider: 'claude-code' } as const;
-const IMPLEMENTER_FULL = { scope: 'full', role: 'implementer', provider: 'claude-code' } as const;
+const ADVISOR_READ = { scope: 'read', role: 'advisor', provider: 'claude-code', workspaceRoot: null } as const;
+const ADVISOR_CODEX = { scope: 'read', role: 'advisor', provider: 'openai-codex', workspaceRoot: null } as const;
+const REVIEWER = { scope: 'review', role: 'reviewer', provider: 'claude-code', workspaceRoot: null } as const;
+const IMPLEMENTER_FULL = { scope: 'full', role: 'implementer', provider: 'claude-code', workspaceRoot: null } as const;
 
 const tool = (name: string) => ({ name, description: name, inputSchema: {} });
 
@@ -80,8 +80,8 @@ describe('policy names and denials', () => {
     expect(isToolDeniedForSession(IMPLEMENTER_FULL, HOST, 'create_session')).toBe(false);
     expect(isToolDeniedForSession(IMPLEMENTER_FULL, EXTENSION, 'anything')).toBe(false);
     expect(isToolDeniedForSession(UNRESTRICTED_TOOL_POLICY, CORE, 'developer_git_commit_proposal')).toBe(false);
-    expect(isToolDeniedForSession({ scope: 'read', role: 'explorer', provider: 'claude-code' }, CORE, 'AskUserQuestion')).toBe(false);
-    expect(isToolDeniedForSession({ scope: 'read', role: 'architect', provider: 'claude-code' }, CORE, 'AskUserQuestion')).toBe(true);
+    expect(isToolDeniedForSession({ scope: 'read', role: 'explorer', provider: 'claude-code', workspaceRoot: null }, CORE, 'AskUserQuestion')).toBe(false);
+    expect(isToolDeniedForSession({ scope: 'read', role: 'architect', provider: 'claude-code', workspaceRoot: null }, CORE, 'AskUserQuestion')).toBe(true);
   });
 
   it('the host\'s file reads are allowed under read, and served only to a restricted member without native reads (not claude-code, not full, not unknown)', () => {
@@ -90,12 +90,12 @@ describe('policy names and denials', () => {
       expect(isToolDeniedForSession(ADVISOR_READ, CORE, name), name).toBe(false);
     }
     expect(servesHostReadTools(ADVISOR_CODEX)).toBe(true);
-    expect(servesHostReadTools({ scope: 'review', role: 'reviewer', provider: 'openai-codex' })).toBe(true);
+    expect(servesHostReadTools({ scope: 'review', role: 'reviewer', provider: 'openai-codex', workspaceRoot: null })).toBe(true);
     expect(servesHostReadTools(ADVISOR_READ)).toBe(false);
     expect(servesHostReadTools(REVIEWER)).toBe(false);
-    expect(servesHostReadTools({ scope: 'full', role: null, provider: 'openai-codex' })).toBe(false);
-    expect(servesHostReadTools({ scope: 'write', role: 'implementer', provider: 'openai-codex' })).toBe(false);
-    expect(servesHostReadTools({ scope: 'read', role: 'advisor', provider: null })).toBe(false);
+    expect(servesHostReadTools({ scope: 'full', role: null, provider: 'openai-codex', workspaceRoot: null })).toBe(false);
+    expect(servesHostReadTools({ scope: 'write', role: 'implementer', provider: 'openai-codex', workspaceRoot: null })).toBe(false);
+    expect(servesHostReadTools({ scope: 'read', role: 'advisor', provider: null, workspaceRoot: null })).toBe(false);
     expect(servesHostReadTools(UNRESTRICTED_TOOL_POLICY)).toBe(false);
   });
 
@@ -118,8 +118,8 @@ describe('resolveSessionToolPolicy', () => {
   it('reads scope, role and provider from the session row once and freezes them', async () => {
     const get = vi.fn(async () => ({ agentRole: 'standard', provider: 'openai-codex', metadata: { toolScope: 'read', teamChild: { role: 'advisor', rootSessionId: 'root', depth: 1 } } }));
     setSessionToolPolicyReader(get);
-    expect(await resolveSessionToolPolicy('adv')).toEqual({ scope: 'read', role: 'advisor', provider: 'openai-codex' });
-    expect(await resolveSessionToolPolicy('adv')).toEqual({ scope: 'read', role: 'advisor', provider: 'openai-codex' });
+    expect(await resolveSessionToolPolicy('adv')).toEqual({ scope: 'read', role: 'advisor', provider: 'openai-codex', workspaceRoot: null });
+    expect(await resolveSessionToolPolicy('adv')).toEqual({ scope: 'read', role: 'advisor', provider: 'openai-codex', workspaceRoot: null });
     expect(get).toHaveBeenCalledTimes(1);
   });
 
@@ -129,10 +129,10 @@ describe('resolveSessionToolPolicy', () => {
     setSessionToolPolicyReader(get as never);
     expect(await resolveSessionToolPolicy(undefined)).toEqual(UNRESTRICTED_TOOL_POLICY);
     expect(await resolveSessionToolPolicy('late')).toEqual(UNRESTRICTED_TOOL_POLICY);
-    expect(await resolveSessionToolPolicy('plain')).toEqual({ scope: 'full', role: null, provider: 'claude-code' });
+    expect(await resolveSessionToolPolicy('plain')).toEqual({ scope: 'full', role: null, provider: 'claude-code', workspaceRoot: null });
     // The row appears later (a connection that raced its own creation): the next read sees it.
     rows.late = { agentRole: 'standard', provider: 'openai-codex', metadata: { toolScope: 'read' } };
-    expect(await resolveSessionToolPolicy('late')).toEqual({ scope: 'read', role: null, provider: 'openai-codex' });
+    expect(await resolveSessionToolPolicy('late')).toEqual({ scope: 'read', role: null, provider: 'openai-codex', workspaceRoot: null });
     expect(get.mock.calls.filter(([id]) => id === 'late')).toHaveLength(2);
   });
 
@@ -140,8 +140,8 @@ describe('resolveSessionToolPolicy', () => {
     setSessionToolPolicyReader(vi.fn(async (id: string) => (id === 'odd'
       ? { agentRole: 'standard', metadata: { toolScope: 'admin' } }
       : { agentRole: 'meta-agent', provider: 'claude-code', metadata: { teamChild: { role: 'advisor', rootSessionId: 'root', depth: 1 } } })));
-    expect(await resolveSessionToolPolicy('odd')).toEqual({ scope: 'read', role: null, provider: null });
-    expect(await resolveSessionToolPolicy('meta')).toEqual({ scope: 'full', role: null, provider: 'claude-code' });
+    expect(await resolveSessionToolPolicy('odd')).toEqual({ scope: 'read', role: null, provider: null, workspaceRoot: null });
+    expect(await resolveSessionToolPolicy('meta')).toEqual({ scope: 'full', role: null, provider: 'claude-code', workspaceRoot: null });
   });
 
   it('a row that cannot be read (after one retry) rejects, is not frozen, and is read again next time', async () => {
@@ -153,7 +153,7 @@ describe('resolveSessionToolPolicy', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     await expect(resolveSessionToolPolicy('flaky')).rejects.toThrow(SESSION_TOOL_POLICY_UNAVAILABLE);
     expect(get).toHaveBeenCalledTimes(2);
-    expect(await resolveSessionToolPolicy('flaky')).toEqual({ scope: 'read', role: null, provider: null });
+    expect(await resolveSessionToolPolicy('flaky')).toEqual({ scope: 'read', role: null, provider: null, workspaceRoot: null });
     expect(get).toHaveBeenCalledTimes(3);
     errorSpy.mockRestore();
   });

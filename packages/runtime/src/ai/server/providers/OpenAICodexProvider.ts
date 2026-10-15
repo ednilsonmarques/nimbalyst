@@ -47,6 +47,7 @@ import {
   wrapCodexHostBindingsForRestriction,
   type CodexUserConfigTables,
 } from './codex/codexTeamPolicy';
+import { buildRestrictedCodexProcessOverrides } from './codex/codexRestrictedProcess';
 import { NO_TEAM } from './teamContext';
 import { CODEX_FALLBACK_MODELS } from './codex/codexModelCatalog';
 
@@ -1030,11 +1031,15 @@ export class OpenAICodexProvider extends BaseAgentProvider {
     const teamContext = isMetaAgent ? NO_TEAM : await this.getTeamContext(sessionId);
     const restriction = resolveCodexRestriction(toolScope, teamRole);
     if (restriction.kind === 'unsupported') {
-      yield { type: 'error', error: describeUnsupportedCodexScope(restriction.scope, 'scope') };
+      const refusal = describeUnsupportedCodexScope(restriction.scope, 'scope');
+      await this.recordTurnError(sessionId, refusal);
+      yield { type: 'error', error: refusal };
       return;
     }
     if (restriction.kind === 'restricted' && this.transport !== 'app-server') {
-      yield { type: 'error', error: describeUnsupportedCodexScope(restriction.scope, 'transport') };
+      const refusal = describeUnsupportedCodexScope(restriction.scope, 'transport');
+      await this.recordTurnError(sessionId, refusal);
+      yield { type: 'error', error: refusal };
       return;
     }
     const restrictedScope = restriction.kind === 'restricted' ? restriction.scope : null;
@@ -1206,6 +1211,13 @@ export class OpenAICodexProvider extends BaseAgentProvider {
 
       const resolvedModel = await this.getConfiguredModel();
 
+      // A restricted thread: the user's MCP servers and plugins to disable
+      // (effective configuration and TOML files, through the host's loader),
+      // applied at the process level (`-c`, verified by the child through
+      // config/read) and at the thread level (defense in depth). The read
+      // fails closed.
+      const restrictedTables = restrictedScope ? await OpenAICodexProvider.codexUserConfigLoader(workspacePath) : null;
+
       const sessionOptions = {
         workspacePath,
         model: resolvedModel,
@@ -1222,13 +1234,18 @@ export class OpenAICodexProvider extends BaseAgentProvider {
           agentVerified: permissionDecision.agentVerified === true,
           // A restricted thread also disables the user's own MCP servers and
           // plugins (config.toml) and web search; the read fails closed.
-          codexConfigOverrides: restrictedScope
+          codexConfigOverrides: restrictedTables
             ? mergeRestrictedCodexConfigOverrides(
               this.buildCodexConfigOverrides(mcpServers),
-              buildRestrictedCodexConfigOverrides(await OpenAICodexProvider.codexUserConfigLoader(workspacePath)),
+              buildRestrictedCodexConfigOverrides(restrictedTables),
             )
             : this.buildCodexConfigOverrides(mcpServers),
-          ...(restrictedScope ? { restrictedToolScope: restrictedScope } : {}),
+          ...(restrictedScope && restrictedTables ? {
+            restrictedToolScope: restrictedScope,
+            restrictedUserTables: restrictedTables,
+            codexProcessOverrides: buildRestrictedCodexProcessOverrides(restrictedTables),
+            restrictedExpectedModel: resolvedModel,
+          } : {}),
           ...(codexEnv ? { codexEnv } : {}),
           ...(this.config?.effortLevel ? { effortLevel: this.config.effortLevel } : {}),
           ...(additionalDirectories.length > 0 ? { additionalDirectories } : {}),
@@ -1507,6 +1524,11 @@ export class OpenAICodexProvider extends BaseAgentProvider {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const isAbort = abortController.signal.aborted || /abort|cancel/i.test(errorMessage);
       if (!isAbort) {
+        // Recorded in the session's own transcript too: a background member
+        // (a Team mode child) has no window to show the ai:error event, and
+        // its coordinator reads the error from the transcript (a refused
+        // restricted thread must be visible, never a silent empty turn).
+        await this.recordTurnError(sessionId, errorMessage);
         yield {
           type: 'error',
           error: errorMessage,
@@ -1880,6 +1902,21 @@ export class OpenAICodexProvider extends BaseAgentProvider {
   private static isSessionNamingToolCall(toolName: string): boolean {
     const normalized = OpenAICodexProvider.normalizeMcpToolName(toolName);
     return normalized === 'update_session_meta' || normalized === 'name_session';
+  }
+
+  /**
+   * A turn that failed before or outside the event stream (a refused
+   * restricted thread, an RPC failure) as an output row of the session: the
+   * app-server error envelope the transcript renders as an error, plus the
+   * top-level `error` the host reads for get_session_result. Best effort.
+   */
+  private async recordTurnError(sessionId: string | undefined, message: string): Promise<void> {
+    if (!sessionId) return;
+    await this.logAgentMessageBestEffort(
+      sessionId,
+      'output',
+      JSON.stringify({ method: 'error', params: { error: { message } }, error: message }),
+    );
   }
 
   private async sendSessionNamingReminder(

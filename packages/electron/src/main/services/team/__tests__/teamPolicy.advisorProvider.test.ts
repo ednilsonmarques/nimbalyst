@@ -22,6 +22,7 @@ import {
   teamRoleDefaultModel,
   teamRoleDefaultToolScope,
   teamRoleProvider,
+  teamRoleModelForProvider,
   type TeamMemberProviderCheck,
 } from '../teamPolicy';
 import { TEAM_ROLES } from '@nimbalyst/runtime/ai/server/providers/teamContext';
@@ -217,5 +218,44 @@ describe('teamProviderDiversity', () => {
 
   it('a model promotion within the same provider is not diversity', () => {
     expect(teamProviderDiversity('claude-code', 'claude-code')).toBe('same');
+  });
+});
+
+describe('NIB.46 hardening of the provider rules', () => {
+  it("7.6: a provider named without a model gets the role's model for that provider, never the caller's", () => {
+    expect(teamRoleModelForProvider('advisor', undefined)).toBe('openai-codex:gpt-6.1-sol');
+    expect(teamRoleModelForProvider('advisor', 'openai-codex')).toBe('openai-codex:gpt-6.1-sol');
+    // The deliberate same-provider second opinion: Opus, the architect's tier, not Sonnet or Fable of the coordinator.
+    expect(teamRoleModelForProvider('advisor', 'claude-code')).toBe('claude-code:opus');
+    expect(teamRoleModelForProvider('advisor', 'opencode')).toBeNull();
+    for (const role of ['explorer', 'implementer', 'reviewer', 'architect', 'other'] as const) {
+      expect(teamRoleModelForProvider(role, 'claude-code'), role).toBe(TEAM_ROLE_DEFAULTS[role].model);
+      expect(teamRoleModelForProvider(role, 'openai-codex'), role).toBeNull();
+    }
+  });
+
+  it("7.7: the advisor's default provider on an incompatible transport is refused as the default being unavailable, naming the transport setting, never as a configuration error", () => {
+    const message = teamMemberProviderRefusal(check({
+      provider: 'openai-codex', origin: 'default', enabled: true,
+      readiness: { ready: false, cause: 'transport', reason: 'runs on the "sdk" transport, and only its app-server transport can restrict a thread (switch the OpenAI Codex transport setting to app-server)' },
+    }))!;
+    expect(message).toMatch(/^Independent Advisor provider unavailable: openai-codex \(the role default\) runs on the "sdk" transport/);
+    expect(message).toContain('No session was created and no fallback to another provider was applied');
+    expect(message).toContain('the default provider of the Independent Advisor (openai-codex) is configured on a transport that cannot keep a Team mode member read-only');
+    expect(message).not.toContain('configuration error');
+    expect(message).not.toContain('claude-code');
+    // A scope or policy cause of a role default is still the host's own configuration error.
+    expect(teamMemberProviderRefusal(check({ provider: 'openai-codex', origin: 'default', readiness: { ready: false, cause: 'scope', reason: 'x' }, enabled: true }))).toContain('configuration error of the role defaults');
+  });
+
+  it('7.8: a CLI older than the verified minimum, or one whose version is unknown, refuses the member; a supported one does not', () => {
+    const base = { provider: 'openai-codex', callerProvider: 'claude-code', origin: 'default', readiness: READY, enabled: true, authenticated: true } as const;
+    expect(teamMemberProviderRefusal(check({ ...base, cliVersion: { version: '0.159.2', minimum: '0.159.1', supported: true } }))).toBeNull();
+    expect(teamMemberProviderRefusal(check({ ...base, cliVersion: { version: '0.150.0', minimum: '0.159.1', supported: false } })))
+      .toMatch(/^Independent Advisor provider unavailable: openai-codex \(the role default\) its CLI is version 0\.150\.0, older than the minimum 0\.159\.1 this integration was verified with\. No session was created and no fallback .* the user may update openai-codex \(nothing is installed or updated automatically\); the default provider of the Independent Advisor is unavailable/);
+    expect(teamMemberProviderRefusal(check({ ...base, cliVersion: { version: null, minimum: '0.159.1', supported: null } })))
+      .toMatch(/its CLI version could not be verified \(minimum 0\.159\.1\)/);
+    // No version check wired for the provider: nothing to refuse on.
+    expect(teamMemberProviderRefusal(check({ ...base, cliVersion: undefined }))).toBeNull();
   });
 });

@@ -201,6 +201,8 @@ import { getSessionWakeupsStore, repositoryManager } from './services/Repository
 import { ExtensionDevService } from './services/ExtensionDevService';
 import { MetaAgentService } from './services/MetaAgentService';
 import { setTeamProviderTransportResolver } from './services/team/teamProviders';
+import { loadCodexUserConfigTables } from '@nimbalyst/runtime/ai/server/providers/codex/codexTeamPolicy';
+import { extractCodexUserConfigTablesFromEffectiveConfig, mergeCodexUserConfigTables } from '@nimbalyst/runtime/ai/server/providers/codex/codexRestrictedProcess';
 import { notificationService } from './services/NotificationService';
 // SuperLoopProgressService import removed - server disabled (leaking into non-super-loop sessions)
 import { registerMockupHandlers } from './ipc/MockupHandlers';
@@ -2680,6 +2682,36 @@ app.whenReady().then(async () => {
         console.warn('[CODEX] codexAuthService.getStatus() failed in the team member check:', err);
         return null;
       }
+    });
+    // Team mode: a Codex member needs a CLI at least as new as the one this
+    // integration was verified with (NIB.46 item 7.8). The version comes from
+    // the long-lived auth child; unknown means unverified, which refuses the
+    // member. Nothing is installed or updated here.
+    MetaAgentService.getInstance().setProviderVersionCheck(async (provider) => {
+      if (provider !== 'openai-codex') return undefined;
+      try {
+        return await codexAuthService.getCliVersion();
+      } catch (err) {
+        console.warn('[CODEX] codexAuthService.getCliVersion() failed in the team member check:', err);
+        return null;
+      }
+    });
+    // A restricted Codex member disables every user MCP server and plugin of
+    // the EFFECTIVE configuration (config/read: bundled plugins included), in
+    // union with what the TOML files name; the process-level overrides are
+    // then verified by the thread's own child before it runs (NIB.46 7.2/7.5).
+    OpenAICodexProvider.setCodexUserConfigLoader(async (workspacePath) => {
+      const fromFiles = await loadCodexUserConfigTables(undefined, workspacePath);
+      let fromProcess: ReturnType<typeof extractCodexUserConfigTablesFromEffectiveConfig> = { mcpServerNames: [], pluginIds: [] };
+      try {
+        fromProcess = extractCodexUserConfigTablesFromEffectiveConfig(await codexAuthService.readEffectiveConfig());
+      } catch (err) {
+        // The restricted child verifies its own effective configuration and
+        // refuses to run if anything stayed enabled, so a failed read here
+        // costs a refused turn at worst, never an unrestricted one.
+        console.warn('[CODEX] config/read failed while restricting a team member; using the configuration files only:', err);
+      }
+      return mergeCodexUserConfigTables(fromFiles, fromProcess);
     });
     // A restricted Codex thread exists only on the app-server transport; the
     // legacy SDK transport cannot run a team member (teamProviders.ts).

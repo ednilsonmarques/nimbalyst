@@ -155,6 +155,7 @@ import { initWorkspaceActivationListeners } from './store/listeners/workspaceAct
 import { initWindowFullScreenListener } from './store/listeners/windowFullScreenListeners';
 import { initThemeFallbackListener } from './store/listeners/themeFallbackListeners';
 import { initTrackerSyncListeners } from './store/listeners/trackerSyncListeners';
+import { initTrackerItemsChangedListeners } from './store/listeners/trackerItemsChangedListeners';
 import { initPullRequestListeners } from './store/listeners/pullRequestListeners';
 import { initGithubIssueListeners } from './store/listeners/githubIssueListeners';
 import { initReadReceiptListeners } from './store/listeners/readReceiptListeners';
@@ -427,6 +428,7 @@ export default function App() {
     const cleanupTheme = initThemeListener();
     const cleanupThemeFallback = initThemeFallbackListener();
     const cleanupTrackerSync = initTrackerSyncListeners();
+    const cleanupTrackerItemsChanged = initTrackerItemsChangedListeners();
     const cleanupWorktree = initWorktreeListeners();
     const cleanupPullRequest = initPullRequestListeners();
     const cleanupGithubIssue = initGithubIssueListeners();
@@ -462,6 +464,7 @@ export default function App() {
       cleanupCodex?.();
       cleanupGemini?.();
       cleanupFileChange?.();
+      cleanupTrackerItemsChanged?.();
       cleanupMcp?.();
       cleanupMenuCommand?.();
       cleanupNotification?.();

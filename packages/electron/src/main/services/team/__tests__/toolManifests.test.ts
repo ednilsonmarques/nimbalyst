@@ -294,3 +294,45 @@ describe('the notice', () => {
     expect(line).toBe('- [MANIFEST M-2] M-2: Make formatGreeting reject blank names (accepted) [ref: NIB.31] · architect session arch-1-a, confidence high');
   });
 });
+
+describe('the update reference line (NIB.25)', () => {
+  const persisted = {
+    persisted: true as const, itemId: 'item-1', ref: 'NIB.31', manifestId: 'M-2', declaredManifestId: null, confidence: 'high',
+    architectSessionId: 'arch-1', rootSessionId: 'root-1', supersedesItemId: 'item-0',
+    superseded: [{ itemId: 'item-0', manifestId: 'M-1', ref: 'NIB.30' }], supersedeFailures: [],
+  };
+
+  it('names the manifest id, the item ref, its draft status and what it supersedes, never the body, in one line', async () => {
+    const { buildToolManifestReference } = await import('../toolManifests');
+    const line = buildToolManifestReference(persisted);
+    expect(line).toBe('Tool Manifest stored: M-2 as tracker item NIB.31 (status draft; supersedes M-1 (NIB.30)). Accept it with tracker_update { id: "NIB.31", status: "accepted" }; the item is the manifest of record, this update carries its text.');
+    expect(line).not.toContain('\n');
+    expect(buildToolManifestReference({ ...persisted, superseded: [] })).toContain('(status draft).');
+  });
+
+  it('E/F: through the real tracker port, the line and its supersedes name references tracker_get/update resolve (item ids), never the local number (pilot G)', async () => {
+    const { buildToolManifestReference } = await import('../toolManifests');
+    const { buildToolManifestTrackerPort } = await import('../toolManifestTrackerPort');
+    const earlier = {
+      id: 'tool-manifest_1792006788175_mitmzg', type: 'tool-manifest', title: 'M-1: x', status: 'draft', localKey: 'WOK.1',
+      customFields: { manifestId: 'M-1', teamRootSessionId: 'root-1', architectSessionId: 'arch-0', contentHash: 'h0' },
+    };
+    const docService = {
+      listTrackerItems: vi.fn(async () => [earlier] as never[]),
+      createHostOwnedTrackerItem: vi.fn(async (payload: any) => ({ ...payload, localKey: 'WOK.2' })),
+      updateTrackerItem: vi.fn(async (id: string, updates: Record<string, unknown>) => ({ id, ...updates }) as never),
+    };
+    const port = buildToolManifestTrackerPort(docService, '/ws/worktree');
+    const result = await persistArchitectManifest(settle({ finalOutput: manifestText('M-2', 'supersedes: M-1') }), port, { recordRootRef: async () => {} });
+    expect(result.persisted).toBe(true);
+    if (!result.persisted) return;
+    const line = buildToolManifestReference(result);
+    expect(result.ref).toMatch(/^tool-manifest_\d+_[a-z0-9]+$/);
+    expect(line).toContain(`as tracker item ${result.ref} (status draft; supersedes M-1 (tool-manifest_1792006788175_mitmzg))`);
+    expect(line).toContain(`tracker_update { id: "${result.ref}", status: "accepted" }`);
+    expect(line).not.toMatch(/WOK\.\d/);
+    // Superseded through the same id, in the workspace the port was bound to.
+    expect(docService.updateTrackerItem).toHaveBeenCalledWith('tool-manifest_1792006788175_mitmzg', { status: 'superseded' });
+    expect(docService.createHostOwnedTrackerItem.mock.calls[0][0].workspace).toBe('/ws/worktree');
+  });
+});

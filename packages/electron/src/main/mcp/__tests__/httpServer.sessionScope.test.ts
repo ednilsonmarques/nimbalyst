@@ -57,22 +57,22 @@ import { handleExtensionTool } from '../tools/extensionToolHandler';
 import { resetSessionToolPolicies, setSessionToolPolicyReader } from '../sessionToolPolicy';
 import type { McpEndpointSelection } from '../mcpEndpointRouting';
 
-const ROWS: Record<string, { agentRole: string; provider: string; metadata: Record<string, unknown> }> = {
+const ROWS: Record<string, { agentRole: string; provider: string; workspacePath?: string; worktreePath?: string; metadata: Record<string, unknown> }> = {
   // A Claude Code advisor: read scope, advisor role.
-  adv: { agentRole: 'standard', provider: 'claude-code', metadata: { toolScope: 'read', teamChild: { role: 'advisor', rootSessionId: 'root', depth: 1 } } },
+  adv: { agentRole: 'standard', provider: 'claude-code', workspacePath: 'C:\\ws', metadata: { toolScope: 'read', teamChild: { role: 'advisor', rootSessionId: 'root', depth: 1 } } },
   // A Codex advisor: the same policy, plus the host's file reads (its shell is refused).
-  'adv-codex': { agentRole: 'standard', provider: 'openai-codex', metadata: { toolScope: 'read', teamChild: { role: 'advisor', rootSessionId: 'root', depth: 1 } } },
-  rev: { agentRole: 'standard', provider: 'claude-code', metadata: { toolScope: 'review', teamChild: { role: 'reviewer', rootSessionId: 'root', depth: 1 } } },
-  root: { agentRole: 'standard', provider: 'claude-code', metadata: { teamMode: true } },
-  plain: { agentRole: 'standard', provider: 'openai-codex', metadata: {} },
+  'adv-codex': { agentRole: 'standard', provider: 'openai-codex', workspacePath: 'C:\\ws', metadata: { toolScope: 'read', teamChild: { role: 'advisor', rootSessionId: 'root', depth: 1 } } },
+  rev: { agentRole: 'standard', provider: 'claude-code', workspacePath: 'C:\\ws', metadata: { toolScope: 'review', teamChild: { role: 'reviewer', rootSessionId: 'root', depth: 1 } } },
+  root: { agentRole: 'standard', provider: 'claude-code', workspacePath: 'C:\\ws', metadata: { teamMode: true } },
+  plain: { agentRole: 'standard', provider: 'openai-codex', workspacePath: 'C:\\ws', metadata: {} },
 };
 
 const HOST: McpEndpointSelection = { kind: 'firstParty', configKey: 'nimbalyst-host' };
 const CORE: McpEndpointSelection = { kind: 'firstParty', configKey: 'nimbalyst' };
 const TRACKERS: McpEndpointSelection = { kind: 'firstParty', configKey: 'nimbalyst-trackers' };
 
-async function connect(sessionId: string | undefined, endpoint: McpEndpointSelection, excludeHostSettings = false) {
-  const server = createSharedMcpServer('C:\\ws', sessionId, endpoint, excludeHostSettings);
+async function connect(sessionId: string | undefined, endpoint: McpEndpointSelection, excludeHostSettings = false, transportWorkspace = 'C:\\ws') {
+  const server = createSharedMcpServer(transportWorkspace, sessionId, endpoint, excludeHostSettings);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
   const client = new Client({ name: 'test', version: '1.0.0' });
@@ -237,6 +237,37 @@ describe('adversarial calls: a denied tool is refused by the server itself, with
     expect((await host.call('read_file', { path: 'CLAUDE.md' })).isError).toBe(true);
     await host.close();
     expect(dispatchDevAgentTool).not.toHaveBeenCalled();
+  });
+
+  it('the host reads run in the folder the session row authorizes (its worktree, else its workspace), never the transport workspace; a row without one is refused', async () => {
+    // The transport names another folder: the row wins (NIB.46 item 7.1).
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const elsewhere = await connect('adv-codex', CORE, false, 'C:\\elsewhere');
+    const read = await elsewhere.call('read_file', { path: 'CLAUDE.md' });
+    expect(read.isError).toBeFalsy();
+    expect(dispatchDevAgentTool).toHaveBeenLastCalledWith('read_file', 'C:\\ws', { path: 'CLAUDE.md' });
+    expect(warn.mock.calls.some(([line]) => String(line).includes('differs from the authorized root'))).toBe(true);
+    warn.mockRestore();
+    await elsewhere.close();
+    // A member attached to a team worktree reads that worktree, not the main workspace.
+    ROWS['adv-codex-wt'] = { ...ROWS['adv-codex'], worktreePath: 'C:\\ws\\.worktrees\\team' };
+    resetSessionToolPolicies();
+    const worktree = await connect('adv-codex-wt', CORE);
+    await worktree.call('list_files', { path: '.' });
+    expect(dispatchDevAgentTool).toHaveBeenLastCalledWith('list_files', 'C:\\ws\\.worktrees\\team', { path: '.' });
+    await worktree.close();
+    // No workspace on record: refused, the dispatcher never runs.
+    ROWS['adv-codex-orphan'] = { ...ROWS['adv-codex'], workspacePath: undefined };
+    resetSessionToolPolicies();
+    vi.mocked(dispatchDevAgentTool).mockClear();
+    const orphan = await connect('adv-codex-orphan', CORE);
+    const refused = await orphan.call('read_file', { path: 'CLAUDE.md' });
+    expect(refused.isError).toBe(true);
+    expect(refused.content[0]?.text).toContain('no authorized workspace on record');
+    expect(dispatchDevAgentTool).not.toHaveBeenCalled();
+    await orphan.close();
+    delete ROWS['adv-codex-wt'];
+    delete ROWS['adv-codex-orphan'];
   });
 
   it('on an extension endpoint the same names are the extension\'s own tools: an unrestricted session reaches the extension handler, a restricted one is refused by the scope', async () => {
