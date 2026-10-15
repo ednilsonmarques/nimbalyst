@@ -388,7 +388,7 @@ describe('coordinator continuity: the coordinator owns the run until the goal or
       'a credential', 'a conflict of requirements the team cannot resolve', 'a blocker whose fix changes an earlier decision of the user', 'the team checkpoint above']) {
       expect(section, gate).toContain(gate);
     }
-    expect(section).toContain('Then explain the decision, the alternatives and their consequences, give your recommendation, and end your turn waiting for the user.');
+    expect(section).toContain('Then explain, in decision language (see Talking to the user below), the decision, the alternatives and their consequences, give your recommendation, and end your turn waiting for the user.');
   });
 
   it('continuous is not endless, and continuity grants nothing', () => {
