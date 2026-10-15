@@ -19,8 +19,13 @@ describe('advisor member contract', () => {
   it('has its own contract: a second opinion, read-only, no authority, not a second reviewer', () => {
     expect(advisor).toContain('## Team Member: Independent Advisor');
     expect(advisor).toContain('Consultor Independente');
-    expect(advisor).toContain('Your main responsibility is a second, independent opinion on the direction the team took');
-    expect(advisor).toContain('You are not a second reviewer');
+    expect(advisor).toContain('Your main responsibility is a second technical and strategic opinion on the work the team did, taken as a whole');
+    expect(advisor).toContain('Your job is to interpret that whole and help the user decide the next step');
+    expect(advisor).toContain('you are neither a second reviewer nor a second architect');
+    // The division of roles, as the contract states it.
+    expect(advisor).toContain('The architect sets the approach, the contracts and the technical strategy; the implementer carries out the approved changes; the reviewer checks the delivery itself (code, tests, regressions, conformance) and finds concrete defects; you audit the whole');
+    expect(advisor).toContain('The user approves scope and rule changes, commits, integrations and critical decisions');
+    expect(advisor).toContain('without losing technical rigor');
     expect(advisor).toContain('is this plan, this implementation and this conclusion really the best direction, and could the team be wrong?');
     expect(advisor).toContain('no edits, no shell, no sub-agents, no sessions, no prompts to other sessions, no permission answers, no tracker writes, no manifest acceptance, no commits, no configuration, no web, no skills, no task creation or assignment');
     expect(advisor).toContain('You cannot ask the user anything');
@@ -45,22 +50,82 @@ describe('advisor member contract', () => {
     expect(advisor).toContain('Do not disagree for its own sake. Agreeing is a valid outcome when the evidence supports the team: then say "no material objections" and stop.');
     expect(advisor).toContain('an objection you cannot evidence is a doubt, not a finding');
     expect(advisor).toContain('A relevant problem outside your mission');
+    expect(advisor).toContain('do not take a conclusion as right because the architect, the reviewer, the coordinator or the user reached it');
+    for (const statement of ['"the reviewer is right"', '"the reviewer is technically right, but I would not delay the phase for it"', '"this was classified non-blocking, but I consider it blocking"',
+      '"the solution works, but it is over-engineered"', '"I found no reason to disagree"', '"the team is solving something that does not need solving now"']) {
+      expect(advisor, statement).toContain(statement);
+    }
   });
 
-  it('ends in a short opinion with a fixed first line, blocking / main findings / alternative / residual risks / conclusion, no YAML', () => {
+  it('answers the decision questions: conclusion, premises, severity, missed blockers, complexity, second-order risks, now vs backlog, next move, own recommendation', () => {
+    expect(advisor).toContain('### What your opinion answers');
+    for (const question of ['1. Is the team\'s conclusion right?', '2. Is there an important premise nobody questioned?', '3. Was any problem classified as too serious or too light?',
+      '4. Is there a real blocker that went unnoticed?', '5. Is the solution more complex than it needs to be?',
+      '6. Are there second-order risks: maintenance, migration, security, data, compatibility, operation, performance, cost, coupling, reversibility?',
+      '7. What really has to be fixed now?', '8. What can go to the backlog?',
+      '9. Is the right move to continue, fix first, stop, go back a phase, run an experiment, or ask the user to decide?',
+      '10. What would you recommend if advising this decision were your responsibility?']) {
+      expect(advisor, question).toContain(question);
+    }
+  });
+
+  it('synthesizes instead of reviewing again: groups findings by their effect on the decision, details only what changes it, no line-by-line or perfectionism', () => {
+    expect(advisor).toContain('### Synthesis, not a second review');
+    expect(advisor).toContain('Do not repeat the reviewer\'s report.');
+    expect(advisor).toContain('"of the 15 findings, 3 change the current decision, 8 are local fixes and 4 can go to the backlog"');
+    expect(advisor).toContain('detail one by one only the points that change the decision or carry a material risk');
+    expect(advisor).toContain('No line-by-line review by default, no long list of low-value items, no new pending item that is not worth tracking, and never block a phase for perfectionism.');
+    expect(advisor).toContain('Go deep technically wherever a point needs it.');
+  });
+
+  it('synthesis governs the report, never the depth: material points are verified on primary evidence before approving', () => {
+    expect(advisor).toContain('Synthesis governs how you report, not how deep you look. Investigate first, then synthesize');
+    expect(advisor).toContain('verify against primary evidence (the code, the tests, the contracts, the documentation, the results themselves) the material points the decision rests on, never only a member\'s summary of them');
+    expect(advisor).toContain('Read code and tests directly whenever the decision depends on them; a blocker nobody found is exactly what you are there to find.');
+    // The depth rule comes before the synthesis rules it governs.
+    expect(advisor.indexOf('Synthesis governs how you report')).toBeLessThan(advisor.indexOf('Do not repeat the reviewer\'s report.'));
+  });
+
+  it('checks the sibling entry points of a mechanism that must keep the same invariant, the material ones only', () => {
+    expect(advisor).toContain('When a plan or a fix covers one entry point of a mechanism, identify the sibling entry points expected to preserve the same invariant');
+    expect(advisor).toContain('inspect the material ones before approving; a guarantee checked on one path only is not yet a guarantee.');
+    expect(advisor).toContain('Inspect the siblings that matter to the decision, not every function.');
+  });
+
+  it('does not run the execution, and "approved with reservations" proceeds only within the scope it states', () => {
+    expect(advisor).toContain('you are neither a second reviewer nor a second architect, and you do not run the execution: the coordinator does.');
+    expect(advisor).toContain('`Independent opinion: approved with reservations` (proceed within the scope you state, with the recommendations below)');
+    expect(advisor).not.toContain('(proceed, with the recommendations below)');
+  });
+
+  it('states the scope of its approval: approved within the review is not ready to commit, integrate, promote or move on', () => {
+    expect(advisor).toContain('### Scope of your approval');
+    expect(advisor).toContain('A step can be approved within the scope of what was reviewed and still not be ready for consolidation, a commit, an integration, a promotion or the next phase.');
+    expect(advisor).toContain('Say exactly what your opinion approves and what it does not.');
+    expect(advisor).toContain('"Approved with reservations" is never a global authorization to go ahead.');
+  });
+
+  it('ends in an opinion with the same four fixed first lines and the decision-oriented points, no YAML, never deciding for the user', () => {
     expect(advisor).toContain('### Your final message: independent opinion');
-    expect(advisor).toContain('Short and useful; no YAML.');
+    expect(advisor).toContain('Useful before long; no YAML.');
+    expect(advisor).toContain('optionally followed by a dash and a short conclusion of your own');
+    // The first-line markers are unchanged (teamReportMarkers.mjs and the pilot report read them).
     for (const line of ['`Independent opinion: no material objections`', '`Independent opinion: approved with reservations`',
       '`Independent opinion: correct before proceeding`', '`Independent opinion: reconsider the approach`']) {
       expect(advisor).toContain(line);
     }
-    for (const section of ['- Blocking:', '- Main findings:', '- Alternative:', '- Residual risks:', '- Conclusion:']) {
-      expect(advisor).toContain(section);
+    for (const point of ['1. My reading of the situation', '2. What really changes the decision', '3. Where I agree or disagree with the team', '4. What I would fix now',
+      '5. What I would leave for later', '6. Decisions that depend on the user', '7. Recommended next step: continue, fix first, stop, go back a phase, run an experiment, or ask the user.',
+      '8. Limits of this review: what you could not verify, and what this opinion approves and what it does not.']) {
+      expect(advisor, point).toContain(point);
     }
-    // The conclusion offers the same four outcomes as the first line.
-    expect(advisor).toContain('- Conclusion: proceed, proceed with reservations, correct before proceeding, or reconsider the approach');
-    expect(advisor).toContain('each labelled recommendation, alternative, doubt or residual risk');
-    expect(advisor).toContain('what would refute it');
+    expect(advisor).toContain('other headings are fine when they read more naturally');
+    expect(advisor).toContain('its evidence (file, line, test, report), its real risk and what would refute it');
+    expect(advisor).toContain('You advise; you never decide for the user, and you never change code, documentation or contracts yourself.');
+    // The old review-shaped sections are gone.
+    for (const section of ['- Blocking:', '- Main findings:', '- Residual risks:', '- Conclusion:']) {
+      expect(advisor).not.toContain(section);
+    }
   });
 
   it('carries the shared role / mission / authority section, with or without a mission', () => {
@@ -158,6 +223,8 @@ describe('coordinator policy: the independent advisor', () => {
 
   it('the opinion is considered before done when asked for; a divergence from a blocking finding is said and recorded; roles are never swapped', () => {
     expect(coordinator).toContain('"no material objections" is a valid outcome');
+    expect(coordinator).toContain('sums up the team\'s findings by their effect on the decision (what changes it, what is a local fix, what can wait), says where it agrees or disagrees with the team, separates the decisions that are the user\'s and recommends a next step');
+    expect(coordinator).toContain('An opinion approves only what it says it approves: "approved with reservations" is never by itself an authorization to commit, integrate, promote or start the next phase.');
     expect(coordinator).toContain('When you asked for it, consider it before you call the task done');
     expect(coordinator).toContain('when you diverge from a blocking finding, say why in one line and record the decision as a Team Note (decision)');
     expect(coordinator).toContain('Never present an advisor as the reviewer, nor a reviewer as the advisor.');

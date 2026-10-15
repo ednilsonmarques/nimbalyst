@@ -20,7 +20,7 @@ import {
 import { AgentCapabilities, BUILTIN_AGENT_CAPABILITIES } from '../agentCapabilities';
 import type { FileChangeFidelity } from '../providerFileTracking';
 import { CodexSDKProtocol } from '../protocols/CodexSDKProtocol';
-import { CodexAppServerProtocol, type CodexAppServerHostBindings } from '../protocols/CodexAppServerProtocol';
+import { CodexAppServerExitedError, CodexAppServerProtocol, type CodexAppServerHostBindings } from '../protocols/CodexAppServerProtocol';
 import {setCodexShellTrackingHost} from '../protocols/codexAppServer/shellTracking';
 import { AgentProtocol, ProtocolEvent, ProtocolSession } from '../protocols/ProtocolInterface';
 import { isNonRenderingAppServerItemStarted } from '../transcript/parsers/CodexAppServerRawParser';
@@ -1522,7 +1522,12 @@ export class OpenAICodexProvider extends BaseAgentProvider {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      const isAbort = abortController.signal.aborted || /abort|cancel/i.test(errorMessage);
+      // A dead Codex process is a failure, never a cancel, whatever its signal
+      // (SIGABRT) or its stderr says ("request cancelled"): matching its text
+      // would swallow the very failure NIB.54 reports. Only the user's own
+      // abort makes it a cancel.
+      const isAbort = abortController.signal.aborted
+        || (!(error instanceof CodexAppServerExitedError) && /abort|cancel/i.test(errorMessage));
       if (!isAbort) {
         // Recorded in the session's own transcript too: a background member
         // (a Team mode child) has no window to show the ai:error event, and

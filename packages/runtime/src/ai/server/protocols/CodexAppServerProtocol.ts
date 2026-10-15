@@ -336,6 +336,31 @@ export class CodexAppServerProtocol implements AgentProtocol {
     // duplicate tool_call from a single item/completed, duplicate completion.
     unsubscribers.push(raw.client.onNotification(onNotification));
 
+    // The turn is driven by notifications, so a child that dies mid-turn
+    // (crash, kill, out of memory) would leave this generator parked forever
+    // and the session 'running' with no settle (NIB.54): the JsonRpcClient only
+    // rejects pending requests on exit. End the turn as a failure instead, once
+    // ('exit' and 'close' both fire), and only while it is still running: the
+    // listeners are removed with the turn, so a late exit after turn/completed
+    // changes nothing. Nothing here retries; the provider evicts the dead
+    // session and the caller decides.
+    let childExitReported = false;
+    const onChildExit = (code?: number | null, signal?: NodeJS.Signals | null) => {
+      if (childExitReported) return;
+      childExitReported = true;
+      push({ kind: 'fail', error: codexChildExitedError(code, signal, raw) });
+    };
+    const child = raw.child;
+    child.once('exit', onChildExit);
+    child.once('close', onChildExit);
+    unsubscribers.push(() => {
+      child.removeListener('exit', onChildExit);
+      child.removeListener('close', onChildExit);
+    });
+    if (typeof child.exitCode === 'number' || typeof child.signalCode === 'string') {
+      onChildExit(child.exitCode, child.signalCode);
+    }
+
     // Wake the pump on abort. Without this, a cancel that lands while we're
     // parked awaiting the next notification is never observed (the aborted
     // check in the loop only runs after an event arrives): turn/interrupt is
@@ -384,6 +409,13 @@ export class CodexAppServerProtocol implements AgentProtocol {
         dispatchOwnedNotification(pending.method, pending.params);
       }
     } catch (err) {
+      for (const unsub of unsubscribers) {
+        try { unsub(); } catch { /* noop */ }
+      }
+      // The child died while turn/start was pending (its rejection is the
+      // JsonRpcClient closing): same terminal failure as a mid-turn exit.
+      const exited = queue.find((entry) => entry.kind === 'fail' && entry.error instanceof CodexAppServerExitedError);
+      if (exited && exited.kind === 'fail') throw exited.error;
       const baseMsg = err instanceof Error ? err.message : String(err);
       yield {
         type: 'error',
@@ -412,6 +444,10 @@ export class CodexAppServerProtocol implements AgentProtocol {
           continue;
         }
         if (entry.kind === 'fail') {
+          // A dead child is thrown, not yielded: the provider's catch records
+          // the error and evicts the dead session so the next turn starts a
+          // fresh process instead of writing to a closed one.
+          if (entry.error instanceof CodexAppServerExitedError) throw entry.error;
           yield { type: 'error', error: appendStderrTail(entry.error.message, raw) };
           return;
         }
@@ -1383,6 +1419,14 @@ export class CodexAppServerProtocol implements AgentProtocol {
 function appendStderrTail(msg: string, raw: { stderrTail: string[] }): string {
   const tail = raw.stderrTail.join('').slice(-2000).trim();
   return tail ? `${msg}\nstderr tail: ${tail}` : msg;
+}
+
+/** The app-server child died while a turn was running (NIB.54); thrown so the provider evicts the dead session. */
+export class CodexAppServerExitedError extends Error {}
+
+function codexChildExitedError(code: number | null | undefined, signal: string | null | undefined, raw: { stderrTail: string[] }): CodexAppServerExitedError {
+  const status = typeof code === 'number' ? `exit code ${code}` : signal ? `signal ${signal}` : 'no exit status';
+  return new CodexAppServerExitedError(appendStderrTail(`[CodexAppServer] the Codex process exited during the turn (${status}); the turn did not complete`, raw));
 }
 
 type CodexUsage = NonNullable<ProtocolEvent['usage']>;

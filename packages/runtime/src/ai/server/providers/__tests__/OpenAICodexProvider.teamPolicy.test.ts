@@ -14,6 +14,7 @@ import { OpenAICodexProvider } from '../OpenAICodexProvider';
 import { configureMcpServers } from '../../services/mcpServerConfig';
 import { AISessionsRepository } from '../../../../storage/repositories/AISessionsRepository';
 import { AgentMessagesRepository } from '../../../../storage/repositories/AgentMessagesRepository';
+import { CodexAppServerExitedError } from '../../protocols/CodexAppServerProtocol';
 
 vi.mock('openai', () => ({
   default: class {
@@ -226,6 +227,55 @@ describe('OpenAICodexProvider: a refused restricted member leaves the error in i
     expect(createSession).toHaveBeenCalledTimes(1);
     expect(chunks).toContainEqual({ type: 'error', error: refusal });
     expect(errorRows('adv')).toEqual([{ method: 'error', params: { error: { message: refusal } }, error: refusal }]);
+  });
+
+  it('NIB.54: a Codex process that dies mid-turn ends the turn as an error in the transcript and the dead session is dropped, so the next turn starts a fresh one', async () => {
+    const exitedMessage = '[CodexAppServer] the Codex process exited during the turn (signal SIGKILL); the turn did not complete';
+    const createSession = vi.fn(async () => ({ id: 'thread-dead', platform: 'mock', raw: {} }));
+    const resumeSession = vi.fn(async () => ({ id: 'thread-dead', platform: 'mock', raw: {} }));
+    const protocol = {
+      platform: 'mock', createSession, resumeSession, forkSession: vi.fn(), abortSession: vi.fn(), cleanupSession: vi.fn(),
+      sendMessage: () => (async function* () { throw new CodexAppServerExitedError(exitedMessage); })(),
+    };
+    const provider = new OpenAICodexProvider({ apiKey: 'test-key' }, { transport: 'app-server', protocol: protocol as never });
+    await provider.initialize({ apiKey: 'test-key', model: 'openai-codex:gpt-6.1-sol' });
+    const chunks = await drain(provider, 'adv');
+    expect(chunks).toContainEqual({ type: 'error', error: exitedMessage });
+    expect(errorRows('adv')).toEqual([{ method: 'error', params: { error: { message: exitedMessage } }, error: exitedMessage }]);
+    // No retry inside the turn: one session open, one attempt.
+    expect(createSession.mock.calls.length + resumeSession.mock.calls.length).toBe(1);
+    // The dead live session was evicted: the next turn opens the session again instead of reusing it.
+    await drain(provider, 'adv');
+    expect(createSession.mock.calls.length + resumeSession.mock.calls.length).toBe(2);
+  });
+
+  it('NIB.54 (review B1): a death by SIGABRT with "cancelled" in its stderr is still a failure, never swallowed as a cancel', async () => {
+    const exitedMessage = '[CodexAppServer] the Codex process exited during the turn (signal SIGABRT); the turn did not complete\nstderr tail: request cancelled; aborted';
+    const createSession = vi.fn(async () => ({ id: 'thread-abrt', platform: 'mock', raw: {} }));
+    const resumeSession = vi.fn(async () => ({ id: 'thread-abrt', platform: 'mock', raw: {} }));
+    const protocol = {
+      platform: 'mock', createSession, resumeSession, forkSession: vi.fn(), abortSession: vi.fn(), cleanupSession: vi.fn(),
+      sendMessage: () => (async function* () { throw new CodexAppServerExitedError(exitedMessage); })(),
+    };
+    const provider = new OpenAICodexProvider({ apiKey: 'test-key' }, { transport: 'app-server', protocol: protocol as never });
+    await provider.initialize({ apiKey: 'test-key', model: 'openai-codex:gpt-6.1-sol' });
+    const chunks = await drain(provider, 'adv');
+    expect(chunks).toContainEqual({ type: 'error', error: exitedMessage });
+    expect(errorRows('adv')).toHaveLength(1);
+    await drain(provider, 'adv');
+    expect(createSession.mock.calls.length + resumeSession.mock.calls.length).toBe(2); // evicted
+  });
+
+  it('an ordinary error whose text says "cancelled" keeps today\'s cancel classification (only the Codex exit is exempt)', async () => {
+    const protocol = {
+      platform: 'mock', createSession: vi.fn(async () => ({ id: 't', platform: 'mock', raw: {} })), resumeSession: vi.fn(), forkSession: vi.fn(), abortSession: vi.fn(), cleanupSession: vi.fn(),
+      sendMessage: () => (async function* () { throw new Error('request cancelled by the transport'); })(),
+    };
+    const provider = new OpenAICodexProvider({ apiKey: 'test-key' }, { transport: 'app-server', protocol: protocol as never });
+    await provider.initialize({ apiKey: 'test-key', model: 'openai-codex:gpt-6.1-sol' });
+    const chunks = await drain(provider, 'adv');
+    expect(chunks.filter((chunk) => chunk.type === 'error')).toEqual([]);
+    expect(errorRows('adv')).toEqual([]);
   });
 
   it('a scope Codex cannot enforce is persisted too, before any thread starts', async () => {

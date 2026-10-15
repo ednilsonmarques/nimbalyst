@@ -354,3 +354,78 @@ describe('architect (Phase 1A)', () => {
     expect(buildTeamChildAddendum('explorer')).not.toContain('ECC capability index');
   });
 });
+
+describe('coordinator continuity: the coordinator owns the run until the goal or a real user gate', () => {
+  const coordinator = buildTeamModeAddendum();
+  const section = coordinator.slice(coordinator.indexOf('### Continuity'));
+
+  it('has its own section after Ownership and integration, and integration no longer ends in "answer"', () => {
+    expect(coordinator).toContain('### Continuity');
+    expect(coordinator.indexOf('### Ownership and integration')).toBeLessThan(coordinator.indexOf('### Continuity'));
+    expect(coordinator).toContain('After results arrive, integrate them and decide the next step (see Continuity) before considering more delegation.');
+    expect(coordinator).not.toContain('integrate and answer before considering more delegation');
+  });
+
+  it('keeps the goal, the rules and the decisions in view, and never asks the user to restate a rule', () => {
+    expect(section).toContain('You own the continuity of the work until the goal the user agreed is reached.');
+    expect(section).toContain('the goal and its completion criterion, the rules and limits the user set, the current state, the steps done and their evidence, the open items, the next logical step, the gates ahead, the decisions the user already made and the decisions still reserved to them');
+    expect(section).toContain('A rule the user already gave stays in force for the whole run: apply it, never ask them to restate it.');
+  });
+
+  it('a finished step is a reason to evaluate the next gate, not to stop; authorized next steps are taken in the same turn', () => {
+    expect(section).toContain('Completion of a step is not a reason to stop; it is a reason to evaluate the next gate.');
+    expect(section).toContain('When no user authorization is required, its absence is not a reason to pause.');
+    expect(section).toContain('is the goal reached; is there a blocker; is there a fix needed within the authority the user explicitly granted; what is the next planned step; does a gate require a reviewer (Review before done) or an advisor (only the situations of Independent advisor above, never after every report); is there a real decision reserved to the user');
+    expect(section).toContain('take it in the same turn (create or brief the next member, have a blocker fixed, request the review or the follow-up review) instead of reporting and waiting');
+    expect(section).toContain('never turn a member\'s completion into a request for confirmation');
+    expect(section).toContain('Waiting for a member\'s report is not a stop: end your turn and its [Child Session Update] wakes you.');
+    expect(section).toContain('Continuity works inside that authority, never beyond it: an action that merely looks like the logical next step does not widen what the user authorized.');
+  });
+
+  it('stops only at a real user decision gate, explains it and waits', () => {
+    for (const gate of ['a change of business rule or of scope', 'a change of legacy or oracle behavior', 'a choice between materially different alternatives none of which was authorized',
+      'a destructive or irreversible risk', 'a promotion to production that needs approval', 'a commit, push or merge the user has not explicitly authorized', 'an external cost not authorized',
+      'a credential', 'a conflict of requirements the team cannot resolve', 'a blocker whose fix changes an earlier decision of the user', 'the team checkpoint above']) {
+      expect(section, gate).toContain(gate);
+    }
+    expect(section).toContain('Then explain the decision, the alternatives and their consequences, give your recommendation, and end your turn waiting for the user.');
+  });
+
+  it('continuous is not endless, and continuity grants nothing', () => {
+    expect(section).toContain('Continuous is not endless. Never repeat the same action without a new hypothesis; when an attempt keeps failing with no new hypothesis, stop and report the impediment.');
+    expect(section).toContain('When the architect, the reviewer and the advisor cycle without converging, name the conflict and ask the user to decide.');
+    expect(section).toContain('When the next step is unclear or outside the authority granted, stop and say so.');
+    expect(section).toContain('Something already validated enough is not validated again without a concrete hypothesis.');
+    expect(section).toContain('none of it widens what you or any member may do');
+  });
+
+  it('the review-before-done rule and the checkpoint stay as they were', () => {
+    expect(coordinator).toContain('Non-trivial implementation needs an independent review before you call it done or ready');
+    expect(coordinator).toContain('When that refusal arrives: stop, tell the user the team reached its checkpoint');
+  });
+});
+
+describe("coordinator continuity: no silent stall, and the advisor recommends while the coordinator decides", () => {
+  const coordinator = buildTeamModeAddendum();
+  const section = coordinator.slice(coordinator.indexOf("### Continuity"));
+
+  it("checks the team once before ending a turn with pending work, because errored or permission-waiting members do not wake it", () => {
+    expect(section).toContain("A member that fails wakes you with an error update, once per failure: it is not a retry, so decide whether there is a new hypothesis within your authority, a decision for the user, or an impediment to report.");
+    expect(section).toContain("A member waiting on a permission or on the user, or one that stopped without settling, may produce no update that wakes you");
+    expect(section).toContain("before you end a turn while members or work are still pending, check the team's state once (`mcp__nimbalyst-host__list_spawned_sessions` or `mcp__nimbalyst-host__get_session_status`)");
+    expect(section).toContain("treat such a member as an operational state to resolve within your authority or as an impediment to report");
+    expect(section).toContain("Never end a turn waiting for an update that will not come; check once per turn, never in a polling loop.");
+  });
+
+  it("names one authority everywhere: the one the user explicitly granted", () => {
+    expect(section).not.toContain("authority already granted");
+    expect(section).toContain("a material decision outside the authority the user explicitly granted");
+  });
+
+  it("the advisor recommends and the coordinator decides: only an accepted recommendation inside the explicit authority is executed", () => {
+    expect(section).toContain("The advisor recommends; you decide.");
+    expect(section).toContain("only when you accept it and the action is within the goal, the rules and the authority the user explicitly granted, have it done, validated, and continue; when you do not accept it, say why");
+    expect(section).toContain("An opinion never binds you and never executes anything by itself.");
+    expect(section).not.toContain("When the advisor recommends a correction that is within the goal and your authority, have it done");
+  });
+});

@@ -71,6 +71,14 @@ import { describeTeamMemberProvider, teamMemberProviderReadiness } from './team/
 import { resolveChildToolScope, type ChildToolScope } from '@nimbalyst/runtime/ai/server/providers/claudeCode/toolPolicy';
 import { isKnownCodexModelId } from '@nimbalyst/runtime/ai/server/providers/codex/codexModelCatalog';
 
+/**
+ * Consecutive error settles of one Team mode member that wake its coordinator
+ * before the member settles successfully again. Each one is a distinct failure
+ * (a repeated event of the same failure is dropped by the signature gate); the
+ * limit only stops a coordinator/member pair that keeps failing in a loop.
+ */
+const TEAM_ERROR_WAKE_LIMIT = 3;
+
 function isExistingDirectory(candidate: string | null | undefined): boolean {
   if (!candidate) return false;
   try {
@@ -318,6 +326,8 @@ export class MetaAgentService {
   private sessionManager: SessionManager | null = null;
   private unsubscribeStateListener: (() => void) | null = null;
   private notificationSignatures = new Map<string, string>();
+  /** Team mode: error wakes delivered per member since its last successful settle (anti-loop backstop). */
+  private teamErrorWakes = new Map<string, number>();
   /** Phase 1B: one Tool Manifest persistence at a time per team root, so two architects settling together never both become M-1. */
   private readonly manifestPersistenceChains = new Map<string, Promise<unknown>>();
   /** Phase 1B: a hung tracker never holds the [Child Session Update] back; past this the update goes out without a notice. */
@@ -449,6 +459,7 @@ export class MetaAgentService {
     this.unsubscribeStateListener?.();
     this.unsubscribeStateListener = null;
     this.notificationSignatures.clear();
+    this.teamErrorWakes.clear();
     this.showNotificationWithResult = null;
     // No standalone HTTP server to tear down (Phase 7); the injected toolFns are
     // process-lifetime singletons.
@@ -1938,7 +1949,28 @@ export class MetaAgentService {
       // spins the meta-agent wakeup loop with no backoff (an antigravity 429
       // child settles instantly into 'error' every cycle). Native children
       // settle 'session:completed', so this gate is a no-op for them.
-      if (eventType !== 'session:error' && (metaStatus === 'idle' || metaStatus === 'interrupted' || metaStatus === 'error')) {
+      // Team mode is the exception: a failed member must not leave its
+      // coordinator asleep waiting for an update that never comes, so its
+      // error settle wakes the coordinator, once per failure (the signature
+      // gate above drops a repeated event of the same failure) and at most
+      // TEAM_ERROR_WAKE_LIMIT times in a row before the member settles
+      // successfully again (a backstop against a coordinator that keeps
+      // re-prompting a member that keeps failing). The host only delivers the
+      // failure: it retries nothing and decides nothing.
+      let wakeParent = eventType !== 'session:error';
+      const teamMember = resolveTeamContext(session.metadata as Record<string, unknown> | undefined, session.agentRole).teamChild != null;
+      if (eventType === 'session:completed') {
+        this.teamErrorWakes.delete(sessionId);
+      } else if (eventType === 'session:error' && teamMember) {
+        const errorWakes = this.teamErrorWakes.get(sessionId) ?? 0;
+        if (errorWakes < TEAM_ERROR_WAKE_LIMIT) {
+          this.teamErrorWakes.set(sessionId, errorWakes + 1);
+          wakeParent = true;
+        } else {
+          console.warn(`[MetaAgentService] Team member ${sessionId} failed ${errorWakes + 1} times in a row; its update is queued but the coordinator is not woken again until the member settles successfully`);
+        }
+      }
+      if (wakeParent && (metaStatus === 'idle' || metaStatus === 'interrupted' || metaStatus === 'error')) {
         await this.aiService.triggerQueuedPromptProcessingForSession(metaSession.id, metaSession.workspacePath, 'meta-agent');
       }
     } catch (error) {
