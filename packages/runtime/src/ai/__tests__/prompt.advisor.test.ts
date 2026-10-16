@@ -180,7 +180,7 @@ describe('reviewer and advisor stay different in nature', () => {
 describe('coordinator policy: the independent advisor', () => {
   it('lists the role with its defaults and names it a non-default member', () => {
     expect(coordinator).toContain('Every member runs on Sonnet by default, except the architect (Opus) and the advisor (OpenAI Codex, gpt-6.1-sol, its role\'s default provider)');
-    expect(coordinator).toContain('- `advisor`: main responsibility a second, independent opinion on the direction the team took: the plan, the strategy, the implementation and the verdicts as a whole (OpenAI Codex gpt-6.1-sol, effort high, read-only; any other toolScope is lowered to read; it cannot ask the user, delegate or create tasks; its provider is a role default of the host, see Independent advisor below). Not a second reviewer and never a default member: only when you explicitly decide, see Independent advisor below.');
+    expect(coordinator).toContain('- `advisor`: main responsibility a second, independent opinion on the direction the team took: the plan, the strategy, the implementation and the verdicts as a whole (OpenAI Codex gpt-6.1-sol, effort high, read-only; any other toolScope is lowered to read; it cannot ask the user, delegate or create tasks; its provider is a role default of the host, see Independent advisor below). Not a second reviewer and never a default member: only at the review level set in Independent advisor below.');
     expect(coordinator).toContain('Use `mcp__nimbalyst-host__create_session` for explorers, reviewers, architects, advisors and implementers');
   });
 
@@ -193,19 +193,20 @@ describe('coordinator policy: the independent advisor', () => {
     expect(coordinator).toContain('it may question the manifest itself');
     expect(coordinator).toContain('It replaces neither the architect (it plans nothing) nor the reviewer (review before done applies as before), and it never implements or corrects anything');
     expect(coordinator).toContain('It gains no authority by disagreeing');
-    expect(coordinator).toContain('Create one only when a second opinion is worth its cost, never on every task and never for trivialities. You MUST create an advisor before concluding, unless it is explicitly impossible (its provider unavailable, the budget exhausted; say which), in any of these situations: a material architecture change; a change of a public contract; a migration of data or formats; security or authorization; persistence or concurrency; a promotion from shadow to production; a risk of divergence from a legacy system or oracle; a material conflict between the architect and the reviewer; a Tool Manifest with `independentReview` level `required`; or the user asked for a second opinion.');
-    expect(coordinator).toContain('When the manifest says `recommended`, create the advisor by default and diverge only with a recorded justification; `optional` is your call; `none` needs nothing.');
-    for (const signal of ['a material architecture change', 'a change of a public contract', 'a migration of data or formats', 'security or authorization', 'persistence or concurrency', 'a promotion from shadow to production', 'a risk of divergence from a legacy system or oracle', 'a material conflict between the architect and the reviewer', 'a Tool Manifest with `independentReview` level `required`', 'or the user asked for a second opinion']) {
+    expect(coordinator).toContain('Create one only when a second opinion is worth its cost, never on every task and never for trivialities.');
+    // The old blanket MUST with an escape hatch is gone: the level now decides (prompt.governance.test.ts).
+    expect(coordinator).not.toContain('unless it is explicitly impossible');
+    for (const signal of ['a broad architecture change', 'a critical legacy system or oracle', 'security or authorization', 'data, persistence, migration or concurrency', 'an important compatibility or public contract', 'a material conflict between the architect and the reviewer', 'the Tool Manifest says `required`', 'the user asked for a second opinion', 'a promotion from shadow to production']) {
       expect(coordinator, signal).toContain(signal);
     }
   });
 
-  it('independentReview in a manifest is a recommendation: no level creates a session, required blocks nothing, a divergence is recorded', () => {
-    expect(coordinator).toContain("A manifest's `independentReview` is the architect's recommendation and nothing more: no level creates an advisor by itself, `required` blocks nothing in the host");
-    expect(coordinator).toContain('when you decide against a recommended or required one, say so in one line and record it as a Team Note (decision)');
+  it('independentReview in a manifest states the level: no level creates a session, required blocks nothing in the host, a declined recommendation is recorded', () => {
+    expect(coordinator).toContain("A manifest's `independentReview` is the architect's statement of the level: no level creates an advisor by itself and `required` blocks nothing in the host; the floor is this policy's, and you apply it.");
+    expect(coordinator).toContain('when you judge it adds too little here, say why in one line with your own reason, not a lower level taken from a manifest, and record it as a Team Note (decision); never imply that a review took place');
     const noNotes = buildTeamModeAddendum('claude', false);
     expect(noNotes).toContain('### Independent advisor');
-    expect(noNotes).toContain('when you decide against a recommended or required one, say so in one line.');
+    expect(noNotes).toContain('when you judge it adds too little here, say why in one line with your own reason, not a lower level taken from a manifest; never imply that a review took place');
     expect(noNotes).not.toContain('record it as a Team Note');
   });
 
@@ -236,8 +237,8 @@ describe('coordinator policy: the independent advisor', () => {
     expect(architect).toContain('independentReview:               # optional: your recommendation of a second, independent opinion (the advisor member) before the team concludes');
     expect(architect).toContain('  level: none | optional | recommended | required');
     expect(architect).toContain('  reason: <one sentence: what a second opinion should question>');
-    expect(architect).toContain('`independentReview` is optional and a recommendation only');
-    expect(architect).toContain('no level creates a session and `required` blocks nothing, the coordinator decides');
+    expect(architect).toContain('`independentReview` is optional: recommend a second, independent opinion');
+    expect(architect).toContain('no level creates a session and the host blocks on none. Under the team\'s policy `required` sets a floor the coordinator must meet; the other levels leave the decision to the coordinator.');
     expect(architect).toContain('explorer, architect and advisor read, reviewer review, implementer full');
     expect(architect).not.toContain('codex');
   });

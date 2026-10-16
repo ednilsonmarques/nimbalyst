@@ -83,7 +83,7 @@ describe('Team mode system prompt', () => {
 
     it('never skips the review nor recycles an earlier reviewer as the independent one', () => {
       expect(checkpoint).toContain('do not present an earlier reviewer as the new independent reviewer of later work, nor an advisor as a reviewer or a reviewer as an advisor;');
-      expect(checkpoint).toContain('do not skip the required review.');
+      expect(checkpoint).toContain('do not skip the required review, nor an independent review at level `required`.');
       // The mandatory independent review itself is untouched.
       expect(text).toContain('Non-trivial implementation needs an independent review before you call it done or ready');
     });
