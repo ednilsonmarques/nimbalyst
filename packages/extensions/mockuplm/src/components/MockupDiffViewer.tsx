@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { renderMockupHtml } from '../utils/mockupDomUtils';
+import { MOCKUP_FRAME_SANDBOX } from '../utils/mockupFrameSandbox';
 
 interface MockupDiffViewerProps {
   originalHtml: string;
@@ -105,7 +106,7 @@ export const MockupDiffViewer: React.FC<MockupDiffViewerProps> = ({
               <iframe
                 ref={afterFrameRef}
                 title="New mockup preview"
-                sandbox="allow-scripts allow-same-origin"
+                sandbox={MOCKUP_FRAME_SANDBOX}
                 className="absolute inset-0 w-full h-full border-none"
               />
             </div>
@@ -120,7 +121,7 @@ export const MockupDiffViewer: React.FC<MockupDiffViewerProps> = ({
               <iframe
                 ref={afterFrameRef}
                 title="Updated mockup preview"
-                sandbox="allow-scripts allow-same-origin"
+                sandbox={MOCKUP_FRAME_SANDBOX}
                 className="absolute inset-0 w-full h-full border-none"
               />
               <div
@@ -130,7 +131,7 @@ export const MockupDiffViewer: React.FC<MockupDiffViewerProps> = ({
                 <iframe
                   ref={beforeFrameRef}
                   title="Original mockup preview"
-                  sandbox="allow-scripts allow-same-origin"
+                  sandbox={MOCKUP_FRAME_SANDBOX}
                   className="absolute inset-0 w-full h-full border-none"
                 />
               </div>

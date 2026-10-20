@@ -26,6 +26,7 @@ import { app } from 'electron';
 import * as path from 'path';
 import Store, { hardenExistingSettings } from './utils/privateSettingsStore';
 import { createUncaughtExceptionHandler } from './uncaughtException';
+import { shouldEnableRemoteDebugging } from './remoteDebugging';
 // Tells the runtime package which host it is running in, before any of its
 // modules resolve a binary path. Registration is a side effect of this import
 // rather than a call in this file's body: ESM evaluates all static imports
@@ -103,7 +104,8 @@ try {
 // Enable CDP remote debugging in dev mode for Playwright extension testing.
 // This allows `playwright connectOverCDP("http://localhost:9222")` to drive
 // the running Nimbalyst instance without launching a separate Electron process.
-if (process.env.NODE_ENV !== 'production') {
+// Never in a packaged build (see shouldEnableRemoteDebugging).
+if (shouldEnableRemoteDebugging({ isPackaged: app.isPackaged, env: process.env })) {
   const cdpPort = process.env.NIMBALYST_CDP_PORT || '9222';
   app.commandLine.appendSwitch('remote-debugging-port', cdpPort);
   // console.log(`[Bootstrap] CDP remote debugging enabled on port ${cdpPort}`);

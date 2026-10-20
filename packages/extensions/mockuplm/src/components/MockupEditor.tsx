@@ -28,6 +28,7 @@ import {
 import { base64ToBlob, captureMockupComposite } from "../utils/screenshotUtils";
 import { mockupHasScript } from "../utils/mockupDomUtils";
 import { bindMockupFrame } from "../utils/bindMockupFrame";
+import { MOCKUP_FRAME_SANDBOX } from "../utils/mockupFrameSandbox";
 // The single selector generator in the tree. The editor used to carry an
 // inline copy that disagreed with the one pin healing resolves against.
 import { generateSelector } from "../utils/generateSelector";
@@ -652,7 +653,7 @@ export const MockupEditor = forwardRef<any, EditorHostProps>(
           <iframe
             ref={attachFrame}
             className="w-full h-full border-none absolute top-0 left-0"
-            sandbox="allow-scripts allow-same-origin"
+            sandbox={MOCKUP_FRAME_SANDBOX}
             title={`Mockup: ${fileName}`}
           />
           <MockupCommentOverlay
@@ -698,7 +699,7 @@ export const MockupEditor = forwardRef<any, EditorHostProps>(
           <iframe
             ref={attachFrame}
             className="w-full h-full border-none absolute top-0 left-0"
-            sandbox="allow-scripts allow-same-origin"
+            sandbox={MOCKUP_FRAME_SANDBOX}
             title={`Mockup: ${fileName}`}
           />
           {/* Drawing Canvas Overlay */}
