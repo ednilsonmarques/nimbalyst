@@ -5,7 +5,8 @@
  * sessionRegistryAtom, edges from SessionMeta.createdBySessionId, live status
  * from the per-session atoms (inside AgentTeamNode), worktree branch from
  * teamDataSource. Nothing here writes session state; clicking a node hands the
- * id to the same select action the kanban board uses.
+ * id to the same select action the kanban board uses. The Office (office/)
+ * is an alternative presentation of the same forest, under the same rules.
  */
 
 import React, { useMemo, useState } from 'react';
@@ -21,9 +22,18 @@ import { displayModel } from '../AgenticCoding/SessionAttentionRow';
 import { AgentTeamNode } from './AgentTeamNode';
 import { useTeamWorktrees } from './useTeamWorktrees';
 import type { TeamWorktreeInfo } from './teamDataSource';
+import { OfficeView } from './office/OfficeView';
+import { CommandCenterContainer } from './commandCenter/CommandCenterContainer';
 import './AgentTeamView.css';
 
 const STANDALONE_PREVIEW_COUNT = 24;
+
+/**
+ * Presentation of the same data: the delegation Tree (default), the Office (POC F1)
+ * or the Command Center (POC G+). The three-way toggle is temporary, kept only to
+ * compare presentations of one read model.
+ */
+type TeamPresentation = 'tree' | 'office' | 'command';
 
 export interface AgentTeamViewProps {
   onSessionOpen: (sessionId: string) => void;
@@ -43,6 +53,8 @@ function AgentTeamBoard({ onSessionOpen }: { onSessionOpen: (sessionId: string) 
   const { t } = useTranslation('agent');
   const registry = useAtomValue(sessionRegistryAtom);
   const [showAllStandalone, setShowAllStandalone] = useState(false);
+  // Local UI choice only: not persisted, every visit starts on the Tree.
+  const [presentation, setPresentation] = useState<TeamPresentation>('tree');
 
   const forest = useMemo(() => buildTeamForest(registry.values()), [registry]);
   const worktreeIds = useMemo(() => {
@@ -74,8 +86,42 @@ function AgentTeamBoard({ onSessionOpen }: { onSessionOpen: (sessionId: string) 
             {t('agentTeam.title')}
           </h2>
           <p className="m-0 mt-1 text-xs text-[var(--nim-text-muted)]">{t('agentTeam.subtitle')}</p>
+          <div
+            className="mt-3 inline-flex overflow-hidden rounded-md border border-[var(--nim-border)]"
+            role="group"
+            aria-label={t('agentTeam.office.presentationLabel')}
+            data-testid="agent-team-presentation"
+          >
+            {(['tree', 'office', 'command'] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                className={`cursor-pointer border-none px-3 py-1 text-xs ${presentation === option ? 'bg-[var(--nim-primary)] text-[var(--nim-on-primary,#fff)]' : 'bg-transparent text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-hover)]'}`}
+                aria-pressed={presentation === option}
+                data-testid={`agent-team-presentation-${option}`}
+                onClick={() => setPresentation(option)}
+              >
+                {t(`agentTeam.office.presentation.${option}`)}
+              </button>
+            ))}
+          </div>
         </header>
 
+        {presentation === 'office' || presentation === 'command' ? (
+          <>
+            {presentation === 'office' ? (
+              <OfficeView teams={teams} onSessionOpen={onSessionOpen} />
+            ) : (
+              <CommandCenterContainer teams={teams} onSessionOpen={onSessionOpen} />
+            )}
+            {standalone.length > 0 && (
+              <p className="m-0 mt-4 text-[11px] text-[var(--nim-text-faint)]" data-testid="office-standalone-note">
+                {t('agentTeam.office.standaloneOnlyInTree', { count: standalone.length })}
+              </p>
+            )}
+          </>
+        ) : (
+        <>
         <section className="agent-team-teams mb-8" data-testid="agent-team-teams">
           <h3 className="m-0 mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--nim-text-muted)]">
             {t('agentTeam.teamsHeading', { total: teams.length })}
@@ -132,6 +178,8 @@ function AgentTeamBoard({ onSessionOpen }: { onSessionOpen: (sessionId: string) 
               </button>
             )}
           </section>
+        )}
+        </>
         )}
       </div>
     </div>

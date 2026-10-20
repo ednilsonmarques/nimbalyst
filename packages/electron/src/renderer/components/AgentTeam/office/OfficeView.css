@@ -1,0 +1,60 @@
+/* Office view (POC F1): plain DOM/CSS, one small pulse for "working". */
+
+.office-desks-divider {
+  align-self: stretch;
+  width: 1px;
+  background: var(--nim-border);
+}
+
+.office-avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nim-on-primary, #fff);
+  background: var(--nim-text-faint);
+}
+
+.office-avatar--coordinator { background: var(--nim-primary); }
+.office-avatar--explorer { background: #4f8a8b; }
+.office-avatar--implementer { background: #6b7bb8; }
+.office-avatar--reviewer { background: #9a6fb0; }
+.office-avatar--architect { background: #b07a4f; }
+.office-avatar--advisor { background: #5f8f5a; }
+.office-avatar--other { background: #7d7d7d; }
+.office-avatar--idle { opacity: 0.55; }
+
+.office-state-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--nim-text-faint);
+}
+
+.office-state-dot--working { background: var(--nim-primary); animation: office-pulse 1.4s ease-in-out infinite; }
+.office-state-dot--error { background: var(--nim-error, #d9534f); }
+/* An open turn stopped on the user is not active work: no pulse. */
+.office-state-dot--stopped { animation: none; background: var(--nim-warning); }
+
+/* The session open in the panel keeps a ring even when the waiting border wins. */
+.office-desk--active { box-shadow: 0 0 0 2px var(--nim-primary); }
+
+.office-state-label--working { color: var(--nim-primary); }
+.office-state-label--error { color: var(--nim-error, #d9534f); }
+.office-state-label--idle { color: var(--nim-text-faint); }
+.office-state-label--stopped { color: var(--nim-warning); }
+
+@keyframes office-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .office-state-dot--working { animation: none; }
+}

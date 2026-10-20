@@ -406,6 +406,48 @@
     "missionTitle": "Missão: {{mission}}",
     "providerTitle": "Provedor diferente do Coordenador: {{provider}}",
     "soloHint": "Sessão em Modo Equipe trabalhando sem membros.",
+    "office": {
+      "presentationLabel": "Apresentação",
+      "presentation": {
+        "tree": "Árvore",
+        "office": "Office",
+        "command": "Command Center"
+      },
+      "attentionHeading": "Precisa de você ({{total}})",
+      "attentionNone": "Nada precisa de você agora.",
+      "summary": {
+        "working_zero": "{{count}} trabalhando",
+        "working_one": "{{count}} trabalhando",
+        "working_other": "{{count}} trabalhando",
+        "waitingUser_zero": "{{count}} aguardando você",
+        "waitingUser_one": "{{count}} aguardando você",
+        "waitingUser_other": "{{count}} aguardando você",
+        "error_zero": "{{count}} com erro não visto",
+        "error_one": "{{count}} com erro não visto",
+        "error_other": "{{count}} com erros não vistos"
+      },
+      "state": {
+        "working": "Trabalhando",
+        "workingStoppedOnYou": "Turno aberto, parado em você",
+        "error": "Erro não visto",
+        "idle": "Ociosa"
+      },
+      "waitingUser": "Aguardando você",
+      "waiting": {
+        "question": "pergunta",
+        "input": "pedido de informação",
+        "permission": "pedido de permissão",
+        "commit": "commit para confirmar",
+        "plan": "plano para aprovar",
+        "unknown": "interação"
+      },
+      "createdBy": "Criada por {{title}}",
+      "activeSession": "Sessão aberta no painel",
+      "scopeNote": "O Office mostra só o estado que o Nimbalyst registra: trabalhando, erro ainda não visto e aguardando você. Cada sessão mostra o próprio turno; a Árvore também conta os filhos de workstream. Conclusão, bloqueios, revisões e vereditos não aparecem aqui.",
+      "standaloneOnlyInTree_zero": "{{count}} sessões avulsas aparecem só na Árvore.",
+      "standaloneOnlyInTree_one": "{{count}} sessão avulsa aparece só na Árvore.",
+      "standaloneOnlyInTree_other": "{{count}} sessões avulsas aparecem só na Árvore."
+    },
     "roleCounts": {
       "coordinator_zero": "{{count}} Coordenadores",
       "coordinator_one": "{{count}} Coordenador",
@@ -428,6 +470,14 @@
       "other_zero": "{{count}} Membros",
       "other_one": "{{count}} Membro",
       "other_other": "{{count}} Membros"
+    },
+    "commandCenter": {
+      "roomLabel": "Centro de comando: {{title}}",
+      "bayLabel": "Bay de revisão independente",
+      "missionLabel": "Missão",
+      "sessionLabel": "Sessão",
+      "overflowHeading": "Sem lugar no piso ({{count}})",
+      "scopeNote": "O Command Center é outra apresentação da mesma leitura do Office (comparação temporária). Mostra só o que o Nimbalyst registra: trabalhando, erro ainda não visto e aguardando você. A postura e as luzes de cada agente mudam com esse estado; nada aqui é deduzido do texto das sessões."
     }
   },
   "mcpStatus": {

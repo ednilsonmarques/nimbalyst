@@ -406,6 +406,48 @@
     "missionTitle": "Mission: {{mission}}",
     "providerTitle": "Provider other than the coordinator's: {{provider}}",
     "soloHint": "Team mode session working without members.",
+    "office": {
+      "presentationLabel": "Presentation",
+      "presentation": {
+        "tree": "Tree",
+        "office": "Office",
+        "command": "Command Center"
+      },
+      "attentionHeading": "Needs you ({{total}})",
+      "attentionNone": "Nothing needs you right now.",
+      "summary": {
+        "working_zero": "{{count}} working",
+        "working_one": "{{count}} working",
+        "working_other": "{{count}} working",
+        "waitingUser_zero": "{{count}} waiting for you",
+        "waitingUser_one": "{{count}} waiting for you",
+        "waitingUser_other": "{{count}} waiting for you",
+        "error_zero": "{{count}} with an unseen error",
+        "error_one": "{{count}} with an unseen error",
+        "error_other": "{{count}} with unseen errors"
+      },
+      "state": {
+        "working": "Working",
+        "workingStoppedOnYou": "Turn open, stopped on you",
+        "error": "Unseen error",
+        "idle": "Idle"
+      },
+      "waitingUser": "Waiting for you",
+      "waiting": {
+        "question": "question",
+        "input": "input request",
+        "permission": "permission request",
+        "commit": "commit to confirm",
+        "plan": "plan to approve",
+        "unknown": "interaction"
+      },
+      "createdBy": "Created by {{title}}",
+      "activeSession": "Session open in the panel",
+      "scopeNote": "The Office shows only state Nimbalyst records: working, an error not yet seen and waiting for you. Each session shows its own turn; the Tree also counts workstream children. Completion, blockers, reviews and verdicts are not shown here.",
+      "standaloneOnlyInTree_zero": "{{count}} standalone sessions are shown only in the Tree.",
+      "standaloneOnlyInTree_one": "{{count}} standalone session is shown only in the Tree.",
+      "standaloneOnlyInTree_other": "{{count}} standalone sessions are shown only in the Tree."
+    },
     "roleCounts": {
       "coordinator_zero": "{{count}} Coordinators",
       "coordinator_one": "{{count}} Coordinator",
@@ -428,6 +470,14 @@
       "other_zero": "{{count}} Members",
       "other_one": "{{count}} Member",
       "other_other": "{{count}} Members"
+    },
+    "commandCenter": {
+      "roomLabel": "Command center: {{title}}",
+      "bayLabel": "Independent review bay",
+      "missionLabel": "Mission",
+      "sessionLabel": "Session",
+      "overflowHeading": "No room on the floor ({{count}})",
+      "scopeNote": "The Command Center is another presentation of the same read model as the Office (temporary comparison). It shows only what Nimbalyst records: working, an error not yet seen, and waiting for you. Each agent's posture and lights change with that state; nothing here is inferred from session text."
     }
   },
   "mcpStatus": {

@@ -1,0 +1,419 @@
+/*
+ * Command Center (POC G+). The room is a dark instrument on any app theme.
+ * Motion rules: only small groups move, by transform or opacity; poses change
+ * through transitions. Which loops exist, and in which state, is an explicit
+ * list that CommandCenterView.test.tsx checks against this sheet:
+ *   working: typing, head scan, breathing, scrolling screens, rack LEDs, lane
+ *            flow and the focus cycle of the main display;
+ *   waiting: lock brackets, beacon, blinking call card, visor, callout dot,
+ *            floating callout (they carry the "needs you" signal);
+ *   error:   beacon, blinking alert triangle, callout dot, floating callout;
+ *   idle:    slow breathing and an occasional glance (ambient presence).
+ * No animated filters, blur or blend modes. Reduced motion stops all of it.
+ */
+
+.cc-room {
+  --cc-working: #3fc3ff;
+  --cc-waiting: #ffb340;
+  --cc-error: #ff4d5e;
+  --cc-idle: #8091a9;
+  position: relative;
+  container-type: inline-size;
+  width: 100%;
+  border-radius: 10px;
+  background: radial-gradient(120% 90% at 50% 40%, #0f1622 0%, #080c13 70%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.cc-room::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 90;
+  border-radius: inherit;
+  background: radial-gradient(120% 100% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
+  pointer-events: none;
+}
+
+.cc-shell,
+.cc-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.cc-shell { z-index: 0; }
+.cc-art { z-index: calc(1 + var(--cc-rank, 1)); }
+
+/* ---- materials: three tones per solid (lit side, shaded side, top) ---- */
+.cc-box .l { fill: var(--l); }
+.cc-box .r { fill: var(--r); }
+.cc-box .t { fill: var(--t); }
+.cc-box .eh { fill: none; stroke: rgba(255, 255, 255, 0.16); stroke-width: 0.8; }
+.cc-box .eh2 { fill: none; stroke: rgba(255, 255, 255, 0.07); stroke-width: 0.8; }
+.cc-m-plinth { --l: #0e141d; --r: #0a0f16; --t: #141b26; }
+.cc-m-wall { --l: #1d2735; --r: #151d29; --t: #2c394b; }
+.cc-m-leg { --l: #222c3a; --r: #18202b; --t: #2d3949; }
+.cc-m-deep { --l: #151c26; --r: #10151d; --t: #1c2531; }
+.cc-m-cabinet { --l: #2b3646; --r: #1f2835; --t: #36445a; }
+.cc-m-top { --l: #4d392b; --r: #382a20; --t: #735a45; }
+.cc-m-metal { --l: #5b667a; --r: #444e5f; --t: #7a869c; }
+.cc-m-panel { --l: #0e131b; --r: #090d13; --t: #19212e; }
+.cc-m-seat { --l: #34405a; --r: #252e42; --t: #4a5878; }
+.cc-m-rack { --l: #1b222d; --r: #121821; --t: #26303f; }
+.cc-m-paper { --l: #aab3c2; --r: #8d96a6; --t: #d0d6e0; }
+.cc-m-fixture { --l: #1f2836; --r: #161d28; --t: #2b3647; }
+.cc-m-sofa { --l: #343d4f; --r: #262e3d; --t: #465068; }
+.cc-m-pot { --l: #3a424f; --r: #2a313b; --t: #4a5361; }
+.cc-m-shade { --l: #8a93a4; --r: #6a7284; --t: #aab2c2; }
+.cc-m-beacon { --l: color-mix(in srgb, var(--cc-state) 60%, #05070a); --r: color-mix(in srgb, var(--cc-state) 35%, #05070a); --t: color-mix(in srgb, var(--cc-state) 80%, #fff 20%); }
+.cc-m-seg-error { --l: #3a1a20; --r: #2a1217; --t: #4a2229; }
+.cc-m-seg-waiting { --l: #3a2c14; --r: #2a200e; --t: #4a3a1c; }
+.cc-m-seg-working { --l: #12303c; --r: #0d2430; --t: #1a3f4e; }
+.cc-m-seg-error.on { --l: #ff4d5e; --r: #d63a4a; --t: #ff8c97; }
+.cc-m-seg-waiting.on { --l: #ffb340; --r: #d89426; --t: #ffd491; }
+.cc-m-seg-working.on { --l: #3fc3ff; --r: #28a0d8; --t: #9fe0ff; }
+
+/* ---- room ---- */
+.cc-floor { fill: #131c29; }
+.cc-floor-grid line { stroke: rgba(140, 175, 230, 0.1); stroke-width: 0.9; }
+.cc-wall-back { fill: #1a2431; }
+.cc-wall-left { fill: #151e2a; }
+.cc-cove { fill: none; stroke: #d5efff; stroke-width: 1.3; opacity: 0.85; }
+.cc-baseboard { fill: none; stroke: #0b1018; stroke-width: 2; }
+.cc-plinth-led { fill: none; stroke: #3fc3ff; stroke-width: 1.2; opacity: 0.55; }
+.cc-glass { fill: #050a13; stroke: #2b3547; stroke-width: 0.5; }
+.cc-wall-glass { stroke: color-mix(in srgb, var(--cc-state) 55%, #2b3547); stroke-width: 0.8; }
+
+.cc-display-head { fill: #0c1626; }
+.cc-display-title { fill: #4c5d78; }
+.cc-tile .body { fill: #0d1626; stroke: #1d2a40; stroke-width: 0.5; }
+.cc-tile .bar { fill: var(--cc-idle); }
+.cc-tile .line { fill: #2a3a55; }
+.cc-tile--working .bar { fill: var(--cc-working); }
+.cc-tile--waiting .bar { fill: var(--cc-waiting); }
+.cc-tile--error .bar { fill: var(--cc-error); }
+.cc-tile--working .line { fill: var(--cc-working); opacity: 0.8; }
+.cc-tile--waiting .line { fill: var(--cc-waiting); opacity: 0.8; }
+.cc-tile--error .line { fill: var(--cc-error); opacity: 0.8; }
+.cc-acc-coordinator { fill: #7f8cff; }
+.cc-acc-explorer { fill: #26d0b4; }
+.cc-acc-architect { fill: #d9a066; }
+.cc-acc-implementer { fill: #4f9bff; }
+.cc-acc-reviewer { fill: #b37bff; }
+.cc-acc-advisor { fill: #5fd08a; }
+.cc-acc-other { fill: #8b97ab; }
+.cc-focus { fill: none; stroke: #dff1ff; stroke-width: 1; animation: cc-cycle calc(var(--n) * 1.6s) steps(var(--n)) infinite; }
+.cc-display-wave path { fill: none; stroke: var(--cc-working); stroke-width: 0.9; opacity: 0.45; }
+.cc-display-wave.cc-scroll-x path { opacity: 0.9; }
+
+.cc-lane .base { fill: none; stroke: #6b7fa3; stroke-width: 1.2; opacity: 0.3; stroke-dasharray: 3 8; }
+.cc-lane--working .base { stroke: var(--cc-working); opacity: 0.3; }
+.cc-lane .flow { fill: none; stroke: var(--cc-working); stroke-width: 1.8; stroke-linecap: round; stroke-dasharray: 2 18; opacity: 0.95; animation: cc-flow 1.6s steps(16) infinite; }
+
+.cc-bay .bay-floor { fill: #2a1d15; }
+.cc-bay .plank { stroke: #120b07; stroke-width: 0.7; opacity: 0.8; }
+.cc-bay .bay-edge { fill: none; stroke: #5fd08a; stroke-width: 1.2; opacity: 0.5; }
+.cc-bay .pane { fill: rgba(191, 226, 255, 0.07); stroke: rgba(214, 236, 255, 0.28); stroke-width: 0.8; }
+.cc-bay .glint { stroke: rgba(230, 244, 255, 0.22); stroke-width: 1.6; }
+.cc-bay .rail { fill: none; stroke: rgba(160, 180, 200, 0.5); stroke-width: 1.6; }
+.cc-bay .post { stroke: rgba(120, 140, 160, 0.8); stroke-width: 2; }
+.cc-bay-label {
+  position: absolute;
+  z-index: 100;
+  transform: translate(-50%, 0);
+  font: 600 clamp(8px, 0.8cqw, 10px) ui-monospace, Consolas, monospace;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #5fd08a;
+  opacity: 0.8;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.cc-fixture-led { fill: #3fc3ff; opacity: 0.45; }
+.cc-plant .leaf { fill: none; stroke-width: 2.4; stroke-linecap: round; }
+.cc-plant .leaf-0 { stroke: #2f6b3f; }
+.cc-plant .leaf-1 { stroke: #3e8a50; }
+.cc-plant .leaf-2 { stroke: #24502f; }
+
+/* ---- station layers ---- */
+.cc-station {
+  --cc-state: var(--cc-idle);
+  --cc-acc: #8b97ab;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.cc-state-working { --cc-state: var(--cc-working); }
+.cc-state-waiting { --cc-state: var(--cc-waiting); }
+.cc-state-error { --cc-state: var(--cc-error); }
+.cc-state-idle { --cc-state: var(--cc-idle); }
+.cc-role-coordinator { --cc-acc: #7f8cff; }
+.cc-role-explorer { --cc-acc: #26d0b4; }
+.cc-role-architect { --cc-acc: #d9a066; }
+.cc-role-implementer { --cc-acc: #4f9bff; }
+.cc-role-reviewer { --cc-acc: #b37bff; }
+.cc-role-advisor { --cc-acc: #5fd08a; }
+.cc-role-other { --cc-acc: #8b97ab; }
+
+.cc-pad .pad { fill: color-mix(in srgb, var(--cc-acc) 7%, transparent); stroke: color-mix(in srgb, var(--cc-acc) 38%, transparent); stroke-width: 1; }
+.cc-pad .s0 { stop-color: var(--cc-state); stop-opacity: 0.5; }
+.cc-pad .s1 { stop-color: var(--cc-state); stop-opacity: 0; }
+.cc-pad .pool { opacity: 0.62; }
+.cc-state-idle .cc-pad .pool { opacity: 0.18; }
+.cc-pad .active-ring { fill: none; stroke: #e8eef7; stroke-width: 1.4; opacity: 0; }
+.cc-station.is-active .cc-pad .active-ring { opacity: 0.8; }
+.cc-pad .hl { fill: rgba(255, 255, 255, 0.06); stroke: var(--cc-state); stroke-width: 1.6; opacity: 0; transition: opacity 0.2s; }
+.cc-station:hover .cc-pad .hl,
+.cc-station:has(.cc-hit:focus-visible) .cc-pad .hl { opacity: 1; }
+/* Keyboard focus ring: the whole floor pad turns to a bright outline (the button itself is clipped, so it has none). */
+.cc-station:has(.cc-hit:focus-visible) .cc-pad .hl { stroke: #ffffff; stroke-width: 3; fill: rgba(255, 255, 255, 0.12); }
+.cc-pad .lock polyline { fill: none; stroke: var(--cc-waiting); stroke-width: 2; opacity: 0; }
+.cc-state-waiting .cc-pad .lock polyline { opacity: 1; animation: cc-lock 2.8s steps(7) infinite; }
+.cc-state-waiting .cc-pad .pad { stroke: color-mix(in srgb, var(--cc-waiting) 60%, transparent); }
+.cc-state-error .cc-pad .pad { stroke: color-mix(in srgb, var(--cc-error) 55%, transparent); }
+
+.cc-lift { transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1); }
+.cc-station:hover .cc-lift,
+.cc-station:has(.cc-hit:focus-visible) .cc-lift { transform: translateY(-4px); }
+.cc-state-idle .cc-lift { opacity: 0.88; }
+
+.cc-lip { fill: none; stroke: color-mix(in srgb, var(--cc-acc) 70%, transparent); stroke-width: 1.4; }
+.cc-lip-state { fill: none; stroke: var(--cc-state); stroke-width: 1.6; opacity: 0.9; }
+.cc-state-idle .cc-lip-state { opacity: 0.15; }
+.cc-state-error .cc-lip-state { opacity: 0.7; }
+
+.cc-beacon .halo { fill: var(--cc-state); opacity: 0.22; }
+.cc-beacon .core { fill: #fff; opacity: 0.8; }
+.cc-state-idle .cc-beacon .halo { opacity: 0.05; }
+.cc-state-idle .cc-beacon .core { opacity: 0.25; }
+.cc-state-waiting .cc-beacon .halo { animation: cc-beacon 2.8s steps(7) infinite; }
+.cc-state-error .cc-beacon .halo { animation: cc-beacon 3.4s steps(7) infinite; }
+.cc-state-working .cc-beacon .halo { opacity: 0.3; }
+
+.cc-rack .slot { stroke: #0a0e14; stroke-width: 0.9; }
+.cc-rack .led { fill: #274a60; }
+.cc-state-working .cc-rack .led { fill: var(--cc-working); }
+.cc-state-working .cc-rack .led-0 { animation: cc-led 1.8s steps(1) infinite; }
+.cc-state-working .cc-rack .led-1 { animation: cc-led 2.4s steps(1) infinite -0.7s; }
+.cc-state-working .cc-rack .led-2 { animation: cc-led 3.1s steps(1) infinite -1.3s; }
+.cc-state-waiting .cc-rack .led { fill: #6a5230; }
+.cc-state-error .cc-rack .led { fill: #6a2c34; }
+
+.cc-lamp .arm { fill: none; stroke: #4b5565; stroke-width: 1.8; stroke-linecap: round; }
+.cc-lamp .head { fill: #2b3342; }
+.cc-lamp .cone { fill: rgba(190, 215, 255, 0.07); }
+.cc-state-error .cc-lamp .cone { fill: rgba(255, 77, 94, 0.2); }
+.cc-state-error .cc-lamp .head { fill: #6a2c34; }
+
+/* ---- screens ---- */
+.cc-scr-log .bar { fill: #4d6283; }
+.cc-scr-log .bar.acc { fill: var(--cc-state); }
+.cc-scr-log .bar.vio { fill: #8d72bb; }
+.cc-scr-wave .line { fill: none; stroke: var(--cc-state); stroke-width: 1.1; }
+.cc-scr-grid .tile { fill: #0f1a2c; stroke: #20304a; stroke-width: 0.4; }
+.cc-scr-grid .line { fill: none; stroke: var(--cc-state); stroke-width: 0.9; }
+.cc-scr-chips .chip { fill: #12301f; stroke: #3fe08a; stroke-width: 0.5; }
+.cc-scr-chips .chip-3 { fill: #3a2c14; stroke: #ffb340; }
+.cc-scr-chips .chip-4 { fill: #131c2b; stroke: #2a3446; }
+.cc-state-waiting .cc-scr-chips .chip-3 { animation: cc-blink 2.8s steps(5) infinite; }
+.cc-scr-dim { opacity: 0.4; }
+.cc-scr-standby rect { fill: #1d2940; }
+.cc-scr-standby .cc-led { fill: #3a4b68; }
+.cc-scr-call .panel { fill: #1a1205; stroke: var(--cc-waiting); stroke-width: 0.7; }
+.cc-scr-call .ring { fill: none; stroke: var(--cc-waiting); stroke-width: 0.8; }
+.cc-scr-call .bar { fill: #e2c78c; }
+.cc-scr-call .bar.dim { opacity: 0.55; }
+.cc-scr-call .btn { fill: var(--cc-waiting); }
+.cc-state-waiting .cc-scr-call .panel { animation: cc-blink 2.8s steps(5) infinite; }
+.cc-scr-alert .band { fill: var(--cc-error); }
+.cc-scr-alert .tri { fill: var(--cc-error); }
+.cc-scr-alert .bar { fill: #7a2f3a; }
+.cc-state-error .cc-scr-alert .tri { animation: cc-blink 3.4s steps(5) infinite; }
+.cc-monitor.is-alert .cc-glass { stroke: var(--cc-error); stroke-width: 0.9; }
+.cc-monitor.is-call .cc-glass { stroke: var(--cc-waiting); stroke-width: 0.9; }
+
+.cc-scroll-y { transform-box: fill-box; animation: cc-scroll-y 7s steps(18) infinite; }
+.cc-scroll-x { transform-box: fill-box; animation: cc-scroll-x 5s steps(30) infinite; }
+
+/* ---- the agent: pose by state; work loops while working, ambient loops while idle ---- */
+.cc-agent .jacket { fill: color-mix(in srgb, var(--cc-acc) 50%, #0f1622); }
+.cc-agent .jacket-shade { fill: rgba(0, 0, 0, 0.26); }
+.cc-agent .collar { fill: color-mix(in srgb, var(--cc-acc) 80%, #fff 12%); }
+.cc-agent .stripe { fill: color-mix(in srgb, var(--cc-acc) 70%, transparent); }
+.cc-agent .hood { fill: color-mix(in srgb, var(--cc-acc) 35%, #0f1622); }
+.cc-agent .strap { stroke: color-mix(in srgb, var(--cc-acc) 80%, #fff 10%); stroke-width: 1.6; fill: none; }
+.cc-agent .badge { fill: #d9deea; opacity: 0.8; }
+.cc-agent .neck { fill: #86685a; }
+.cc-agent .skull { fill: #1b2230; }
+.cc-agent .hair { fill: #151a26; }
+.cc-agent .rim { fill: color-mix(in srgb, var(--cc-state) 70%, #fff 10%); opacity: 0.55; }
+.cc-agent .ear { fill: #86685a; }
+.cc-agent .face { fill: #26303f; }
+.cc-agent .visor { fill: var(--cc-state); }
+.cc-agent .headset { fill: none; stroke: color-mix(in srgb, var(--cc-acc) 80%, #fff 20%); stroke-width: 1.4; stroke-linecap: round; }
+.cc-agent .glass-arm { stroke: #aab5c9; stroke-width: 0.9; }
+.cc-agent .upper,
+.cc-agent .lower { fill: none; stroke: color-mix(in srgb, var(--cc-acc) 58%, #0f1622); stroke-width: 6; stroke-linecap: round; d: path(var(--p)); transition: d 0.5s ease; }
+.cc-agent .hand { fill: #86685a; transition: transform 0.5s ease; }
+.cc-agent .fore { transition: transform 0.5s ease; }
+.cc-chair .spoke { stroke: #2c3547; stroke-width: 2; stroke-linecap: round; }
+
+.cc-agent .cc-body,
+.cc-agent .cc-torso,
+.cc-agent .cc-head { transition: transform 0.6s cubic-bezier(0.3, 0.7, 0.2, 1); }
+.cc-agent .cc-torso { transform-origin: 0 -4px; }
+.cc-agent .cc-head { transform-origin: 0 -46px; }
+.cc-agent .cc-face-view { opacity: 0; transition: opacity 0.4s; }
+.cc-agent .cc-hair-view { transition: opacity 0.4s; }
+
+.cc-state-working .cc-torso { transform: translate(calc(var(--cc-dir) * 1.2px), 0) rotate(calc(var(--cc-dir) * 3deg)); }
+.cc-state-working .cc-body { animation: cc-breathe 3.2s steps(8) infinite; }
+.cc-state-working .cc-head { animation: cc-scan 8s steps(1) infinite; }
+.cc-state-working .cc-arm-l .tap { animation: cc-tap 0.56s steps(1) infinite; }
+.cc-state-working .cc-arm-r .tap { animation: cc-tap 0.56s steps(1) infinite -0.28s; }
+
+.cc-state-idle .cc-torso { transform: rotate(calc(var(--cc-dir) * -5deg)) translate(0, 1px); }
+.cc-state-idle .cc-head { transform: rotate(calc(var(--cc-dir) * -4deg)); animation: cc-glance 16s steps(1) infinite; }
+.cc-state-idle .cc-body { animation: cc-breathe 6s steps(8) infinite; }
+
+.cc-state-waiting .cc-body { transform: translateY(-5px); }
+.cc-state-waiting .cc-torso { transform: rotate(calc(var(--cc-dir) * -2deg)); }
+.cc-state-waiting .cc-head { transform: rotate(calc(var(--cc-dir) * -10deg)) translate(calc(var(--cc-dir) * -1px), 0); }
+.cc-state-waiting .cc-hair-view { opacity: 0; }
+.cc-state-waiting .cc-face-view { opacity: 1; }
+.cc-state-waiting .cc-face-view .visor { animation: cc-blink 2.8s steps(5) infinite; }
+
+.cc-state-error .cc-body { transform: translateY(2px); }
+.cc-state-error .cc-torso { transform: scaleY(0.96) rotate(calc(var(--cc-dir) * 4deg)); }
+.cc-state-error .cc-head { transform: translate(calc(var(--cc-dir) * 2px), 4px) rotate(calc(var(--cc-dir) * 16deg)); }
+
+/* ---- labels, callouts, tooltips ---- */
+.cc-label {
+  position: absolute;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  align-items: center;
+  text-align: center;
+  transform: translate(-50%, 0);
+  font-size: clamp(9px, 0.95cqw, 12.5px);
+  line-height: 1.2;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px #000, 0 0 6px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  transition: transform 0.25s;
+}
+.cc-label .role { font: 600 0.72em ui-monospace, Consolas, monospace; letter-spacing: 0.12em; text-transform: uppercase; color: color-mix(in srgb, var(--cc-acc) 75%, #8892a6); }
+.cc-label .name { max-width: 12em; overflow: hidden; text-overflow: ellipsis; font-weight: 600; color: #eef3fa; }
+.cc-label .mission { max-width: 12em; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; font-size: 0.82em; font-weight: 400; color: #aab7ca; }
+.cc-label .state { display: flex; align-items: center; gap: 0.45em; color: var(--cc-state); font-size: 0.9em; }
+.cc-label .state i { width: 0.6em; height: 0.6em; border-radius: 50%; background: var(--cc-state); box-shadow: 0 0 0.9em var(--cc-state); }
+.cc-station:hover .cc-label,
+.cc-station:has(.cc-hit:focus-visible) .cc-label { filter: brightness(1.25); }
+
+.cc-callout {
+  position: absolute;
+  z-index: 130;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.45em 0.8em 0.45em 0.65em;
+  transform: translate(-50%, -100%);
+  border: 1px solid color-mix(in srgb, var(--cc-state) 70%, transparent);
+  border-radius: 8px;
+  background: rgba(9, 14, 22, 0.92);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), 0 0 14px color-mix(in srgb, var(--cc-state) 28%, transparent);
+  font-size: clamp(9px, 0.95cqw, 12.5px);
+  line-height: 1.25;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: cc-float 3.6s steps(6) infinite;
+}
+.cc-callout i { width: 0.7em; height: 0.7em; border-radius: 50%; background: var(--cc-state); }
+.cc-callout b { display: block; font: 700 0.78em ui-monospace, Consolas, monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cc-state); }
+.cc-callout em { display: block; font-style: normal; color: #dbe3ef; }
+.cc-state-waiting .cc-callout i { animation: cc-blink 2.8s steps(5) infinite; }
+.cc-state-error .cc-callout i { animation: cc-blink 3.4s steps(5) infinite; }
+
+.cc-hit { position: absolute; z-index: calc(40 + var(--cc-rank, 1)); margin: 0; padding: 0; border: 0; background: transparent; cursor: pointer; pointer-events: auto; }
+/* The focus ring is drawn on the pad (see .cc-pad .hl above): the clip-path would cut a native outline. */
+.cc-hit:focus-visible { outline: none; }
+
+.cc-tip {
+  --tx: 0;
+  --ty: 0;
+  position: absolute;
+  z-index: 200;
+  width: max-content;
+  max-width: min(320px, 44cqw);
+  padding: 12px 14px;
+  border: 1px solid #26324a;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(16, 22, 33, 0.97), rgba(9, 13, 20, 0.97));
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  color: #c9d3e2;
+  font-size: 12px;
+  line-height: 1.45;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(var(--tx), var(--ty));
+  transition: opacity 0.15s;
+}
+.cc-tip.is-below { --ty: 18px; }
+.cc-tip.is-above { --ty: calc(-100% - 18px); }
+.cc-tip.is-end { --tx: -100%; }
+.cc-station:hover .cc-tip,
+.cc-station:has(.cc-hit:focus-visible) .cc-tip { opacity: 1; }
+.cc-tip .head { display: flex; align-items: baseline; gap: 10px; }
+.cc-tip .name { font-weight: 600; font-size: 13px; color: #f1f5fb; }
+.cc-tip .role { margin-left: auto; font: 600 9px ui-monospace, Consolas, monospace; letter-spacing: 0.14em; text-transform: uppercase; color: #7d8ca5; }
+.cc-tip .state { display: flex; align-items: center; gap: 6px; margin-top: 5px; color: var(--cc-state); }
+.cc-tip .state i { width: 7px; height: 7px; border-radius: 50%; background: var(--cc-state); box-shadow: 0 0 8px var(--cc-state); }
+.cc-tip .wait { margin-top: 3px; color: var(--cc-waiting); }
+.cc-tip .k { margin-top: 9px; font: 600 9px ui-monospace, Consolas, monospace; letter-spacing: 0.16em; text-transform: uppercase; color: #7d8ca5; }
+.cc-tip .mission { margin-top: 2px; color: #dde5f0; }
+.cc-tip .meta { margin-top: 9px; font: 10.5px ui-monospace, Consolas, monospace; color: #8091a9; word-break: break-all; }
+
+.cc-chip.cc-state-waiting { border-color: var(--cc-waiting); }
+.cc-chip.cc-state-error { border-color: var(--cc-error); }
+
+/* Esc closes the tooltip of the focused station; leaving, entering or blurring shows it again. */
+.cc-station.is-dismissed .cc-tip,
+.cc-station.is-dismissed:hover .cc-tip,
+.cc-station.is-dismissed:has(.cc-hit:focus-visible) .cc-tip { opacity: 0; }
+
+/* ---- motion ---- */
+@keyframes cc-scroll-y { to { transform: translateY(-50%); } }
+@keyframes cc-scroll-x { to { transform: translateX(-50%); } }
+@keyframes cc-flow { to { stroke-dashoffset: -40; } }
+@keyframes cc-cycle { to { transform: translateX(calc(var(--step) * var(--n))); } }
+@keyframes cc-tap { 0% { transform: translate(0, 0); } 50% { transform: translate(0, -2.6px); } }
+@keyframes cc-breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-0.9px); } }
+@keyframes cc-scan {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  30% { transform: translate(calc(var(--cc-dir) * 1.6px), -0.6px) rotate(calc(var(--cc-dir) * 5deg)); }
+  62% { transform: translate(calc(var(--cc-dir) * -0.8px), 0.4px) rotate(calc(var(--cc-dir) * -3deg)); }
+  82% { transform: translate(calc(var(--cc-dir) * 1px), 0) rotate(calc(var(--cc-dir) * 2deg)); }
+}
+@keyframes cc-glance {
+  0%, 62% { transform: rotate(calc(var(--cc-dir) * -4deg)); }
+  64%, 78% { transform: rotate(calc(var(--cc-dir) * 12deg)) translate(calc(var(--cc-dir) * 1.4px), 0); }
+  80%, 100% { transform: rotate(calc(var(--cc-dir) * -4deg)); }
+}
+@keyframes cc-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes cc-lock { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes cc-beacon { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.12; } }
+@keyframes cc-led { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+@keyframes cc-float { 0%, 100% { transform: translate(-50%, -100%); } 50% { transform: translate(-50%, calc(-100% - 4px)); } }
+
+/* Reduced motion: no loops, no transitions. Each state stays recognisable by pose and light. */
+@media (prefers-reduced-motion: reduce) {
+  .cc-room *,
+  .cc-room *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
