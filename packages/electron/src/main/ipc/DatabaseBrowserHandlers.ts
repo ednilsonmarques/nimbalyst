@@ -5,6 +5,11 @@ import {
     reclaimClaudeCodeRawLog,
 } from '../database/reclaimClaudeCodeRawLog';
 
+/** Quote a Postgres identifier so a caller-supplied name cannot end the statement. */
+function quoteIdentifier(name: string): string {
+    return `"${String(name).replace(/"/g, '""')}"`;
+}
+
 export function registerDatabaseBrowserHandlers() {
     // NOTE: this whole module is the PGLite-era registration. On the SQLite
     // backend -- which is now every install that has not deliberately rolled
@@ -112,9 +117,10 @@ export function registerDatabaseBrowserHandlers() {
     // Get table data with pagination and sorting
     safeHandle('database:getTableData', async (event, tableName: string, limit: number = 100, offset: number = 0, sortColumn?: string, sortDirection?: 'asc' | 'desc') => {
         try {
+            const quotedTable = quoteIdentifier(tableName);
             // Get total count
             const countResult = await database.query<{ count: string }>(
-                `SELECT COUNT(*) as count FROM ${tableName}`
+                `SELECT COUNT(*) as count FROM ${quotedTable}`
             );
             const totalCount = parseInt(countResult.rows[0].count);
 
@@ -129,7 +135,7 @@ export function registerDatabaseBrowserHandlers() {
 
             // Get paginated data with optional sorting
             const dataResult = await database.query(
-                `SELECT * FROM ${tableName}${orderByClause} LIMIT $1 OFFSET $2`,
+                `SELECT * FROM ${quotedTable}${orderByClause} LIMIT $1 OFFSET $2`,
                 [limit, offset]
             );
 
@@ -158,7 +164,10 @@ export function registerDatabaseBrowserHandlers() {
                 };
             }
 
-            const result = await database.query(sql);
+            // The prefix check above is only a courtesy message; the engine
+            // enforces read-only (single statement, read-only transaction,
+            // 30 s deadline), same as the MCP database_query tool.
+            const result = await database.queryReadOnly(sql, [], 30_000);
 
             return {
                 success: true,

@@ -30,6 +30,7 @@ import {
   setWorkspaceExtensionConfiguration,
   setWorkspaceExtensionConfigurationBulk,
   getReleaseChannel,
+  getWorkspaceRoots,
 } from '../utils/store';
 import { registerFileExtension, clearRegisteredExtensions } from '../extensions/RegisteredFileTypes';
 import { getBuiltinExtensionsDirectory } from '../extensions/builtinExtensionsDirectory';
@@ -49,6 +50,8 @@ import { ModelIdentifier } from '@nimbalyst/runtime/ai/server/types';
 import type { ReleaseChannel } from '../utils/store';
 import { buildExtensionFindFilesPlan } from './extensionFindFilesPlan';
 import { database } from '../database/PGLiteDatabaseWorker';
+import { windowStates, getWindowIdForWindow, resolveActiveWorkspacePath } from '../window/windowState';
+import { runExtensionExec, assertSafeExtensionId } from './extensionExec';
 import { isAllowedToContributeBackendModules } from '../extensions/backendModuleAllowlist';
 import { getAgentProviderRegistry } from '../extensions/AgentProviderRegistry';
 import type {
@@ -1504,8 +1507,12 @@ export function registerExtensionHandlers(): void {
     }
   });
 
-  // Execute a shell command on behalf of an extension (requires filesystem permission)
-  safeHandle('extension:exec', async (_event, params: {
+  // Execute a shell command on behalf of an extension (requires filesystem permission).
+  // The guards in extensionExec.ts are hygiene (installed + enabled extension,
+  // cwd inside the calling window's workspace, loader env vars dropped, top
+  // frame only). They do NOT stop script running in a workspace window from
+  // calling this as any installed extension; see the note in that module.
+  safeHandle('extension:exec', async (event, params: {
     extensionId: string;
     command: string;
     cwd: string;
@@ -1513,36 +1520,27 @@ export function registerExtensionHandlers(): void {
     env?: Record<string, string>;
     maxBuffer?: number;
   }) => {
-    const { extensionId, command, cwd, timeout = 60000, env, maxBuffer = 10 * 1024 * 1024 } = params;
-
-    const manifest = await readExtensionManifest(extensionId);
-    const hasFilesystemPermission = !!manifest?.permissions?.filesystem;
-
-    if (!hasFilesystemPermission) {
-      return { success: false, stdout: '', stderr: `Extension ${extensionId} not found or lacks filesystem permission`, exitCode: -1 };
-    }
-
-    const { exec } = await import('child_process');
-    const { promisify } = await import('util');
-    const execAsync = promisify(exec);
-
-    try {
-      const { stdout, stderr } = await execAsync(command, {
-        cwd,
-        timeout,
-        maxBuffer,
-        env: env ? { ...process.env, ...env } : process.env,
-      });
-      return { success: true, stdout, stderr, exitCode: 0 };
-    } catch (execError: unknown) {
-      const err = execError as { stdout?: string; stderr?: string; code?: number; message?: string };
-      return {
-        success: false,
-        stdout: err.stdout || '',
-        stderr: err.stderr || err.message || '',
-        exitCode: err.code || 1,
-      };
-    }
+    const sender = event.sender;
+    const senderFrame = event.senderFrame;
+    const isTopFrame = !!senderFrame && senderFrame === sender.mainFrame;
+    return runExtensionExec(
+      {
+        readManifest: readExtensionManifest,
+        isEnabled: getExtensionEnabled,
+        getWorkspaceRoots: () => {
+          const win = BrowserWindow.fromWebContents(sender);
+          const state = windowStates.get(getWindowIdForWindow(win) ?? -1);
+          if (!state) return null;
+          const roots = new Set<string>();
+          for (const base of [state.workspacePath, resolveActiveWorkspacePath(state)]) {
+            if (base) getWorkspaceRoots(base).forEach((root) => roots.add(root));
+          }
+          return roots.size > 0 ? [...roots] : null;
+        },
+      },
+      { isTopFrame },
+      params,
+    );
   });
 
   // ============================================================================
@@ -1653,7 +1651,7 @@ export function registerExtensionHandlers(): void {
   safeHandle('extension:file-storage:usage', async (_event, params: {
     extensionId: string;
   }) => {
-    const extRoot = path.join(getExtensionDataRoot(), params.extensionId);
+    const extRoot = path.join(getExtensionDataRoot(), assertSafeExtensionId(params.extensionId, getExtensionDataRoot()));
     const usedBytes = await getDirectorySize(extRoot);
     const limitBytes = 500 * 1024 * 1024; // 500MB default
     return { usedBytes, limitBytes };
@@ -1707,6 +1705,7 @@ export function registerExtensionHandlers(): void {
  */
 interface ManifestForGating {
   id?: string;
+  defaultEnabled?: boolean;
   permissions?: {
     filesystem?: boolean;
     ai?: boolean;
@@ -1787,6 +1786,7 @@ async function getExtensionDataPath(
   scope: 'workspace' | 'global'
 ): Promise<string> {
   const root = getExtensionDataRoot();
+  assertSafeExtensionId(extensionId, root);
 
   if (scope === 'global') {
     return path.join(root, extensionId, 'global');

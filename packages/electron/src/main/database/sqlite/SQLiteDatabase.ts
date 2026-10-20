@@ -397,7 +397,19 @@ export class SQLiteDatabase {
     const inFlight = this.instrumentation.beginInFlight(adapted.sql, stack);
     const t0 = performance.now();
     try {
+      // Must precede prepare(): SQLite applies some PRAGMAs (locking_mode,
+      // busy_timeout, max_page_count) while compiling the statement, so
+      // rejecting after prepare would be too late.
+      if (readOnly && !isAllowedPragma(adapted.sql)) {
+        throw new Error('queryReadOnly received a non-SELECT statement');
+      }
       const stmt = this.db.prepare(adapted.sql);
+      // `PRAGMA query_only` does not stop VACUUM INTO, ATTACH (creates the
+      // file) or wal_checkpoint, so ask the engine itself: a read-only caller
+      // may only run a statement that returns rows and writes nothing.
+      if (readOnly && !isReadOnlyStatement(stmt)) {
+        throw new Error('queryReadOnly received a non-SELECT statement');
+      }
       let rows: T[] = [];
       if (stmtReturnsRows(stmt)) {
         rows = stmt.all(...adapted.params) as T[];
@@ -542,6 +554,68 @@ function stmtReturnsRows(stmt: import('better-sqlite3').Statement): boolean {
   // better-sqlite3 exposes `reader` to indicate the statement returns rows
   // (SELECT, RETURNING, PRAGMA-with-result).
   return (stmt as unknown as { reader: boolean }).reader === true;
+}
+
+// A comment body is `(?:[^*]|\*(?!\/))*`, so it can only end at its first `*/`
+// (the lazy `[\s\S]*?` form let the anchored pattern below backtrack
+// exponentially over many adjacent comments).
+const SKIP_LEADING = /^(?:\s|;|--[^\n]*(?:\n|$)|\/\*(?:[^*]|\*(?!\/))*\*\/)*/;
+const STARTS_WITH_PRAGMA = /^pragma(?![A-Za-z0-9_$])/i;
+const STARTS_WITH_EXPLAIN = /^explain(?![A-Za-z0-9_$])/i;
+// Whitespace or a comment: SQLite accepts a comment wherever it accepts a space.
+const GAP = String.raw`(?:\s|--[^\n]*(?:\n|$)|\/\*(?:[^*]|\*(?!\/))*\*\/)`;
+// The only accepted spelling: PRAGMA [schema.]name[(arg)], every identifier
+// unquoted, no "=", no comma, at most one parenthesised argument and nothing
+// after it but `;`, whitespace and comments. The argument may be quoted
+// (PRAGMA table_info("t")); a quoted or bracketed name or schema is rejected.
+const STRICT_PRAGMA = new RegExp(
+  String.raw`^pragma${GAP}+(?:[A-Za-z_][A-Za-z0-9_$]*${GAP}*\.${GAP}*)?([A-Za-z_][A-Za-z0-9_$]*)` +
+    String.raw`${GAP}*(?:\([^=;(),]*\)${GAP}*)?(?:;|${GAP})*$`,
+  'i',
+);
+/** Introspection PRAGMAs whose only argument names an object; they set nothing. */
+const READ_ONLY_PRAGMAS = new Set([
+  'table_info',
+  'table_xinfo',
+  'index_list',
+  'index_info',
+  'foreign_key_list',
+  'database_list',
+]);
+
+/**
+ * Fail-closed text check, run BEFORE the statement is compiled: SQLite applies
+ * some PRAGMAs (busy_timeout, locking_mode, max_page_count) while preparing
+ * them, and several report `readonly`, so neither the engine check nor
+ * rejecting after prepare() is enough.
+ *
+ * After skipping whitespace, comments and empty `;` statements:
+ *  - a statement starting with the word PRAGMA must match STRICT_PRAGMA with
+ *    an allowlisted name; anything else starting with PRAGMA is rejected,
+ *    however it is spelled;
+ *  - EXPLAIN / EXPLAIN QUERY PLAN is rejected outright (no queryReadOnly
+ *    caller uses it, and it would otherwise have to re-apply the rule above).
+ */
+function isAllowedPragma(sql: string): boolean {
+  const body = sql.slice(SKIP_LEADING.exec(sql)![0].length);
+  if (STARTS_WITH_EXPLAIN.test(body)) return false;
+  if (!STARTS_WITH_PRAGMA.test(body)) return true;
+  const m = STRICT_PRAGMA.exec(body);
+  return m !== null && READ_ONLY_PRAGMAS.has(m[1].toLowerCase());
+}
+
+/**
+ * True when the engine reports the prepared statement as returning rows
+ * (`reader`) and not writing (`readonly`). better-sqlite3 derives both from
+ * sqlite3_stmt_readonly, so VACUUM, VACUUM INTO, wal_checkpoint, PRAGMA
+ * journal_mode and INSERT ... RETURNING are refused; `reader` also refuses
+ * ATTACH, DETACH and `PRAGMA x = y` forms that return no rows. PRAGMAs that
+ * return a row yet change connection state are refused earlier, by text
+ * (`isAllowedPragma`), before the statement is compiled.
+ */
+function isReadOnlyStatement(stmt: import('better-sqlite3').Statement): boolean {
+  const s = stmt as unknown as { reader: boolean; readonly: boolean };
+  return s.reader === true && s.readonly === true;
 }
 
 function captureStack(): string | undefined {
