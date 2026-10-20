@@ -15,6 +15,7 @@ import { readTeamSessionFields } from '@nimbalyst/runtime/ai/adapters/sessionSto
 import path from "path";
 import { BrowserWindow } from 'electron';
 import { safeHandle, safeOn } from '../utils/ipcRegistry';
+import { registerTestQueryDbHandler } from './testQueryDbHandler';
 import { getCachedUncommittedFiles } from '../utils/gitUncommittedFiles';
 import { parseJsonObjectColumn } from '../utils/jsonColumn';
 import type { SessionCreateResult } from '../../shared/ipc/types';
@@ -902,24 +903,19 @@ export async function registerSessionHandlers() {
         }
     });
 
-    // Test-only: Query database directly (for e2e tests and debugging)
-    // This handler is safe to leave registered as it's read-only
-    safeHandle('test:query-db', async (event, sql: string, params?: any[]) => {
-        try {
-            const { database } = await import('../database/PGLiteDatabaseWorker');
-            const result = await database.query(sql, params);
-            return result;
-        } catch (error) {
-            console.error('[SessionHandlers] Test query error:', error);
-            return { error: String(error) };
-        }
-    });
+    // Test-only database inspection for E2E specs: registered only in an
+    // unpackaged app under the Playwright harness, and read-only where it
+    // exists. See testQueryDbHandler.ts.
+    registerTestQueryDbHandler(database);
 
     // ============================================================
     // Test-only handlers for E2E testing without AI agent
     // These allow inserting mock sessions and messages for testing
     // interactive prompt widgets in isolation.
-    // SECURITY: Only registered in development/test environments.
+    // SECURITY: registered only when isTestEnv below is true. isTestEnv reads
+    // environment variables at run time (NODE_ENV, PLAYWRIGHT,
+    // PLAYWRIGHT_TEST); it is not a build-time guarantee, so a packaged app
+    // launched with one of them set would register these handlers too.
     // ============================================================
 
     const isTestEnv = process.env.NODE_ENV === 'development' ||
