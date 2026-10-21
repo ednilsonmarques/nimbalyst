@@ -8,7 +8,9 @@ import {
 } from '../shared/trackerDeepLinks';
 import { parseInviteDeepLink, type InviteDeepLinkTarget } from '../shared/inviteDeepLinks';
 import { resolveOrgMessagingDestination } from '../shared/orgMessagingRouting';
-import { safeHandle, safeOn } from './utils/ipcRegistry';
+import { safeHandle, safeOn, installIpcChannelObserver } from './utils/ipcRegistry';
+import { createChannelAllowlistObserver } from './security/channelAllowlistMonitor';
+import ipcChannelAllowlist from '../shared/ipcChannelAllowlist.json';
 import { installMicrophoneGate } from './mediaPermissionGate';
 import { markBootComplete } from './utils/bootState';
 import { markStart, markEnd, checkpoint, logSummary } from './utils/startupTiming';
@@ -391,6 +393,13 @@ registerCollabAssetSchemeAsPrivileged();
 // file links that slip past the renderer's link routing used to open blank
 // white child windows.
 installWindowOpenGuard();
+
+// NIB.85 stage d3 (decision U6: LOG-ONLY, never block): note, once per channel
+// and bounded, any channel the renderer invokes that scripts/ipc-channel-
+// allowlist.mjs did not find in the source.
+installIpcChannelObserver(
+  createChannelAllowlistObserver(ipcChannelAllowlist, { log: (message) => console.warn(message) }),
+);
 
 // NOTE: User data directory configuration is handled in bootstrap.ts
 // which runs BEFORE this file is imported, ensuring electron-store

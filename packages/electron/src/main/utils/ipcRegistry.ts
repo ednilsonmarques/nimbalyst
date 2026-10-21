@@ -103,6 +103,27 @@ function ipcSlowLog(channel: string, durationMs: number): void {
   );
 }
 
+/**
+ * Channel observer (NIB.85 stage d3, LOG-ONLY). Called with the channel name
+ * on every invocation that reaches a safeHandle / safeOn / safeOnce wrapper
+ * from an accepted sender. It cannot alter the call: its result is ignored and
+ * a throw is swallowed.
+ */
+let channelObserver: ((channel: string) => void) | null = null;
+
+export function installIpcChannelObserver(observer: ((channel: string) => void) | null): void {
+  channelObserver = observer;
+}
+
+function observeChannel(channel: string): void {
+  if (!channelObserver) return;
+  try {
+    channelObserver(channel);
+  } catch {
+    // observation must never affect the IPC call
+  }
+}
+
 function getOrCreateIpcStats(channel: string): IpcInvocationStats {
   let stats = ipcStats.get(channel);
   if (!stats) {
@@ -166,6 +187,7 @@ export function safeHandle(
   // promise takes from outside `ipcMain.handle`, so the wrap is the only
   // place to measure end-to-end main-side handler latency.
   const timed = async (event: IpcMainInvokeEvent, ...args: any[]) => {
+    observeChannel(channel);
     const stats = getOrCreateIpcStats(channel);
     const t0 = performance.now();
     stats.callCount += 1;
@@ -190,7 +212,11 @@ export function safeHandle(
     }
   };
 
-  const instrumented = UNTIMED_IPC_CHANNELS.has(channel) ? handler : timed;
+  const untimed = async (event: IpcMainInvokeEvent, ...args: any[]) => {
+    observeChannel(channel);
+    return handler(event, ...args);
+  };
+  const instrumented = UNTIMED_IPC_CHANNELS.has(channel) ? untimed : timed;
 
   // Special case: electron-log registers its own '__ELECTRON_LOG__' handler
   // If we try to register after electron-log has already initialized, we'll get an error
@@ -226,6 +252,7 @@ function containListenerErrors(
     console.error(`[IPC] Listener for ${channel} threw:`, error);
   };
   return (event, ...args) => {
+    observeChannel(channel);
     try {
       const result = handler(event, ...args);
       if (result && typeof (result as Promise<unknown>).then === 'function') {
