@@ -44,6 +44,36 @@ describe('Team mode system prompt', () => {
     expect(text).toContain('do not read or redo it yourself');
   });
 
+  describe('reusing members', () => {
+    const text = buildTeamModeAddendum('claude');
+    const section = text.slice(text.indexOf('### Reusing members'), text.indexOf('### Limits'));
+
+    it('sits between Briefs and Limits', () => {
+      expect(text.indexOf('### Briefs')).toBeLessThan(text.indexOf('### Reusing members'));
+      expect(text.indexOf('### Reusing members')).toBeLessThan(text.indexOf('### Limits'));
+    });
+
+    it('tells the root to retitle a reused member through send_prompt, to open a new implementer when the subject changes, and to keep one reviewer or advisor per round', () => {
+      expect(section).toContain('pass `title` on `mcp__nimbalyst-host__send_prompt`');
+      expect(section).toContain("so the member's title names its current task");
+      expect(section).toContain('When the subject changes, create a new implementer instead of piling unrelated tasks on one session');
+      expect(section).toContain('A reviewer or advisor stays one per review round');
+      expect(section).toContain('follow-ups of the same round go to the same session');
+    });
+
+    it('leaves the Missions text and the reuse rule of the checkpoint untouched, and stays static', () => {
+      expect(text).toContain('cannot be changed afterwards and reaches the member in its system prompt next to its role');
+      expect(text).toContain('Reusing a member in its own role stays fine, with or without budget left');
+      expect(buildTeamModeAddendum('claude')).toBe(text);
+    });
+
+    it('does not reach the members', () => {
+      for (const role of ['explorer', 'implementer', 'reviewer', 'other'] as const) {
+        expect(buildTeamChildAddendum(role)).not.toContain('Reusing members');
+      }
+    });
+  });
+
   describe('team checkpoint', () => {
     const text = buildTeamModeAddendum('claude');
     const checkpoint = text.slice(text.indexOf('### Team checkpoint'), text.indexOf('### Ownership and integration'));

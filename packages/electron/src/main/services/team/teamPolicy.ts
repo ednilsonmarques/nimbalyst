@@ -410,6 +410,32 @@ export function resolveRequestedTeamMission(raw: unknown): string | undefined {
   return mission;
 }
 
+/** Longest title the team root may give a member through send_prompt (the same cap update_session_meta applies to a name). */
+export const TEAM_MEMBER_TITLE_MAX_LENGTH = 100;
+
+/**
+ * Title the team root asks for when it reuses a member: plain, non-blank text of
+ * at most TEAM_MEMBER_TITLE_MAX_LENGTH characters once whitespace is collapsed,
+ * and never a child-completion notification (the same recursion guard spawn
+ * applies). Refused before any side effect.
+ */
+export function resolveRequestedMemberTitle(raw: unknown): string {
+  if (typeof raw !== 'string') {
+    throw new Error('Invalid title: expected plain text.');
+  }
+  const title = raw.replace(/\s+/g, ' ').trim();
+  if (!title) {
+    throw new Error('Invalid title: it is blank.');
+  }
+  if (title.length > TEAM_MEMBER_TITLE_MAX_LENGTH) {
+    throw new Error(`Title too long (${title.length} characters; at most ${TEAM_MEMBER_TITLE_MAX_LENGTH}). Name the member's current task in a few words.`);
+  }
+  if (title.startsWith('[Child Session Update]')) {
+    throw new Error('Refusing a title that begins with "[Child Session Update]".');
+  }
+  return title;
+}
+
 export function buildTeamChild(team: TeamCaller, role: TeamRole, mission?: string): TeamChild {
   const child: TeamChild = { role, rootSessionId: team.rootSessionId, depth: team.depth + 1 };
   return mission ? { ...child, mission } : child;

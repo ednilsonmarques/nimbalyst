@@ -49,6 +49,7 @@ import { withToolManifestTrackerPort } from './team/toolManifestTrackerPort';
 import {
   buildTeamChild,
   callerWorktreeRequest,
+  resolveRequestedMemberTitle,
   resolveRequestedTeamMission,
   resolveRequestedTeamRole,
   resolveTeamCaller,
@@ -68,6 +69,7 @@ import {
   type TeamProviderDiversity,
 } from './team/teamPolicy';
 import { describeTeamMemberProvider, teamMemberProviderReadiness } from './team/teamProviders';
+import { applySessionTitleThroughNaming } from '../mcp/sessionNamingServer';
 import { resolveChildToolScope, type ChildToolScope } from '@nimbalyst/runtime/ai/server/providers/claudeCode/toolPolicy';
 import { isKnownCodexModelId } from '@nimbalyst/runtime/ai/server/providers/codex/codexModelCatalog';
 
@@ -410,8 +412,8 @@ export class MetaAgentService {
           this.getSessionResultJson(targetSessionId, workspaceId, options),
         listQueuedPrompts: (_metaSessionId, workspaceId, targetSessionId, options) =>
           this.listQueuedPromptsJson(targetSessionId, workspaceId, options),
-        sendPrompt: (metaSessionId, workspaceId, targetSessionId, prompt, interrupt, messageKind) =>
-          this.sendPromptToSession(metaSessionId, targetSessionId, workspaceId, prompt, interrupt, messageKind),
+        sendPrompt: (metaSessionId, workspaceId, targetSessionId, prompt, interrupt, messageKind, options) =>
+          this.sendPromptToSession(metaSessionId, targetSessionId, workspaceId, prompt, interrupt, messageKind, options),
         notifyUser: (callerSessionId, workspaceId, args) =>
           this.notifyUserJson(callerSessionId, workspaceId, args),
         respondToPrompt: (_metaSessionId, workspaceId, args) =>
@@ -1513,6 +1515,7 @@ export class MetaAgentService {
     prompt: string,
     interrupt = false,
     messageKind: OrchestrationMessageKind = 'instruction',
+    options?: { title?: unknown },
   ): Promise<string> {
     if (!this.aiService) {
       throw new Error('AI service not initialized');
@@ -1526,6 +1529,13 @@ export class MetaAgentService {
       throw new Error(`Session ${sessionId} not found`);
     }
 
+    // The title is validated and its authority checked here, before anything is
+    // queued or persisted (bypass branch included): a refusal leaves the queue
+    // and the title exactly as they were.
+    const requestedTitle = options?.title !== undefined
+      ? await this.authorizeMemberRetitle(originSessionId, session, options.title)
+      : null;
+
     // Validated by the guard above; this hands the same stored key back verbatim.
     const sessionWorkspaceKey = resolveStoredWorkspaceId(session.workspacePath, workspaceId);
     const normalizedPrompt = prompt.trim();
@@ -1538,6 +1548,10 @@ export class MetaAgentService {
       messageKind,
       originSessionId,
     };
+
+    if (requestedTitle) {
+      await applySessionTitleThroughNaming(sessionId, requestedTitle);
+    }
 
     if (shouldBypassExecution) {
       await this.persistSyntheticInputMessage(sessionId, normalizedPrompt, promptProvenance);
@@ -1607,6 +1621,30 @@ export class MetaAgentService {
       ...(interruptSkippedReason ? { interruptSkippedReason } : {}),
       ...(driveOutcome ? { driveOutcome } : {}),
     }, null, 2);
+  }
+
+  /**
+   * Authority of `send_prompt({ title })`: only the team root retitles, only a
+   * member whose `teamChild.rootSessionId` is that root, never the root itself.
+   * Returns the normalized title; throws before any side effect otherwise. The
+   * title is a label: the member's mission, role and scope are never touched.
+   */
+  private async authorizeMemberRetitle(
+    callerSessionId: string,
+    target: { id: string; metadata?: unknown; agentRole?: string | null },
+    rawTitle: unknown,
+  ): Promise<string> {
+    const refusal = 'Only the team root may retitle its own members through send_prompt title.';
+    const caller = await AISessionsRepository.get(callerSessionId);
+    const callerContext = resolveTeamContext(caller?.metadata as Record<string, unknown> | undefined, caller?.agentRole);
+    if (!callerContext.teamMode) {
+      throw new Error(refusal);
+    }
+    const targetContext = resolveTeamContext(target.metadata as Record<string, unknown> | undefined, target.agentRole);
+    if (target.id === callerSessionId || targetContext.teamChild?.rootSessionId !== callerSessionId) {
+      throw new Error(`${refusal} The target is not one of your own members.`);
+    }
+    return resolveRequestedMemberTitle(rawTitle);
   }
 
   /**

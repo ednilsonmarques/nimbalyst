@@ -422,6 +422,9 @@ Provider diversity: a second opinion from a different provider (another model fa
 ### Briefs
 Every brief states: the role, the exact deliverable, the acceptance criterion, the files the session owns and the files it must not touch, and any limits. A session knows nothing beyond its brief and its mission. A brief is instructions, never a permission: what a member may do comes from its scope, whatever the brief says.
 
+### Reusing members
+When you reuse a member for a new task, pass \`title\` on ${sendPromptTool} (a short phrase, at most 100 characters) so the member's title names its current task; the sidebar shows it. Only you, the team root, can retitle your members: a member that already has a title cannot rename itself, and the title changes neither its role, its mission nor its scope. When the subject changes, create a new implementer instead of piling unrelated tasks on one session. A reviewer or advisor stays one per review round: follow-ups of the same round go to the same session, and the next round gets a new one.
+
 ### Limits
 A team has at most 3 real sessions active at once, and sessions nest at most 2 levels deep. It starts with a budget of 8 real sessions in total, counting every member ever created, finished and archived ones included. The runtime enforces all three. When the active or depth limit refuses a new session, wait for a member to finish or integrate what you have.
 

@@ -136,8 +136,17 @@ const MetaAgentChildRow: React.FC<{
   onContextMenu: (e: React.MouseEvent) => void;
   /** Team member role label; absent for meta-agent children. */
   roleLabel?: string;
-}> = memo(({ session, isActive, onSelect, onContextMenu, roleLabel }) => (
+}> = memo(({ session, isActive, onSelect, onContextMenu, roleLabel }) => {
+  const { t } = useTranslation('agent');
+  // The row truncates the title: the native tooltip carries all of it, plus the
+  // member's mission when it has one. Both come from the live session, so a
+  // retitle by the team root shows up without a reload.
+  const tooltip = session.teamMission
+    ? `${session.title}\n${t('agentTeam.missionTitle', { mission: session.teamMission })}`
+    : session.title;
+  return (
   <div
+    title={tooltip || undefined}
     className={`meta-agent-child-item flex items-center gap-2 py-1.5 px-3 mr-2 mb-0.5 cursor-pointer rounded transition-colors duration-150 select-none ${
       isActive ? 'bg-[var(--nim-bg-selected)]' : 'hover:bg-[var(--nim-bg-hover)]'
     } focus:outline-2 focus:outline-[var(--nim-border-focus)] focus:outline-offset-[-2px]`}
@@ -172,7 +181,8 @@ const MetaAgentChildRow: React.FC<{
       <ChildSessionStatus sessionId={session.id} />
     </div>
   </div>
-));
+  );
+});
 
 export const MetaAgentGroup: React.FC<MetaAgentGroupProps> = memo(({
   metaSession,

@@ -162,3 +162,35 @@ describe('MetaAgentGroup for a Team mode root', () => {
     expect(screen.getByTestId('team-summary-line').textContent).toBe('Team • 3 members');
   });
 });
+
+describe('MetaAgentGroup member row tooltip (NIB.102)', () => {
+  const row = (role: string) => document.querySelector(`[data-team-role="${role}"]`) as HTMLElement;
+
+  it('the native title is the full title plus the mission line when the member has a mission', () => {
+    const long = 'Corrigir a validação do fluxo de supersedes no Tool Manifest e cobrir os casos de borda';
+    renderGroup({
+      childSessions: [session('impl', { title: long, createdBySessionId: 'root', teamRole: 'implementer', teamMission: 'Fix only the validation of the supersedes relationship.' })],
+    });
+    expect(row('implementer').getAttribute('title')).toBe(`${long}\nMissão: Fix only the validation of the supersedes relationship.`);
+  });
+
+  it('a member without a mission gets the title alone', () => {
+    renderGroup();
+    expect(row('explorer').getAttribute('title')).toBe('auditoria estrutura');
+  });
+
+  it('follows the title live when the member is retitled', () => {
+    const member = (title: string) => session('impl', { title, createdBySessionId: 'root', teamRole: 'implementer', teamMission: 'Mission text.' });
+    const tree = (title: string) => (
+      <Provider store={store}>
+        <I18nProvider>
+          <MetaAgentGroup metaSession={ROOT} childSessions={[member(title)]} isExpanded isActive={false} onToggle={vi.fn()} activeSessionId={null} onSessionSelect={vi.fn()} />
+        </I18nProvider>
+      </Provider>
+    );
+    const { rerender } = render(tree('Primeira tarefa'));
+    expect(row('implementer').getAttribute('title')).toBe('Primeira tarefa\nMissão: Mission text.');
+    rerender(tree('Segunda tarefa'));
+    expect(row('implementer').getAttribute('title')).toBe('Segunda tarefa\nMissão: Mission text.');
+  });
+});

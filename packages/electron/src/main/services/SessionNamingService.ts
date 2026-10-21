@@ -9,11 +9,13 @@ import {
   setGetSessionTitleFn,
   setGetSessionPhaseFn,
   setGetSessionToolScopeFn,
+  setGetSessionNameLockedFn,
 } from '../mcp/sessionNamingServer';
 import { getDatabase } from '../database/initialize';
 import { TrayManager } from '../tray/TrayManager';
 import { createWorktreeStore } from './WorktreeStore';
 import { getPreferredAgentLanguage } from '../utils/store';
+import { isSessionNameLocked } from './sessionNameLock';
 import { normalizeSessionPhaseMetadataUpdate } from './session/sessionPhaseTransition';
 
 /**
@@ -104,6 +106,13 @@ export class SessionNamingService {
           const session = await AISessionsRepository.get(sessionId);
           const scope = (session?.metadata as any)?.toolScope;
           return typeof scope === 'string' ? scope : null;
+        });
+
+        // Name lock: a team member that already has a title keeps it; its team
+        // root retitles it through send_prompt. Unnamed members name themselves
+        // once, and sessions outside a team are never locked.
+        setGetSessionNameLockedFn(async (sessionId: string) => {
+          return isSessionNameLocked(await AISessionsRepository.get(sessionId));
         });
 
         // MCP consolidation Phase 7: `update_session_meta` is served by the

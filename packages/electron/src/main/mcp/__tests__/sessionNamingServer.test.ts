@@ -1,11 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   buildSessionMetaToolSchemas,
   dispatchSessionMetaTool,
   setGetSessionPhaseFn,
   setGetSessionTagsFn,
+  setGetSessionNameLockedFn,
   setGetSessionTitleFn,
+  setUpdateSessionTitleFn,
   setGetSessionToolScopeFn,
   setUpdateSessionMetadataFn,
 } from "../sessionNamingServer";
@@ -92,5 +94,61 @@ describe("dispatchSessionMetaTool only writes operational metadata (NIB.46 item 
         expect(write, key).not.toHaveProperty(key);
       }
     }
+  });
+});
+
+describe('dispatchSessionMetaTool name lock for a titled team member (NIB.102)', () => {
+  const NOTICE = "Name not changed: this member's title is managed by its team root.";
+  let writes: Array<Record<string, unknown>>;
+  let titles: string[];
+
+  beforeEach(() => {
+    writes = [];
+    titles = [];
+    setUpdateSessionMetadataFn(async (_sessionId, metadata) => { writes.push(metadata); });
+    setUpdateSessionTitleFn(async (_sessionId, title) => { titles.push(title); });
+    setGetSessionTagsFn(async () => []);
+    setGetSessionTitleFn(async () => "Fix the supersedes validation");
+    setGetSessionPhaseFn(async () => null);
+    setGetSessionToolScopeFn(async () => null);
+  });
+
+  it('skips the name, applies tags and phase, and reports a notice without an error', async () => {
+    setGetSessionNameLockedFn(async () => true);
+    const result = await dispatchSessionMetaTool("update_session_meta", { name: "My own title", add: ["bug-fix"], phase: "implementing" }, "member");
+    expect(result.isError).toBe(false);
+    expect(titles).toEqual([]);
+    expect(writes).toEqual([{ tags: ["bug-fix"], phase: "implementing" }]);
+    const body = JSON.parse(result.content[0].text);
+    expect(body.summary).toContain(NOTICE);
+    expect(body.summary).toContain("Added tags: #bug-fix");
+    expect(body.after.name).toBe("Fix the supersedes validation");
+  });
+
+  it('a name alone is a non-error notice and writes nothing', async () => {
+    setGetSessionNameLockedFn(async () => true);
+    const result = await dispatchSessionMetaTool("update_session_meta", { name: "My own title" }, "member");
+    expect(result.isError).toBe(false);
+    expect(titles).toEqual([]);
+    expect(writes).toEqual([]);
+    expect(JSON.parse(result.content[0].text).summary).toContain(NOTICE);
+  });
+
+  it('a lookup failure is handled the same way: name ignored, the rest applied, no error', async () => {
+    setGetSessionNameLockedFn(async () => { throw new Error("db unavailable"); });
+    const result = await dispatchSessionMetaTool("update_session_meta", { name: "My own title", phase: "validating" }, "member");
+    expect(result.isError).toBe(false);
+    expect(titles).toEqual([]);
+    expect(writes).toEqual([{ phase: "validating" }]);
+    expect(JSON.parse(result.content[0].text).summary).toContain(NOTICE);
+  });
+
+  it('an unnamed team member (or a non-team session) still names itself', async () => {
+    setGetSessionNameLockedFn(async () => false);
+    const result = await dispatchSessionMetaTool("update_session_meta", { name: "First and only name", add: ["feature"] }, "member");
+    expect(result.isError).toBe(false);
+    expect(titles).toEqual(["First and only name"]);
+    expect(writes).toEqual([{ tags: ["feature"] }]);
+    expect(JSON.parse(result.content[0].text).summary).not.toContain(NOTICE);
   });
 });

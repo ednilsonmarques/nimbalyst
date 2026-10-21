@@ -132,7 +132,8 @@ interface MetaAgentToolFns {
     targetSessionId: string,
     prompt: string,
     interrupt?: boolean,
-    messageKind?: OrchestrationMessageKind
+    messageKind?: OrchestrationMessageKind,
+    options?: { title?: unknown }
   ) => Promise<string>;
   notifyUser: (
     metaSessionId: string,
@@ -404,6 +405,11 @@ export const META_AGENT_TOOL_DEFS: Array<{
           enum: ["instruction", "report", "status", "question", "error"],
           description: "Defaults to instruction. report/status are informational context that the recipient can consume mid-turn; never label a request to change work as a report.",
         },
+        title: {
+          type: "string",
+          description:
+            "Optional, team root only. Retitles the target team member (at most 100 characters) so its sidebar title names the task you are sending; use it when you reuse a member for a new task. Refused for any other caller and for a session that is not your own team member; a refusal queues nothing. The member's mission does not change.",
+        },
         interrupt: {
           type: "boolean",
           description:
@@ -647,6 +653,19 @@ export async function dispatchMetaAgentTool(
       );
     case "send_prompt":
       if (args?.messageKind !== undefined && !['instruction', 'report', 'status', 'question', 'error'].includes(String(args.messageKind))) throw new Error('Invalid orchestration messageKind');
+      // The title rides as a trailing options object only when given, so a
+      // plain send keeps today's call shape.
+      if (args?.title !== undefined) {
+        return toolFns.sendPrompt(
+          aiSessionId,
+          effectiveWorkspaceId,
+          (args?.sessionId as string) ?? "",
+          (args?.prompt as string) ?? "",
+          args?.interrupt === true,
+          (args?.messageKind as OrchestrationMessageKind | undefined) ?? 'instruction',
+          { title: args.title }
+        );
+      }
       return toolFns.sendPrompt(
         aiSessionId,
         effectiveWorkspaceId,

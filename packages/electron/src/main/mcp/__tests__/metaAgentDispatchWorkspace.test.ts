@@ -90,4 +90,15 @@ describe('dispatchMetaAgentTool workspace resolution (#1551)', () => {
 
     expect(seen[0].workspaceId).toBe(fixture.aliasProject);
   });
+
+  it('hands send_prompt title to sendPrompt as a trailing options object, and keeps today\'s call without one', async () => {
+    const calls: unknown[][] = [];
+    setMetaAgentToolFns({ sendPrompt: async (...args: unknown[]) => { calls.push(args); return '{}'; } } as any);
+
+    await dispatchMetaAgentTool('send_prompt', 'root', fixture.aliasProject, { sessionId: 'member', prompt: 'next task', title: 'Fix the login' });
+    await dispatchMetaAgentTool('send_prompt', 'root', fixture.aliasProject, { sessionId: 'member', prompt: 'next task' });
+
+    expect(calls[0]).toEqual(['root', fixture.aliasProject, 'member', 'next task', false, 'instruction', { title: 'Fix the login' }]);
+    expect(calls[1]).toEqual(['root', fixture.aliasProject, 'member', 'next task', false, 'instruction']);
+  });
 });

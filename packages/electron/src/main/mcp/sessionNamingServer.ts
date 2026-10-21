@@ -35,6 +35,21 @@ let getSessionToolScopeFn:
   | ((sessionId: string) => Promise<string | null>)
   | null = null;
 
+let getSessionNameLockedFn:
+  | ((sessionId: string) => Promise<boolean>)
+  | null = null;
+
+/**
+ * Set the function that tells whether a session's name is locked: a team member
+ * that already has a title (called once at startup). Its team root retitles it
+ * through send_prompt, so a member's own `name` is skipped, never refused.
+ */
+export function setGetSessionNameLockedFn(
+  getNameLockedFn: (sessionId: string) => Promise<boolean>
+) {
+  getSessionNameLockedFn = getNameLockedFn;
+}
+
 /**
  * Set the update function for session titles (called once at startup)
  */
@@ -42,6 +57,19 @@ export function setUpdateSessionTitleFn(
   updateTitleFn: (sessionId: string, title: string) => Promise<void>
 ) {
   updateSessionTitleFn = updateTitleFn;
+}
+
+/**
+ * Apply a title through the same funnel update_session_meta uses
+ * (SessionNamingService.applySessionTitle: hasBeenNamed, session:title-updated,
+ * worktree name). The team root retitling a member goes through here; the
+ * indirection keeps MetaAgentService from importing the naming service.
+ */
+export async function applySessionTitleThroughNaming(sessionId: string, title: string): Promise<void> {
+  if (!updateSessionTitleFn) {
+    throw new Error('Session title update not available.');
+  }
+  await updateSessionTitleFn(sessionId, title);
 }
 
 /**
@@ -254,8 +282,23 @@ export async function dispatchSessionMetaTool(
       const before = await snapshotSessionMeta(aiSessionId);
       const notes: string[] = [];
 
+      // A titled team member's name is managed by its team root: skip it with a
+      // notice, never an error, so a first-turn call that also sets tags/phase
+      // goes through. A lookup that fails is treated as locked.
+      let nameLocked = false;
+      if (sessionName && getSessionNameLockedFn) {
+        try {
+          nameLocked = await getSessionNameLockedFn(aiSessionId);
+        } catch (error) {
+          console.error("[Session Naming MCP] Failed to check the name lock:", error);
+          nameLocked = true;
+        }
+      }
+
       // Handle name (write-once)
-      if (sessionName) {
+      if (sessionName && nameLocked) {
+        notes.push("Name not changed: this member's title is managed by its team root.");
+      } else if (sessionName) {
         if (typeof sessionName !== "string") {
           return {
             content: [
