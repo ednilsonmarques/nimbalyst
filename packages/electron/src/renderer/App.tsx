@@ -46,6 +46,9 @@ import {
   type EditorRevealPosition,
 } from './components/TabEditor/editorRevealCommand';
 import { ConfirmDialog } from './components/ConfirmDialog/ConfirmDialog';
+import { UnsavedChangesDialog } from './components/UnsavedChangesDialog/UnsavedChangesDialog';
+import { useUnsavedChangesDialog } from './hooks/useUnsavedChangesDialog';
+import { createDocumentEditedSync } from './hooks/documentEditedSync';
 import { GlobalHistoryDialog } from './components/HistoryDialog';
 // NOTE: DiscordInvitation, KeyboardShortcutsDialog, ApiKeyDialog now managed by DialogProvider
 // NOTE: WindowsClaudeCodeWarning now managed by DialogProvider
@@ -541,6 +544,11 @@ export default function App() {
 
   // General confirm dialog
   const confirmDialog = useConfirmDialog();
+  // Any cancel of an attempt, also during "Salvando...", tells the main process which attempt ended, so normal
+  // close behaviour returns at once instead of after the main-process expiry.
+  const unsavedDialog = useUnsavedChangesDialog({
+    onCancelled: (attemptId) => window.electronAPI?.send?.('close-window-cancel', { attemptId }),
+  });
 
   // Document context hook needs to be after tabs - will declare after special window modes
 
@@ -607,7 +615,7 @@ export default function App() {
   // NOTE: isDirty state removed - TabEditor owns dirty state and calls setDocumentEdited directly
   // NOTE: contentVersion removed - EditorContainer doesn't need version bumping for remounts
   // NOTE: tabStatesRef removed - TabEditor tracks its own dirty state
-  const tabsRef = useRef<any>(null);  // Reference to current tabs object for use in intervals only
+  const tabsRef = useRef<any>(null);  // Tabs actions published by EditorMode (tabsRef prop); read by the window lifecycle and edited-state sync
   const [isInitializing, setIsInitializing] = useState(true);
   // NOTE: extensionsReady state moved to top of component (before early returns)
   const [workspaceMode, setWorkspaceMode] = useState(false);
@@ -1532,29 +1540,19 @@ export default function App() {
   useEffect(() => {
     if (!window.electronAPI?.setDocumentEdited) return;
 
-    const syncWindowEditedState = () => {
-      const snapshot = tabsRef.current?.getSnapshot?.();
-      const tabs = snapshot
-        ? snapshot.tabOrder
-          .map((tabId: string) => snapshot.tabs.get(tabId))
-          .filter(Boolean)
-        : [];
-
-      const hasUnsavedOrUnsyncedTabs = tabs.some((tab: any) => {
-        if (!tab?.filePath) return false;
-        const isDirty = store.get(editorDirtyAtom(makeEditorKey(tab.filePath)));
-        if (isDirty) return true;
-        if (!isCollabUri(tab.filePath)) return false;
-        const status = store.get(collabConnectionStatusAtom(tab.filePath));
-        return hasCollabUnsyncedChanges(status);
-      });
-
-      window.electronAPI?.setDocumentEdited(hasUnsavedOrUnsyncedTabs);
+    // A dirty change is reported immediately (the main process must know before the user can close
+    // the window); the 500 ms interval stays as a backstop and re-attaches when the tabs change.
+    const editedSync = createDocumentEditedSync({
+      getTabsActions: () => tabsRef.current,
+      store,
+      report: (edited) => window.electronAPI?.setDocumentEdited(edited),
+    });
+    editedSync.sync();
+    const interval = setInterval(editedSync.sync, 500);
+    return () => {
+      clearInterval(interval);
+      editedSync.dispose();
     };
-
-    syncWindowEditedState();
-    const interval = setInterval(syncWindowEditedState, 500);
-    return () => clearInterval(interval);
   }, []);
 
   // NOTE: useHMRStateRestoration removed - no longer needed now that TabEditor
@@ -2593,9 +2591,9 @@ export default function App() {
   // React to "confirm close (unsaved)" command. The IPC subscription lives
   // in store/listeners/appCommandListeners.ts.
   const confirmCloseUnsavedVersion = useAtomValue(confirmCloseUnsavedRequestAtom);
-  const confirmCloseUnsavedInitialRef = useRef(confirmCloseUnsavedVersion);
-  useEffect(() => {
-    if (confirmCloseUnsavedVersion === confirmCloseUnsavedInitialRef.current) return;
+  // useDialogRequestTrigger consumes the version when it fires: `confirmDialog` is a new object every
+  // render, so a guard that never advanced re-opened the dialog on every render (React #185, NIB.97).
+  useDialogRequestTrigger(confirmCloseUnsavedVersion, true, () => {
     if (!window.electronAPI) return;
 
     const handleConfirmClose = async () => {
@@ -2623,28 +2621,50 @@ export default function App() {
         return;
       }
 
-      const confirmed = await confirmDialog.confirm({
-        title: translate('general:app.unsavedChanges.title'),
-        message: translate('general:app.unsavedChanges.message'),
-        confirmLabel: translate('common:save'),
-        cancelLabel: translate('general:app.unsavedChanges.dontSave'),
-        destructive: false
-      });
+      // The whole attempt (asking and saving) is one guarded unit: while it is open a second request
+      // is ignored (ask() returns null), and Cancel at any point invalidates it.
+      const attempt = unsavedDialog.ask();
+      if (!attempt) return;
+      const choice = await attempt.choice;
 
-      if (confirmed) {
-        // Save
-        if (handleSaveRef.current) {
-          await handleSaveRef.current();
-        }
-        window.electronAPI?.send?.('close-window-save');
-      } else {
-        // Discard
+      if (choice === 'cancel') {
+        // Keep editing: Esc, the overlay and the Cancel button all land here. The main process was already
+        // told by the dialog's onCancelled (which also covers a cancel during the save).
+        return;
+      }
+      if (choice === 'discard') {
         window.electronAPI?.send?.('close-window-discard');
+        return;
+      }
+
+      // Save: every dirty tab, not just the active one. The window closes only if all of them were saved.
+      window.electronAPI?.send?.('close-window-save-started', { attemptId: attempt.id });
+      let result: { ok: boolean; failed: string[]; timedOut?: string[] } = { ok: false, failed: [] };
+      try {
+        result = (await editorModeRef.current?.saveAllDirtyTabs()) ?? { ok: false, failed: [] };
+      } catch (error) {
+        console.error('[WINDOW CLOSE] Saving before close failed:', error);
+      }
+      // The user cancelled while the save was running: a late result must not close the window.
+      if (!attempt.isCurrent()) return;
+      unsavedDialog.finish(attempt);
+      // Report first, then show the error: the report ends the attempt in the main process, so the X
+      // (and a new close request) works even while the error dialog is still open.
+      window.electronAPI?.send?.('close-window-save', { attemptId: attempt.id, ok: result.ok, failed: result.failed });
+      if (!result.ok) {
+        await confirmDialog.confirm({
+          title: translate('general:app.unsavedChanges.saveFailedTitle'),
+          message: translate('general:app.unsavedChanges.saveFailedMessage', {
+            files: result.failed.length > 0 ? result.failed.join(', ') : '—',
+          }),
+          confirmLabel: translate('dialogs:confirm.ok'),
+          destructive: true,
+        });
       }
     };
 
     void handleConfirmClose();
-  }, [confirmCloseUnsavedVersion, confirmDialog]);
+  });
 
   // React to close-active-tab from the menu. IPC subscription lives in
   // store/listeners/appCommandListeners.ts.
@@ -2963,6 +2983,7 @@ export default function App() {
                     theme={theme}
                     isActive={activeMode === 'files'}
                     onModeChange={setActiveMode as (mode: string) => void}
+                    tabsRef={tabsRef}
                     onGetContentReady={(getContentFn) => {
                       getContentRef.current = getContentFn;
                     }}
@@ -3221,6 +3242,13 @@ export default function App() {
       <GlobalHistoryDialog theme={theme === 'auto' ? 'dark' : theme} workspacePath={workspacePath || undefined} />
       <SessionLaunchPopup workspacePath={workspacePath} />
       <TrackerQuickCreatePopup workspacePath={workspacePath} />
+      <UnsavedChangesDialog
+        isOpen={unsavedDialog.isOpen}
+        isSaving={unsavedDialog.isSaving}
+        onSave={unsavedDialog.onSave}
+        onDiscard={unsavedDialog.onDiscard}
+        onCancel={unsavedDialog.onCancel}
+      />
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title={confirmDialog.options.title}

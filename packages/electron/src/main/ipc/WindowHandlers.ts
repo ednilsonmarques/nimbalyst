@@ -1,7 +1,7 @@
 import { BrowserWindow, shell, nativeImage, app, powerMonitor } from 'electron';
 import { safeHandle, safeOn } from '../utils/ipcRegistry';
 import { windowStates, windows, getWindowId } from '../window/WindowManager';
-import { syncRepresentedFilename } from '../window/windowState';
+import { syncRepresentedFilename, recordDocumentEdited } from '../window/windowState';
 import { basename, join } from 'path';
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { tmpdir } from 'os';
@@ -112,6 +112,7 @@ export function registerWindowHandlers() {
         const window = BrowserWindow.fromWebContents(event.sender);
         if (!window) return;
 
+        recordDocumentEdited(window, edited);
         window.setDocumentEdited(edited);
     });
 

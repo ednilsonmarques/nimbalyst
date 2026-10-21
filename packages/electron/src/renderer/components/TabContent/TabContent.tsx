@@ -54,6 +54,8 @@ interface TabContentProps {
   onGetContentReady?: (tabId: string, getContentFunction: () => string) => void;
   onSaveComplete?: (filePath: string) => void;
   onSaveTabByIdReady?: (saveTabById: (tabId: string) => Promise<void>) => void;
+  /** Exposes a reader for any tab's current content (used to verify that a save covered the current revision). */
+  onGetTabContentByIdReady?: (getTabContentById: (tabId: string) => string | null) => void;
 
   // Document action callbacks
   onRenameDocument?: () => void;
@@ -96,6 +98,7 @@ const TabContentComponent: React.FC<TabContentProps> = ({
   onGetContentReady,
   onSaveComplete,
   onSaveTabByIdReady,
+  onGetTabContentByIdReady,
   onRenameDocument,
   onSwitchToAgentMode,
   onOpenSessionInChat,
@@ -817,6 +820,19 @@ const TabContentComponent: React.FC<TabContentProps> = ({
       onSaveTabByIdReady(saveTabById);
     }
   }, [onSaveTabByIdReady, saveTabById]);
+
+  const getTabContentById = useCallback((tabId: string): string | null => {
+    try {
+      const content = getContentFunctionsRef.current.get(tabId)?.();
+      return typeof content === 'string' ? content : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    onGetTabContentByIdReady?.(getTabContentById);
+  }, [onGetTabContentByIdReady, getTabContentById]);
 
   // Cleanup on unmount -- save dirty editors before destroying them
   useEffect(() => {

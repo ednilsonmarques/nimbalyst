@@ -23,6 +23,18 @@ export function resolveActiveWorkspacePath(state: WindowState | undefined): stri
 }
 
 /**
+ * Records the renderer's "has unsaved changes" report on the window state. The close handler
+ * (WindowManager) reads `state.documentEdited` to ask for confirmation; since f58c11837 nothing
+ * wrote it, so closing a window with unsaved edits never asked (NIB.97).
+ */
+export function recordDocumentEdited(browserWindow: BrowserWindow | null | undefined, edited: boolean): void {
+    const windowId = getWindowIdForWindow(browserWindow);
+    if (windowId === null) return;
+    const state = windowStates.get(windowId);
+    if (state) state.documentEdited = edited;
+}
+
+/**
  * Reverse-lookup a window's id from the shared map. Single-sources the scan so
  * callers that only need "which window is this?" don't each reimplement it
  * (and don't have to import WindowManager to get it).

@@ -812,7 +812,13 @@
     "unsavedChanges": {
       "title": "Alterações não salvas",
       "message": "Deseja salvar as alterações feitas? Suas alterações serão perdidas se você não salvá-las.",
-      "dontSave": "Não salvar"
+      "dontSave": "Não salvar",
+      "unloadMessage": "Há alterações não salvas. Sair desta página e perder as alterações?",
+      "unloadReload": "Sair",
+      "unloadStay": "Ficar",
+      "saveFailedTitle": "Não foi possível salvar",
+      "saveFailedMessage": "Não foi possível salvar estes arquivos: {{files}}. A janela continua aberta para você não perder as alterações.",
+      "saving": "Salvando…"
     },
     "agentNeedsWorkspace": "O modo Agente requer um espaço de trabalho",
     "agentNeedsWorkspaceHint": "Abra um espaço de trabalho para usar os recursos de agente",

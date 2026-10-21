@@ -1,4 +1,4 @@
-import { BrowserWindow, app, nativeImage, ipcMain, screen, Menu, type IpcMainEvent, type IpcMainInvokeEvent } from 'electron';
+import { BrowserWindow, app, dialog, nativeImage, ipcMain, screen, Menu, type IpcMainEvent, type IpcMainInvokeEvent } from 'electron';
 import { safeHandle, safeOn } from '../utils/ipcRegistry';
 import { join, basename } from 'path';
 import { existsSync } from 'fs';
@@ -40,6 +40,17 @@ import {
     type WorkspaceWindowMatch,
 } from './workspaceWindowMatch';
 import { shouldSaveSessionOnWindowClose } from './sessionSaveOnClose';
+import {
+    registerCloseListeners,
+    handleCloseWindowSave,
+    handleCloseWindowSaveStarted,
+    handleCloseWindowCancel,
+    handleCloseWindowDiscard,
+    handleWillPreventUnload,
+    forgetCloseConfirmation,
+    clearCloseAttempt,
+    isDocumentReplacingNavigation,
+} from './closeConfirmation';
 import {
     registerCustomTitleBarWindow,
     registerFullScreenChrome,
@@ -187,6 +198,32 @@ export interface CreateWindowOptions {
     startupReveal?: boolean;
     /** Among the startup windows, the one that should end up frontmost. */
     startupFrontmost?: boolean;
+}
+
+/**
+ * Saves the global session after a project window is really gone. `windowStates` no longer has the
+ * window by now, so the saved list skips it and closed windows are not restored on next launch.
+ */
+function saveSessionAfterWindowClosed(): void {
+    // Save global session state (will not include this window since we removed it from windowStates)
+    // This ensures closed windows are not restored on next launch
+    // SKIP during quit/restart - the complete state was already saved in
+    // before-quit; re-saving here as Electron tears the windows down would
+    // persist a shrinking list ending at `{ windows: [] }`, so the next
+    // launch would restore nothing (NIM-1518, same clobber as NIM-869)
+    if (!shouldSaveSessionOnWindowClose({ isQuitting, isRestarting: false })) {
+        console.log('[MAIN] Skipping session save during quit (session already saved)');
+        return;
+    }
+    import('../index').then(({ isRestarting }) => {
+        if (!shouldSaveSessionOnWindowClose({ isQuitting, isRestarting: isRestarting() })) {
+            console.log('[MAIN] Skipping session save during quit/restart (session already saved)');
+            return;
+        }
+        import('../session/SessionState').then(({ saveSessionState }) => {
+            saveSessionState();
+        });
+    });
 }
 
 export function createWindow(
@@ -387,25 +424,25 @@ export function createWindow(
             }
         });
 
-        // Handle window close with unsaved changes
-        window.on('close', (event) => {
-            if (isQuitting) {
-                // Allow close to proceed without prompts during app quit
-                return;
-            }
-
-            const state = windowStates.get(windowId);
-            if (state?.documentEdited) {
-                event.preventDefault();
-                // Send message to renderer to show custom dialog
-                window.webContents.send('confirm-close-unsaved');
-            }
-        });
-
         // Store state for use in both 'close' and 'closed' handlers
         let savedState: WindowState | undefined;
 
-        window.on('close', (event) => {
+        // First listener asks before losing unsaved changes; the cleanup below runs only when the
+        // close actually proceeds (it used to run, and delete the window state, even when the close
+        // had just been cancelled for the confirmation).
+        registerCloseListeners(window, {
+            windowId,
+            getState: () => windowStates.get(windowId),
+            isQuitting: () => isQuitting,
+            onClosed: () => {
+                // The window is really gone: only now is its state released and the session saved
+                // (a close can still be cancelled after the 'close' event, e.g. by beforeunload).
+                // A close that skipped the 'close' event (destroy) never took the snapshot: take it now.
+                savedState = savedState ?? windowStates.get(windowId);
+                windowStates.delete(windowId);
+                saveSessionAfterWindowClosed();
+            },
+            onProceed: (event) => {
             // Save workspace-specific window state before closing
             const state = windowStates.get(windowId);
             savedState = state; // Preserve for 'closed' handler
@@ -436,31 +473,28 @@ export function createWindow(
                 }
             }
 
-            // Remove from windowStates so saveSessionState() will skip this closing window
-            windowStates.delete(windowId);
+            // The state is NOT removed here: this close can still be cancelled (beforeunload). The release
+            // and the session save run in onClosed.
+            },
+        });
 
-            // Save global session state (will not include this window since we removed it from windowStates)
-            // This ensures closed windows are not restored on next launch
-            // SKIP during quit/restart - the complete state was already saved in
-            // before-quit; re-saving here as Electron tears the windows down would
-            // persist a shrinking list ending at `{ windows: [] }`, so the next
-            // launch would restore nothing (NIM-1518, same clobber as NIM-869)
-            if (!shouldSaveSessionOnWindowClose({ isQuitting, isRestarting: false })) {
-                console.log('[MAIN] Skipping session save during quit (session already saved)');
-                return;
-            }
-            import('../index').then(({ isRestarting }) => {
-                if (!shouldSaveSessionOnWindowClose({ isQuitting, isRestarting: isRestarting() })) {
-                    console.log('[MAIN] Skipping session save during quit/restart (session already saved)');
-                    return;
-                }
-                import('../session/SessionState').then(({ saveSessionState }) => {
-                    saveSessionState();
-                });
+        // The attempt belongs to the page that started it: a navigation or a renderer crash ends it.
+        window.webContents.on('did-start-navigation', (...args: unknown[]) => {
+            if (isDocumentReplacingNavigation(args)) clearCloseAttempt(windowId);
+        });
+        window.webContents.on('render-process-gone', () => clearCloseAttempt(windowId));
+
+        // A beforeunload that blocks a reload (or a close nobody confirmed) used to do nothing visible.
+        window.webContents.on('will-prevent-unload', (event) => {
+            handleWillPreventUnload(event, {
+                windowId,
+                isQuitting: () => isQuitting,
+                prompt: (options) => dialog.showMessageBoxSync(window, options),
             });
         });
 
         window.on('closed', () => {
+            forgetCloseConfirmation(windowId);
             windows.delete(windowId);
             console.info('[WindowLifecycle] Project closed', {
                 windowId: electronWindowId, managedWindowId: windowId, isQuitting,
@@ -881,28 +915,25 @@ safeHandle('window:force-focus', (event) => {
     return false;
 });
 
-// Handle close-window responses from renderer's custom dialog
-safeOn('close-window-save', (event) => {
-    const window = BrowserWindow.fromWebContents(event.sender);
-    if (window && !window.isDestroyed()) {
-        const windowId = getWindowId(window);
-        if (windowId !== null) {
-            // Send save request
-            window.webContents.send('save-before-close');
-            // Wait for save to complete, then close
-            setTimeout(() => {
-                const currentState = windowStates.get(windowId);
-                if (!currentState?.documentEdited && !window.isDestroyed()) {
-                    window.destroy();
-                }
-            }, 100);
-        }
-    }
+// Handle close-window responses from renderer's custom dialog. "Save" carries the renderer's report
+// ({ ok, failed }) and closes only on a confirmed save of every dirty tab (closeConfirmation.ts).
+const closeEnv = {
+    getWindowId: (window: unknown) => getWindowIdForWindow(window as BrowserWindow),
+    getState: (windowId: number) => windowStates.get(windowId),
+    log: (message: string, detail?: unknown) => console.warn(message, detail),
+};
+safeOn('close-window-save-started', (event, payload?: unknown) => {
+    handleCloseWindowSaveStarted(BrowserWindow.fromWebContents(event.sender), payload, closeEnv);
+});
+
+safeOn('close-window-cancel', (event, payload?: unknown) => {
+    handleCloseWindowCancel(BrowserWindow.fromWebContents(event.sender), payload, closeEnv);
+});
+
+safeOn('close-window-save', (event, payload?: unknown) => {
+    handleCloseWindowSave(BrowserWindow.fromWebContents(event.sender), payload, closeEnv);
 });
 
 safeOn('close-window-discard', (event) => {
-    const window = BrowserWindow.fromWebContents(event.sender);
-    if (window && !window.isDestroyed()) {
-        window.destroy();
-    }
+    handleCloseWindowDiscard(BrowserWindow.fromWebContents(event.sender), closeEnv);
 });

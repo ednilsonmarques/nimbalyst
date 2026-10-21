@@ -44,12 +44,17 @@ import {
 } from '../../store/atoms/workspaceLayout';
 import { refreshFileTree } from '../../store/listeners/fileTreeListeners';
 import { requestConfirmation } from '../../dialogs/requestConfirmation';
+import { usePublishTabsActions } from '../../hooks/publishTabsActions';
+import { saveAllDirtyTabs, type SaveAllResult } from '../../utils/saveAllDirtyTabs';
+import { DocumentModelRegistry } from '../../services/document-model/DocumentModelRegistry';
 import { t as translate } from '@nimbalyst/runtime/i18n';
 import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 
 export interface EditorModeRef {
   closeActiveTab: () => void;
   reopenLastClosedTab: () => Promise<void>;
+  /** Saves every dirty tab and reports which ones could not be saved (window close, NIB.97). */
+  saveAllDirtyTabs: () => Promise<SaveAllResult>;
   handleOpen: () => Promise<void>;
   handleSaveAs: () => Promise<void>;
   selectFile: (filePath: string) => Promise<void>;
@@ -82,6 +87,8 @@ export interface EditorModeProps {
   onCloseWorkspace?: () => void;
   onOpenQuickSearch?: () => void;
   onSwitchToAgentMode?: (planDocumentPath?: string, sessionId?: string) => void;
+  /** App-level ref that receives the tabs actions (window lifecycle reads the tab snapshot from it). */
+  tabsRef?: React.MutableRefObject<any>;
 }
 
 const EditorMode = forwardRef<EditorModeRef, EditorModeProps>(function EditorMode({
@@ -93,7 +100,8 @@ const EditorMode = forwardRef<EditorModeRef, EditorModeProps>(function EditorMod
   onGetContentReady,
   onCloseWorkspace,
   onOpenQuickSearch,
-  onSwitchToAgentMode
+  onSwitchToAgentMode,
+  tabsRef: externalTabsRef
 }, ref) {
   const { t } = useTranslation('editor');
   // Sidebar state — kept in per-workspace atom families so each open
@@ -190,6 +198,7 @@ const EditorMode = forwardRef<EditorModeRef, EditorModeProps>(function EditorMod
   sidebarWidthRef.current = sidebarWidth;
   const chatSidebarRef = useRef<ChatSidebarRef>(null);
   const saveTabByIdRef = useRef<((tabId: string) => Promise<void>) | null>(null);
+  const getTabContentByIdRef = useRef<((tabId: string) => string | null) | null>(null);
 
   // Get tab actions from context (doesn't subscribe to state - no re-renders)
   const tabsActions = useTabsActions();
@@ -225,6 +234,9 @@ const EditorMode = forwardRef<EditorModeRef, EditorModeProps>(function EditorMod
   useEffect(() => {
     tabsRef.current = tabsActions;
   }, [tabsActions]);
+
+  // Also publish them to App, which owns the window lifecycle (beforeunload / edited state).
+  usePublishTabsActions(externalTabsRef, tabsActions);
 
   // Update window title and sync current file with backend when active tab changes
   // This is done imperatively to avoid re-renders in parent components
@@ -1005,6 +1017,28 @@ const EditorMode = forwardRef<EditorModeRef, EditorModeProps>(function EditorMod
       // because handleTabClose will no-op if the tab doesn't exist
       handleTabClose(tabIdToClose);
     },
+    saveAllDirtyTabs: () => saveAllDirtyTabs({
+      listTabs: () => {
+        const snapshot = tabsRef.current?.getSnapshot?.();
+        return snapshot ? snapshot.tabOrder.map((id: string) => snapshot.tabs.get(id)).filter(Boolean) : [];
+      },
+      isDirty: (filePath) => !!store.get(editorDirtyAtom(makeEditorKey(filePath))),
+      isCollabUnsynced: (filePath) => isCollabUri(filePath) && hasCollabUnsyncedChanges(store.get(collabConnectionStatusAtom(filePath))),
+      saveTabById: async (tabId) => { await saveTabByIdRef.current?.(tabId); },
+      // The edited-state sync subscribes to this atom, so the window reports unsaved changes again right away.
+      markDirty: (filePath) => { store.set(editorDirtyAtom(makeEditorKey(filePath)), true); },
+      // Extension (custom) editors serialize their own representation, which is not guaranteed to be the one
+      // that was persisted: the revision check is limited to the built-in text editors (Lexical, Monaco).
+      getContent: (tabId) => {
+        const filePath = tabsRef.current?.getSnapshot?.()?.tabs.get(tabId)?.filePath;
+        if (filePath && customEditorRegistry.findRegistrationForFile(filePath)) return null;
+        return getTabContentByIdRef.current?.(tabId) ?? null;
+      },
+      getPersistedContent: (filePath) => {
+        const persisted = DocumentModelRegistry.get(filePath)?.getLastPersistedContent();
+        return typeof persisted === 'string' ? persisted : null;
+      },
+    }),
     reopenLastClosedTab: async () => {
       const currentTabs = tabsRef.current;
       if (currentTabs) {
@@ -1400,6 +1434,9 @@ const EditorMode = forwardRef<EditorModeRef, EditorModeProps>(function EditorMod
                 }}
                 onSaveTabByIdReady={(saveFn) => {
                   saveTabByIdRef.current = saveFn;
+                }}
+                onGetTabContentByIdReady={(getFn) => {
+                  getTabContentByIdRef.current = getFn;
                 }}
                 onSaveComplete={(filePath) => {
                   isDirtyRef.current = false;

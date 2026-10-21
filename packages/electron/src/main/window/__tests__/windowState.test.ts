@@ -7,6 +7,8 @@ import {
   windowReferencesWorkspace,
   anyWindowReferencesWorkspace,
   syncRepresentedFilename,
+  recordDocumentEdited,
+  windows,
 } from '../windowState';
 import type { WindowState } from '../../types';
 
@@ -255,6 +257,27 @@ describe('windowState helpers', () => {
     it('tolerates a missing window', () => {
       expect(() => syncRepresentedFilename(null, null)).not.toThrow();
       expect(() => syncRepresentedFilename(undefined, '/ws/notes.md')).not.toThrow();
+    });
+  });
+  describe('recordDocumentEdited (NIB.97)', () => {
+    afterEach(() => { windows.clear(); });
+
+    it('writes the renderer report onto the window state the close handler reads', () => {
+      const win = { id: 1 } as any;
+      windows.set(7, win);
+      windowStates.set(7, makeState());
+      recordDocumentEdited(win, true);
+      expect(windowStates.get(7)?.documentEdited).toBe(true);
+      recordDocumentEdited(win, false);
+      expect(windowStates.get(7)?.documentEdited).toBe(false);
+    });
+
+    it('ignores unknown windows and windows without a state', () => {
+      const win = { id: 2 } as any;
+      expect(() => recordDocumentEdited(win, true)).not.toThrow();
+      expect(() => recordDocumentEdited(null, true)).not.toThrow();
+      windows.set(8, win);
+      expect(() => recordDocumentEdited(win, true)).not.toThrow();
     });
   });
 });

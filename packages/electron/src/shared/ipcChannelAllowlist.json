@@ -168,8 +168,10 @@
     "cli:installNodeJs",
     "cli:uninstall",
     "cli:upgrade",
+    "close-window-cancel",
     "close-window-discard",
     "close-window-save",
+    "close-window-save-started",
     "codex-usage:activity",
     "codex-usage:get",
     "codex-usage:refresh",
@@ -1265,14 +1267,14 @@
     "worktree:session-created"
   ],
   "stats": {
-    "invokeChannels": 1014,
+    "invokeChannels": 1016,
     "fromCallSites": 942,
-    "fromRegisteredNameReferences": 72,
+    "fromRegisteredNameReferences": 74,
     "dynamicPrefixes": 17,
     "listenChannels": 226,
     "unresolvedCallSites": 54,
-    "registeredLiteralHandlersInMain": 1118,
-    "registeredAndListed": 991,
+    "registeredLiteralHandlersInMain": 1120,
+    "registeredAndListed": 993,
     "registeredNotListed": 127
   },
   "unresolved": [

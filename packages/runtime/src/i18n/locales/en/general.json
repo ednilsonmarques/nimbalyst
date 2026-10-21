@@ -812,7 +812,13 @@
     "unsavedChanges": {
       "title": "Unsaved Changes",
       "message": "Do you want to save the changes you made? Your changes will be lost if you don't save them.",
-      "dontSave": "Don't Save"
+      "dontSave": "Don't Save",
+      "unloadMessage": "There are unsaved changes. Leave this page and lose the changes?",
+      "unloadReload": "Leave",
+      "unloadStay": "Stay",
+      "saveFailedTitle": "Could not save",
+      "saveFailedMessage": "These files could not be saved: {{files}}. The window stays open so you do not lose your changes.",
+      "saving": "Saving…"
     },
     "agentNeedsWorkspace": "Agent mode requires a workspace",
     "agentNeedsWorkspaceHint": "Open a workspace to use agent features",
