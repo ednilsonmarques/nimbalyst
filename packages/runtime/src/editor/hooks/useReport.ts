@@ -58,7 +58,8 @@ export default function useReport(): (
       if (timer.current !== null) {
         clearTimeout(timer.current);
       }
-      element.innerHTML = content;
+      // textContent, not innerHTML: the message is shown as text, never parsed as markup.
+      element.textContent = content;
       timer.current = setTimeout(cleanup, 1000);
       return timer.current;
     },

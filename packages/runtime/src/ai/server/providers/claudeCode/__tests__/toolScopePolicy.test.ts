@@ -105,6 +105,7 @@ describe('toolScopeDeniedTools', () => {
       'mcp__nimbalyst-trackers__tracker_set_sync_policy',
       'mcp__nimbalyst-extension-dev__extension_install',
       'mcp__nimbalyst-extension-dev__restart_nimbalyst',
+      'mcp__nimbalyst-extension-dev__renderer_eval',
     ]) {
       expect(denied, tool).toContain(tool);
     }

@@ -21,6 +21,14 @@ export function useTrackerReferenceIsForeign(href: string | null): boolean {
   return trackerReferenceForeignScope(href, home) !== null;
 }
 
+/**
+ * The href comes from stored/pasted data. Only http(s) may be navigable: tabs, newlines and control characters
+ * inside a scheme are ignored by browsers, so they are stripped before the scheme is read.
+ */
+function navigableHref(href: string): string | undefined {
+  return /^https?:/i.test(href.replace(/[\u0000-\u0020]/g, '')) ? href : undefined;
+}
+
 export function TrackerReferenceExternalChip({ referenceKey, href }: { referenceKey: string; href: string }): JSX.Element {
   return (
     <a
@@ -28,7 +36,7 @@ export function TrackerReferenceExternalChip({ referenceKey, href }: { reference
       data-testid="tracker-reference-external"
       data-issue-key={referenceKey}
       data-resolved="false"
-      href={href}
+      href={navigableHref(href)}
       title={`${referenceKey} in another project`}
       style={{
         display: 'inline-flex',

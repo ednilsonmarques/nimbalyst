@@ -417,7 +417,10 @@ function serializeEvalResult(result: unknown): string {
  * Executes JavaScript expressions in the renderer context for debugging.
  * Only active in development mode.
  */
-function setupRendererEvalListener(): void {
+export function setupRendererEvalListener(isDevelopment: boolean = import.meta.env.DEV): void {
+  // Development builds only (Vite's build-time import.meta.env.DEV, the flag the rest of the renderer uses):
+  // a production renderer does not even listen for renderer:eval.
+  if (!isDevelopment) return;
   if (rendererEvalListenerSetup) return;
   rendererEvalListenerSetup = true;
 

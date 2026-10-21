@@ -35,6 +35,7 @@ import { requireMcpAuth } from "./mcpAuth";
 import { selectFocusedRestartSessions } from "./restartContinuationSelection";
 import { tailFile, grepTailFile } from "./logTail";
 import { app as electronApp } from "electron";
+import { isRendererEvalAvailable } from "./rendererEvalGate";
 import { captureRendererHeapSnapshot } from "../services/HeapSnapshotService";
 import { analyzeHeapSnapshot } from "../services/HeapSnapshotAnalyzer";
 
@@ -1009,8 +1010,11 @@ function createExtensionDevMcpServer(
           },
         },
         // Only include renderer-facing diagnostics in development mode
-        ...(process.env.NODE_ENV === "development" ||
-        !!process.env.ELECTRON_RENDERER_URL
+        ...(isRendererEvalAvailable({
+          nodeEnv: process.env.NODE_ENV,
+          rendererUrl: process.env.ELECTRON_RENDERER_URL,
+          isPackaged: electronApp.isPackaged,
+        })
           ? [
               {
                 name: "renderer_eval",
@@ -2087,9 +2091,11 @@ function createExtensionDevMcpServer(
 
       case "renderer_eval": {
         // Double-check dev mode (tool definition should already be hidden in prod)
-        const isDev =
-          process.env.NODE_ENV === "development" ||
-          !!process.env.ELECTRON_RENDERER_URL;
+        const isDev = isRendererEvalAvailable({
+          nodeEnv: process.env.NODE_ENV,
+          rendererUrl: process.env.ELECTRON_RENDERER_URL,
+          isPackaged: electronApp.isPackaged,
+        });
         if (!isDev) {
           return {
             content: [
