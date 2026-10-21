@@ -75,7 +75,7 @@ export class OffscreenEditorManager {
       height: 800,
       webPreferences: {
         preload: getPreloadPath(),
-        sandbox: false,
+        sandbox: true,
         contextIsolation: true,
       },
     });

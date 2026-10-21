@@ -26,7 +26,7 @@ import { app } from 'electron';
 import * as path from 'path';
 import Store, { hardenExistingSettings } from './utils/privateSettingsStore';
 import { createUncaughtExceptionHandler } from './uncaughtException';
-import { shouldEnableRemoteDebugging } from './remoteDebugging';
+import { shouldEnableRemoteDebugging, debugSwitchesToRemove } from './remoteDebugging';
 // Tells the runtime package which host it is running in, before any of its
 // modules resolve a binary path. Registration is a side effect of this import
 // rather than a call in this file's body: ESM evaluates all static imports
@@ -99,6 +99,30 @@ try {
   // If we can't read settings, use default
   app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096');
   // console.log('[Bootstrap] V8 heap limit set to 4096MB (default)');
+}
+
+// Decision U8 (NIB.85 stage d2): a packaged app must not open a debugging
+// channel because one was passed on its command line. Drop those switches
+// before Chromium reads them, log it, and start normally. (Development builds
+// keep theirs.) Whether removeSwitch takes effect this early is checked in
+// nib81/smoke/staged2.cjs; see its result before relying on this.
+const requestedDebugSwitches = debugSwitchesToRemove({ isPackaged: app.isPackaged, argv: process.argv });
+// remote-debugging-*/remote-allow-origins are Chromium switches: removeSwitch closes them
+// (measured in nib81/smoke/staged2.cjs). --inspect* belongs to Node, which reads it before any
+// app code runs, so removeSwitch cannot close it; say so rather than claim it was removed.
+const strippedDebugSwitches = requestedDebugSwitches.filter((name) => !name.startsWith('inspect'));
+const unclosedInspectSwitches = requestedDebugSwitches.filter((name) => name.startsWith('inspect'));
+for (const name of strippedDebugSwitches) {
+  app.commandLine.removeSwitch(name);
+}
+if (strippedDebugSwitches.length > 0) {
+  console.warn(`[Bootstrap] Removed debugging switches from the command line of a packaged build: ${strippedDebugSwitches.join(', ')}`);
+}
+if (unclosedInspectSwitches.length > 0) {
+  console.warn(
+    `[Bootstrap] Node inspector switches were passed to a packaged build (${unclosedInspectSwitches.join(', ')}); ` +
+      'removing them here does not close the inspector. That needs the EnableNodeCliInspectArguments fuse.',
+  );
 }
 
 // Enable CDP remote debugging in dev mode for Playwright extension testing.

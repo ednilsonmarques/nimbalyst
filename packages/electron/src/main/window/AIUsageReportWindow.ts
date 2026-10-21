@@ -22,7 +22,7 @@ export function createAIUsageReportWindow(): electron.BrowserWindow {
     title: 'AI Usage Report',
     webPreferences: {
       preload: getPreloadPath(),
-      sandbox: false,
+      sandbox: true,
       contextIsolation: true,
     },
   });
