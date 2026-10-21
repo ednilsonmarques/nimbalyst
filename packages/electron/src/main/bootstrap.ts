@@ -109,7 +109,8 @@ try {
 const requestedDebugSwitches = debugSwitchesToRemove({ isPackaged: app.isPackaged, argv: process.argv });
 // remote-debugging-*/remote-allow-origins are Chromium switches: removeSwitch closes them
 // (measured in nib81/smoke/staged2.cjs). --inspect* belongs to Node, which reads it before any
-// app code runs, so removeSwitch cannot close it; say so rather than claim it was removed.
+// app code runs, so removeSwitch cannot close it; the packaging config closes it with the
+// EnableNodeCliInspectArguments fuse (build.electronFuses). Say so rather than claim it was removed.
 const strippedDebugSwitches = requestedDebugSwitches.filter((name) => !name.startsWith('inspect'));
 const unclosedInspectSwitches = requestedDebugSwitches.filter((name) => name.startsWith('inspect'));
 for (const name of strippedDebugSwitches) {
@@ -121,7 +122,8 @@ if (strippedDebugSwitches.length > 0) {
 if (unclosedInspectSwitches.length > 0) {
   console.warn(
     `[Bootstrap] Node inspector switches were passed to a packaged build (${unclosedInspectSwitches.join(', ')}); ` +
-      'removing them here does not close the inspector. That needs the EnableNodeCliInspectArguments fuse.',
+      'a packaged build ignores them because the EnableNodeCliInspectArguments fuse is disabled in the packaging config ' +
+      '(build.electronFuses); this code does not remove them or enforce that.',
   );
 }
 

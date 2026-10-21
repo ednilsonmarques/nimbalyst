@@ -90,9 +90,11 @@ describe('bootstrap wiring', () => {
     expect(importIndex).toBeGreaterThan(remove);
   });
 
-  it('does not report --inspect* as removed: it logs that the inspector stays open and names the fuse', () => {
+  it('does not report --inspect* as removed: it logs that a packaged build ignores them because of the fuse', () => {
     expect(bootstrap).toMatch(/filter\(\(name\) => !name\.startsWith\('inspect'\)\)/);
     expect(bootstrap).toMatch(/EnableNodeCliInspectArguments/);
-    expect(bootstrap).toMatch(/does not close the inspector/);
+    expect(bootstrap).toMatch(/packaged build ignores them because the EnableNodeCliInspectArguments fuse is disabled/);
+    expect(bootstrap).toMatch(/does not remove them or enforce that/);
+    expect(bootstrap).not.toMatch(/does not close the inspector/);
   });
 });

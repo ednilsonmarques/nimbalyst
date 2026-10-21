@@ -421,6 +421,9 @@
     ],
     "afterSign": "build/afterSign.js",
     "afterPack": "build/afterPack.js",
+    "electronFuses": {
+      "enableNodeCliInspectArguments": false
+    },
     "afterAllArtifactBuild": "build/afterAllArtifactBuild.js",
     "fileAssociations": [
       {
