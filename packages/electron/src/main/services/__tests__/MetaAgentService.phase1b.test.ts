@@ -31,7 +31,8 @@ vi.mock('@nimbalyst/runtime/storage/repositories/AISessionsRepository', () => ({
   AISessionsRepository: { create: vi.fn(), updateMetadata: vi.fn(), get: vi.fn() },
 }));
 vi.mock('@nimbalyst/runtime/storage/repositories/AgentMessagesRepository', () => ({
-  AgentMessagesRepository: { list: vi.fn() },
+  // listTail returns what the test gave list(): these tests use short sessions, where both reads agree.
+  AgentMessagesRepository: (() => { const list = vi.fn(); return { list, listTail: vi.fn((sessionId: string) => list(sessionId)) }; })(),
 }));
 vi.mock('@nimbalyst/runtime/storage/repositories/SessionFilesRepository', () => ({
   SessionFilesRepository: { getFilesBySession: vi.fn().mockResolvedValue([]) },

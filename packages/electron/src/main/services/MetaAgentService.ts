@@ -7,7 +7,7 @@ import { BrowserWindow } from 'electron';
 import { randomUUID } from 'crypto';
 import { safeHandle } from '../utils/ipcRegistry';
 import { SessionManager } from '@nimbalyst/runtime/ai/server';
-import type { AIProviderType, PromptProvenance } from '@nimbalyst/runtime/ai/server/types';
+import type { AgentMessage, AIProviderType, PromptProvenance } from '@nimbalyst/runtime/ai/server/types';
 import { ModelIdentifier } from '@nimbalyst/runtime/ai/server/types';
 import {
   EFFORT_LEVELS,
@@ -80,6 +80,11 @@ import { isKnownCodexModelId } from '@nimbalyst/runtime/ai/server/providers/code
  * limit only stops a coordinator/member pair that keeps failing in a loop.
  */
 const TEAM_ERROR_WAKE_LIMIT = 3;
+
+/** Newest stored messages read to build a session result (get_session_result and child updates). */
+const SESSION_RESULT_MESSAGE_WINDOW = 500;
+/** Oldest messages read to recover the original prompt when the newest window no longer reaches it. */
+const SESSION_RESULT_HEAD_WINDOW = 50;
 
 function isExistingDirectory(candidate: string | null | undefined): boolean {
   if (!candidate) return false;
@@ -2239,8 +2244,12 @@ export class MetaAgentService {
       }
     }
 
-    const messages = await AgentMessagesRepository.list(sessionId, { limit: 500 });
-    const userPrompts = extractUserPrompts(messages);
+    // Every "latest" field below (recent messages, last/full response, error,
+    // newest prompts) must come from the NEWEST rows. list({ limit }) returns the
+    // oldest rows (ascending id + LIMIT), which froze a reused member's report at
+    // its first 500 messages; listTail returns the newest rows in ascending order.
+    const messages = await AgentMessagesRepository.listTail(sessionId, SESSION_RESULT_MESSAGE_WINDOW);
+    const userPrompts = await this.userPromptsWithOriginal(sessionId, messages);
     const recentMessages = this.extractRecentMessages(
       messages,
       3,
@@ -2291,6 +2300,27 @@ export class MetaAgentService {
           : undefined,
       ...(sessionTeamRole ? { teamRole: sessionTeamRole, providerDiversity: sessionProviderDiversity } : {}),
     };
+  }
+
+  /**
+   * The user prompts in `latest`, preceded by the session's original prompt when
+   * the window no longer reaches the start of the session (originalPrompt is the
+   * first entry). A window that starts at the session's first row is the whole
+   * session, so no extra read is needed.
+   */
+  private async userPromptsWithOriginal(sessionId: string, latest: AgentMessage[]): Promise<string[]> {
+    const prompts = extractUserPrompts(latest);
+    if (latest.length < SESSION_RESULT_MESSAGE_WINDOW) {
+      return prompts;
+    }
+    const head = await AgentMessagesRepository.list(sessionId, { limit: SESSION_RESULT_HEAD_WINDOW });
+    const windowStart = latest[0]?.id;
+    if (head.length === 0 || windowStart === undefined || head[0].id === windowStart) {
+      return prompts;
+    }
+    // Only rows before the window: a prompt the window already holds is not repeated.
+    const original = extractUserPrompts(head.filter((message) => (message.id ?? 0) < windowStart))[0];
+    return original ? [original, ...prompts] : prompts;
   }
 
   /** Every unanswered interactive prompt of a session, oldest first (Phase 1A.1 reads the whole list). */
