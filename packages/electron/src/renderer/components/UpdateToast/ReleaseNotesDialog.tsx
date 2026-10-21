@@ -1,12 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { marked } from 'marked';
 import { useTranslation } from '@nimbalyst/runtime/i18n/react';
-
-// Configure marked for safe rendering
-marked.setOptions({
-  breaks: true,
-  gfm: true,
-});
+import { renderReleaseNotesHtml } from './releaseNotesHtml';
 
 interface ReleaseNotesDialogProps {
   currentVersion: string;
@@ -49,18 +43,11 @@ export function ReleaseNotesDialog({
     };
   }, [onClose]);
 
-  // Parse and render markdown release notes
-  const renderedReleaseNotes = React.useMemo(() => {
-    if (!releaseNotes) {
-      return `<p>${t('updateToast.releaseNotes.noNotes')}</p>`;
-    }
-    try {
-      return marked.parse(releaseNotes) as string;
-    } catch (err) {
-      console.error('[ReleaseNotesDialog] Failed to parse release notes:', err);
-      return `<p>${releaseNotes}</p>`;
-    }
-  }, [releaseNotes, t]);
+  // Parse release-notes markdown and sanitize the HTML (see releaseNotesHtml.ts)
+  const renderedReleaseNotes = React.useMemo(
+    () => renderReleaseNotesHtml(releaseNotes, `<p>${t('updateToast.releaseNotes.noNotes')}</p>`),
+    [releaseNotes, t],
+  );
 
   return (
     <div

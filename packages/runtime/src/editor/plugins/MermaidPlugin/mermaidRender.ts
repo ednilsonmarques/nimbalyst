@@ -31,7 +31,7 @@ export async function loadMermaid(isDarkTheme: boolean): Promise<any> {
     mermaidModule.initialize({
       startOnLoad: false,
       theme: isDarkTheme ? 'dark' : 'default',
-      securityLevel: 'antiscript',
+      securityLevel: 'strict',
       fontFamily: 'monospace',
       // Without this, a parse failure draws mermaid's error SVG into a temp
       // container on document.body and never removes it. Leaked containers make

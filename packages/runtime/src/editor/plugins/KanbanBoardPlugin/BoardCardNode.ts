@@ -26,6 +26,62 @@ export type SerializedCardNode = Spread<
   SerializedElementNode
 >;
 
+const PRIORITY_ICONS = {
+  low: 'low_priority',
+  medium: 'priority_high',
+  high: 'error',
+} as const;
+
+type KnownPriority = keyof typeof PRIORITY_ICONS;
+
+function isKnownPriority(value: unknown): value is KnownPriority {
+  return typeof value === 'string' && Object.prototype.hasOwnProperty.call(PRIORITY_ICONS, value);
+}
+
+function createIconSpan(iconName: string): HTMLSpanElement {
+  const icon = document.createElement('span');
+  icon.className = 'material-symbols-outlined';
+  icon.textContent = iconName;
+  return icon;
+}
+
+/**
+ * Card fields come from a markdown `board-table` that may live in a shared
+ * repository or be written by an AI, so they are only ever written as text
+ * (textContent / text nodes), never parsed as HTML.
+ */
+function createMetaSpan(className: string, iconName: string, value: string): HTMLSpanElement {
+  const span = document.createElement('span');
+  span.className = className;
+  span.appendChild(createIconSpan(iconName));
+  span.appendChild(document.createTextNode(` ${value}`));
+  return span;
+}
+
+/** Rebuild the owner / due date / priority chips for a card. */
+function appendCardMeta(
+  cardMeta: HTMLElement,
+  data: CardData,
+  visibleFields: { owner?: boolean; dueDate?: boolean; priority?: boolean },
+): void {
+  if (visibleFields.owner && data.owner) {
+    cardMeta.appendChild(createMetaSpan('kanban-card-owner', 'person', String(data.owner)));
+  }
+
+  if (visibleFields.dueDate && data.dueDate) {
+    cardMeta.appendChild(createMetaSpan('kanban-card-due', 'calendar_today', String(data.dueDate)));
+  }
+
+  // The priority is a closed set; anything else (including text from a
+  // hand-edited file) is dropped rather than echoed into a class name.
+  if (visibleFields.priority && isKnownPriority(data.priority)) {
+    const priority = document.createElement('span');
+    priority.className = `kanban-card-priority kanban-card-priority-${data.priority}`;
+    priority.appendChild(createIconSpan(PRIORITY_ICONS[data.priority]));
+    cardMeta.appendChild(priority);
+  }
+}
+
 export class BoardCardNode extends ElementNode {
   __id: string;
   __data: CardData;
@@ -149,31 +205,7 @@ export class BoardCardNode extends ElementNode {
     const boardConfig = this.getBoardConfig();
     const visibleFields = boardConfig?.visibleFields || { owner: true, dueDate: true, priority: true, description: false };
     
-    if (visibleFields.owner && this.__data.owner) {
-      const owner = document.createElement('span');
-      owner.className = 'kanban-card-owner';
-      owner.innerHTML = `<span class="material-symbols-outlined">person</span> ${this.__data.owner}`;
-      cardMeta.appendChild(owner);
-    }
-    
-    if (visibleFields.dueDate && this.__data.dueDate) {
-      const dueDate = document.createElement('span');
-      dueDate.className = 'kanban-card-due';
-      dueDate.innerHTML = `<span class="material-symbols-outlined">calendar_today</span> ${this.__data.dueDate}`;
-      cardMeta.appendChild(dueDate);
-    }
-    
-    if (visibleFields.priority && this.__data.priority) {
-      const priority = document.createElement('span');
-      priority.className = `kanban-card-priority kanban-card-priority-${this.__data.priority}`;
-      const priorityIcons = {
-        low: '<span class="material-symbols-outlined">low_priority</span>',
-        medium: '<span class="material-symbols-outlined">priority_high</span>',
-        high: '<span class="material-symbols-outlined">error</span>'
-      };
-      priority.innerHTML = priorityIcons[this.__data.priority];
-      cardMeta.appendChild(priority);
-    }
+    appendCardMeta(cardMeta, this.__data, visibleFields);
 
     if (cardMeta.children.length > 0) {
       element.appendChild(cardMeta);
@@ -216,33 +248,8 @@ export class BoardCardNode extends ElementNode {
       // Update metadata display
       const cardMeta = dom.querySelector('.kanban-card-meta');
       if (cardMeta) {
-        cardMeta.innerHTML = '';
-        
-        if (visibleFields.owner && this.__data.owner) {
-          const owner = document.createElement('span');
-          owner.className = 'kanban-card-owner';
-          owner.innerHTML = `<span class="material-symbols-outlined">person</span> ${this.__data.owner}`;
-          cardMeta.appendChild(owner);
-        }
-        
-        if (visibleFields.dueDate && this.__data.dueDate) {
-          const dueDate = document.createElement('span');
-          dueDate.className = 'kanban-card-due';
-          dueDate.innerHTML = `<span class="material-symbols-outlined">calendar_today</span> ${this.__data.dueDate}`;
-          cardMeta.appendChild(dueDate);
-        }
-        
-        if (visibleFields.priority && this.__data.priority) {
-          const priority = document.createElement('span');
-          priority.className = `kanban-card-priority kanban-card-priority-${this.__data.priority}`;
-          const priorityIcons = {
-            low: '<span class="material-symbols-outlined">low_priority</span>',
-            medium: '<span class="material-symbols-outlined">priority_high</span>',
-            high: '<span class="material-symbols-outlined">error</span>'
-          };
-          priority.innerHTML = priorityIcons[this.__data.priority];
-          cardMeta.appendChild(priority);
-        }
+        cardMeta.textContent = '';
+        appendCardMeta(cardMeta as HTMLElement, this.__data, visibleFields);
       }
 
       // Update description
