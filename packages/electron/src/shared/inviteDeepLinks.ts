@@ -10,6 +10,16 @@ export interface InviteDeepLinkTarget {
 }
 
 /**
+ * The one definition of "this URL is the team-invitation route", shared by the
+ * deep-link handler (main/index.ts), the parser below and the in-app
+ * navigation policy (NIB.98), so they cannot disagree. Takes a parsed URL; the
+ * protocol is checked by the callers that care.
+ */
+export function isInviteRoute(parsed: { host: string; pathname: string }): boolean {
+  return parsed.host === 'invite' || parsed.pathname.startsWith('/invite/');
+}
+
+/**
  * Parse and validate a team-invitation deep link at the main-process routing
  * boundary: `nimbalyst://invite/{orgId}?email={email}`.
  *
@@ -20,9 +30,7 @@ export interface InviteDeepLinkTarget {
  */
 export function parseInviteDeepLink(rawUrl: string): InviteDeepLinkTarget {
   const parsed = new URL(rawUrl);
-  const isInviteRoute = parsed.protocol === 'nimbalyst:'
-    && (parsed.host === 'invite' || parsed.pathname.startsWith('/invite/'));
-  if (!isInviteRoute) {
+  if (!(parsed.protocol === 'nimbalyst:' && isInviteRoute(parsed))) {
     throw new Error('URL is not a Nimbalyst invite deep link');
   }
 

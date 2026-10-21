@@ -6,9 +6,9 @@ import {
     type TrackerDeepLinkTarget,
     type TrackerDeepLinkView,
 } from '../shared/trackerDeepLinks';
-import { parseInviteDeepLink, type InviteDeepLinkTarget } from '../shared/inviteDeepLinks';
+import { isInviteRoute, parseInviteDeepLink, type InviteDeepLinkTarget } from '../shared/inviteDeepLinks';
 import { resolveOrgMessagingDestination } from '../shared/orgMessagingRouting';
-import { safeHandle, safeOn, installIpcChannelObserver } from './utils/ipcRegistry';
+import { safeHandle, safeOn, installIpcSenderValidator, installIpcChannelObserver } from './utils/ipcRegistry';
 import { createChannelAllowlistObserver } from './security/channelAllowlistMonitor';
 import ipcChannelAllowlist from '../shared/ipcChannelAllowlist.json';
 import { installMicrophoneGate } from './mediaPermissionGate';
@@ -335,6 +335,9 @@ import { TrayManager } from './tray/TrayManager';
 import { pathToFileURL } from 'url';
 import { registerLinuxAppImageProtocolHandler } from './services/LinuxProtocolRegistration';
 import { installWindowOpenGuard } from './window/windowOpenGuard';
+import { installNavigationGuard } from './window/navigationGuard';
+import { getAppOriginConfig } from './security/appOrigin';
+import { createIpcSenderValidator } from './security/ipcSenderValidator';
 import { openConsoleDeepLink } from './services/consoleLinks/consoleLinkHandlers';
 import { resolveClaudeConfigDir } from '@nimbalyst/runtime/ai/server/providers/claudeCode/claudeConfigDir';
 import { parseConversationDeepLink } from '../shared/conversationDeepLinks';
@@ -393,6 +396,20 @@ registerCollabAssetSchemeAsPrivileged();
 // file links that slip past the renderer's link routing used to open blank
 // white child windows.
 installWindowOpenGuard();
+
+// NIB.85 stage d1: app windows stay on the app's own renderer (main-frame
+// navigation to another origin is blocked or sent to the system browser), and
+// IPC is accepted only from the top frame of an app window at the app origin.
+// A `nimbalyst:` link that reaches the window as a navigation used to go to the OS and come
+// back through second-instance / open-url into handleDeepLink. It goes to that same handler
+// directly now (NIB.98), with the same parsing, validation and confirmations; nothing else.
+installNavigationGuard({
+    routeAppUrl: (url) => {
+        logger.main.info('[DeepLink] Routing nimbalyst: navigation in-app:', summarizeDeepLink(url));
+        return handleDeepLink(url);
+    },
+});
+installIpcSenderValidator(createIpcSenderValidator(getAppOriginConfig()));
 
 // NIB.85 stage d3 (decision U6: LOG-ONLY, never block): note, once per channel
 // and bounded, any channel the renderer invokes that scripts/ipc-channel-
@@ -1132,7 +1149,7 @@ async function handleDeepLink(url: string): Promise<void> {
                 return;
             }
             await openFeedbackRequestFromDeepLink(feedback.requestId, feedback.orgId);
-        } else if (parsed.host === 'invite' || parsed.pathname?.startsWith('/invite/')) {
+        } else if (isInviteRoute(parsed)) {
             // Handle team invitation handoff from the web console:
             // nimbalyst://invite/{orgId}?email={email}
             let inviteLink: InviteDeepLinkTarget;

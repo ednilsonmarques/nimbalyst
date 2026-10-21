@@ -104,6 +104,53 @@ function ipcSlowLog(channel: string, durationMs: number): void {
 }
 
 /**
+ * Sender validation (NIB.85 stage d1). main/index.ts installs a validator that
+ * accepts only the top frame of an app window at the app's own origin. With no
+ * validator installed (unit tests, early startup) every sender is accepted.
+ *
+ * Rejections are logged once per channel and reason (bounded), so a noisy
+ * caller cannot flood the log. In `enforce: false` mode the rejection is only
+ * logged and the call proceeds.
+ */
+export type IpcSenderVerdict = { allowed: true } | { allowed: false; reason: string };
+export type IpcSenderValidator = (event: unknown, channel: string) => IpcSenderVerdict;
+
+let senderValidator: IpcSenderValidator | null = null;
+let senderEnforce = true;
+const loggedSenderRejections = new Set<string>();
+const SENDER_REJECTION_LOG_CAP = 100;
+
+export function installIpcSenderValidator(
+  validator: IpcSenderValidator | null,
+  options: { enforce?: boolean } = {},
+): void {
+  senderValidator = validator;
+  senderEnforce = options.enforce !== false;
+  loggedSenderRejections.clear();
+}
+
+/** True when the call may proceed. */
+function senderAllowed(event: unknown, channel: string): boolean {
+  if (!senderValidator) return true;
+  let verdict: IpcSenderVerdict;
+  try {
+    verdict = senderValidator(event, channel);
+  } catch (error) {
+    // A validator that throws must not open the door in enforce mode.
+    verdict = { allowed: false, reason: `validator-error:${(error as Error)?.message ?? 'unknown'}` };
+  }
+  if (verdict.allowed) return true;
+  const key = `${channel}|${verdict.reason}`;
+  if (!loggedSenderRejections.has(key) && loggedSenderRejections.size < SENDER_REJECTION_LOG_CAP) {
+    loggedSenderRejections.add(key);
+    console.warn(
+      `[IPC] ${senderEnforce ? 'Rejected' : 'Would reject (log-only)'} sender for ${channel}: ${verdict.reason}`,
+    );
+  }
+  return !senderEnforce;
+}
+
+/**
  * Channel observer (NIB.85 stage d3, LOG-ONLY). Called with the channel name
  * on every invocation that reaches a safeHandle / safeOn / safeOnce wrapper
  * from an accepted sender. It cannot alter the call: its result is ignored and
@@ -187,6 +234,9 @@ export function safeHandle(
   // promise takes from outside `ipcMain.handle`, so the wrap is the only
   // place to measure end-to-end main-side handler latency.
   const timed = async (event: IpcMainInvokeEvent, ...args: any[]) => {
+    if (!senderAllowed(event, channel)) {
+      throw new Error(`IPC sender rejected for ${channel}`);
+    }
     observeChannel(channel);
     const stats = getOrCreateIpcStats(channel);
     const t0 = performance.now();
@@ -213,6 +263,9 @@ export function safeHandle(
   };
 
   const untimed = async (event: IpcMainInvokeEvent, ...args: any[]) => {
+    if (!senderAllowed(event, channel)) {
+      throw new Error(`IPC sender rejected for ${channel}`);
+    }
     observeChannel(channel);
     return handler(event, ...args);
   };
@@ -244,15 +297,21 @@ export function safeHandle(
  * channel instead and never rethrow. `safeHandle` is deliberately not wrapped:
  * invoke errors must still reject to the renderer.
  */
+type ContainedListener = ((event: Electron.IpcMainEvent, ...args: any[]) => void) & {
+  /** True when the sender passes validation (and logs a rejection once). */
+  accepts: (event: Electron.IpcMainEvent) => boolean;
+  /** Runs the handler for an already accepted event, containing errors. */
+  run: (event: Electron.IpcMainEvent, args: any[]) => void;
+};
+
 function containListenerErrors(
   channel: string,
   handler: (event: Electron.IpcMainEvent, ...args: any[]) => unknown,
-): (event: Electron.IpcMainEvent, ...args: any[]) => void {
+): ContainedListener {
   const logError = (error: unknown) => {
     console.error(`[IPC] Listener for ${channel} threw:`, error);
   };
-  return (event, ...args) => {
-    observeChannel(channel);
+  const run = (event: Electron.IpcMainEvent, args: any[]) => {
     try {
       const result = handler(event, ...args);
       if (result && typeof (result as Promise<unknown>).then === 'function') {
@@ -262,6 +321,19 @@ function containListenerErrors(
       logError(error);
     }
   };
+  const guarded = (event: Electron.IpcMainEvent, ...args: any[]) => {
+    if (!senderAllowed(event, channel)) return;
+    observeChannel(channel);
+    run(event, args);
+  };
+  // `safeOnce` needs to know whether the message was accepted before it spends its one shot.
+  return Object.assign(guarded, {
+    accepts: (event: Electron.IpcMainEvent) => senderAllowed(event, channel),
+    run: (event: Electron.IpcMainEvent, args: any[]) => {
+      observeChannel(channel);
+      run(event, args);
+    },
+  });
 }
 
 /**
@@ -308,7 +380,7 @@ export function safeOnce(
   handler: (event: Electron.IpcMainEvent, ...args: any[]) => void
 ): void {
   const ipcMain = getIpcMain();
-  if (!ipcMain?.once) {
+  if (!ipcMain?.on) {
     return;
   }
 
@@ -322,13 +394,16 @@ export function safeOnce(
   }
   handlers.add(handler);
 
-  // Wrap to remove from our tracking when the handler fires
+  // Registered with on() and removed by hand, not with once(): a message from a rejected sender
+  // must not use up the one shot that the next, accepted, message is waiting for.
   const contained = containListenerErrors(channel, handler);
-  const wrappedHandler = (event: Electron.IpcMainEvent, ...args: any[]) => {
+  const listener = (event: Electron.IpcMainEvent, ...args: any[]) => {
+    if (!contained.accepts(event)) return;
+    ipcMain.removeListener?.(channel, listener);
     handlers.delete(handler);
-    contained(event, ...args);
+    contained.run(event, args);
   };
-  ipcMain.once(channel, wrappedHandler);
+  ipcMain.on(channel, listener);
 }
 
 /**
