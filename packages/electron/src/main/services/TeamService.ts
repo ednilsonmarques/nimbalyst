@@ -1982,9 +1982,12 @@ async function mergeOrg(
  * org-scoped session (promoting the user from pending/invited to active
  * in Stytch automatically), then sets up encryption keys.
  */
-async function acceptInvite(orgId: string): Promise<TeamDetails> {
-  const pendingTeam = (await listTeams()).find((team) => team.orgId === orgId);
-  const inviteAccountOrgId = pendingTeam?.boundPersonalOrgId
+async function acceptInvite(orgId: string, expectedAccountOrgId?: string): Promise<TeamDetails> {
+  // A deep-link invite passes the account it showed in the confirmation, so the account that joins
+  // is the one the user was shown and not whatever the directory says by the time this runs.
+  const pendingTeam = expectedAccountOrgId ? undefined : (await listTeams()).find((team) => team.orgId === orgId);
+  const inviteAccountOrgId = expectedAccountOrgId
+    ?? pendingTeam?.boundPersonalOrgId
     ?? pendingTeam?.sourcePersonalOrgId;
   if (!inviteAccountOrgId) {
     throw new Error(`No signed-in account owns the pending invite for ${orgId}`);
@@ -2017,7 +2020,18 @@ export type InviteDeepLinkOutcome =
   | { status: 'already-member'; orgId: string; teamName: string }
   | { status: 'sign-in-required'; orgId: string; email?: string }
   | { status: 'not-found'; orgId: string; email?: string }
+  | { status: 'declined'; orgId: string; reason: 'user' | 'account-changed' }
   | { status: 'error'; orgId: string; message: string };
+
+/**
+ * Asked right before an invitation would be accepted. Resolves `true` only on an explicit user
+ * confirmation; anything else (cancel, error) means the invitation is not accepted.
+ */
+export type ConfirmInviteJoin = (info: { orgId: string; teamName: string; email?: string }) => Promise<boolean>;
+
+function pendingInviteAccountOrgId(team: { boundPersonalOrgId?: string | null; sourcePersonalOrgId?: string | null }): string | undefined {
+  return team.boundPersonalOrgId ?? team.sourcePersonalOrgId ?? undefined;
+}
 
 /**
  * Resolve a team-invitation deep link against the signed-in accounts.
@@ -2031,7 +2045,8 @@ export type InviteDeepLinkOutcome =
  */
 export async function resolveInviteDeepLink(
   orgId: string,
-  email?: string,
+  email: string | undefined,
+  confirmJoin: ConfirmInviteJoin,
 ): Promise<InviteDeepLinkOutcome> {
   // Normalize here rather than trusting the caller: this is exported, and a
   // casing mismatch must not be the difference between accepting an invitation
@@ -2057,7 +2072,39 @@ export async function resolveInviteDeepLink(
     if (!team) return { status: 'not-found', orgId, email: normalizedEmail };
 
     if (team.membershipType && team.membershipType !== 'active_member') {
-      const joined = await acceptInvite(orgId);
+      // The account that will join is fixed BEFORE the confirmation and shown in it.
+      const inviteAccountOrgId = pendingInviteAccountOrgId(team);
+      if (!inviteAccountOrgId) throw new Error(`No signed-in account owns the pending invite for ${orgId}`);
+      const isActiveAccount = () => isAuthenticated() && getAccounts().some((account) => (
+        account.personalOrgId === inviteAccountOrgId && account.sessionStatus === 'active'
+      ));
+      const shownEmail = getAccounts().find((account) => account.personalOrgId === inviteAccountOrgId)?.email?.trim().toLowerCase()
+        || normalizedEmail;
+
+      // A link must never join a team by itself: ask first, and treat any failure as a refusal.
+      let confirmed = false;
+      try {
+        confirmed = (await confirmJoin({ orgId, teamName: team.name, email: shownEmail })) === true;
+      } catch {
+        confirmed = false;
+      }
+      if (!confirmed) return { status: 'declined', orgId, reason: 'user' };
+
+      // The confirmation is asynchronous: the user could have signed out, switched accounts, or the
+      // invitation could have moved to another account meanwhile. Re-validate; decline on any change.
+      if (!isActiveAccount()) return { status: 'declined', orgId, reason: 'account-changed' };
+      invalidateListTeamsCache();
+      const fresh = (await listTeams({ forceFresh: true })).find((candidate) => candidate.orgId === orgId);
+      if (!fresh) return { status: 'not-found', orgId, email: normalizedEmail };
+      if (!fresh.membershipType || fresh.membershipType === 'active_member') {
+        return { status: 'already-member', orgId, teamName: fresh.name };
+      }
+      if (pendingInviteAccountOrgId(fresh) !== inviteAccountOrgId) {
+        return { status: 'declined', orgId, reason: 'account-changed' };
+      }
+      // The listing above is asynchronous too: check the account is still the active one right before joining.
+      if (!isActiveAccount()) return { status: 'declined', orgId, reason: 'account-changed' };
+      const joined = await acceptInvite(orgId, inviteAccountOrgId);
       return { status: 'accepted', orgId, teamName: joined.name };
     }
 

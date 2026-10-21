@@ -607,5 +607,13 @@
       "title": "Create New Workspace",
       "button": "Create"
     }
+  },
+  "teamInviteDeepLink": {
+    "title": "Join organization?",
+    "message": "Join \"{{org}}\"?",
+    "detail": "This invitation was opened from a link, so it did not come from inside Nimbalyst. Joining as {{email}} gives you access to this organization's shared projects and documents. Only continue if you were expecting this invitation.",
+    "detailNoEmail": "This invitation was opened from a link, so it did not come from inside Nimbalyst. Joining gives your signed-in account access to this organization's shared projects and documents. Only continue if you were expecting this invitation.",
+    "confirm": "Join organization",
+    "cancel": "Cancel"
   }
 }

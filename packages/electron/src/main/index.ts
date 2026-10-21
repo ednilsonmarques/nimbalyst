@@ -302,6 +302,7 @@ import {
   resolveInviteDeepLink,
   type InviteDeepLinkOutcome,
 } from './services/TeamService';
+import { confirmTeamInviteJoin, runExclusiveInviteFlow } from './services/teamInviteConfirmation';
 import { registerOrgProjectWalkHandlers } from './services/OrgProjectWalkService';
 import {
     consumePendingOrgFeedbackLink,
@@ -1484,7 +1485,20 @@ async function openFeedbackRequestFromDeepLink(
  * email).
  */
 async function openTeamInviteFromDeepLink(orgId: string, email?: string): Promise<void> {
-    const outcome = await resolveInviteDeepLink(orgId, email);
+    // One invite at a time: a second link while a confirmation is open is ignored, never stacked.
+    await runExclusiveInviteFlow(
+        () => resolveAndSurfaceTeamInvite(orgId, email),
+        () => logger.main.warn('[DeepLink] Team invite ignored: another invite confirmation is in progress', { orgId }),
+    );
+}
+
+async function resolveAndSurfaceTeamInvite(orgId: string, email?: string): Promise<void> {
+    const outcome = await resolveInviteDeepLink(orgId, email, (info) =>
+        confirmTeamInviteJoin(info, undefined, getMostRecentlyFocusedWorkspaceWindow()));
+    if (outcome.status === 'declined') {
+        logger.main.info('[DeepLink] Team invite not accepted:', { orgId, reason: outcome.reason });
+        return;
+    }
     logger.main.info('[DeepLink] Team invite outcome:', {
         status: outcome.status,
         orgId,

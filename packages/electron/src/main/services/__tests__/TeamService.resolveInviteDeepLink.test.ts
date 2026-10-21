@@ -129,8 +129,12 @@ const PENDING_TEAM = {
 };
 
 describe('resolveInviteDeepLink', () => {
+  const confirmJoin = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
+    confirmJoin.mockReset();
+    confirmJoin.mockResolvedValue(true);
     fetchMock.mockReset();
     authenticatedMock.mockReturnValue(true);
     accountsMock.mockReturnValue([{
@@ -144,7 +148,7 @@ describe('resolveInviteDeepLink', () => {
   it('refuses to accept an invitation addressed to an email no signed-in account owns', async () => {
     respondWithTeams([PENDING_TEAM]);
 
-    const outcome = await resolveInviteDeepLink('org-acme', 'someone-else@test.com');
+    const outcome = await resolveInviteDeepLink('org-acme', 'someone-else@test.com', confirmJoin);
 
     expect(outcome).toEqual({
       status: 'sign-in-required',
@@ -160,7 +164,7 @@ describe('resolveInviteDeepLink', () => {
     authenticatedMock.mockReturnValue(false);
     respondWithTeams([PENDING_TEAM]);
 
-    const outcome = await resolveInviteDeepLink('org-acme', 'invitee@test.com');
+    const outcome = await resolveInviteDeepLink('org-acme', 'invitee@test.com', confirmJoin);
 
     expect(outcome).toEqual({
       status: 'sign-in-required',
@@ -173,7 +177,7 @@ describe('resolveInviteDeepLink', () => {
   it('treats a membership the console already activated as already-member, not a fresh join', async () => {
     respondWithTeams([{ ...PENDING_TEAM, membershipType: 'active_member' }]);
 
-    const outcome = await resolveInviteDeepLink('org-acme', 'INVITEE@Test.com');
+    const outcome = await resolveInviteDeepLink('org-acme', 'INVITEE@Test.com', confirmJoin);
 
     expect(outcome).toEqual({ status: 'already-member', orgId: 'org-acme', teamName: 'Acme' });
     expect(sessionExchangeCallCount()).toBe(0);
@@ -182,12 +186,129 @@ describe('resolveInviteDeepLink', () => {
   it('reports not-found when the invitation is no longer in the account directory', async () => {
     respondWithTeams([]);
 
-    const outcome = await resolveInviteDeepLink('org-acme', 'invitee@test.com');
+    const outcome = await resolveInviteDeepLink('org-acme', 'invitee@test.com', confirmJoin);
 
     expect(outcome).toEqual({
       status: 'not-found',
       orgId: 'org-acme',
       email: 'invitee@test.com',
+    });
+  });
+  describe('explicit confirmation before joining', () => {
+    it('does not ask when there is nothing to join (sign-in, already a member, not found)', async () => {
+      respondWithTeams([{ ...PENDING_TEAM, membershipType: 'active_member' }]);
+      await resolveInviteDeepLink('org-acme', 'invitee@test.com', confirmJoin);
+      respondWithTeams([]);
+      invalidateListTeamsCache();
+      await resolveInviteDeepLink('org-acme', 'invitee@test.com', confirmJoin);
+      expect(confirmJoin).not.toHaveBeenCalled();
+    });
+
+    it('asks with the team name and the invited email, then joins on confirm', async () => {
+      respondWithTeams([PENDING_TEAM]);
+      await resolveInviteDeepLink('org-acme', 'INVITEE@Test.com', confirmJoin);
+      expect(confirmJoin).toHaveBeenCalledTimes(1);
+      expect(confirmJoin).toHaveBeenCalledWith({ orgId: 'org-acme', teamName: 'Acme', email: 'invitee@test.com' });
+      // confirm -> acceptInvite ran: it exchanges the session for the org
+      expect(sessionExchangeCallCount()).toBe(1);
+    });
+
+    it('does not join when the user cancels', async () => {
+      respondWithTeams([PENDING_TEAM]);
+      confirmJoin.mockResolvedValue(false);
+      const outcome = await resolveInviteDeepLink('org-acme', 'invitee@test.com', confirmJoin);
+      expect(outcome).toEqual({ status: 'declined', orgId: 'org-acme', reason: 'user' });
+      expect(sessionExchangeCallCount()).toBe(0);
+    });
+
+    it('does not join when the confirmation fails or answers anything but true', async () => {
+      respondWithTeams([PENDING_TEAM]);
+      confirmJoin.mockRejectedValue(new Error('dialog failed'));
+      expect(await resolveInviteDeepLink('org-acme', 'invitee@test.com', confirmJoin)).toEqual({ status: 'declined', orgId: 'org-acme', reason: 'user' });
+      confirmJoin.mockResolvedValue('yes' as unknown as boolean);
+      expect(await resolveInviteDeepLink('org-acme', 'invitee@test.com', confirmJoin)).toEqual({ status: 'declined', orgId: 'org-acme', reason: 'user' });
+      confirmJoin.mockImplementation(() => { throw new Error('sync throw'); });
+      expect(await resolveInviteDeepLink('org-acme', 'invitee@test.com', confirmJoin)).toEqual({ status: 'declined', orgId: 'org-acme', reason: 'user' });
+      expect(sessionExchangeCallCount()).toBe(0);
+    });
+
+    describe('the account shown is the account that joins (A5)', () => {
+      it('shows the owning account and joins with exactly that account', async () => {
+        respondWithTeams([PENDING_TEAM]);
+        await resolveInviteDeepLink('org-acme', undefined, confirmJoin);
+        expect(confirmJoin).toHaveBeenCalledWith({ orgId: 'org-acme', teamName: 'Acme', email: 'invitee@test.com' });
+        // the exchange ran once, for the account that was confirmed
+        expect(sessionExchangeCallCount()).toBe(1);
+      });
+
+      it('declines when the signed-in account changes while the dialog is open', async () => {
+        respondWithTeams([PENDING_TEAM]);
+        confirmJoin.mockImplementation(async () => {
+          accountsMock.mockReturnValue([{ personalOrgId: 'personal-2', email: 'other@test.com', sessionStatus: 'active' }]);
+          return true;
+        });
+        const outcome = await resolveInviteDeepLink('org-acme', 'invitee@test.com', confirmJoin);
+        expect(outcome).toEqual({ status: 'declined', orgId: 'org-acme', reason: 'account-changed' });
+        expect(sessionExchangeCallCount()).toBe(0);
+      });
+
+      it('declines when the user signs out while the dialog is open', async () => {
+        respondWithTeams([PENDING_TEAM]);
+        confirmJoin.mockImplementation(async () => { authenticatedMock.mockReturnValue(false); return true; });
+        const outcome = await resolveInviteDeepLink('org-acme', 'invitee@test.com', confirmJoin);
+        expect(outcome).toEqual({ status: 'declined', orgId: 'org-acme', reason: 'account-changed' });
+        expect(sessionExchangeCallCount()).toBe(0);
+      });
+
+      it('declines when the second listing binds the invitation to a different account, and does not switch', async () => {
+        accountsMock.mockReturnValue([
+          { personalOrgId: 'personal-1', email: 'invitee@test.com', sessionStatus: 'active' },
+          { personalOrgId: 'personal-2', email: 'other@test.com', sessionStatus: 'active' },
+        ]);
+        respondWithTeams([PENDING_TEAM]);
+        confirmJoin.mockImplementation(async () => {
+          // by the time the user confirms, the directory binds this invitation to the other account
+          invalidateListTeamsCache();
+          respondWithTeams([{ ...PENDING_TEAM, owningPersonalOrgId: 'personal-2', teamMemberId: 'member-2' }]);
+          return true;
+        });
+        const outcome = await resolveInviteDeepLink('org-acme', 'invitee@test.com', confirmJoin);
+        expect(confirmJoin).toHaveBeenCalledWith({ orgId: 'org-acme', teamName: 'Acme', email: 'invitee@test.com' });
+        expect(outcome).toEqual({ status: 'declined', orgId: 'org-acme', reason: 'account-changed' });
+        expect(sessionExchangeCallCount()).toBe(0);
+      });
+
+      it('re-checks the active account after the second listing: if it changed meanwhile, declines without switching', async () => {
+        let teamListings = 0;
+        fetchMock.mockImplementation(async (url: string) => {
+          if (url.includes('/api/teams') && !url.includes('/api/teams/')) {
+            teamListings++;
+            // the second listing is the fresh one after the confirmation: the signed-in account changes during it,
+            // after the listing already took its snapshot of the accounts and after the first isActiveAccount() check
+            if (teamListings === 2) {
+              accountsMock.mockReturnValue([{ personalOrgId: 'personal-2', email: 'other@test.com', sessionStatus: 'active' }]);
+            }
+            return { ok: true, status: 200, json: async () => ({ teams: [PENDING_TEAM] }) };
+          }
+          return { ok: true, status: 200, json: async () => ({}) };
+        });
+        const outcome = await resolveInviteDeepLink('org-acme', 'invitee@test.com', confirmJoin);
+        expect(teamListings).toBe(2);
+        expect(confirmJoin).toHaveBeenCalledTimes(1);
+        expect(outcome).toEqual({ status: 'declined', orgId: 'org-acme', reason: 'account-changed' });
+        expect(sessionExchangeCallCount()).toBe(0); // acceptInvite never ran: no session exchange, no account switch
+      });
+
+      it('does not join twice when the membership became active while the dialog was open', async () => {
+        respondWithTeams([PENDING_TEAM]);
+        confirmJoin.mockImplementation(async () => {
+          respondWithTeams([{ ...PENDING_TEAM, membershipType: 'active_member' }]);
+          return true;
+        });
+        const outcome = await resolveInviteDeepLink('org-acme', 'invitee@test.com', confirmJoin);
+        expect(outcome).toEqual({ status: 'already-member', orgId: 'org-acme', teamName: 'Acme' });
+        expect(sessionExchangeCallCount()).toBe(0);
+      });
     });
   });
 });
