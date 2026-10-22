@@ -408,7 +408,7 @@ export const META_AGENT_TOOL_DEFS: Array<{
         title: {
           type: "string",
           description:
-            "Optional, team root only. Retitles the target team member (at most 100 characters) so its sidebar title names the task you are sending; use it when you reuse a member for a new task. Refused for any other caller and for a session that is not your own team member; a refusal queues nothing. The member's mission does not change.",
+            "Optional, team root only. Retitles the target team member (at most 100 characters) so its sidebar title names the task you are sending; use it when you reuse a member for a new task. Refused for any other caller and for a session that is not your own team member; a refusal queues nothing. The title is written once the prompt is queued; if that write fails, the send still succeeds and the result carries titleError (do not resend the prompt). The member's mission does not change.",
         },
         interrupt: {
           type: "boolean",
@@ -493,7 +493,7 @@ export const META_AGENT_TOOL_DEFS: Array<{
   {
     name: "list_spawned_sessions",
     description:
-      "List all child sessions created by this meta-agent session, including current status and a short summary.",
+      "List all child sessions created by this meta-agent session, including current status and a short summary. The task and last response are previews and editedFiles lists only the first five paths (editedFileCount has the total); use get_session_result for a member's full record, including when you check what it edited.",
     inputSchema: {
       type: "object",
       properties: {},

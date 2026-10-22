@@ -86,6 +86,16 @@ const SESSION_RESULT_MESSAGE_WINDOW = 500;
 /** Oldest messages read to recover the original prompt when the newest window no longer reaches it. */
 const SESSION_RESULT_HEAD_WINDOW = 50;
 
+/** list_spawned_sessions previews: the full text stays in get_session_result. */
+const SESSION_LIST_PROMPT_PREVIEW = 200;
+const SESSION_LIST_RESPONSE_PREVIEW = 300;
+const SESSION_LIST_EDITED_FILES = 5;
+
+function truncateForSessionList(value: unknown, max: number): unknown {
+  if (typeof value !== 'string' || value.length <= max) return value;
+  return `${value.slice(0, max)}... [truncated: ${value.length - max} more characters; get_session_result has the full text]`;
+}
+
 function isExistingDirectory(candidate: string | null | undefined): boolean {
   if (!candidate) return false;
   try {
@@ -1554,12 +1564,25 @@ export class MetaAgentService {
       originSessionId,
     };
 
-    if (requestedTitle) {
-      await applySessionTitleThroughNaming(sessionId, requestedTitle);
-    }
+    // NIB.108: the title is written only once the task is in the queue (a queue
+    // failure leaves the title untouched) and before the member is driven (it
+    // starts its turn under the new title). The task is already queued at that
+    // point, so a failed title write is reported, never thrown: a retry would
+    // queue the same task twice.
+    const applyRequestedTitle = async (): Promise<string | null> => {
+      if (!requestedTitle) return null;
+      try {
+        await applySessionTitleThroughNaming(sessionId, requestedTitle);
+        return null;
+      } catch (error) {
+        console.error(`[MetaAgentService] Retitling session ${sessionId} failed after its prompt was queued:`, error);
+        return error instanceof Error ? error.message : String(error);
+      }
+    };
 
     if (shouldBypassExecution) {
       await this.persistSyntheticInputMessage(sessionId, normalizedPrompt, promptProvenance);
+      const bypassTitleError = await applyRequestedTitle();
       return JSON.stringify({
         sessionId,
         queuedPromptId: null,
@@ -1568,6 +1591,7 @@ export class MetaAgentService {
         processingTriggered: false,
         interrupted: false,
         bypassedExecutionForTest: true,
+        ...(bypassTitleError ? { titleError: bypassTitleError } : {}),
       }, null, 2);
     }
 
@@ -1580,6 +1604,7 @@ export class MetaAgentService {
       undefined,
       { promptProvenance },
     );
+    const titleError = await applyRequestedTitle();
     const status = (statusRow?.status || 'idle') as SessionStatusValue;
     const workspaceForDrive = session.worktreePath || session.workspacePath || workspaceId;
     const idleEnoughToDrive = status === 'idle' || status === 'interrupted' || status === 'error';
@@ -1625,6 +1650,7 @@ export class MetaAgentService {
       ...(interruptMethod ? { interruptMethod } : {}),
       ...(interruptSkippedReason ? { interruptSkippedReason } : {}),
       ...(driveOutcome ? { driveOutcome } : {}),
+      ...(titleError ? { titleError } : {}),
     }, null, 2);
   }
 
@@ -1775,9 +1801,26 @@ export class MetaAgentService {
     }, null, 2);
   }
 
+  /**
+   * The list_spawned_sessions tool: a compact summary per member. The coordinator
+   * reads it on every check of its team, and repeating each member's whole task,
+   * every edited path and a long last response made a 15-member list ~74,000
+   * characters. get_session_result keeps the full text; the Team view's IPC
+   * (getSpawnedSessions) keeps the full records.
+   */
   private async listSpawnedSessionsJson(metaSessionId: string, workspaceId: string): Promise<string> {
     const sessions = await this.getSpawnedSessions(metaSessionId, workspaceId);
-    return JSON.stringify(sessions, null, 2);
+    const compact = sessions.map((session) => {
+      const editedFiles = Array.isArray(session.editedFiles) ? session.editedFiles as string[] : [];
+      return {
+        ...session,
+        originalPrompt: truncateForSessionList(session.originalPrompt, SESSION_LIST_PROMPT_PREVIEW),
+        lastResponse: truncateForSessionList(session.lastResponse, SESSION_LIST_RESPONSE_PREVIEW),
+        editedFileCount: editedFiles.length,
+        editedFiles: editedFiles.slice(0, SESSION_LIST_EDITED_FILES),
+      };
+    });
+    return JSON.stringify(compact, null, 2);
   }
 
   private async getSpawnedSessions(metaSessionId: string, workspaceId: string): Promise<Array<Record<string, unknown>>> {
@@ -2641,6 +2684,11 @@ export class MetaAgentService {
   private extractErrorMessage(messages: Array<{ direction: string; content: string }>): string | null {
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       const message = messages[index];
+      // The current turn starts at the last input: an error before it belongs to
+      // an earlier task and must not be reported on this one.
+      if (message.direction === 'input') {
+        return null;
+      }
       try {
         const parsed = JSON.parse(message.content);
         if (typeof parsed.error === 'string' && parsed.error.trim()) {

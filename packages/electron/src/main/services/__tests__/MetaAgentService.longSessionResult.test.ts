@@ -187,6 +187,44 @@ describe('session result of a reused member past 500 stored messages', () => {
     expect(data.lastResponse).toBe('RESULTADO-C');
   });
 
+  it('does not report an error from an earlier mission on a later, successful one', async () => {
+    appendMission('A', 3);
+    rows.push({ id: rows.length + 1, direction: 'output', content: JSON.stringify({ error: 'falha da missao A' }), metadata: null });
+    appendMission('B', 3);
+
+    const data = await build();
+
+    expect(data.lastResponse).toBe('RESULTADO-B');
+    expect(data.errorMessage).toBeNull();
+  });
+
+  it('still reports an error raised in the current mission', async () => {
+    appendMission('A', 3);
+    rows.push({ id: rows.length + 1, direction: 'input', content: 'MISSAO-B', metadata: null });
+    rows.push({ id: rows.length + 1, direction: 'output', content: JSON.stringify({ error: 'falha da missao B' }), metadata: null });
+
+    const data = await build();
+
+    expect(data.errorMessage).toBe('falha da missao B');
+  });
+
+  it('an input injected mid-turn bounds the error scan: an error before it, in a turn that recovered, is not reported', async () => {
+    rows.push({ id: rows.length + 1, direction: 'input', content: 'MISSAO-A', metadata: null });
+    rows.push({ id: rows.length + 1, direction: 'output', content: JSON.stringify({ error: 'falha recuperada' }), metadata: null });
+    rows.push({ id: rows.length + 1, direction: 'input', content: 'mensagem injetada', metadata: null });
+    rows.push({ id: rows.length + 1, direction: 'output', content: 'RESULTADO-A', metadata: null });
+
+    expect((await build()).errorMessage).toBeNull();
+  });
+
+  it('an error after an input injected mid-turn is still reported', async () => {
+    rows.push({ id: rows.length + 1, direction: 'input', content: 'MISSAO-A', metadata: null });
+    rows.push({ id: rows.length + 1, direction: 'input', content: 'mensagem injetada', metadata: null });
+    rows.push({ id: rows.length + 1, direction: 'output', content: JSON.stringify({ error: 'falha atual' }), metadata: null });
+
+    expect((await build()).errorMessage).toBe('falha atual');
+  });
+
   it('is unchanged for a short session', async () => {
     appendMission('A', 3);
     appendMission('B', 3);

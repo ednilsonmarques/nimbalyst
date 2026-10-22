@@ -105,16 +105,69 @@ describe('send_prompt title: authority', () => {
     vi.mocked(AISessionsRepository.updateMetadata).mockReset();
   });
 
-  it('the team root retitles its own member, then the prompt is queued; the mission is untouched', async () => {
+  it('the team root retitles its own member once the prompt is queued and before the member is driven; the mission is untouched', async () => {
     const h = setup(TEAM);
     const result = JSON.parse(await h.send(ROOT, MEMBER, '  Fix   the login\nbug '));
     expect(applySessionTitle).toHaveBeenCalledTimes(1);
     // applySessionTitleThroughNaming reaches SessionNamingService.applySessionTitle, the funnel that marks the session named and broadcasts session:title-updated.
     expect(applySessionTitle).toHaveBeenCalledWith(MEMBER, 'Fix the login bug');
     expect(h.queuePromptForSession).toHaveBeenCalledTimes(1);
-    expect(applySessionTitle.mock.invocationCallOrder[0]).toBeLessThan(h.queuePromptForSession.mock.invocationCallOrder[0]);
+    // NIB.108: queued first, so a queue failure never leaves a renamed member without its task...
+    expect(h.queuePromptForSession.mock.invocationCallOrder[0]).toBeLessThan(applySessionTitle.mock.invocationCallOrder[0]);
+    // ...and titled before the drive, so the member starts its turn under the new title.
+    const drive = h.service.aiService.triggerQueuedPromptProcessingForSession;
+    expect(applySessionTitle.mock.invocationCallOrder[0]).toBeLessThan(drive.mock.invocationCallOrder[0]);
     expect(result.queuedPromptId).toBe('queued-1');
+    expect(result.titleError).toBeUndefined();
     expect(AISessionsRepository.updateMetadata).not.toHaveBeenCalled();
+  });
+
+  it('with interrupt, the title lands after the queue and before the interrupt and the drive', async () => {
+    const h = setup(TEAM);
+    vi.spyOn(h.service, 'getSessionStatusRow').mockResolvedValue({ id: MEMBER, status: 'running' });
+    vi.spyOn(h.service, 'reasonToSkipInterrupt').mockReturnValue(null);
+    h.service.aiService.interruptCurrentTurn.mockResolvedValue({ success: true, method: 'abort' });
+    h.service.aiService.driveQueuedPrompts.mockResolvedValue({ kind: 'dispatched' });
+
+    await h.service.sendPromptToSession(ROOT, MEMBER, WORKSPACE, 'next task', true, 'instruction', { title: 'Urgent fix' });
+
+    const order = [
+      h.queuePromptForSession.mock.invocationCallOrder[0],
+      applySessionTitle.mock.invocationCallOrder[0],
+      h.service.aiService.interruptCurrentTurn.mock.invocationCallOrder[0],
+      h.service.aiService.driveQueuedPrompts.mock.invocationCallOrder[0],
+    ];
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+  });
+
+  it('without a title the result carries no titleError key', async () => {
+    const h = setup(TEAM);
+    const result = JSON.parse(await h.send(ROOT, MEMBER));
+    expect('titleError' in result).toBe(false);
+  });
+
+  it('the bypass branch reports a failed title write instead of throwing', async () => {
+    const h = setup(TEAM, true);
+    applySessionTitle.mockRejectedValueOnce(new Error('naming down'));
+    const result = JSON.parse(await h.send(ROOT, MEMBER, 'Review round 3'));
+    expect(h.persistSynthetic).toHaveBeenCalledTimes(1);
+    expect(result.titleError).toMatch(/naming down/);
+  });
+
+  it('a queue failure leaves the member\'s title unchanged (NIB.108)', async () => {
+    const h = setup(TEAM);
+    h.queuePromptForSession.mockRejectedValueOnce(new Error('queue down'));
+    await expect(h.send(ROOT, MEMBER, 'New task title')).rejects.toThrow(/queue down/);
+    expect(applySessionTitle).not.toHaveBeenCalled();
+  });
+
+  it('a title write that fails after queueing does not fail the send: the task is queued and driven, and the failure is reported', async () => {
+    const h = setup(TEAM);
+    applySessionTitle.mockRejectedValueOnce(new Error('naming down'));
+    const result = JSON.parse(await h.send(ROOT, MEMBER, 'New task title'));
+    expect(result.queuedPromptId).toBe('queued-1');
+    expect(h.service.aiService.triggerQueuedPromptProcessingForSession).toHaveBeenCalledTimes(1);
+    expect(result.titleError).toMatch(/naming down/);
   });
 
   it('an omitted title keeps today\'s behavior: no title write', async () => {
