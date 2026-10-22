@@ -3102,7 +3102,7 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
 
       try {
         // Get recent messages for this session
-        const messages = await AgentMessagesRepository.list(sessionId, { limit: 50 });
+        const messages = await AgentMessagesRepository.listTail(sessionId, 50);
 
         // Look for a nimbalyst_tool_result that matches our requestId
         for (const msg of messages) {
@@ -3177,7 +3177,7 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
       {
         pendingAskUserQuestions: this.pendingAskUserQuestions,
         listRecentMessages: async (resolvedSessionId, limit) =>
-          AgentMessagesRepository.list(resolvedSessionId, { limit }),
+          AgentMessagesRepository.listTail(resolvedSessionId, limit),
         logTimeout: (resolvedQuestionId) =>
           this.logSecurity('[pollForAskUserQuestionResponse] Polling timed out:', { questionId: resolvedQuestionId }),
         logResolved: (resolvedQuestionId, answersCount, respondedBy) =>

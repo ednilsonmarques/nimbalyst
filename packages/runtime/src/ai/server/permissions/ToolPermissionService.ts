@@ -606,7 +606,7 @@ export class ToolPermissionService {
 
       try {
         // Get recent messages for this session
-        const messages = await AgentMessagesRepository.list(sessionId, { limit: pollLimit });
+        const messages = await AgentMessagesRepository.listTail(sessionId, pollLimit);
 
         // Look for a nimbalyst_tool_result that matches our requestId
         for (const msg of messages) {

@@ -261,7 +261,7 @@ function waitForToolPermissionAnswer(
     pollTimer = setInterval(async () => {
       if (settled) return;
       try {
-        const messages = await AgentMessagesRepository.list(sessionId, { limit: 50 });
+        const messages = await AgentMessagesRepository.listTail(sessionId, 50);
         for (const msg of messages) {
           const answer = parseToolPermissionResponseRecord(msg.content, requestId);
           if (answer) {
@@ -959,10 +959,7 @@ export async function handleGitCommitProposal(
         }
 
         try {
-          const messages = await AgentMessagesRepository.list(
-            targetSessionId,
-            { limit: 20 }
-          );
+          const messages = await AgentMessagesRepository.listTail(targetSessionId, 50);
           for (const msg of messages) {
             try {
               const content = JSON.parse(msg.content);

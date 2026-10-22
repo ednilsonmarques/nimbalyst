@@ -85,7 +85,10 @@ export function findCodexAppServerToolCallId(
 ): string | null {
   if (!turnId || !toolName) return null;
 
-  for (const content of rawMessageContents) {
+  // Newest first: when one turn called the same tool more than once, the call
+  // waiting for an answer is the latest one, not an earlier, already-settled one.
+  for (let index = rawMessageContents.length - 1; index >= 0; index -= 1) {
+    const content = rawMessageContents[index];
     try {
       const parsed = JSON.parse(content);
       const params = parsed?.params;
@@ -130,7 +133,7 @@ export async function resolveToolUseIdFromMcpRequest(
   if (!codexTurn?.turnId) return undefined;
 
   try {
-    const messages = await AgentMessagesRepository.list(sessionId, { limit: 50 });
+    const messages = await AgentMessagesRepository.listTail(sessionId, 50);
     return findCodexAppServerToolCallId(
       messages.map((msg) => msg.content),
       codexTurn.turnId,

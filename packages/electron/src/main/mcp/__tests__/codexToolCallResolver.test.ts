@@ -66,8 +66,38 @@ describe("codexToolCallResolver", () => {
     expect(findCodexAppServerToolCallId(contents, "turn-1", "AskUserQuestion")).toBeNull();
   });
 
+  it("returns the newest call when one turn called the same tool twice", () => {
+    const started = (id: string) => JSON.stringify({
+      method: "item/started",
+      params: { turnId: "turn-1", item: { type: "mcpToolCall", tool: "PromptForUserInput", id } },
+    });
+
+    expect(findCodexAppServerToolCallId([started("call_A"), started("call_B")], "turn-1", "PromptForUserInput"))
+      .toBe("call_B");
+  });
+
+  it("finds the current turn's call at the end of a long session", async () => {
+    // Real store contract: list({ limit }) is the OLDEST rows, listTail(n) the newest.
+    const rows = Array.from({ length: 80 }, (_, i) => ({ content: JSON.stringify({ type: "text", text: `row ${i}` }) }));
+    rows.push({
+      content: JSON.stringify({
+        method: "item/started",
+        params: { turnId: "turn-9", item: { type: "mcpToolCall", tool: "PromptForUserInput", id: "call_current" } },
+      }),
+    });
+    vi.spyOn(AgentMessagesRepository, "list").mockImplementation(async (_id, options) =>
+      rows.slice(0, options?.limit ?? rows.length) as any);
+    vi.spyOn(AgentMessagesRepository, "listTail").mockImplementation(async (_id, limit) =>
+      rows.slice(-limit) as any);
+
+    await expect(resolveToolUseIdFromMcpRequest({
+      params: { _meta: { "x-codex-turn-metadata": { turn_id: "turn-9" } } },
+    }, "session-1", "PromptForUserInput")).resolves.toBe("call_current");
+  });
+
   it("resolves the tool-use id from recent Codex app-server messages when direct metadata is missing", async () => {
-    vi.spyOn(AgentMessagesRepository, "list").mockResolvedValue([
+    // The lookup reads the session's newest rows (listTail): the current turn is at the end.
+    vi.spyOn(AgentMessagesRepository, "listTail").mockResolvedValue([
       {
         content: JSON.stringify({
           method: "item/started",
