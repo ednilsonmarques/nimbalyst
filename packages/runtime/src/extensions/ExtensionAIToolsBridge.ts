@@ -177,7 +177,7 @@ export function setOffscreenMountCallback(callback: (filePath: string, workspace
 export async function executeExtensionTool(
   toolName: string,
   args: Record<string, unknown>,
-  context: { workspacePath?: string; activeFilePath?: string }
+  context: { workspacePath?: string; activeFilePath?: string; aiSessionId?: string }
 ): Promise<ExtensionToolResult> {
   const handler = toolHandlers.get(toolName);
   if (!handler) {
@@ -266,6 +266,7 @@ export async function executeExtensionTool(
     const aiContext: AIToolContext = {
       workspacePath: context.workspacePath,
       activeFilePath: resolvedFilePath,
+      aiSessionId: context.aiSessionId,
       extensionContext: handler.extension.context,
       editorAPI,
     };

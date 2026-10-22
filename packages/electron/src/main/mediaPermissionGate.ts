@@ -33,6 +33,15 @@ interface MediaPermissionDetails {
 export interface MicrophoneGateOptions {
   allowWhenGranted: boolean;
   label?: string;
+  /**
+   * Decides, per requesting web contents, whether every permission other than
+   * audio capture is denied (audio handling stays as above). Lets a session
+   * shared by several views deny for some of them only, e.g. agent-driven
+   * ones. `webContents` is null when Chromium does not say who is asking
+   * (some permission checks); the predicate must then choose the default.
+   * Omitted keeps Electron's allow-by-default behaviour.
+   */
+  denyOtherPermissionsFor?: (webContents: unknown) => boolean;
 }
 
 function isAudioRequest(permission: string, details?: MediaPermissionDetails): boolean {
@@ -86,7 +95,7 @@ export function installMicrophoneGate(session: Session, opts: MicrophoneGateOpti
       callback(allowed);
       return;
     }
-    callback(true);
+    callback(!opts.denyOtherPermissionsFor?.(_wc));
   });
 
   // Chromium also consults the (synchronous) check handler for some media
@@ -100,6 +109,6 @@ export function installMicrophoneGate(session: Session, opts: MicrophoneGateOpti
       }
       return allowed;
     }
-    return true;
+    return !opts.denyOtherPermissionsFor?.(_wc);
   });
 }

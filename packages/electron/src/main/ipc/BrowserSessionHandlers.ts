@@ -25,7 +25,7 @@
 
 import { BrowserWindow } from 'electron';
 import { relative, isAbsolute, resolve, join } from 'path';
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, realpath, writeFile } from 'fs/promises';
 import {
   BrowserSessionService,
   type BrowserSessionBounds,
@@ -42,7 +42,18 @@ import { safeHandle } from '../utils/ipcRegistry';
 
 export const BROWSER_TRANSCRIPT_IMAGE_DIRNAME = 'transcript-images';
 
-interface CreatePayload {
+/**
+ * Who is calling. The user's own UI sends no `actorSessionId` and keeps full
+ * control. An AI session's calls arrive with the id main handed to the tool path
+ * (extensionToolHandler -> AIToolContext.aiSessionId) and are confined to the
+ * sessions that AI session owns. Enforcement is here and in the service, so a
+ * renderer that forgets to check cannot widen an agent's reach.
+ */
+interface ActorPayload {
+  actorSessionId?: string | null;
+}
+
+interface CreatePayload extends ActorPayload {
   sessionId: string;
   url: string;
   partition?: string;
@@ -50,22 +61,95 @@ interface CreatePayload {
   viewport?: { width: number; height: number };
 }
 
-interface BoundsPayload {
+interface BoundsPayload extends ActorPayload {
   sessionId: string;
   bounds: BrowserSessionBounds;
 }
 
-interface SessionIdPayload {
+interface SessionIdPayload extends ActorPayload {
   sessionId: string;
 }
 
-interface NavigatePayload {
+interface NavigatePayload extends ActorPayload {
   sessionId: string;
   url: string;
 }
 
+type Authorization = { ok: true; actor: string | undefined } | { ok: false; error: string };
+
+/**
+ * Read the caller identity. Absent/null means the user's UI. Anything else must
+ * be a non-empty string: a malformed actor is refused rather than treated as
+ * the user, so garbage cannot widen access.
+ */
+function readActor(payload: ActorPayload | undefined): { ok: true; actor: string | undefined } | { ok: false; error: string } {
+  const raw = payload?.actorSessionId;
+  if (raw === undefined || raw === null) return { ok: true, actor: undefined };
+  if (typeof raw === 'string' && raw.length > 0) return { ok: true, actor: raw };
+  return { ok: false, error: 'Invalid actorSessionId' };
+}
+
+/** Caller identity plus access to `payload.sessionId`; refusals read like "no such session". */
+function authorize(service: BrowserSessionService, payload: SessionIdPayload): Authorization {
+  const who = readActor(payload);
+  if (!who.ok) return who;
+  try {
+    service.assertAccess(payload.sessionId, who.actor);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+  return { ok: true, actor: who.actor };
+}
+
 export function getBrowserTranscriptImageDir(workspacePath: string): string {
   return join(resolve(workspacePath), '.nimbalyst', BROWSER_TRANSCRIPT_IMAGE_DIRNAME);
+}
+
+/**
+ * Resolve a caller-supplied workspace path to a registered open workspace.
+ * Accepted: a path equal to or inside a root the app registered for an open
+ * workspace window, or the exact path of a known worktree whose project is
+ * registered. Returns the normalised path, or null when it is neither (or does
+ * not exist, or resolves out of its root through a link).
+ */
+export async function resolveRegisteredWorkspace(workspacePath: string): Promise<string | null> {
+  const candidate = resolve(workspacePath);
+  const roots = getNimPreviewWorkspaceRoots();
+
+  const root = roots.find((r) => previewPathInsideRoot(r, candidate));
+  if (root) {
+    try {
+      const [realRoot, realCandidate] = await Promise.all([realpath(root), realpath(candidate)]);
+      return previewPathInsideRoot(realRoot, realCandidate) ? candidate : null;
+    } catch {
+      return null;
+    }
+  }
+
+  const projectPath = await lookupWorktreeProjectPath(candidate);
+  if (!projectPath) return null;
+  const project = resolve(projectPath);
+  if (!roots.some((r) => previewPathInsideRoot(r, project))) return null;
+  try {
+    await realpath(candidate);
+  } catch {
+    return null;
+  }
+  return candidate;
+}
+
+async function lookupWorktreeProjectPath(workspacePath: string): Promise<string | null> {
+  try {
+    const { getDatabase } = await import('../database/initialize');
+    const { createWorktreeStore } = await import('../services/WorktreeStore');
+    const worktree = await createWorktreeStore(getDatabase()).getByPath(workspacePath);
+    return worktree?.projectPath ?? null;
+  } catch (err) {
+    logger.main.warn(
+      `[BrowserSessionHandlers] worktree lookup failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return null;
+  }
 }
 
 function broadcastState(state: BrowserNavigationState): void {
@@ -99,6 +183,8 @@ export function registerBrowserSessionHandlers(): void {
     if (!payload?.sessionId || !payload?.url) {
       return { success: false, error: 'sessionId and url are required' };
     }
+    const who = readActor(payload);
+    if (!who.ok) return { success: false, error: who.error };
     try {
       const state = service.createSession({
         sessionId: payload.sessionId,
@@ -106,6 +192,7 @@ export function registerBrowserSessionHandlers(): void {
         partition: payload.partition,
         headless: payload.headless,
         viewport: payload.viewport,
+        ownerSessionId: who.actor,
       });
       return { success: true, state };
     } catch (err) {
@@ -119,6 +206,8 @@ export function registerBrowserSessionHandlers(): void {
     if (!payload?.sessionId) {
       return { success: false, error: 'sessionId is required' };
     }
+    const auth = authorize(service, payload);
+    if (!auth.ok) return { success: false, error: auth.error };
     service.destroySession(payload.sessionId);
     return { success: true };
   });
@@ -131,6 +220,8 @@ export function registerBrowserSessionHandlers(): void {
     if (!hostWindow || hostWindow.isDestroyed()) {
       return { success: false, error: 'Host window not available' };
     }
+    const auth = authorize(service, payload);
+    if (!auth.ok) return { success: false, error: auth.error };
     try {
       service.attachToWindow(payload.sessionId, hostWindow, payload.bounds);
       return { success: true };
@@ -144,6 +235,8 @@ export function registerBrowserSessionHandlers(): void {
     if (!payload?.sessionId) {
       return { success: false, error: 'sessionId is required' };
     }
+    const auth = authorize(service, payload);
+    if (!auth.ok) return { success: false, error: auth.error };
     service.detachFromWindow(payload.sessionId);
     return { success: true };
   });
@@ -152,6 +245,8 @@ export function registerBrowserSessionHandlers(): void {
     if (!payload?.sessionId || !payload?.bounds) {
       return { success: false, error: 'sessionId and bounds are required' };
     }
+    const auth = authorize(service, payload);
+    if (!auth.ok) return { success: false, error: auth.error };
     service.setBounds(payload.sessionId, payload.bounds);
     return { success: true };
   });
@@ -160,6 +255,8 @@ export function registerBrowserSessionHandlers(): void {
     if (!payload?.sessionId || !payload?.url) {
       return { success: false, error: 'sessionId and url are required' };
     }
+    const auth = authorize(service, payload);
+    if (!auth.ok) return { success: false, error: auth.error };
     try {
       service.navigate(payload.sessionId, payload.url);
       return { success: true };
@@ -173,6 +270,8 @@ export function registerBrowserSessionHandlers(): void {
     if (!payload?.sessionId) {
       return { success: false, error: 'sessionId is required' };
     }
+    const auth = authorize(service, payload);
+    if (!auth.ok) return { success: false, error: auth.error };
     try {
       service.reload(payload.sessionId);
       return { success: true };
@@ -185,6 +284,8 @@ export function registerBrowserSessionHandlers(): void {
     if (!payload?.sessionId) {
       return { success: false, error: 'sessionId is required' };
     }
+    const auth = authorize(service, payload);
+    if (!auth.ok) return { success: false, error: auth.error };
     try {
       service.goBack(payload.sessionId);
       return { success: true };
@@ -197,6 +298,8 @@ export function registerBrowserSessionHandlers(): void {
     if (!payload?.sessionId) {
       return { success: false, error: 'sessionId is required' };
     }
+    const auth = authorize(service, payload);
+    if (!auth.ok) return { success: false, error: auth.error };
     try {
       service.goForward(payload.sessionId);
       return { success: true };
@@ -209,6 +312,8 @@ export function registerBrowserSessionHandlers(): void {
     if (!payload?.sessionId) {
       return { success: false, error: 'sessionId is required' };
     }
+    const auth = authorize(service, payload);
+    if (!auth.ok) return { success: false, error: auth.error };
     try {
       const buffer = await service.captureScreenshot(payload.sessionId);
       return {
@@ -270,11 +375,15 @@ export function registerBrowserSessionHandlers(): void {
     if (!payload?.sessionId) {
       return { success: false, error: 'sessionId is required' };
     }
-    return { success: true, state: service.getState(payload.sessionId) };
+    // A session the caller does not own looks the same as one that does not exist.
+    const auth = authorize(service, payload);
+    return { success: true, state: auth.ok ? service.getState(payload.sessionId) : null };
   });
 
-  safeHandle('browser-session:list-sessions', async () => {
-    return { success: true, sessionIds: service.listSessions() };
+  safeHandle('browser-session:list-sessions', async (_event, payload?: ActorPayload) => {
+    const who = readActor(payload);
+    if (!who.ok) return { success: false, error: who.error };
+    return { success: true, sessionIds: service.listSessions(who.actor) };
   });
 
   // Capture a screenshot and write it to a PNG file under the workspace,
@@ -282,19 +391,41 @@ export function registerBrowserSessionHandlers(): void {
   // base64 blobs never travel through the renderer or the tool result.
   safeHandle(
     'browser-session:screenshot-to-file',
-    async (_event, payload: { sessionId: string; workspacePath: string; label?: string }) => {
+    async (
+      _event,
+      payload: { sessionId: string; workspacePath: string; label?: string } & ActorPayload,
+    ) => {
       if (!payload?.sessionId || !payload?.workspacePath) {
         return { success: false, error: 'sessionId and workspacePath are required' };
       }
       if (!isAbsolute(payload.workspacePath)) {
         return { success: false, error: 'workspacePath must be absolute' };
       }
+      const auth = authorize(service, payload);
+      if (!auth.ok) return { success: false, error: auth.error };
       try {
+        // The caller names the workspace, so it is only trusted once it is a
+        // registered open workspace (or a worktree of one). Nothing is
+        // captured or written otherwise.
+        const workspace = await resolveRegisteredWorkspace(payload.workspacePath);
+        if (!workspace) {
+          return { success: false, error: 'workspacePath is not a registered open workspace' };
+        }
         const buffer = await service.captureScreenshot(payload.sessionId);
         // Persist transcript-linked screenshots in a durable .nimbalyst
         // subdirectory instead of the transient browser-shots path.
-        const dir = getBrowserTranscriptImageDir(payload.workspacePath);
+        const dir = getBrowserTranscriptImageDir(workspace);
+        const realWorkspace = await realpath(workspace);
+        // A `.nimbalyst` that is a link leaving the workspace must not become
+        // the write target (checked before mkdir, which would follow it).
+        const realNimbalyst = await realpath(join(workspace, '.nimbalyst')).catch(() => null);
+        if (realNimbalyst && !previewPathInsideRoot(realWorkspace, realNimbalyst)) {
+          return { success: false, error: '.nimbalyst resolves outside the workspace' };
+        }
         await mkdir(dir, { recursive: true });
+        if (!previewPathInsideRoot(realWorkspace, await realpath(dir))) {
+          return { success: false, error: 'Screenshot directory resolves outside the workspace' };
+        }
         const safeLabel = (payload.label || payload.sessionId)
           .replace(/[^a-zA-Z0-9_-]+/g, '-')
           .slice(0, 60);
@@ -311,10 +442,12 @@ export function registerBrowserSessionHandlers(): void {
 
   safeHandle(
     'browser-session:evaluate',
-    async (_event, payload: { sessionId: string; script: string }) => {
+    async (_event, payload: { sessionId: string; script: string } & ActorPayload) => {
       if (!payload?.sessionId || typeof payload?.script !== 'string') {
         return { success: false, error: 'sessionId and script are required' };
       }
+      const auth = authorize(service, payload);
+      if (!auth.ok) return { success: false, error: auth.error };
       try {
         const result = await service.evaluate(payload.sessionId, payload.script);
         return { success: true, result };
@@ -328,6 +461,8 @@ export function registerBrowserSessionHandlers(): void {
     if (!payload?.sessionId) {
       return { success: false, error: 'sessionId is required' };
     }
+    const auth = authorize(service, payload);
+    if (!auth.ok) return { success: false, error: auth.error };
     try {
       const info = await service.getPageInfo(payload.sessionId);
       return { success: true, info };
@@ -340,11 +475,13 @@ export function registerBrowserSessionHandlers(): void {
     'browser-session:click',
     async (
       _event,
-      payload: { sessionId: string; selector?: string; index?: number; x?: number; y?: number },
+      payload: { sessionId: string; selector?: string; index?: number; x?: number; y?: number } & ActorPayload,
     ) => {
       if (!payload?.sessionId) {
         return { success: false, error: 'sessionId is required' };
       }
+      const auth = authorize(service, payload);
+      if (!auth.ok) return { success: false, error: auth.error };
       try {
         await service.click(payload.sessionId, payload);
         return { success: true };
@@ -358,11 +495,13 @@ export function registerBrowserSessionHandlers(): void {
     'browser-session:type',
     async (
       _event,
-      payload: { sessionId: string; selector?: string; index?: number; text: string; clear?: boolean },
+      payload: { sessionId: string; selector?: string; index?: number; text: string; clear?: boolean } & ActorPayload,
     ) => {
       if (!payload?.sessionId || typeof payload?.text !== 'string') {
         return { success: false, error: 'sessionId and text are required' };
       }
+      const auth = authorize(service, payload);
+      if (!auth.ok) return { success: false, error: auth.error };
       try {
         await service.type(payload.sessionId, payload);
         return { success: true };
@@ -376,11 +515,13 @@ export function registerBrowserSessionHandlers(): void {
     'browser-session:scroll',
     async (
       _event,
-      payload: { sessionId: string; selector?: string; index?: number; dx?: number; dy?: number },
+      payload: { sessionId: string; selector?: string; index?: number; dx?: number; dy?: number } & ActorPayload,
     ) => {
       if (!payload?.sessionId) {
         return { success: false, error: 'sessionId is required' };
       }
+      const auth = authorize(service, payload);
+      if (!auth.ok) return { success: false, error: auth.error };
       try {
         await service.scroll(payload.sessionId, payload);
         return { success: true };

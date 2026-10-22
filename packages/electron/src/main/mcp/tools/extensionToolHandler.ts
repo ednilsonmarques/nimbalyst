@@ -8,6 +8,9 @@ type McpToolResult = {
   isError: boolean;
 };
 
+/** Stand-in AI session id for an extension tool call that arrived without one. */
+const UNATTRIBUTED_AI_SESSION = "unattributed-ai-session";
+
 export async function handleExtensionTool(
   toolName: string,
   originalName: string,
@@ -72,6 +75,13 @@ export async function handleExtensionTool(
     };
   }
 
+  if (!sessionId) {
+    // Tool name only: arguments may carry secrets.
+    console.warn(
+      `[MCP Server] Extension tool "${extensionTool.name}" called without an MCP session id; attributing it to the unattributed placeholder session`
+    );
+  }
+
   // Prefer filePath from tool args (agent targeting a specific file) over session state
   const activeFilePath = args?.filePath || currentDocState?.filePath;
   const TOOL_TIMEOUT_MS = 30000;
@@ -88,6 +98,10 @@ export async function handleExtensionTool(
       context: {
         workspacePath,
         activeFilePath,
+        // Attribution comes from the MCP connection, never from `args`. A call
+        // with no session id is still an agent: it gets a placeholder that owns
+        // nothing and matches nothing, so it can never act as the user.
+        aiSessionId: sessionId || UNATTRIBUTED_AI_SESSION,
       },
     },
     { timeoutMs: TOOL_TIMEOUT_MS, resultChannelPrefix: "mcp-extension-result" }

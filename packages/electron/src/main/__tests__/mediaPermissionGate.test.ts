@@ -138,3 +138,43 @@ describe('installMicrophoneGate', () => {
     );
   });
 });
+
+describe('installMicrophoneGate denyOtherPermissionsFor', () => {
+  const realPlatform = process.platform;
+  const setPlatform = (platform: string) =>
+    Object.defineProperty(process, 'platform', { value: platform, configurable: true });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setPlatform('darwin');
+  });
+
+  afterAll(() => setPlatform(realPlatform));
+
+  it('denies non-audio permissions on request and check', () => {
+    const session = makeFakeSession();
+    installMicrophoneGate(session as never, { ...DEFAULT_OPTS, denyOtherPermissionsFor: () => true });
+    for (const permission of ['geolocation', 'notifications', 'clipboard-read', 'midi']) {
+      expect(session.request(permission, {})).toBe(false);
+      expect(session.check(permission, {})).toBe(false);
+    }
+    expect(session.request('media', VIDEO)).toBe(false);
+  });
+
+  it('leaves audio handling exactly as before', () => {
+    getMediaAccessStatus.mockReturnValue('granted');
+    const session = makeFakeSession();
+    installMicrophoneGate(session as never, { ...DEFAULT_OPTS, denyOtherPermissionsFor: () => true });
+    expect(session.request('media', AUDIO)).toBe(true);
+    expect(session.check('audioCapture', {})).toBe(true);
+  });
+
+  it('keeps allow-by-default for non-audio permissions when the predicate is absent or false', () => {
+    const session = makeFakeSession();
+    installMicrophoneGate(session as never, DEFAULT_OPTS);
+    expect(session.request('geolocation', {})).toBe(true);
+    expect(session.check('notifications', {})).toBe(true);
+    installMicrophoneGate(session as never, { ...DEFAULT_OPTS, denyOtherPermissionsFor: () => false });
+    expect(session.request('geolocation', {})).toBe(true);
+  });
+});

@@ -1100,6 +1100,14 @@ export interface AIToolContext {
   /** Path to the currently active file (may be undefined if no file is open) */
   activeFilePath?: string;
 
+  /**
+   * Id of the AI session that made this tool call. Set by the host from the
+   * MCP connection (never from tool arguments); undefined when the call did not
+   * come from an AI session. Tools that hand out per-session resources use it
+   * to attribute them to their caller.
+   */
+  aiSessionId?: string;
+
   /** The extension context for accessing services */
   extensionContext: ExtensionContext;
 

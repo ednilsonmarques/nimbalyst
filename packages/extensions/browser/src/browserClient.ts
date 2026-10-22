@@ -42,6 +42,12 @@ export interface BrowserCreateOptions {
   /** Create an agent-owned session in the shared off-screen host window. */
   headless?: boolean;
   viewport?: { width: number; height: number };
+  /**
+   * AI session on whose behalf the call is made. Main records it as the
+   * session's owner and then confines every later call carrying it to the
+   * sessions it owns. Omit for the user's own UI.
+   */
+  actorSessionId?: string;
 }
 
 /** Target for click/type/scroll: a CSS selector or a getPageInfo index. */
@@ -113,6 +119,7 @@ export async function createBrowserSession(
     partition: options?.partition,
     headless: options?.headless,
     viewport: options?.viewport,
+    actorSessionId: options?.actorSessionId,
   });
   if (!res.success || !res.state) {
     throw new Error(res.error || 'Failed to create browser session');
@@ -120,19 +127,23 @@ export async function createBrowserSession(
   return res.state;
 }
 
-export async function listBrowserSessions(): Promise<string[]> {
-  const res = await callIpc('browser-session:list-sessions', {});
+export async function listBrowserSessions(actorSessionId?: string): Promise<string[]> {
+  const res = await callIpc('browser-session:list-sessions', { actorSessionId });
   return res.sessionIds ?? [];
 }
 
-export async function evaluateInBrowserSession(sessionId: string, script: string): Promise<unknown> {
-  const res = await callIpc('browser-session:evaluate', { sessionId, script });
+export async function evaluateInBrowserSession(
+  sessionId: string,
+  script: string,
+  actorSessionId?: string,
+): Promise<unknown> {
+  const res = await callIpc('browser-session:evaluate', { sessionId, script, actorSessionId });
   if (!res.success) throw new Error(res.error || 'evaluate failed');
   return res.result;
 }
 
-export async function getBrowserPageInfo(sessionId: string): Promise<unknown> {
-  const res = await callIpc('browser-session:get-page-info', { sessionId });
+export async function getBrowserPageInfo(sessionId: string, actorSessionId?: string): Promise<unknown> {
+  const res = await callIpc('browser-session:get-page-info', { sessionId, actorSessionId });
   if (!res.success) throw new Error(res.error || 'get-page-info failed');
   return res.info;
 }
@@ -140,24 +151,27 @@ export async function getBrowserPageInfo(sessionId: string): Promise<unknown> {
 export async function clickInBrowserSession(
   sessionId: string,
   target: BrowserTarget & { x?: number; y?: number },
+  actorSessionId?: string,
 ): Promise<void> {
-  const res = await callIpc('browser-session:click', { sessionId, ...target });
+  const res = await callIpc('browser-session:click', { sessionId, ...target, actorSessionId });
   if (!res.success) throw new Error(res.error || 'click failed');
 }
 
 export async function typeInBrowserSession(
   sessionId: string,
   args: BrowserTarget & { text: string; clear?: boolean },
+  actorSessionId?: string,
 ): Promise<void> {
-  const res = await callIpc('browser-session:type', { sessionId, ...args });
+  const res = await callIpc('browser-session:type', { sessionId, ...args, actorSessionId });
   if (!res.success) throw new Error(res.error || 'type failed');
 }
 
 export async function scrollBrowserSession(
   sessionId: string,
   args: BrowserTarget & { dx?: number; dy?: number },
+  actorSessionId?: string,
 ): Promise<void> {
-  const res = await callIpc('browser-session:scroll', { sessionId, ...args });
+  const res = await callIpc('browser-session:scroll', { sessionId, ...args, actorSessionId });
   if (!res.success) throw new Error(res.error || 'scroll failed');
 }
 
@@ -165,16 +179,26 @@ export async function screenshotBrowserSessionToFile(
   sessionId: string,
   workspacePath: string,
   label?: string,
+  actorSessionId?: string,
 ): Promise<string> {
-  const res = await callIpc('browser-session:screenshot-to-file', { sessionId, workspacePath, label });
+  const res = await callIpc('browser-session:screenshot-to-file', {
+    sessionId,
+    workspacePath,
+    label,
+    actorSessionId,
+  });
   if (!res.success || !res.path) {
     throw new Error(res.error || 'screenshot-to-file failed');
   }
   return res.path;
 }
 
-export async function destroyBrowserSession(sessionId: string): Promise<void> {
-  await callIpc('browser-session:destroy', { sessionId });
+export async function destroyBrowserSession(sessionId: string, actorSessionId?: string): Promise<void> {
+  const res = await callIpc('browser-session:destroy', { sessionId, actorSessionId });
+  // Surface a refusal: an agent must not be told it closed a session it does not own.
+  if (actorSessionId && res && res.success === false) {
+    throw new Error(res.error || 'destroy failed');
+  }
 }
 
 export async function attachBrowserSession(
@@ -196,21 +220,36 @@ export async function setBrowserSessionBounds(
   await callIpc('browser-session:set-bounds', { sessionId, bounds });
 }
 
-export async function navigateBrowserSession(sessionId: string, url: string): Promise<void> {
-  const res = await callIpc('browser-session:navigate', { sessionId, url });
+export async function navigateBrowserSession(
+  sessionId: string,
+  url: string,
+  actorSessionId?: string,
+): Promise<void> {
+  const res = await callIpc('browser-session:navigate', { sessionId, url, actorSessionId });
   if (!res.success) throw new Error(res.error || 'navigate failed');
 }
 
-export async function reloadBrowserSession(sessionId: string): Promise<void> {
-  await callIpc('browser-session:reload', { sessionId });
+/**
+ * History/reload calls were fire-and-forget for the editor UI. An agent must
+ * hear about a refusal, so only a call made on an agent's behalf throws.
+ */
+async function callSessionOp(channel: string, sessionId: string, actorSessionId?: string): Promise<void> {
+  const res = await callIpc(channel, { sessionId, actorSessionId });
+  if (actorSessionId && res && res.success === false) {
+    throw new Error(res.error || `${channel} failed`);
+  }
 }
 
-export async function goBackBrowserSession(sessionId: string): Promise<void> {
-  await callIpc('browser-session:go-back', { sessionId });
+export async function reloadBrowserSession(sessionId: string, actorSessionId?: string): Promise<void> {
+  await callSessionOp('browser-session:reload', sessionId, actorSessionId);
 }
 
-export async function goForwardBrowserSession(sessionId: string): Promise<void> {
-  await callIpc('browser-session:go-forward', { sessionId });
+export async function goBackBrowserSession(sessionId: string, actorSessionId?: string): Promise<void> {
+  await callSessionOp('browser-session:go-back', sessionId, actorSessionId);
+}
+
+export async function goForwardBrowserSession(sessionId: string, actorSessionId?: string): Promise<void> {
+  await callSessionOp('browser-session:go-forward', sessionId, actorSessionId);
 }
 
 export async function captureBrowserScreenshot(sessionId: string): Promise<string> {

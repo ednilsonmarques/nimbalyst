@@ -28,7 +28,7 @@
  * between the two (`dip = cssPx * zoomFactor`); callers always pass CSS pixels.
  */
 
-import { WebContentsView, BrowserWindow, session as electronSession } from 'electron';
+import { WebContentsView, BrowserWindow, session as electronSession, type Session } from 'electron';
 import { EventEmitter } from 'events';
 import { logger } from '../utils/logger';
 import { ensureNimPreviewProtocolForSession } from '../protocols/nimPreviewProtocol';
@@ -60,7 +60,17 @@ export interface BrowserSessionInitOptions {
    * is driven by the editor placeholder's bounds.
    */
   viewport?: { width: number; height: number };
+  /**
+   * AI session that opens (and from then on owns) this session. Omit for the
+   * user's own sessions (editor tabs), which no AI session may reach. An owned
+   * session's id must start with `AGENT_SESSION_ID_PREFIX`, which keeps agents
+   * out of the id space the editors use.
+   */
+  ownerSessionId?: string;
 }
+
+/** Prefix every agent-created browser session id must carry. */
+export const AGENT_SESSION_ID_PREFIX = 'agent-';
 
 /** Default headless viewport when the caller doesn't specify one. */
 const DEFAULT_HEADLESS_VIEWPORT = { width: 1280, height: 800 };
@@ -117,6 +127,21 @@ interface SessionEntry {
   headless: boolean;
   /** `Date.now()` of the last operation on this session; drives idle reaping. */
   lastUsedAt: number;
+  /** AI session that owns this session; null for the user's own (editor) sessions. */
+  ownerSessionId: string | null;
+}
+
+/**
+ * Pure ownership policy. A caller without an actor is the user's own UI and may
+ * act on any session. An actor (an AI session) may act only on sessions it
+ * owns: never on the user's sessions (owner null), never on another agent's.
+ */
+export function canActOnSession(
+  ownerSessionId: string | null,
+  actorSessionId?: string | null,
+): boolean {
+  if (actorSessionId === undefined || actorSessionId === null) return true;
+  return ownerSessionId !== null && ownerSessionId === actorSessionId;
 }
 
 /** Minimal shape the idle reaper needs; keeps the decision unit-testable. */
@@ -271,8 +296,32 @@ export class BrowserSessionService extends EventEmitter {
     return this.sessions.has(sessionId);
   }
 
-  public listSessions(): string[] {
-    return [...this.sessions.keys()];
+  /**
+   * Session ids visible to `actorSessionId`. The user's UI (no actor) sees all
+   * of them; an AI session sees only the ones it owns.
+   */
+  public listSessions(actorSessionId?: string | null): string[] {
+    return [...this.sessions.values()]
+      .filter((e) => canActOnSession(e.ownerSessionId, actorSessionId))
+      .map((e) => e.sessionId);
+  }
+
+  /** Owning AI session, or null for a user session. Undefined when there is no such session. */
+  public getOwner(sessionId: string): string | null | undefined {
+    const entry = this.sessions.get(sessionId);
+    return entry ? entry.ownerSessionId : undefined;
+  }
+
+  /**
+   * Throws unless `actorSessionId` may act on `sessionId`. A session the actor
+   * does not own is reported exactly like a missing one, so an agent cannot
+   * probe which ids exist.
+   */
+  public assertAccess(sessionId: string, actorSessionId?: string | null): void {
+    const entry = this.sessions.get(sessionId);
+    if (!entry || !canActOnSession(entry.ownerSessionId, actorSessionId)) {
+      throw new Error(`No browser session: ${sessionId}`);
+    }
   }
 
   public getState(sessionId: string): BrowserNavigationState | null {
@@ -281,8 +330,18 @@ export class BrowserSessionService extends EventEmitter {
   }
 
   public createSession(opts: BrowserSessionInitOptions): BrowserNavigationState {
+    const ownerSessionId = opts.ownerSessionId ?? null;
+    if (ownerSessionId !== null && !opts.sessionId.startsWith(AGENT_SESSION_ID_PREFIX)) {
+      throw new Error(
+        `Agent browser session ids must start with "${AGENT_SESSION_ID_PREFIX}": ${opts.sessionId}`,
+      );
+    }
     const existing = this.sessions.get(opts.sessionId);
     if (existing) {
+      if (existing.ownerSessionId !== ownerSessionId) {
+        // Never reveal whose it is.
+        throw new Error(`Browser session ${opts.sessionId} already exists`);
+      }
       const requestedPartition = resolveBrowserPartitionName(opts.partition);
       if (
         existing.state.url !== opts.url ||
@@ -306,7 +365,12 @@ export class BrowserSessionService extends EventEmitter {
     installMicrophoneGate(ses, {
       allowWhenGranted: false,
       label: partitionName,
+      // Agent-driven views get no permission beyond the existing microphone
+      // handling. The partition is shared with the user's own tabs, which keep
+      // today's behaviour, so the decision is per requesting web contents.
+      denyOtherPermissionsFor: (wc) => this.isAgentOwnedContents(wc),
     });
+    this.installDownloadGuard(ses);
     // Custom partitions do not inherit the default session's protocol
     // handlers; without this, nim-preview:// is an unknown scheme in the view
     // (issue #612).
@@ -334,6 +398,7 @@ export class BrowserSessionService extends EventEmitter {
       requestedBounds: null,
       headless,
       lastUsedAt: Date.now(),
+      ownerSessionId,
       state: {
         sessionId: opts.sessionId,
         url: opts.url,
@@ -370,7 +435,7 @@ export class BrowserSessionService extends EventEmitter {
     });
 
     logger.main.info(
-      `[BrowserSessionService] Created session ${opts.sessionId} url=${opts.url} partition=${partitionName}`,
+      `[BrowserSessionService] Created session ${opts.sessionId} url=${opts.url} partition=${partitionName} owner=${ownerSessionId ?? 'user'}`,
     );
     return { ...entry.state };
   }
@@ -843,11 +908,65 @@ export class BrowserSessionService extends EventEmitter {
       emitStateChanged();
     });
 
+    // Page-initiated navigation (links, `location = ...`, redirects) skips
+    // navigate()/createSession(), which are the only places the allow-list was
+    // applied. `will-navigate` is not emitted for loadURL(), so this cannot
+    // fire on our own navigations; `will-redirect` also covers redirects of
+    // those. Fail closed when the target cannot be read.
+    const guardNavigation = (
+      kind: string,
+      event: { url?: string; preventDefault: () => void },
+      positionalUrl?: string,
+    ): void => {
+      const target = typeof event?.url === 'string' ? event.url : positionalUrl;
+      if (typeof target === 'string' && isAllowedBrowserUrl(target)) return;
+      event.preventDefault();
+      logger.main.warn(
+        `[BrowserSessionService] Blocked ${kind} in ${entry.sessionId} to ${String(target).slice(0, 200)}`,
+      );
+    };
+    wc.on('will-navigate', (event: any, url?: string) => guardNavigation('navigation', event, url));
+    wc.on('will-redirect', (event: any, url?: string) => guardNavigation('redirect', event, url));
+
     // Open `target=_blank` and any window.open() calls externally rather than
-    // in a popup we don't own.
+    // in a popup we don't own. Only URLs the allow-list accepts are forwarded.
     wc.setWindowOpenHandler(({ url }) => {
-      this.emit('external-navigation-requested', { sessionId: entry.sessionId, url });
+      if (isAllowedBrowserUrl(url)) {
+        this.emit('external-navigation-requested', { sessionId: entry.sessionId, url });
+      } else {
+        logger.main.warn(
+          `[BrowserSessionService] Blocked popup in ${entry.sessionId} to ${String(url).slice(0, 200)}`,
+        );
+      }
       return { action: 'deny' };
+    });
+  }
+
+  /** Whether `webContents` belongs to a view owned by an AI session. */
+  private isAgentOwnedContents(webContents: unknown): boolean {
+    for (const e of this.sessions.values()) {
+      if (e.view.webContents === webContents) return e.ownerSessionId !== null;
+    }
+    return false;
+  }
+
+  /** Sessions already carrying the download guard (one listener per Session). */
+  private downloadGuardedSessions = new WeakSet<Session>();
+
+  /**
+   * Cancel downloads started by agent-owned views. Installed once per Session
+   * (partitions are shared between sessions) and decided per download from the
+   * originating web contents, so the user's own editor tabs keep Electron's
+   * default download behaviour.
+   */
+  private installDownloadGuard(ses: Session): void {
+    if (this.downloadGuardedSessions.has(ses)) return;
+    this.downloadGuardedSessions.add(ses);
+    ses.on('will-download', (event, _item, webContents) => {
+      const entry = [...this.sessions.values()].find((e) => e.view.webContents === webContents);
+      if (!entry || entry.ownerSessionId === null) return;
+      event.preventDefault();
+      logger.main.warn(`[BrowserSessionService] Blocked download in agent session ${entry.sessionId}`);
     });
   }
 

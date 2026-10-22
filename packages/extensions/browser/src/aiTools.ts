@@ -10,6 +10,8 @@
  *    the user currently has open. The editor registers its session id via
  *    host.registerEditorAPI(), which the host hands to the tool as
  *    `context.editorAPI`. An explicit `sessionId` param always overrides.
+ *    That editor fallback exists only for callers with no AI session; an AI
+ *    session must always name a session it owns (see resolveSessionId).
  *
  *  - Global tools (open_session / open_local_preview / list_sessions /
  *    close_session) manage sessions directly and default to creating
@@ -47,12 +49,25 @@ export interface BrowserEditorAPI {
 const EDITOR_PATTERNS = ['*.browser.json', '*.html', '*.htm'];
 
 /**
- * Resolve which session a tool should act on: an explicit `sessionId` param
- * wins; otherwise fall back to the active editor's registered session.
+ * Resolve which session a tool should act on.
+ *
+ * A call made by an AI session (`context.aiSessionId`, set by main from the MCP
+ * connection) must name its session: it only ever reaches sessions it owns, so
+ * there is no "current" session to default to and the user's editor is never a
+ * fallback. Main enforces the same rule on every IPC channel; refusing here
+ * just gives the agent a clear message instead of a generic refusal.
+ *
+ * Calls with no AI session (the user's own tooling) keep the old behaviour: an
+ * explicit `sessionId` wins, otherwise the active editor's registered session.
  */
 function resolveSessionId(params: Record<string, unknown>, context: AIToolContext): string {
   const explicit = typeof params.sessionId === 'string' ? params.sessionId.trim() : '';
   if (explicit) return explicit;
+  if (context.aiSessionId) {
+    throw new Error(
+      'sessionId is required. Pass the id returned by browser.open_session / browser.open_local_preview (see browser.list_sessions for the sessions you own).',
+    );
+  }
   const api = context.editorAPI as BrowserEditorAPI | undefined;
   const fromEditor = api?.getSessionId?.();
   if (fromEditor) return fromEditor;
@@ -75,7 +90,7 @@ const SESSION_ID_PROP = {
   sessionId: {
     type: 'string' as const,
     description:
-      'Optional explicit browser session id (e.g. from browser.open_session). Omit to target the browser editor the user currently has open.',
+      'Browser session id returned by browser.open_session or browser.open_local_preview. Required: you can only drive sessions you opened.',
   },
 };
 
@@ -105,14 +120,14 @@ export const aiTools: ExtensionAITool[] = [
         },
         sessionId: {
           type: 'string',
-          description: 'Optional stable id to reuse; auto-generated if omitted.',
+          description: "Optional stable id; must start with 'agent-'. Auto-generated if omitted.",
         },
         width: { type: 'number', description: 'Viewport width in CSS px (headless only).' },
         height: { type: 'number', description: 'Viewport height in CSS px (headless only).' },
       },
       required: ['url'],
     },
-    handler: async (params) => {
+    handler: async (params, context) => {
       const url = String(params.url ?? '');
       if (!url) return { success: false, error: 'url is required' };
       const headless = params.headless !== false;
@@ -124,7 +139,11 @@ export const aiTools: ExtensionAITool[] = [
           ? { width: params.width, height: params.height }
           : undefined;
       try {
-        const state = await createBrowserSession(sessionId, url, { headless, viewport });
+        const state = await createBrowserSession(sessionId, url, {
+          headless,
+          viewport,
+          actorSessionId: context.aiSessionId,
+        });
         return {
           success: true,
           message: `Opened browser session ${sessionId}`,
@@ -156,7 +175,10 @@ export const aiTools: ExtensionAITool[] = [
       try {
         const url = await buildPreviewUrl(filePath, context.workspacePath);
         const sessionId = `agent-preview:${Date.now()}-${Math.random().toString(16).slice(2)}`;
-        const state = await createBrowserSession(sessionId, url, { headless });
+        const state = await createBrowserSession(sessionId, url, {
+          headless,
+          actorSessionId: context.aiSessionId,
+        });
         return { success: true, message: `Preview opened for ${filePath}`, data: { sessionId, url, state } };
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -167,11 +189,11 @@ export const aiTools: ExtensionAITool[] = [
     name: 'browser.list_sessions',
     scope: 'global',
     access: { kind: 'filesystem' } as const,
-    description: 'List the ids of all open browser sessions (both editor-backed and agent-owned).',
+    description: 'List the ids of the browser sessions you opened. Sessions opened by other agents or by the user are never listed.',
     inputSchema: { type: 'object', properties: {} },
-    handler: async () => {
+    handler: async (_params, context) => {
       try {
-        const sessionIds = await listBrowserSessions();
+        const sessionIds = await listBrowserSessions(context.aiSessionId);
         return { success: true, data: { sessionIds } };
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -182,17 +204,17 @@ export const aiTools: ExtensionAITool[] = [
     name: 'browser.close_session',
     scope: 'global',
     access: { kind: 'filesystem' } as const,
-    description: 'Close an agent-owned browser session and free its resources.',
+    description: 'Close a browser session you opened and free its resources.',
     inputSchema: {
       type: 'object',
       properties: { sessionId: { type: 'string', description: 'Session id to close.' } },
       required: ['sessionId'],
     },
-    handler: async (params) => {
+    handler: async (params, context) => {
       const sessionId = String(params.sessionId ?? '');
       if (!sessionId) return { success: false, error: 'sessionId is required' };
       try {
-        await destroyBrowserSession(sessionId);
+        await destroyBrowserSession(sessionId, context.aiSessionId);
         return { success: true, message: `Closed ${sessionId}` };
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -218,7 +240,7 @@ export const aiTools: ExtensionAITool[] = [
     handler: async (params, context) => {
       try {
         const sid = resolveSessionId(params, context);
-        await navigateBrowserSession(sid, String(params.url ?? ''));
+        await navigateBrowserSession(sid, String(params.url ?? ''), context.aiSessionId);
         return { success: true, message: `Navigating to ${params.url}` };
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -234,7 +256,7 @@ export const aiTools: ExtensionAITool[] = [
     inputSchema: { type: 'object', properties: { ...SESSION_ID_PROP } },
     handler: async (params, context) => {
       try {
-        await reloadBrowserSession(resolveSessionId(params, context));
+        await reloadBrowserSession(resolveSessionId(params, context), context.aiSessionId);
         return { success: true };
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -250,7 +272,7 @@ export const aiTools: ExtensionAITool[] = [
     inputSchema: { type: 'object', properties: { ...SESSION_ID_PROP } },
     handler: async (params, context) => {
       try {
-        await goBackBrowserSession(resolveSessionId(params, context));
+        await goBackBrowserSession(resolveSessionId(params, context), context.aiSessionId);
         return { success: true };
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -266,7 +288,7 @@ export const aiTools: ExtensionAITool[] = [
     inputSchema: { type: 'object', properties: { ...SESSION_ID_PROP } },
     handler: async (params, context) => {
       try {
-        await goForwardBrowserSession(resolveSessionId(params, context));
+        await goForwardBrowserSession(resolveSessionId(params, context), context.aiSessionId);
         return { success: true };
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -283,7 +305,7 @@ export const aiTools: ExtensionAITool[] = [
     inputSchema: { type: 'object', properties: { ...SESSION_ID_PROP } },
     handler: async (params, context) => {
       try {
-        const info = await getBrowserPageInfo(resolveSessionId(params, context));
+        const info = await getBrowserPageInfo(resolveSessionId(params, context), context.aiSessionId);
         return { success: true, data: info };
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -312,7 +334,7 @@ export const aiTools: ExtensionAITool[] = [
         const target = targetFromParams(params);
         const x = typeof params.x === 'number' ? params.x : undefined;
         const y = typeof params.y === 'number' ? params.y : undefined;
-        await clickInBrowserSession(sid, { ...target, x, y });
+        await clickInBrowserSession(sid, { ...target, x, y }, context.aiSessionId);
         return { success: true };
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -339,11 +361,15 @@ export const aiTools: ExtensionAITool[] = [
     handler: async (params, context) => {
       try {
         const sid = resolveSessionId(params, context);
-        await typeInBrowserSession(sid, {
-          ...targetFromParams(params),
-          text: String(params.text ?? ''),
-          clear: params.clear === true,
-        });
+        await typeInBrowserSession(
+          sid,
+          {
+            ...targetFromParams(params),
+            text: String(params.text ?? ''),
+            clear: params.clear === true,
+          },
+          context.aiSessionId,
+        );
         return { success: true };
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -369,11 +395,15 @@ export const aiTools: ExtensionAITool[] = [
     handler: async (params, context) => {
       try {
         const sid = resolveSessionId(params, context);
-        await scrollBrowserSession(sid, {
-          ...targetFromParams(params),
-          dx: typeof params.dx === 'number' ? params.dx : undefined,
-          dy: typeof params.dy === 'number' ? params.dy : undefined,
-        });
+        await scrollBrowserSession(
+          sid,
+          {
+            ...targetFromParams(params),
+            dx: typeof params.dx === 'number' ? params.dx : undefined,
+            dy: typeof params.dy === 'number' ? params.dy : undefined,
+          },
+          context.aiSessionId,
+        );
         return { success: true };
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -398,7 +428,7 @@ export const aiTools: ExtensionAITool[] = [
     handler: async (params, context) => {
       try {
         const sid = resolveSessionId(params, context);
-        const result = await evaluateInBrowserSession(sid, String(params.script ?? ''));
+        const result = await evaluateInBrowserSession(sid, String(params.script ?? ''), context.aiSessionId);
         return { success: true, data: { result } };
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -429,6 +459,7 @@ export const aiTools: ExtensionAITool[] = [
           sid,
           context.workspacePath,
           typeof params.label === 'string' ? params.label : undefined,
+          context.aiSessionId,
         );
         return { success: true, message: `Screenshot saved to ${path}`, data: { path } };
       } catch (err) {

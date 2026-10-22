@@ -473,7 +473,10 @@ export function setupRendererEvalListener(isDevelopment: boolean = import.meta.e
  * Set up IPC listeners for extension test tools (open-file, ai-tool).
  * These support the extension_test_open_file and extension_test_ai_tool MCP tools.
  */
-function setupExtensionTestListeners(): void {
+/** Actor for tools run through extension_test_ai_tool; owns nothing, is never the user. */
+const EXTENSION_DEV_TEST_AI_SESSION = 'extension-dev-test';
+
+export function setupExtensionTestListeners(): void {
   if (extensionTestListenersSetup) return;
   extensionTestListenersSetup = true;
 
@@ -552,9 +555,13 @@ function setupExtensionTestListeners(): void {
       const extensionShortName = data.extensionId.split('.').pop() || data.extensionId;
       const fullToolName = `${extensionShortName}.${data.toolName}`;
 
+      // No MCP connection here, so no AI session id. A fixed placeholder keeps
+      // browser.* from running as the user: it owns no browser session and
+      // matches none, which is what an agent without sessions should see.
       const context = {
         workspacePath: data.workspacePath,
         activeFilePath: data.filePath,
+        aiSessionId: EXTENSION_DEV_TEST_AI_SESSION,
       };
 
       const result = await executeExtensionTool(fullToolName, data.args, context);
