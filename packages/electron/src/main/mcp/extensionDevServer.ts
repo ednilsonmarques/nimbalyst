@@ -12,6 +12,7 @@
  * - restart_nimbalyst - Restart the Nimbalyst application (only when user explicitly requests)
  */
 
+import { issueActorToken, revokeActorToken, EXTENSION_DEV_TEST_ACTOR } from "../services/BrowserAuthority";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -2658,7 +2659,13 @@ ${script}
             .toString(36)
             .slice(2)}`;
 
+          // No MCP connection on this path: main mints a token for the fixed
+          // extension-test actor (owns only its own browser sessions) and
+          // revokes it when the call ends.
+          const aiSessionToken = issueActorToken(EXTENSION_DEV_TEST_ACTOR);
+
           const timeoutId = setTimeout(() => {
+            revokeActorToken(aiSessionToken);
             resolve({
               content: [
                 {
@@ -2673,6 +2680,7 @@ ${script}
           const { ipcMain } = require("electron");
           ipcMain.once(responseChannel, (_event: any, result: any) => {
             clearTimeout(timeoutId);
+            revokeActorToken(aiSessionToken);
 
             if (result.error) {
               resolve({
@@ -2707,6 +2715,7 @@ ${script}
             filePath: toolFilePath,
             workspacePath,
             responseChannel,
+            aiSessionToken,
           });
         });
       }

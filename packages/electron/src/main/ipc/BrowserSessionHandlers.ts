@@ -38,18 +38,22 @@ import {
   previewPathInsideRoot,
 } from '../protocols/nimPreviewProtocol';
 import { logger } from '../utils/logger';
+import { resolveCaller } from '../services/BrowserAuthority';
 import { safeHandle } from '../utils/ipcRegistry';
 
 export const BROWSER_TRANSCRIPT_IMAGE_DIRNAME = 'transcript-images';
 
 /**
- * Who is calling. The user's own UI sends no `actorSessionId` and keeps full
- * control. An AI session's calls arrive with the id main handed to the tool path
- * (extensionToolHandler -> AIToolContext.aiSessionId) and are confined to the
- * sessions that AI session owns. Enforcement is here and in the service, so a
- * renderer that forgets to check cannot widen an agent's reach.
+ * Who is calling (decided by BrowserAuthority). The user's own UI sends no
+ * `actorSessionId` and keeps full control. An agent's calls carry the actor
+ * token main minted for that tool call (extensionToolHandler); the token
+ * resolves to the AI session id, and the agent is confined to the sessions that
+ * id owns. A bare session id or any other value is refused, never read as the
+ * user. Enforcement is here and in the service, so a renderer that forgets to
+ * check cannot widen an agent's reach.
  */
 interface ActorPayload {
+  /** The user's UI omits it; an agent passes the main-issued token. */
   actorSessionId?: string | null;
 }
 
@@ -77,17 +81,7 @@ interface NavigatePayload extends ActorPayload {
 
 type Authorization = { ok: true; actor: string | undefined } | { ok: false; error: string };
 
-/**
- * Read the caller identity. Absent/null means the user's UI. Anything else must
- * be a non-empty string: a malformed actor is refused rather than treated as
- * the user, so garbage cannot widen access.
- */
-function readActor(payload: ActorPayload | undefined): { ok: true; actor: string | undefined } | { ok: false; error: string } {
-  const raw = payload?.actorSessionId;
-  if (raw === undefined || raw === null) return { ok: true, actor: undefined };
-  if (typeof raw === 'string' && raw.length > 0) return { ok: true, actor: raw };
-  return { ok: false, error: 'Invalid actorSessionId' };
-}
+const readActor = (payload: ActorPayload | undefined) => resolveCaller(payload?.actorSessionId);
 
 /** Caller identity plus access to `payload.sessionId`; refusals read like "no such session". */
 function authorize(service: BrowserSessionService, payload: SessionIdPayload): Authorization {

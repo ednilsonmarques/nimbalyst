@@ -46,16 +46,23 @@ vi.mock('../../services/WorktreeStore', () => ({
 import { BrowserSessionService } from '../../services/BrowserSessionService';
 import { fakeState } from '../../services/__tests__/helpers/fakeElectronBrowser';
 import { registerBrowserSessionHandlers } from '../BrowserSessionHandlers';
+import { issueActorToken } from '../../services/BrowserAuthority';
 
 const A = 'ai-session-A';
 const B = 'ai-session-B';
 const EDITOR_ID = 'browser:doc.html:1111';
 const AGENT_ID = 'agent-browser:a1';
 
+// F1.1: an agent is whoever holds a main-issued token. These F0 cases still name
+// their agents A/B; the shim mints a token for each name, as main would per call.
+// (Bare ids and forged tokens are covered in BrowserSessionHandlers.authority.test.ts.)
 function call(channel: string, payload: Record<string, unknown>): Promise<any> {
   const handler = handlers.get(channel);
   if (!handler) throw new Error(`no handler for ${channel}`);
-  return handler({ sender: {} }, payload);
+  const actor = payload.actorSessionId;
+  const withToken =
+    typeof actor === 'string' && actor.length > 0 ? { ...payload, actorSessionId: issueActorToken(actor) } : payload;
+  return handler({ sender: {} }, withToken);
 }
 
 async function openAs(actor: string | undefined, sessionId: string, extra: Record<string, unknown> = {}) {

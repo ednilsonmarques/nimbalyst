@@ -1101,10 +1101,16 @@ export interface AIToolContext {
   activeFilePath?: string;
 
   /**
-   * Id of the AI session that made this tool call. Set by the host from the
-   * MCP connection (never from tool arguments); undefined when the call did not
-   * come from an AI session. Tools that hand out per-session resources use it
-   * to attribute them to their caller.
+   * Opaque attribution token for the AI session that made this tool call. Set by
+   * the host from the MCP connection (never from tool arguments); undefined when
+   * the call did not come from an AI session.
+   *
+   * It is NOT the AI session id: the host mints it per call, it is valid for
+   * about 2 minutes, and a later call carries a different value for the same AI
+   * session. Do not use it as a key, store it, log it or compare it between
+   * calls. Its only use is to hand it back unchanged to host APIs that ask for
+   * the caller (e.g. the browser session IPC), which resolve it in the main
+   * process.
    */
   aiSessionId?: string;
 

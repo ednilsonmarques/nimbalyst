@@ -1,8 +1,9 @@
 // @vitest-environment node
 /**
- * Portal F0 -- permission denial is scoped to agent-owned views. The browser
- * partition is shared with the user's own editor tabs, which must keep today's
- * behaviour; microphone handling is the existing one for both.
+ * Portal F0 -- permission denial is scoped to agent-owned views; the user's own
+ * editor tabs keep today's behaviour. (F1.1: agent portals now sit in their own
+ * partition, see BrowserSessionService.agentPartition.test.ts for the full
+ * deny-all matrix; the microphone is denied for agents on every platform.)
  */
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -32,7 +33,9 @@ function open(kind: 'agent' | 'user') {
     service.createSession({ sessionId: 'browser:doc.html:1', url: 'about:blank' });
   }
   const view = fakeState.views[fakeState.views.length - 1];
-  return { ses: fakeState.sessions.get('browser-preview')!, wc: view.webContents };
+  // F1.1: an agent portal lives in its own partition; user tabs share browser-preview.
+  const name = service.getPartitionName(kind === 'agent' ? 'agent-browser:a1' : 'browser:doc.html:1')!;
+  return { ses: fakeState.sessions.get(name)!, wc: view.webContents };
 }
 
 beforeEach(() => {
@@ -63,14 +66,14 @@ describe("user's editor session keeps today's behaviour", () => {
   });
 });
 
-describe('one shared partition, two views', () => {
-  it('denies only the agent view', () => {
+describe('agent and user views no longer share a partition', () => {
+  it('denies the agent view and leaves the user view as today', () => {
     const user = open('user');
     const agent = open('agent');
-    expect(user.ses).toBe(agent.ses);
+    expect(user.ses).not.toBe(agent.ses);
     expect(agent.ses.request('geolocation', {}, agent.wc)).toBe(false);
-    expect(agent.ses.request('geolocation', {}, user.wc)).toBe(true);
-    expect(agent.ses.check('notifications', {}, user.wc)).toBe(true);
+    expect(user.ses.request('geolocation', {}, user.wc)).toBe(true);
+    expect(user.ses.check('notifications', {}, user.wc)).toBe(true);
     expect(agent.ses.check('notifications', {}, agent.wc)).toBe(false);
   });
 
@@ -82,18 +85,23 @@ describe('one shared partition, two views', () => {
   });
 });
 
-describe('microphone handling is unchanged for both', () => {
-  it.each(['agent', 'user'] as const)('%s on macOS: denied', (kind) => {
+describe('microphone handling', () => {
+  it('the user tab: denied on macOS, not restricted elsewhere (unchanged)', () => {
     setPlatform('darwin');
-    const { ses, wc } = open(kind);
-    expect(ses.request('media', { mediaTypes: ['audio'] }, wc)).toBe(false);
-    expect(ses.check('audioCapture', {}, wc)).toBe(false);
+    let u = open('user');
+    expect(u.ses.request('media', { mediaTypes: ['audio'] }, u.wc)).toBe(false);
+    BrowserSessionService.__resetForTests();
+    fakeState.reset();
+    setPlatform('win32');
+    u = open('user');
+    expect(u.ses.request('media', { mediaTypes: ['audio'] }, u.wc)).toBe(true);
+    expect(u.ses.check('audioCapture', {}, u.wc)).toBe(true);
   });
 
-  it.each(['agent', 'user'] as const)('%s elsewhere: not restricted', (kind) => {
-    setPlatform('win32');
-    const { ses, wc } = open(kind);
-    expect(ses.request('media', { mediaTypes: ['audio'] }, wc)).toBe(true);
-    expect(ses.check('audioCapture', {}, wc)).toBe(true);
+  it.each(['darwin', 'win32'])('the agent portal: denied on %s (F1.1)', (platform) => {
+    setPlatform(platform);
+    const { ses, wc } = open('agent');
+    expect(ses.request('media', { mediaTypes: ['audio'] }, wc)).toBe(false);
+    expect(ses.check('audioCapture', {}, wc)).toBe(false);
   });
 });

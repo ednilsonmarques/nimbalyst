@@ -84,6 +84,19 @@ function run(toolName: string, args: Record<string, unknown>) {
 }
 
 describe('extension-test:ai-tool attribution', () => {
+  it('carries the token main issued for the call, not a value of its own', async () => {
+    await handler({
+      extensionId: 'com.nimbalyst.browser', toolName: 'list_sessions', args: {}, responseChannel: 'resp',
+      workspacePath: '/ws', aiSessionToken: 'nimactor_from_main',
+    });
+    expect(executeExtensionTool.mock.calls[0][2].aiSessionId).toBe('nimactor_from_main');
+  });
+
+  it('falls back to the fixed name when main sent no token (main refuses that name as a bare id)', async () => {
+    await run('list_sessions', {});
+    expect(executeExtensionTool.mock.calls[0][2].aiSessionId).toBe('extension-dev-test');
+  });
+
   it('passes a fixed placeholder actor in the tool context, never none', async () => {
     await run('list_sessions', {});
     const context = executeExtensionTool.mock.calls[0][2];

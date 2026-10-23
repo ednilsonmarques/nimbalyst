@@ -20,6 +20,7 @@ import {
   getVoiceEnabledBackendToolsForWorkspace,
   resolveBackendWorkspacePath,
 } from '../../mcp/mcpWorkspaceResolver';
+import { MOBILE_VOICE_ACTOR } from '../BrowserAuthority';
 import { handleExtensionTool } from '../../mcp/tools/extensionToolHandler';
 import { handleBackendTool, isBackendTool } from '../../mcp/tools/backendToolHandler';
 import { searchSessionsForVoice } from './sessionSearch';
@@ -152,7 +153,8 @@ export async function handleMobileVoiceToolCall(
     if (resolvedWs && isBackendTool(namespacedName, resolvedWs)) {
       result = await handleBackendTool(namespacedName, namespacedName, args, resolvedWs, { sessionId: null, caller: 'voice' });
     } else {
-      result = await handleExtensionTool(namespacedName, namespacedName, args, undefined, workspacePath);
+      // No MCP connection here: a fixed actor that owns only its own browser sessions.
+      result = await handleExtensionTool(namespacedName, namespacedName, args, MOBILE_VOICE_ACTOR, workspacePath);
     }
     const text = (result.content || [])
       .map((c) => (typeof c?.text === 'string' ? c.text : ''))

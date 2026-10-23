@@ -473,7 +473,7 @@ export function setupRendererEvalListener(isDevelopment: boolean = import.meta.e
  * Set up IPC listeners for extension test tools (open-file, ai-tool).
  * These support the extension_test_open_file and extension_test_ai_tool MCP tools.
  */
-/** Actor for tools run through extension_test_ai_tool; owns nothing, is never the user. */
+/** Fallback name when main sent no token; refused by main as a bare id, never the user. */
 const EXTENSION_DEV_TEST_AI_SESSION = 'extension-dev-test';
 
 export function setupExtensionTestListeners(): void {
@@ -546,6 +546,8 @@ export function setupExtensionTestListeners(): void {
     filePath?: string;
     workspacePath?: string;
     responseChannel: string;
+    /** Actor token main minted for this call; the renderer only carries it. */
+    aiSessionToken?: string;
   }) => {
     // console.log('[ExtensionSystem] Extension test: AI tool', data.extensionId, data.toolName);
 
@@ -555,13 +557,14 @@ export function setupExtensionTestListeners(): void {
       const extensionShortName = data.extensionId.split('.').pop() || data.extensionId;
       const fullToolName = `${extensionShortName}.${data.toolName}`;
 
-      // No MCP connection here, so no AI session id. A fixed placeholder keeps
-      // browser.* from running as the user: it owns no browser session and
-      // matches none, which is what an agent without sessions should see.
+      // No MCP connection here. Main mints the actor token (for the fixed
+      // extension-test actor) and sends it along. If it is missing, the bare
+      // fixed name is sent instead: main refuses it as an identity, so browser.*
+      // fails closed rather than running as the user.
       const context = {
         workspacePath: data.workspacePath,
         activeFilePath: data.filePath,
-        aiSessionId: EXTENSION_DEV_TEST_AI_SESSION,
+        aiSessionId: data.aiSessionToken || EXTENSION_DEV_TEST_AI_SESSION,
       };
 
       const result = await executeExtensionTool(fullToolName, data.args, context);

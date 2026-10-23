@@ -447,10 +447,12 @@ export function createSharedMcpServer(
       const currentFilePath = sessionId
         ? documentStateBySession.get(sessionId)?.filePath
         : undefined;
-      const extensionTools = await getAvailableExtensionTools(
-        workspacePath,
-        currentFilePath
-      );
+      // A connection without `?sessionId` cannot run renderer-executed extension
+      // tools (handleExtensionTool refuses an unattributed call), so it is not
+      // offered them. The refusal at call time stays as the real guard.
+      const extensionTools = sessionId
+        ? await getAvailableExtensionTools(workspacePath, currentFilePath)
+        : [];
       // Backend-module-registered tools (executed by the module, not the
       // renderer) live in a parallel registry; merge them in for this endpoint.
       // This server serves one Nimbalyst session, so owned-sessions tools are

@@ -8,8 +8,10 @@ type McpToolResult = {
   isError: boolean;
 };
 
-/** Stand-in AI session id for an extension tool call that arrived without one. */
-const UNATTRIBUTED_AI_SESSION = "unattributed-ai-session";
+import { withActorToken } from "../../services/BrowserAuthority";
+
+/** Tools that drive the embedded browser; they must present their actor token. */
+const BROWSER_TOOL = /^browser[._]/;
 
 export async function handleExtensionTool(
   toolName: string,
@@ -18,6 +20,18 @@ export async function handleExtensionTool(
   sessionId: string | undefined,
   workspacePath: string | undefined
 ): Promise<McpToolResult> {
+  // No attribution, no execution: a call without an MCP session id has no actor
+  // and must not run, or create or own anything, as a stand-in.
+  if (!sessionId) {
+    console.warn(`[MCP Server] Rejected extension tool "${originalName}": no MCP session id (unattributed call)`);
+    return {
+      content: [
+        { type: "text", text: `Error: extension tool calls must be attributed to an MCP session; this call had no session id` },
+      ],
+      isError: true,
+    };
+  }
+
   // Check if this is an extension tool - use session-specific state
   const currentDocState = sessionId
     ? documentStateBySession.get(sessionId)
@@ -75,13 +89,6 @@ export async function handleExtensionTool(
     };
   }
 
-  if (!sessionId) {
-    // Tool name only: arguments may carry secrets.
-    console.warn(
-      `[MCP Server] Extension tool "${extensionTool.name}" called without an MCP session id; attributing it to the unattributed placeholder session`
-    );
-  }
-
   // Prefer filePath from tool args (agent targeting a specific file) over session state
   const activeFilePath = args?.filePath || currentDocState?.filePath;
   const TOOL_TIMEOUT_MS = 30000;
@@ -89,23 +96,32 @@ export async function handleExtensionTool(
   // Send IPC to renderer to execute the tool.
   // Use the extension's original name (may contain dots) since the
   // renderer matches against the name defined in extension code.
-  const outcome = await requestFromRenderer<any>(
-    targetWindow,
-    "mcp:executeExtensionTool",
-    {
-      toolName: extensionTool.name,
-      args: args || {},
-      context: {
-        workspacePath,
-        activeFilePath,
-        // Attribution comes from the MCP connection, never from `args`. A call
-        // with no session id is still an agent: it gets a placeholder that owns
-        // nothing and matches nothing, so it can never act as the user.
-        aiSessionId: sessionId || UNATTRIBUTED_AI_SESSION,
+  // Attribution comes from the MCP connection, never from `args`. The renderer
+  // receives an opaque token main minted for this call, not the session id, so
+  // it cannot present an identity of its own; main resolves the token back to
+  // the session id on every browser IPC and revokes it when the call ends.
+  const { value: outcome, used: tokenPresented } = await withActorToken(sessionId, (actorToken) =>
+    requestFromRenderer<any>(
+      targetWindow,
+      "mcp:executeExtensionTool",
+      {
+        toolName: extensionTool!.name,
+        args: args || {},
+        context: {
+          workspacePath,
+          activeFilePath,
+          aiSessionId: actorToken,
+        },
       },
-    },
-    { timeoutMs: TOOL_TIMEOUT_MS, resultChannelPrefix: "mcp-extension-result" }
+      { timeoutMs: TOOL_TIMEOUT_MS, resultChannelPrefix: "mcp-extension-result" }
+    )
   );
+  if (!tokenPresented && BROWSER_TOOL.test(extensionTool.name)) {
+    // Tool name only: arguments may carry secrets.
+    console.error(
+      `[MCP Server] Browser tool "${extensionTool.name}" finished without presenting its actor token; attribution was lost between main and the browser IPC`
+    );
+  }
 
   if (outcome.status === "timedOut") {
     console.error(`[MCP Server] Extension tool timed out:`, {

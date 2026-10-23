@@ -162,14 +162,15 @@ describe('popups (window.open / target=_blank)', () => {
     expect(handler({ url: 'file:///etc/passwd' })).toEqual({ action: 'deny' });
     expect(handler({ url: 'javascript:alert(1)' })).toEqual({ action: 'deny' });
     expect(handler({ url: 'https://example.com/next' })).toEqual({ action: 'deny' });
-    expect(forwarded).toEqual(['https://example.com/next']);
+    // F1.1: an agent portal never forwards a popup to the external browser.
+    expect(forwarded).toEqual([]);
   });
 });
 
 describe('downloads', () => {
   it('cancels a download started by an agent-owned session', () => {
     openAgentSession('agent-browser:a1', AGENT_A);
-    const ses = fakeState.sessions.get('browser-preview')!;
+    const ses = fakeState.sessions.get(service().getPartitionName('agent-browser:a1')!)!;
     const event = { preventDefault: vi.fn() };
     ses.emit('will-download', event, {}, viewOf(0).webContents);
     expect(event.preventDefault).toHaveBeenCalled();
@@ -183,14 +184,15 @@ describe('downloads', () => {
     expect(event.preventDefault).not.toHaveBeenCalled();
   });
 
-  it('tells the two apart when they share one partition', () => {
+  it('tells the two apart (separate partitions since F1.1)', () => {
     openEditorSession();
     openAgentSession('agent-browser:a1', AGENT_A);
-    const ses = fakeState.sessions.get('browser-preview')!;
+    const editorSes = fakeState.sessions.get('browser-preview')!;
+    const agentSes = fakeState.sessions.get(service().getPartitionName('agent-browser:a1')!)!;
     const editorEvent = { preventDefault: vi.fn() };
     const agentEvent = { preventDefault: vi.fn() };
-    ses.emit('will-download', editorEvent, {}, viewOf(0).webContents);
-    ses.emit('will-download', agentEvent, {}, viewOf(1).webContents);
+    editorSes.emit('will-download', editorEvent, {}, viewOf(0).webContents);
+    agentSes.emit('will-download', agentEvent, {}, viewOf(1).webContents);
     expect(editorEvent.preventDefault).not.toHaveBeenCalled();
     expect(agentEvent.preventDefault).toHaveBeenCalled();
   });

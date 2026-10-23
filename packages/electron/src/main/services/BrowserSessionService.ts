@@ -34,6 +34,12 @@ import { logger } from '../utils/logger';
 import { ensureNimPreviewProtocolForSession } from '../protocols/nimPreviewProtocol';
 import { PAGE_INFO_SCRIPT } from './browserPageInfoScript';
 import { installMicrophoneGate } from '../mediaPermissionGate';
+import {
+  selectPartition,
+  lockDownAgentPartition,
+  releaseAgentPartition,
+  assertPortalCapacity,
+} from './BrowserAuthority';
 
 export interface BrowserSessionInitOptions {
   /** Stable session id chosen by the caller. */
@@ -45,6 +51,8 @@ export interface BrowserSessionInitOptions {
    * run; use a `persist:` prefix only when the caller explicitly wants
    * Chromium storage to survive restarts.
    * Falls back to the in-memory `'preview'` partition if omitted.
+   * Only for the user's own sessions: an agent-owned session (`ownerSessionId`)
+   * gets a fresh partition chosen by BrowserAuthority and must not pass one.
    */
   partition?: string;
   /**
@@ -148,13 +156,16 @@ export function canActOnSession(
 export interface ReapCandidate {
   sessionId: string;
   headless: boolean;
+  /** Owned by an AI session; collected when idle even without a headless host window. */
+  agentOwned?: boolean;
   lastUsedAt: number;
 }
 
 /**
- * Pure-function reaper policy. Returns the ids of headless sessions that have
- * been idle for at least `ttlMs`. Editor-backed sessions are never reaped --
- * the user owns those, and their host window is a real app window.
+ * Pure-function reaper policy. Returns the ids of headless or agent-owned
+ * sessions that have been idle for at least `ttlMs`. The user's own
+ * editor-backed sessions are never reaped -- the user owns those, and their host
+ * window is a real app window.
  */
 export function selectIdleHeadlessSessions(
   candidates: ReapCandidate[],
@@ -162,7 +173,7 @@ export function selectIdleHeadlessSessions(
   ttlMs: number,
 ): string[] {
   return candidates
-    .filter((c) => c.headless && now - c.lastUsedAt >= ttlMs)
+    .filter((c) => (c.headless || c.agentOwned === true) && now - c.lastUsedAt >= ttlMs)
     .map((c) => c.sessionId);
 }
 
@@ -241,6 +252,18 @@ export function isAllowedBrowserUrl(url: string): boolean {
 export function resolveBrowserPartitionName(partition?: string): string {
   const normalized = partition?.trim() || 'preview';
   return normalized.startsWith('persist:') ? normalized : `browser-${normalized}`;
+}
+
+/** Partition an already-open session must match for an idempotent re-create. */
+function selectExistingPartition(
+  existing: { partitionName: string },
+  ownerSessionId: string | null,
+  requested?: string,
+): string {
+  if (ownerSessionId === null) return resolveBrowserPartitionName(requested);
+  // Throws if the agent asked for any partition.
+  selectPartition(ownerSessionId, requested);
+  return existing.partitionName;
 }
 
 export class BrowserSessionService extends EventEmitter {
@@ -324,6 +347,11 @@ export class BrowserSessionService extends EventEmitter {
     }
   }
 
+  /** Partition the session lives in; undefined when there is no such session. */
+  public getPartitionName(sessionId: string): string | undefined {
+    return this.sessions.get(sessionId)?.partitionName;
+  }
+
   public getState(sessionId: string): BrowserNavigationState | null {
     const entry = this.sessions.get(sessionId);
     return entry ? { ...entry.state } : null;
@@ -342,7 +370,8 @@ export class BrowserSessionService extends EventEmitter {
         // Never reveal whose it is.
         throw new Error(`Browser session ${opts.sessionId} already exists`);
       }
-      const requestedPartition = resolveBrowserPartitionName(opts.partition);
+      // Agent portals own a partition of their own; only the URL can differ.
+      const requestedPartition = selectExistingPartition(existing, ownerSessionId, opts.partition);
       if (
         existing.state.url !== opts.url ||
         existing.partitionName !== requestedPartition
@@ -358,19 +387,49 @@ export class BrowserSessionService extends EventEmitter {
       throw new Error(`Disallowed browser URL: ${opts.url}`);
     }
 
-    const partitionName = resolveBrowserPartitionName(opts.partition);
+    if (ownerSessionId !== null) {
+      let open = 0;
+      for (const e of this.sessions.values()) if (e.ownerSessionId === ownerSessionId) open++;
+      assertPortalCapacity(open);
+    }
+
+    const partitionName = selectPartition(ownerSessionId, opts.partition);
     const ses = electronSession.fromPartition(partitionName);
-    // Belt-and-suspenders with the global session-created hook: browsed web
-    // content must remain microphone-denied even after Voice Mode is granted.
-    installMicrophoneGate(ses, {
-      allowWhenGranted: false,
-      label: partitionName,
-      // Agent-driven views get no permission beyond the existing microphone
-      // handling. The partition is shared with the user's own tabs, which keep
-      // today's behaviour, so the decision is per requesting web contents.
-      denyOtherPermissionsFor: (wc) => this.isAgentOwnedContents(wc),
-    });
-    this.installDownloadGuard(ses);
+    try {
+      return this.openSession(opts, ownerSessionId, partitionName, ses);
+    } catch (err) {
+      // Whatever got built before the failure goes away with it. An agent
+      // partition was this call's alone; a user partition is shared and stays.
+      if (this.sessions.has(opts.sessionId)) {
+        this.destroySession(opts.sessionId);
+      } else if (ownerSessionId !== null) {
+        releaseAgentPartition(partitionName);
+      }
+      throw err;
+    }
+  }
+
+  private openSession(
+    opts: BrowserSessionInitOptions,
+    ownerSessionId: string | null,
+    partitionName: string,
+    ses: Session,
+  ): BrowserNavigationState {
+    if (ownerSessionId !== null) {
+      // Fresh partition, only this portal in it: deny every permission, device
+      // and download outright (microphone and null-webContents checks included).
+      lockDownAgentPartition(ses, partitionName);
+    } else {
+      // The user's tabs keep today's handling: browsed web content stays
+      // microphone-denied even after Voice Mode is granted.
+      installMicrophoneGate(ses, {
+        allowWhenGranted: false,
+        label: partitionName,
+        denyOtherPermissionsFor: (wc) => this.isAgentOwnedContents(wc),
+      });
+      // (Agent partitions cancel every download in lockDownAgentPartition.)
+      this.installDownloadGuard(ses);
+    }
     // Custom partitions do not inherit the default session's protocol
     // handlers; without this, nim-preview:// is an unknown scheme in the view
     // (issue #612).
@@ -421,8 +480,9 @@ export class BrowserSessionService extends EventEmitter {
       const vp = opts.viewport ?? DEFAULT_HEADLESS_VIEWPORT;
       const host = this.getOrCreateHeadlessHostWindow(vp);
       this.attachToWindow(opts.sessionId, host, { x: 0, y: 0, width: vp.width, height: vp.height });
-      this.startHeadlessReaper();
     }
+    // Agent portals are collected when idle whether or not they are headless.
+    if (headless || ownerSessionId !== null) this.startHeadlessReaper();
 
     // Kick off the initial load. We intentionally do not await -- the renderer
     // will see navigation events via the state-changed signal.
@@ -467,6 +527,12 @@ export class BrowserSessionService extends EventEmitter {
     }
 
     this.sessions.delete(sessionId);
+    if (entry.ownerSessionId !== null) {
+      // The agent partition was this portal's alone: wipe it, release its
+      // handlers and drop it from the registry (the reaper, a host-window close
+      // and cleanup() all end here too).
+      releaseAgentPartition(entry.partitionName);
+    }
     this.maybeTeardownHeadlessHost();
     logger.main.info(`[BrowserSessionService] Destroyed session ${sessionId}`);
   }
@@ -796,10 +862,10 @@ export class BrowserSessionService extends EventEmitter {
 
   /** Destroy the headless host window once no headless sessions remain. */
   private maybeTeardownHeadlessHost(): void {
+    if (!this.hasReapableSessions()) this.stopHeadlessReaper();
     if (!this.headlessHostWindow) return;
     const stillHeadless = [...this.sessions.values()].some((e) => e.headless);
     if (stillHeadless) return;
-    this.stopHeadlessReaper();
     if (!this.headlessHostWindow.isDestroyed()) {
       this.headlessHostWindow.destroy();
     }
@@ -832,6 +898,7 @@ export class BrowserSessionService extends EventEmitter {
       [...this.sessions.values()].map((e) => ({
         sessionId: e.sessionId,
         headless: e.headless,
+        agentOwned: e.ownerSessionId !== null,
         lastUsedAt: e.lastUsedAt,
       })),
       Date.now(),
@@ -843,9 +910,14 @@ export class BrowserSessionService extends EventEmitter {
       );
       this.destroySession(sessionId);
     }
-    if (![...this.sessions.values()].some((e) => e.headless)) {
+    if (!this.hasReapableSessions()) {
       this.stopHeadlessReaper();
     }
+  }
+
+  /** Whether any session is one the idle reaper may collect. */
+  private hasReapableSessions(): boolean {
+    return [...this.sessions.values()].some((e) => e.headless || e.ownerSessionId !== null);
   }
 
   private requireEntry(sessionId: string): SessionEntry {
@@ -931,7 +1003,12 @@ export class BrowserSessionService extends EventEmitter {
     // Open `target=_blank` and any window.open() calls externally rather than
     // in a popup we don't own. Only URLs the allow-list accepts are forwarded.
     wc.setWindowOpenHandler(({ url }) => {
-      if (isAllowedBrowserUrl(url)) {
+      if (entry.ownerSessionId !== null) {
+        // Agent portals never hand a link to the user's external browser.
+        logger.main.warn(
+          `[BrowserSessionService] Denied popup in agent session ${entry.sessionId} to ${String(url).slice(0, 200)}`,
+        );
+      } else if (isAllowedBrowserUrl(url)) {
         this.emit('external-navigation-requested', { sessionId: entry.sessionId, url });
       } else {
         logger.main.warn(

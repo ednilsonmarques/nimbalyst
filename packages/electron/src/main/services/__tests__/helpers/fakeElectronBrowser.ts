@@ -58,11 +58,34 @@ export class FakeSession extends EventEmitter {
   checkHandler:
     | ((wc: unknown, permission: string, origin: string, details: unknown) => boolean)
     | null = null;
-  setPermissionRequestHandler(handler: FakeSession['requestHandler']): void {
+  setPermissionRequestHandler(handler: FakeSession['requestHandler'] | null): void {
     this.requestHandler = handler;
   }
-  setPermissionCheckHandler(handler: FakeSession['checkHandler']): void {
+  setPermissionCheckHandler(handler: FakeSession['checkHandler'] | null): void {
     this.checkHandler = handler;
+  }
+  deviceHandler: ((details: unknown) => boolean) | null = null;
+  setDevicePermissionHandler(handler: ((details: unknown) => boolean) | null): void {
+    this.deviceHandler = handler;
+  }
+  /** Per-session cookie jar: a stand-in for the partition's own storage. */
+  cookieJar = new Map<string, string>();
+  cookies = {
+    set: (c: { name: string; value: string }): Promise<void> => {
+      this.cookieJar.set(c.name, c.value);
+      return Promise.resolve();
+    },
+    get: (): Promise<Array<{ name: string; value: string }>> =>
+      Promise.resolve([...this.cookieJar].map(([name, value]) => ({ name, value }))),
+  };
+  storageCleared = 0;
+  clearStorageData(): Promise<void> {
+    this.storageCleared++;
+    this.cookieJar.clear();
+    return Promise.resolve();
+  }
+  clearCache(): Promise<void> {
+    return Promise.resolve();
   }
   /** Fire a permission request and return what the installed handler answered. */
   request(permission: string, details: unknown = {}, webContents: unknown = null): boolean {
@@ -128,7 +151,16 @@ export class FakeBrowserWindow {
   isDestroyed(): boolean {
     return false;
   }
-  once(): void {}
+  private closeHandlers: Array<() => void> = [];
+  once(event?: string, handler?: () => void): void {
+    if (event === 'closed' && handler) this.closeHandlers.push(handler);
+  }
+  /** Simulate the user closing this window: fires the 'closed' listeners. */
+  fireClosed(): void {
+    const handlers = this.closeHandlers;
+    this.closeHandlers = [];
+    for (const h of handlers) h();
+  }
   showInactive(): void {}
   setContentSize(): void {}
   setOpacity(): void {}
