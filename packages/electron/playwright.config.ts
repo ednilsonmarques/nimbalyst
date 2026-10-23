@@ -11,6 +11,8 @@ const htmlReportDir = path.resolve(__dirname, '../../e2e_test_output/playwright-
 
 export default defineConfig({
   testDir: './e2e',
+  // The Portal fixture launches a separate build with its own registry guard: only playwright.portal.config.ts runs it.
+  testIgnore: '**/e2e/portal/**',
   outputDir: testResultsDir,
   fullyParallel: false, // Electron tests should run serially
   forbidOnly: !!process.env.CI,

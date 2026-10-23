@@ -21,6 +21,7 @@ export default defineConfig({
   // Only match *.spec.ts files — avoids picking up vitest *.test.ts files
   // that would crash Playwright when they import from 'vitest'.
   testMatch: '**/*.spec.ts',
+  testIgnore: '**/e2e/portal/**',
   outputDir,
   fullyParallel: false,
   workers: 1,
