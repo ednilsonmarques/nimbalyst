@@ -105,6 +105,7 @@ import {
   feedbackToolSchemas,
 } from "./tools/feedbackToolHandlers";
 import { handleExtensionTool } from "./tools/extensionToolHandler";
+import { handlePortalTool, isPortalToolName, portalToolSchemas } from "./tools/portalToolHandlers";
 // Host + core tool surfaces folded onto the unified server (MCP consolidation
 // Phase 5). Each standalone server still runs (legacy ports, retired in Phase 7)
 // but exports its schemas + a dispatch fn so the unified `/mcp/host` (and core
@@ -487,6 +488,8 @@ export function createSharedMcpServer(
       ...getRequestFeedbackToolSchemas(),
       ...displayToolSchemas,
       ...voiceToolSchemas,
+      // portal_* (served by the core endpoint; the session's scope and role decide who sees which)
+      ...portalToolSchemas,
       ...getInteractiveToolSchemas(sessionId),
       ...trackerToolSchemas,
       ...feedbackToolSchemas,
@@ -585,6 +588,13 @@ export function createSharedMcpServer(
       }
       const text = await dispatchDevAgentTool(toolName, authorizedRoot, (args ?? {}) as Record<string, unknown>);
       return { content: [{ type: "text", text }], isError: text.startsWith("Error") };
+    }
+
+    // The agent's local-preview browser. Executed in main over BrowserAuthority
+    // (no renderer hop), core endpoint only; the handler re-checks the session's
+    // scope and role and the project's test-data mark itself.
+    if (isPortalToolName(toolName) && endpoint.kind === "firstParty" && endpoint.configKey === MCP_CORE) {
+      return handlePortalTool(toolName, args, { sessionId, workspacePath });
     }
 
     try {

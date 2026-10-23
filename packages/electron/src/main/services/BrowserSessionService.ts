@@ -75,6 +75,25 @@ export interface BrowserSessionInitOptions {
    * out of the id space the editors use.
    */
   ownerSessionId?: string;
+  /**
+   * Agent portals only: bind the session to the origin of `url`. Top-level
+   * navigation, redirects and frames may then not leave that origin; subresources
+   * and fetches are unaffected (no request-level hook is installed).
+   */
+  confineToOrigin?: boolean;
+  /**
+   * Agent sessions: the project the owning AI session belongs to (from its
+   * session record). The test-data mark is read for this project.
+   */
+  projectPath?: string;
+  /**
+   * Agent sessions: the project that OPENED the session (from the opening
+   * session's record; a fixed actor's call carries the calling session's). Unlike
+   * `projectPath` it does not confine or gate a session by itself; it only says
+   * whose project a local (loopback) page belongs to when the test-data mark is
+   * checked, so a caller of another project cannot borrow its own mark.
+   */
+  openedByProject?: string;
 }
 
 /** Prefix every agent-created browser session id must carry. */
@@ -137,6 +156,12 @@ interface SessionEntry {
   lastUsedAt: number;
   /** AI session that owns this session; null for the user's own (editor) sessions. */
   ownerSessionId: string | null;
+  /** Origin an agent portal is bound to (`scheme://host[:port]`); null when unconfined. */
+  boundOrigin: string | null;
+  /** Project the owning AI session belongs to; null for the user's own sessions. */
+  projectPath: string | null;
+  /** Project that opened an agent session; null for the user's own sessions. */
+  openedByProject: string | null;
 }
 
 /**
@@ -249,6 +274,25 @@ export function isAllowedBrowserUrl(url: string): boolean {
   );
 }
 
+/**
+ * `scheme://host[:port]` of a URL, or null when it cannot be parsed. Used instead
+ * of `URL.origin`, which is the string "null" for custom schemes such as
+ * `nim-preview:` (whose host is the encoded workspace root).
+ */
+export function originKeyOf(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return null;
+  }
+}
+
+/** Whether `url` lies on the bound origin `origin` (an `originKeyOf` value). */
+export function isWithinOrigin(url: string, origin: string): boolean {
+  return originKeyOf(url) === origin;
+}
+
 export function resolveBrowserPartitionName(partition?: string): string {
   const normalized = partition?.trim() || 'preview';
   return normalized.startsWith('persist:') ? normalized : `browser-${normalized}`;
@@ -347,6 +391,37 @@ export class BrowserSessionService extends EventEmitter {
     }
   }
 
+  /** Origin a portal is bound to; undefined for an unconfined session or when there is no such session. */
+  public getBoundOrigin(sessionId: string): string | undefined {
+    return this.sessions.get(sessionId)?.boundOrigin ?? undefined;
+  }
+
+  /** Project an agent session belongs to; undefined for a user session or when there is no such session. */
+  public getProjectPath(sessionId: string): string | undefined {
+    return this.sessions.get(sessionId)?.projectPath ?? undefined;
+  }
+
+  /** Project that opened an agent session; undefined for a user session, an unrecorded one, or no such session. */
+  public getOpenedByProject(sessionId: string): string | undefined {
+    return this.sessions.get(sessionId)?.openedByProject ?? undefined;
+  }
+
+  /**
+   * The page the view is on right now (the view's own URL, which leads the
+   * emitted state while a navigation settles), falling back to the last state.
+   */
+  public getCurrentUrl(sessionId: string): string | undefined {
+    const entry = this.sessions.get(sessionId);
+    if (!entry) return undefined;
+    let live = '';
+    try {
+      live = entry.view.webContents.getURL?.() ?? '';
+    } catch {
+      live = '';
+    }
+    return live || entry.state.url;
+  }
+
   /** Partition the session lives in; undefined when there is no such session. */
   public getPartitionName(sessionId: string): string | undefined {
     return this.sessions.get(sessionId)?.partitionName;
@@ -363,6 +438,14 @@ export class BrowserSessionService extends EventEmitter {
       throw new Error(
         `Agent browser session ids must start with "${AGENT_SESSION_ID_PREFIX}": ${opts.sessionId}`,
       );
+    }
+    if (opts.confineToOrigin && ownerSessionId === null) {
+      throw new Error('Only agent portals can be confined to an origin');
+    }
+    // A portal must be bound to a real origin: refuse rather than leave it unbound.
+    const boundOrigin = opts.confineToOrigin ? originKeyOf(opts.url) : null;
+    if (opts.confineToOrigin && (!boundOrigin || boundOrigin.startsWith('about:'))) {
+      throw new Error(`Cannot bind a portal to the origin of this URL: ${opts.url}`);
     }
     const existing = this.sessions.get(opts.sessionId);
     if (existing) {
@@ -435,6 +518,7 @@ export class BrowserSessionService extends EventEmitter {
     // (issue #612).
     ensureNimPreviewProtocolForSession(ses);
     const headless = opts.headless === true;
+    const boundOrigin = opts.confineToOrigin ? originKeyOf(opts.url) : null;
 
     const view = new WebContentsView({
       webPreferences: {
@@ -458,6 +542,9 @@ export class BrowserSessionService extends EventEmitter {
       headless,
       lastUsedAt: Date.now(),
       ownerSessionId,
+      boundOrigin,
+      projectPath: ownerSessionId !== null ? opts.projectPath ?? null : null,
+      openedByProject: ownerSessionId !== null ? opts.openedByProject ?? null : null,
       state: {
         sessionId: opts.sessionId,
         url: opts.url,
@@ -624,6 +711,9 @@ export class BrowserSessionService extends EventEmitter {
     const entry = this.requireEntry(sessionId);
     if (!isAllowedBrowserUrl(url)) {
       throw new Error(`Disallowed browser URL: ${url}`);
+    }
+    if (entry.boundOrigin && !isWithinOrigin(url, entry.boundOrigin)) {
+      throw new Error(`This portal is bound to ${entry.boundOrigin}; navigation to another origin is not allowed: ${url}`);
     }
     entry.state.lastError = undefined;
     void entry.view.webContents.loadURL(url).catch((err) => {
@@ -985,13 +1075,28 @@ export class BrowserSessionService extends EventEmitter {
     // applied. `will-navigate` is not emitted for loadURL(), so this cannot
     // fire on our own navigations; `will-redirect` also covers redirects of
     // those. Fail closed when the target cannot be read.
+    //
+    // A portal bound to an origin (agent portals, F1.2) additionally refuses any
+    // top-level navigation, redirect or frame navigation to another origin.
+    // Sub-frames may start from about:blank / about:srcdoc. Subresources and
+    // fetches are not navigations and are not touched.
     const guardNavigation = (
       kind: string,
-      event: { url?: string; preventDefault: () => void },
+      event: { url?: string; isMainFrame?: boolean; preventDefault: () => void },
       positionalUrl?: string,
     ): void => {
       const target = typeof event?.url === 'string' ? event.url : positionalUrl;
-      if (typeof target === 'string' && isAllowedBrowserUrl(target)) return;
+      if (typeof target === 'string' && isAllowedBrowserUrl(target)) {
+        const bound = entry.boundOrigin;
+        if (!bound || isWithinOrigin(target, bound)) return;
+        if (event.isMainFrame === false && (target === 'about:blank' || target === 'about:srcdoc')) return;
+      } else if (
+        entry.boundOrigin &&
+        event.isMainFrame === false &&
+        (target === 'about:srcdoc')
+      ) {
+        return;
+      }
       event.preventDefault();
       logger.main.warn(
         `[BrowserSessionService] Blocked ${kind} in ${entry.sessionId} to ${String(target).slice(0, 200)}`,
@@ -999,6 +1104,9 @@ export class BrowserSessionService extends EventEmitter {
     };
     wc.on('will-navigate', (event: any, url?: string) => guardNavigation('navigation', event, url));
     wc.on('will-redirect', (event: any, url?: string) => guardNavigation('redirect', event, url));
+    if (entry.boundOrigin) {
+      wc.on('will-frame-navigate', (event: any, url?: string) => guardNavigation('frame navigation', event, url));
+    }
 
     // Open `target=_blank` and any window.open() calls externally rather than
     // in a popup we don't own. Only URLs the allow-list accepts are forwarded.

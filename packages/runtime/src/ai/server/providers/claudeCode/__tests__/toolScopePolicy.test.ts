@@ -3,6 +3,9 @@ import {
   ARCHITECT_DENIED_TOOLS,
   READ_SCOPE_ALLOWED_NATIVE_TOOLS,
   RUN_PROJECT_TESTS_TOOL,
+  PORTAL_OBSERVE_TOOLS,
+  PORTAL_EXERCISE_TOOLS,
+  PORTAL_TOOLS,
   teamRoleDeniedTools,
   isReadScopeAllowedMcpTool,
   isToolDeniedForScope,
@@ -157,7 +160,9 @@ describe('review scope', () => {
     const read = toolScopeDeniedTools('read');
     expect(RUN_PROJECT_TESTS_TOOL).toBe('mcp__nimbalyst-host__run_project_tests');
     expect(review).not.toContain(RUN_PROJECT_TESTS_TOOL);
-    expect([...review].sort()).toEqual(read.filter((tool) => tool !== RUN_PROJECT_TESTS_TOOL).sort());
+    // F1.2: a reviewer also keeps the portal observe + exercise tools (never portal_evaluate).
+    const portalKept = [...PORTAL_OBSERVE_TOOLS, ...PORTAL_EXERCISE_TOOLS].map((tool) => `mcp__nimbalyst__${tool}`);
+    expect([...review].sort()).toEqual(read.filter((tool) => tool !== RUN_PROJECT_TESTS_TOOL && !portalKept.includes(tool)).sort());
   });
 
   it('denies every shell, file edit, delegation, commit and config route', () => {
@@ -394,6 +399,9 @@ describe('architect role denials (Phase 1A)', () => {
     expect(architect.filter((tool) => !architectOnly.includes(tool)).sort()).toEqual([...explorer].sort());
     // The role denies even without a restricting scope (defense in depth).
     expect(mergeToolScopeDisallowedTools(undefined, 'full', [], 'architect')).toEqual(expect.arrayContaining(architectOnly));
-    expect(mergeToolScopeDisallowedTools(undefined, 'full', [], 'explorer')).toBeUndefined();
+    // F1.2: an explorer carries no ask/plan denials, but it never gets a portal tool and loses browser.*.
+    expect(mergeToolScopeDisallowedTools(undefined, 'full', [], 'explorer')?.sort()).toEqual(
+      [...PORTAL_TOOLS.map((tool) => `mcp__nimbalyst__${tool}`), 'mcp__nimbalyst-browser'].sort(),
+    );
   });
 });

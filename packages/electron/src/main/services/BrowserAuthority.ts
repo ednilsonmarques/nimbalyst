@@ -28,11 +28,12 @@
  *
  * (No logger import on purpose: this module is imported by light-weight callers.)
  *
- * Known limit: an omitted `actorSessionId` is the user's UI. The renderer is
- * the trusted hop, so a renderer that drops the field is indistinguishable from
- * the user; `withActorToken` reports when a token was never presented so the
- * caller can flag it. Closing it fully means executing agent calls in main
- * (`portal.*`, F1.2).
+ * An omitted `actorSessionId` is the user's UI, and main cannot tell that hop
+ * from an agent's renderer hop that dropped the field. F1.2 closes it for the
+ * browser tools by removing the hop: agent `browser.*` and `portal_*` calls
+ * execute in main (mcp/tools/browserToolInMain.ts, portalToolHandlers.ts) with
+ * the actor taken from the MCP connection, so the browser IPC only sees the
+ * user's UI (no field) or a token for some other renderer-run tool.
  */
 
 import { randomBytes, randomUUID } from 'crypto';
@@ -54,6 +55,13 @@ interface TokenEntry {
   actorId: string;
   expiresAt: number;
   used: boolean;
+  /** Project the call was made for; the test-data mark is read against it. */
+  workspacePath?: string;
+}
+
+/** Extra facts main binds to a token when it mints it. */
+export interface ActorTokenContext {
+  workspacePath?: string;
 }
 
 const tokens = new Map<string, TokenEntry>();
@@ -70,11 +78,15 @@ function sweepExpired(now: number): void {
 }
 
 /** Mint an opaque token that stands for `actorId` until revoked or expired. */
-export function issueActorToken(actorId: string, ttlMs: number = ACTOR_TOKEN_TTL_MS): string {
+export function issueActorToken(
+  actorId: string,
+  ttlMs: number = ACTOR_TOKEN_TTL_MS,
+  context?: ActorTokenContext,
+): string {
   const now = Date.now();
   sweepExpired(now);
   const token = `${TOKEN_PREFIX}${randomBytes(24).toString('hex')}`;
-  tokens.set(token, { actorId, expiresAt: now + ttlMs, used: false });
+  tokens.set(token, { actorId, expiresAt: now + ttlMs, used: false, workspacePath: context?.workspacePath });
   return token;
 }
 
@@ -92,8 +104,9 @@ export function revokeActorToken(token: string): { used: boolean } {
 export async function withActorToken<T>(
   actorId: string,
   work: (token: string) => Promise<T>,
+  context?: ActorTokenContext,
 ): Promise<{ value: T; used: boolean }> {
-  const token = issueActorToken(actorId);
+  const token = issueActorToken(actorId, undefined, context);
   try {
     const value = await work(token);
     return { value, used: tokens.get(token)?.used === true };
@@ -102,7 +115,9 @@ export async function withActorToken<T>(
   }
 }
 
-export type CallerResolution = { ok: true; actor: string | undefined } | { ok: false; error: string };
+export type CallerResolution =
+  | { ok: true; actor: string | undefined; workspacePath?: string }
+  | { ok: false; error: string };
 
 /**
  * Resolve the `actorSessionId` field of a browser IPC payload. Absent or null is
@@ -120,7 +135,9 @@ export function resolveCaller(raw: unknown): CallerResolution {
     return { ok: false, error: 'Unattributed or invalid browser actor' };
   }
   entry.used = true;
-  return { ok: true, actor: entry.actorId };
+  return entry.workspacePath === undefined
+    ? { ok: true, actor: entry.actorId }
+    : { ok: true, actor: entry.actorId, workspacePath: entry.workspacePath };
 }
 
 // ---------- partitions ----------

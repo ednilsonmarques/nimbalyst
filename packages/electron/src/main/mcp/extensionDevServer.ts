@@ -13,6 +13,7 @@
  */
 
 import { issueActorToken, revokeActorToken, EXTENSION_DEV_TEST_ACTOR } from "../services/BrowserAuthority";
+import { isBrowserToolName, runBrowserToolInMain } from "./tools/browserToolInMain";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -804,7 +805,11 @@ export async function startExtensionDevServer(
 }
 
 function createExtensionDevMcpServer(
-  workspacePath: string | undefined
+  workspacePath: string | undefined,
+  // The AI session this connection was configured for (`aiSessionId` on the URL
+  // McpConfigService builds). Its scope and team-role policy governs the browser
+  // tools reached through extension_test_ai_tool.
+  callingAiSessionId?: string
 ): Server {
   // Create a new MCP Server instance for this connection
   const server = new Server(
@@ -2638,6 +2643,31 @@ ${script}
           };
         }
 
+        // The browser tools never take the renderer hop (see browserToolInMain):
+        // main runs them as the fixed extension-test actor (which owns only its
+        // own sessions), but under the CALLING session's scope and team-role
+        // policy (a team member is refused, a solo session is allowed) and under
+        // the same test-data-mark rule as any agent. A connection that names no
+        // calling session is refused.
+        if (isBrowserToolName(aiToolName)) {
+          const browserResult = await runBrowserToolInMain(
+            aiToolName,
+            (args?.args as Record<string, unknown>) || {},
+            { actor: EXTENSION_DEV_TEST_ACTOR, workspacePath, policySessionId: callingAiSessionId },
+          );
+          return {
+            content: [
+              {
+                type: "text",
+                text: browserResult.success
+                  ? JSON.stringify(browserResult.data ?? { message: browserResult.message }, null, 2)
+                  : `Error: ${browserResult.error}`,
+              },
+            ],
+            isError: !browserResult.success,
+          };
+        }
+
         const aiToolWindow = findWindowByWorkspace(workspacePath);
         if (!aiToolWindow || aiToolWindow.isDestroyed()) {
           return {
@@ -2662,7 +2692,7 @@ ${script}
           // No MCP connection on this path: main mints a token for the fixed
           // extension-test actor (owns only its own browser sessions) and
           // revokes it when the call ends.
-          const aiSessionToken = issueActorToken(EXTENSION_DEV_TEST_ACTOR);
+          const aiSessionToken = issueActorToken(EXTENSION_DEV_TEST_ACTOR, undefined, { workspacePath });
 
           const timeoutId = setTimeout(() => {
             revokeActorToken(aiSessionToken);
@@ -2845,7 +2875,12 @@ async function tryCreateExtensionDevServer(port: number): Promise<any> {
             | string
             | undefined;
 
-          const server = createExtensionDevMcpServer(workspacePath);
+          const server = createExtensionDevMcpServer(
+            workspacePath,
+            typeof parsedUrl.query.aiSessionId === "string" && parsedUrl.query.aiSessionId
+              ? parsedUrl.query.aiSessionId
+              : undefined
+          );
 
           // Create SSE transport
           const transport = new SSEServerTransport("/mcp", res);
@@ -2939,7 +2974,12 @@ async function tryCreateExtensionDevServer(port: number): Promise<any> {
             const workspacePath = parsedUrl.query.workspacePath as
               | string
               | undefined;
-            const server = createExtensionDevMcpServer(workspacePath);
+            const server = createExtensionDevMcpServer(
+            workspacePath,
+            typeof parsedUrl.query.aiSessionId === "string" && parsedUrl.query.aiSessionId
+              ? parsedUrl.query.aiSessionId
+              : undefined
+          );
             const transport = new StreamableHTTPServerTransport({
               sessionIdGenerator: () => randomUUID(),
               onsessioninitialized: (streamableSessionId) => {

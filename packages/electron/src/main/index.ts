@@ -192,6 +192,8 @@ import {
   addNimPreviewWorkspaceRoot,
 } from './protocols/nimPreviewProtocol';
 import { registerBrowserSessionHandlers } from './ipc/BrowserSessionHandlers';
+import { registerPortalTestDataHandlers } from './services/portalTestData';
+import { installUserInputRecency } from './services/userInputRecency';
 import { BrowserSessionService } from './services/BrowserSessionService';
 import {
   registerCollabAssetSchemeAsPrivileged,
@@ -411,6 +413,10 @@ installNavigationGuard({
     },
 });
 installIpcSenderValidator(createIpcSenderValidator(getAppOriginConfig()));
+
+// Portal F1.2: remember real user input per window, so the test-data mark can
+// only be changed by a person acting in the window (portalTestData.ts).
+installUserInputRecency();
 
 // NIB.85 stage d3 (decision U6: LOG-ONLY, never block): note, once per channel
 // and bounded, any channel the renderer invokes that scripts/ipc-channel-
@@ -1852,6 +1858,7 @@ app.whenReady().then(async () => {
     // Browser session IPC handlers + state-changed event broadcast. The
     // service itself owns the WebContentsView pool.
     registerBrowserSessionHandlers();
+    registerPortalTestDataHandlers();
 
     // collab-asset:// document attachment handler. Same-origins the production
     // worker request from Chromium's perspective, so we can keep

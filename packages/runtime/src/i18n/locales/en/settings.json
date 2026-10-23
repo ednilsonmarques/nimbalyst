@@ -992,7 +992,10 @@
       "urlPatternAdded": "URL pattern added",
       "urlPatternRemoved": "URL pattern removed",
       "allDomainsAllowed": "All domains are now allowed",
-      "allDomainsRevoked": "All domains permission revoked"
+      "allDomainsRevoked": "All domains permission revoked",
+      "portalTestDataOn": "Project marked as test data for agent browsers",
+      "portalTestDataOff": "Test-data mark turned off",
+      "portalPortsUpdated": "Ports updated"
     },
     "errors": {
       "trust": "Failed to trust workspace",
@@ -1007,7 +1010,11 @@
       "removeUrlPattern": "Failed to remove URL pattern",
       "allowAllDomains": "Failed to allow all domains",
       "revokeAllDomains": "Failed to revoke all domains permission",
-      "load": "Failed to load workspace permissions"
+      "load": "Failed to load workspace permissions",
+      "portalTestData": "Failed to change the test-data mark",
+      "portalTestDataNotProjectWindow": "Open this project in its own window to change this setting",
+      "portalTestDataNoUserInput": "We could not confirm that you made this change. Click the button again",
+      "portalPortInvalid": "Enter a whole number from 1 to 65535"
     },
     "trust": {
       "title": "Workspace Trust",
@@ -1018,6 +1025,22 @@
       "trustedOn": "Trusted on {{date}}",
       "revoke": "Revoke Trust",
       "trust": "Trust Workspace"
+    },
+    "portalTestData": {
+      "title": "Agent Browser Test Data",
+      "on": "This project is marked as test data",
+      "off": "This project is not marked as test data",
+      "description": "While this is on, agents can click, type and run scripts in previews of this project's files and on the localhost ports you declare below. On other localhost pages they can only look. Only you can change this, and Nimbalyst asks you to confirm it in a system dialog.",
+      "enable": "Mark as test data",
+      "disable": "Turn off",
+      "ports": {
+        "title": "Ports agents may interact with",
+        "description": "Agents can always look at any localhost page. They can click, type and run scripts only on localhost pages served from these ports, and on previews of this project's files.",
+        "placeholder": "Port, e.g. 5173",
+        "add": "Add",
+        "remove": "Remove port {{port}}",
+        "empty": "No ports declared: localhost pages are view-only."
+      }
     },
     "mode": {
       "title": "Permission Mode",

@@ -28,6 +28,9 @@ vi.mock('../../protocols/nimPreviewProtocol', () => ({
   previewPathInsideRoot: () => false,
 }));
 vi.mock('../../database/initialize', () => ({ getDatabase: () => ({}) }));
+// These tests are about identity and ownership; the test-data mark (click/type/evaluate
+// for an agent actor) has its own suite, BrowserSessionHandlers.testDataMark.test.ts.
+vi.mock('../../services/portalTestData', () => ({ assertAgentMayExercise: async () => undefined, assertAgentMayExerciseOn: async () => undefined }));
 vi.mock('../../services/WorktreeStore', () => ({
   createWorktreeStore: () => ({ getByPath: async () => null }),
 }));

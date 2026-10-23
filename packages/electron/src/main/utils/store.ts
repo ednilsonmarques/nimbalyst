@@ -630,6 +630,26 @@ export interface WorkspaceState {
   // omits the `nimbalyst-trackers` MCP server so the agent gets no tracker_*
   // tools in this project. Defaults to enabled (undefined === true).
   trackersEnabled?: boolean;
+  /**
+   * User-only "test data" mark for the agent portal (F1.2). While set, agents
+   * may click, type and evaluate in the project's portals; without it they may
+   * only observe. Lives only in this app store (userData), never in a workspace
+   * file, and is written only by the UI through `portal:set-test-data` (sender
+   * validated, recent real user input required). No MCP tool can write it.
+   * Read by main (portalTestData.ts) on every click, type and evaluate, with a
+   * worktree resolved to its parent project.
+   */
+  portalTestData?: { enabled: true; markedAt: number };
+  /**
+   * Loopback ports the user declared as safe for agent interaction (click, type,
+   * evaluate) in this project's localhost pages, 1..65535. With the mark on,
+   * agents may interact only with nim-preview pages of the project and with
+   * loopback pages on these ports; every other localhost page is observe-only.
+   * Same rules as the mark: app store only, written only by the UI through
+   * `portal:set-interaction-ports` (sender window, recent input and a native
+   * confirmation when widened), read by main.
+   */
+  portalInteractionPorts?: number[];
   // Issue key prefix for tracker items (e.g., "NIM", "APP"). Used for local-only trackers.
   // For synced trackers, the prefix is stored server-side in TrackerRoom metadata.
   issueKeyPrefix?: string;

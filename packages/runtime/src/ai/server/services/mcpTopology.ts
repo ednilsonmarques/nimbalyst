@@ -100,6 +100,19 @@ export const CORE_TOOLS: readonly string[] = [
   // `developer_git_commit_proposal` has a first-party core handler (the
   // interactive commit widget in interactiveToolHandlers).
   'update_session_meta',
+  // Portal (F1.2): the project's local preview driven from main, over
+  // BrowserAuthority. The observe/exercise/evaluate tiers and the user-only
+  // test-data mark are enforced by the host (toolPolicy PORTAL_*).
+  'portal_open',
+  'portal_navigate',
+  'portal_list',
+  'portal_screenshot',
+  'portal_page_info',
+  'portal_close',
+  'portal_click',
+  'portal_type',
+  'portal_scroll',
+  'portal_evaluate',
 ];
 
 /**

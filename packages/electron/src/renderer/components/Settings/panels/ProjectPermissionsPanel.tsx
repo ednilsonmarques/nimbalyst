@@ -22,6 +22,7 @@ import {
   getProjectTrustChoice,
 } from '../../ProjectTrustToast/projectTrustChoices';
 import { useTranslation, Trans } from '@nimbalyst/runtime/i18n/react';
+import { parsePortInput, portalTestDataErrorKey, shouldShowPortalTestDataError } from './portalTestDataErrors';
 
 interface ProjectPermissionsPanelProps {
   workspacePath: string;
@@ -49,6 +50,10 @@ export const ProjectPermissionsPanel: React.FC<ProjectPermissionsPanelProps> = (
   const [isAddingUrl, setIsAddingUrl] = useState(false);
   const [newUrlPattern, setNewUrlPattern] = useState('');
   const [newUrlDescription, setNewUrlDescription] = useState('');
+  // User-only "test data" mark for agent browsers (main enforces it; only this UI can set it)
+  const [portalTestData, setPortalTestData] = useState(false);
+  const [portalPorts, setPortalPorts] = useState<number[]>([]);
+  const [portInput, setPortInput] = useState('');
 
   // Extract permissions from state
   const { loading, error: loadError } = permissionsState;
@@ -80,6 +85,78 @@ export const ProjectPermissionsPanel: React.FC<ProjectPermissionsPanelProps> = (
       });
     }
   }, [permissions, loading, posthog]);
+
+  useEffect(() => {
+    if (!workspacePath) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await window.electronAPI.invoke('portal:get-test-data', workspacePath);
+        if (!cancelled) {
+          setPortalTestData(res?.success === true && res.enabled === true);
+          setPortalPorts(res?.success === true && Array.isArray(res.ports) ? res.ports : []);
+        }
+      } catch {
+        if (!cancelled) {
+          setPortalTestData(false);
+          setPortalPorts([]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [workspacePath]);
+
+  const handlePortalTestDataChange = async (enabled: boolean) => {
+    try {
+      const res = await window.electronAPI.invoke('portal:set-test-data', workspacePath, enabled);
+      if (!res?.success) {
+        // Main answers with a code, never with text: map it to a translated message.
+        // A cancelled native confirmation just leaves the setting as it was.
+        if (shouldShowPortalTestDataError(res?.code)) setError(t(portalTestDataErrorKey(res?.code)));
+        return;
+      }
+      setPortalTestData(res.enabled === true);
+      setSuccess(t(enabled ? 'projectPermissions.messages.portalTestDataOn' : 'projectPermissions.messages.portalTestDataOff'));
+      posthog?.capture('permission_setting_changed', { action: 'portal_test_data', enabled });
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      console.error('Failed to change the portal test-data mark:', err);
+      setError(t(portalTestDataErrorKey(undefined)));
+    }
+  };
+
+  const handlePortalPortsChange = async (ports: number[]) => {
+    try {
+      const res = await window.electronAPI.invoke('portal:set-interaction-ports', workspacePath, ports);
+      if (!res?.success) {
+        if (shouldShowPortalTestDataError(res?.code)) setError(t(portalTestDataErrorKey(res?.code)));
+        return;
+      }
+      setPortalPorts(Array.isArray(res.ports) ? res.ports : ports);
+      setPortInput('');
+      setSuccess(t('projectPermissions.messages.portalPortsUpdated'));
+      posthog?.capture('permission_setting_changed', { action: 'portal_ports', count: ports.length });
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      console.error('Failed to change the portal interaction ports:', err);
+      setError(t(portalTestDataErrorKey(undefined)));
+    }
+  };
+
+  const handleAddPortalPort = () => {
+    const port = parsePortInput(portInput);
+    if (port === null) {
+      setError(t('projectPermissions.errors.portalPortInvalid'));
+      return;
+    }
+    if (portalPorts.includes(port)) {
+      setPortInput('');
+      return;
+    }
+    void handlePortalPortsChange([...portalPorts, port]);
+  };
 
   const handleTrustWorkspace = async () => {
     try {
@@ -349,6 +426,84 @@ export const ProjectPermissionsPanel: React.FC<ProjectPermissionsPanelProps> = (
           </div>
         </div>
       </div>
+
+      {/* Agent browser test data: user-only mark that lets agents click, type and evaluate in a portal */}
+      <div className="permissions-section mb-6">
+        <div className="permissions-section-header text-sm font-medium text-[var(--nim-text)] mb-3">
+          <span>{t('projectPermissions.portalTestData.title')}</span>
+        </div>
+        <div className="permissions-portal-test-data-card flex items-center justify-between p-4 rounded-lg border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)]">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`material-symbols-outlined ${portalTestData ? 'text-[var(--nim-success)]' : 'text-[var(--nim-text-muted)]'}`}>
+                {portalTestData ? 'science' : 'visibility'}
+              </span>
+              <span className="text-sm font-medium text-[var(--nim-text)]">
+                {portalTestData ? t('projectPermissions.portalTestData.on') : t('projectPermissions.portalTestData.off')}
+              </span>
+            </div>
+            <p className="text-xs text-[var(--nim-text-muted)]">{t('projectPermissions.portalTestData.description')}</p>
+          </div>
+          <div>
+            <button
+              className={portalTestData
+                ? 'btn-secondary px-3 py-1.5 rounded text-xs font-medium border border-[var(--nim-border)] bg-transparent text-[var(--nim-text-muted)] hover:bg-[var(--nim-bg-hover)] cursor-pointer'
+                : 'btn-primary px-3 py-1.5 rounded text-xs font-medium bg-[var(--nim-primary)] text-white hover:bg-[var(--nim-primary-hover)] cursor-pointer'}
+              onClick={() => handlePortalTestDataChange(!portalTestData)}
+            >
+              {portalTestData ? t('projectPermissions.portalTestData.disable') : t('projectPermissions.portalTestData.enable')}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Interaction ports: only meaningful while the mark is on; widening is confirmed natively by main */}
+      {portalTestData && (
+        <div className="permissions-section mb-6">
+          <div className="permissions-section-header text-sm font-medium text-[var(--nim-text)] mb-3">
+            <span>{t('projectPermissions.portalTestData.ports.title')}</span>
+          </div>
+          <div className="permissions-portal-ports-card p-4 rounded-lg border border-[var(--nim-border)] bg-[var(--nim-bg-secondary)]">
+            <p className="text-xs text-[var(--nim-text-muted)] mb-3">{t('projectPermissions.portalTestData.ports.description')}</p>
+            {portalPorts.length === 0 ? (
+              <p className="text-xs text-[var(--nim-text-faint)] mb-3">{t('projectPermissions.portalTestData.ports.empty')}</p>
+            ) : (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {portalPorts.map((port) => (
+                  <span key={port} className="inline-flex items-center gap-1 px-2 py-1 rounded border border-[var(--nim-border)] text-xs text-[var(--nim-text)]">
+                    {port}
+                    <button
+                      className="cursor-pointer bg-transparent border-none text-[var(--nim-text-muted)]"
+                      aria-label={t('projectPermissions.portalTestData.ports.remove', { port })}
+                      onClick={() => void handlePortalPortsChange(portalPorts.filter((p) => p !== port))}
+                    >
+                      <span className="material-symbols-outlined text-sm">close</span>
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <input
+                className="px-2 py-1 rounded border border-[var(--nim-border)] bg-[var(--nim-bg)] text-xs text-[var(--nim-text)] w-32"
+                inputMode="numeric"
+                value={portInput}
+                placeholder={t('projectPermissions.portalTestData.ports.placeholder')}
+                onChange={(e) => setPortInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddPortalPort();
+                }}
+              />
+              <button
+                className="btn-primary px-3 py-1.5 rounded text-xs font-medium bg-[var(--nim-primary)] text-white hover:bg-[var(--nim-primary-hover)] cursor-pointer"
+                onClick={handleAddPortalPort}
+              >
+                {t('projectPermissions.portalTestData.ports.add')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Permission Mode Section - Only show when trusted */}
       {permissions && permissions.permissionMode !== null && (

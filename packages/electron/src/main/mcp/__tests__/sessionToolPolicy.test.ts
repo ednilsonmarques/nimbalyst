@@ -29,6 +29,7 @@ const HOST: McpEndpointSelection = { kind: 'firstParty', configKey: 'nimbalyst-h
 const CORE: McpEndpointSelection = { kind: 'firstParty', configKey: 'nimbalyst' };
 const TRACKERS: McpEndpointSelection = { kind: 'firstParty', configKey: 'nimbalyst-trackers' };
 const EXTENSION: McpEndpointSelection = { kind: 'extension', extensionShortName: 'browser' };
+const OTHER_EXTENSION: McpEndpointSelection = { kind: 'extension', extensionShortName: 'excalidraw' };
 const ADVISOR_READ = { scope: 'read', role: 'advisor', provider: 'claude-code', workspaceRoot: null } as const;
 const ADVISOR_CODEX = { scope: 'read', role: 'advisor', provider: 'openai-codex', workspaceRoot: null } as const;
 const REVIEWER = { scope: 'review', role: 'reviewer', provider: 'claude-code', workspaceRoot: null } as const;
@@ -78,7 +79,10 @@ describe('policy names and denials', () => {
     expect(isToolDeniedForSession(REVIEWER, HOST, 'run_project_tests')).toBe(false);
     expect(isToolDeniedForSession(REVIEWER, HOST, 'create_session')).toBe(true);
     expect(isToolDeniedForSession(IMPLEMENTER_FULL, HOST, 'create_session')).toBe(false);
-    expect(isToolDeniedForSession(IMPLEMENTER_FULL, EXTENSION, 'anything')).toBe(false);
+    expect(isToolDeniedForSession(IMPLEMENTER_FULL, OTHER_EXTENSION, 'anything')).toBe(false);
+    // F1.2: every team member loses the legacy browser.* server (it uses portal_*); a solo session keeps it.
+    expect(isToolDeniedForSession(IMPLEMENTER_FULL, EXTENSION, 'anything')).toBe(true);
+    expect(isToolDeniedForSession(UNRESTRICTED_TOOL_POLICY, EXTENSION, 'anything')).toBe(false);
     expect(isToolDeniedForSession(UNRESTRICTED_TOOL_POLICY, CORE, 'developer_git_commit_proposal')).toBe(false);
     expect(isToolDeniedForSession({ scope: 'read', role: 'explorer', provider: 'claude-code', workspaceRoot: null }, CORE, 'AskUserQuestion')).toBe(false);
     expect(isToolDeniedForSession({ scope: 'read', role: 'architect', provider: 'claude-code', workspaceRoot: null }, CORE, 'AskUserQuestion')).toBe(true);
@@ -156,5 +160,60 @@ describe('resolveSessionToolPolicy', () => {
     expect(await resolveSessionToolPolicy('flaky')).toEqual({ scope: 'read', role: null, provider: null, workspaceRoot: null });
     expect(get).toHaveBeenCalledTimes(3);
     errorSpy.mockRestore();
+  });
+});
+
+describe('Codex is not part of Portal V1 (N4)', () => {
+  const CODEX_FULL = { scope: 'full', role: null, provider: 'openai-codex', workspaceRoot: null } as const;
+  const CODEX_TEAM = { scope: 'write', role: 'implementer', provider: 'openai-codex', workspaceRoot: null } as const;
+  const CLAUDE_FULL = { scope: 'full', role: null, provider: 'claude-code', workspaceRoot: null } as const;
+  const PORTAL = ['portal_open', 'portal_navigate', 'portal_list', 'portal_screenshot', 'portal_page_info', 'portal_close', 'portal_click', 'portal_type', 'portal_scroll', 'portal_evaluate'];
+
+  it.each(PORTAL)('%s is denied to an openai-codex session, solo or team, and allowed to Claude Code', (name) => {
+    expect(isToolDeniedForSession(CODEX_FULL, CORE, name)).toBe(true);
+    expect(isToolDeniedForSession(CODEX_TEAM, CORE, name)).toBe(true);
+    expect(isToolDeniedForSession(CLAUDE_FULL, CORE, name)).toBe(false);
+  });
+
+  it('is removed from the list a Codex session is served, and says why when called', () => {
+    const served = filterToolsForSession(PORTAL.map(tool), CODEX_FULL, CORE);
+    expect(served).toEqual([]);
+    expect(sessionToolDenial(CODEX_FULL, CORE, 'portal_open').content[0].text).toMatch(/Claude Code sessions only/);
+  });
+
+  it('leaves the rest of the core endpoint to Codex', () => {
+    expect(isToolDeniedForSession(CODEX_FULL, CORE, 'display_to_user')).toBe(false);
+  });
+});
+
+describe('only claude-code gets portal_* (provider allowlist)', () => {
+  const policyOf = (provider: string | null) => ({ scope: 'full', role: null, provider, workspaceRoot: null }) as const;
+  const PORTAL = ['portal_open', 'portal_navigate', 'portal_list', 'portal_screenshot', 'portal_page_info', 'portal_close', 'portal_click', 'portal_type', 'portal_scroll', 'portal_evaluate'];
+
+  it.each(PORTAL)('%s is denied to openai-codex-acp, at listing and at execution', (name) => {
+    expect(isToolDeniedForSession(policyOf('openai-codex-acp'), CORE, name)).toBe(true);
+    expect(filterToolsForSession([tool(name)], policyOf('openai-codex-acp'), CORE)).toEqual([]);
+  });
+
+  it.each(['gemini', 'opencode', 'openai', 'copilot-cli'])('another non-Claude provider (%s) is denied', (provider) => {
+    expect(isToolDeniedForSession(policyOf(provider), CORE, 'portal_open')).toBe(true);
+    expect(filterToolsForSession(PORTAL.map(tool), policyOf(provider), CORE)).toEqual([]);
+  });
+
+  it('a session whose provider is unknown is denied too (fail closed)', () => {
+    expect(isToolDeniedForSession(policyOf(null), CORE, 'portal_open')).toBe(true);
+  });
+
+  it('claude-code is allowed and keeps the whole list', () => {
+    for (const name of PORTAL) expect(isToolDeniedForSession(policyOf('claude-code'), CORE, name), name).toBe(false);
+    expect(filterToolsForSession(PORTAL.map(tool), policyOf('claude-code'), CORE)).toHaveLength(PORTAL.length);
+  });
+
+  it('keeps the existing refusal message for a denied provider and leaves the other core tools alone', () => {
+    const text = sessionToolDenial(policyOf('openai-codex-acp'), CORE, 'portal_open').content[0].text;
+    expect(text).toMatch(/Portal tools are available to Claude Code sessions only/);
+    expect(text).not.toMatch(/codex/i);
+    expect(text).toContain('Nothing was executed');
+    expect(isToolDeniedForSession(policyOf('openai-codex-acp'), CORE, 'display_to_user')).toBe(false);
   });
 });

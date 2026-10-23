@@ -992,7 +992,10 @@
       "urlPatternAdded": "Padrão de URL adicionado",
       "urlPatternRemoved": "Padrão de URL removido",
       "allDomainsAllowed": "Todos os domínios agora estão permitidos",
-      "allDomainsRevoked": "Permissão para todos os domínios revogada"
+      "allDomainsRevoked": "Permissão para todos os domínios revogada",
+      "portalTestDataOn": "Projeto marcado como dados de teste para os navegadores dos agentes",
+      "portalTestDataOff": "Marca de dados de teste desativada",
+      "portalPortsUpdated": "Portas atualizadas"
     },
     "errors": {
       "trust": "Falha ao marcar o espaço de trabalho como confiável",
@@ -1007,7 +1010,11 @@
       "removeUrlPattern": "Falha ao remover o padrão de URL",
       "allowAllDomains": "Falha ao permitir todos os domínios",
       "revokeAllDomains": "Falha ao revogar a permissão para todos os domínios",
-      "load": "Falha ao carregar as permissões do espaço de trabalho"
+      "load": "Falha ao carregar as permissões do espaço de trabalho",
+      "portalTestData": "Falha ao alterar a marca de dados de teste",
+      "portalTestDataNotProjectWindow": "Abra este projeto na própria janela para alterar esta configuração",
+      "portalTestDataNoUserInput": "Não foi possível confirmar que a alteração partiu de você. Clique no botão novamente",
+      "portalPortInvalid": "Informe um número inteiro de 1 a 65535"
     },
     "trust": {
       "title": "Confiança no espaço de trabalho",
@@ -1018,6 +1025,22 @@
       "trustedOn": "Confiável desde {{date}}",
       "revoke": "Revogar confiança",
       "trust": "Confiar no espaço de trabalho"
+    },
+    "portalTestData": {
+      "title": "Dados de teste do navegador do agente",
+      "on": "Este projeto está marcado como dados de teste",
+      "off": "Este projeto não está marcado como dados de teste",
+      "description": "Enquanto estiver ativado, os agentes podem clicar, digitar e executar scripts em prévias dos arquivos deste projeto e nas portas do localhost que você declarar abaixo. Nas demais páginas do localhost, eles só podem olhar. Só você pode alterar isso, e o Nimbalyst pede sua confirmação em uma caixa de diálogo do sistema.",
+      "enable": "Marcar como dados de teste",
+      "disable": "Desativar",
+      "ports": {
+        "title": "Portas com as quais os agentes podem interagir",
+        "description": "Os agentes sempre podem olhar qualquer página do localhost. Só podem clicar, digitar e executar scripts em páginas do localhost servidas por estas portas e em prévias dos arquivos deste projeto.",
+        "placeholder": "Porta, ex.: 5173",
+        "add": "Adicionar",
+        "remove": "Remover a porta {{port}}",
+        "empty": "Nenhuma porta declarada: as páginas do localhost ficam em somente visualização."
+      }
     },
     "mode": {
       "title": "Modo de permissão",

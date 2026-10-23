@@ -18,6 +18,7 @@ import { CANVAS_WORKING_SET_TOOL_SCHEMAS } from '../tools/canvasWorkingSetToolHa
 import { trackerToolSchemas } from '../tools/trackerToolHandlers';
 import { feedbackToolSchemas } from '../tools/feedbackToolHandlers';
 import { voiceToolSchemas } from '../tools/voiceToolHandlers';
+import { portalToolSchemas } from '../tools/portalToolSchemas';
 import { getCollabIndexToolSchemas } from '../tools/collabIndexToolHandlers';
 import { getCollabReadToolSchemas } from '../tools/collabReadToolHandlers';
 import { getRequestFeedbackToolSchemas } from '../tools/requestFeedbackToolHandler';
@@ -46,6 +47,7 @@ describe('MCP tool budget characterization (current first-party surface)', () =>
       ...trackerToolSchemas,
       ...feedbackToolSchemas,
       ...voiceToolSchemas,
+      ...portalToolSchemas,
     ];
   }
 

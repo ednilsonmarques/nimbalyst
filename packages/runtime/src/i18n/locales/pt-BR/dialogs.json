@@ -615,5 +615,15 @@
     "detailNoEmail": "Este convite foi aberto por um link, ou seja, não veio de dentro do Nimbalyst. Entrar dá à sua conta conectada acesso aos projetos e documentos compartilhados desta organização. Continue somente se você esperava este convite.",
     "confirm": "Entrar na organização",
     "cancel": "Cancelar"
+  },
+  "portalTestData": {
+    "title": "Permitir que os agentes interajam com prévias locais?",
+    "messageEnable": "Marcar \"{{project}}\" como dados de teste?",
+    "messagePorts": "Permitir que os agentes interajam com mais portas do localhost em \"{{project}}\"?",
+    "detailEnable": "Os agentes que trabalham neste projeto poderão clicar, digitar e executar scripts em prévias dos arquivos dele e em páginas do localhost servidas por estas portas: {{ports}}. Eles podem alterar dados ali, então continue somente se essas páginas contiverem apenas dados de teste. Páginas do localhost em outras portas continuam em somente visualização.",
+    "detailEnableNoPorts": "Os agentes que trabalham neste projeto poderão clicar, digitar e executar scripts em prévias dos arquivos dele. Eles podem alterar dados ali, então continue somente se essas prévias contiverem apenas dados de teste. As páginas do localhost ficam em somente visualização até você declarar portas.",
+    "detailPorts": "Os agentes que trabalham neste projeto poderão clicar, digitar e executar scripts em páginas do localhost servidas por estas portas: {{ports}}. Eles podem alterar dados ali, então continue somente se essas páginas contiverem apenas dados de teste.",
+    "confirm": "Permitir",
+    "cancel": "Cancelar"
   }
 }

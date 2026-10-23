@@ -290,6 +290,45 @@ const CONFIG_AND_COMMIT_TOOLS: readonly string[] = [
 export const HOST_READ_TOOLS: readonly string[] = ['read_file', 'list_files', 'search_files'];
 
 /**
+ * The `portal_*` tools (core endpoint, executed in main over BrowserAuthority):
+ * observe = open/navigate/list/screenshot/page_info/close, exercise =
+ * click/type/scroll, evaluate = arbitrary script in the page. The scope matrix:
+ * read and the explorer/architect/advisor roles get none; review (reviewer) and
+ * write (implementer) get observe + exercise; only full gets evaluate. The
+ * click/type/evaluate tools additionally need the user-only test-data mark,
+ * which main checks at execution (services/portalTestData.ts).
+ */
+export const PORTAL_OBSERVE_TOOLS: readonly string[] = [
+  'portal_open', 'portal_navigate', 'portal_list', 'portal_screenshot', 'portal_page_info', 'portal_close',
+];
+export const PORTAL_EXERCISE_TOOLS: readonly string[] = ['portal_click', 'portal_type', 'portal_scroll'];
+export const PORTAL_EVALUATE_TOOL = 'portal_evaluate';
+export const PORTAL_TOOLS: readonly string[] = [...PORTAL_OBSERVE_TOOLS, ...PORTAL_EXERCISE_TOOLS, PORTAL_EVALUATE_TOOL];
+
+/** Config key of the browser extension's MCP server; its tools are the legacy `browser.*`. */
+const BROWSER_EXTENSION_SERVER = 'mcp__nimbalyst-browser';
+
+const PORTAL_OBSERVE_EXERCISE_NAMES: ReadonlySet<string> = new Set(
+  [...PORTAL_OBSERVE_TOOLS, ...PORTAL_EXERCISE_TOOLS].map((tool) => mcpTool(MCP_CORE, tool)),
+);
+
+/**
+ * Portal and browser denials a team role carries whatever its scope says: the
+ * explorer, architect and advisor never drive a browser; a reviewer never
+ * evaluates; and every team member loses the legacy `browser.*` server (a team
+ * member uses `portal_*`; a solo session keeps `browser.*` under ownership).
+ * Kept apart from the architect's and advisor's ask/plan denials, whose lists
+ * other policy mirrors compare exactly.
+ */
+export function teamRolePortalDeniedTools(role: TeamRole | null | undefined): readonly string[] {
+  if (role === 'explorer' || role === 'architect' || role === 'advisor') {
+    return PORTAL_TOOLS.map((tool) => mcpTool(MCP_CORE, tool));
+  }
+  if (role === 'reviewer') return [mcpTool(MCP_CORE, PORTAL_EVALUATE_TOOL)];
+  return [];
+}
+
+/**
  * First-party Nimbalyst tools a `read` child may keep: lookups, plus asking the
  * user, rendering output to them, and naming its own session (the system prompt
  * asks every session to call update_session_meta). Everything else on the
@@ -377,9 +416,16 @@ export function toolScopeDeniedTools(scope: ChildToolScope): readonly string[] {
       ...FILE_WRITE_TOOLS, ...RUN_TOOLS, ...DELEGATION_TOOLS, ...CONFIG_AND_COMMIT_TOOLS,
       ...OUTWARD_TOOLS, ...NETWORK_TOOLS, ...SKILL_TOOLS, ...readScopeDeniedFirstPartyTools(),
     ])];
-    return scope === 'review' ? denied.filter((tool) => tool !== RUN_PROJECT_TESTS_TOOL) : denied;
+    return scope === 'review'
+      ? denied.filter((tool) => tool !== RUN_PROJECT_TESTS_TOOL && !PORTAL_OBSERVE_EXERCISE_NAMES.has(tool))
+      : denied;
   }
-  if (scope === 'write') return [...RUN_TOOLS, RUN_PROJECT_TESTS_TOOL, ...DELEGATION_TOOLS, ...CONFIG_AND_COMMIT_TOOLS, ...OUTWARD_TOOLS];
+  if (scope === 'write') {
+    return [
+      ...RUN_TOOLS, RUN_PROJECT_TESTS_TOOL, mcpTool(MCP_CORE, PORTAL_EVALUATE_TOOL),
+      ...DELEGATION_TOOLS, ...CONFIG_AND_COMMIT_TOOLS, ...OUTWARD_TOOLS,
+    ];
+  }
   return [];
 }
 
@@ -396,7 +442,8 @@ export function mergeToolScopeDisallowedTools(
   mcpServerKeys: readonly string[] = [],
   role: TeamRole | null = null,
 ): string[] | undefined {
-  const denied = [...toolScopeDeniedTools(scope), ...teamRoleDeniedTools(role)];
+  const denied = [...toolScopeDeniedTools(scope), ...teamRoleDeniedTools(role), ...teamRolePortalDeniedTools(role)];
+  if (role !== null) denied.push(BROWSER_EXTENSION_SERVER);
   if (scope === 'read' || scope === 'review') {
     denied.push(...mcpServerKeys.filter(isExtensionServerConfigKey).map((key) => `mcp__${key}`));
   }
@@ -412,6 +459,7 @@ export function mergeToolScopeDisallowedTools(
  */
 export function isReadScopeAllowedMcpTool(toolName: string, scope: 'read' | 'review'): boolean {
   if (READ_SCOPE_ALLOWED_FIRST_PARTY_TOOLS.has(toolName)) return true;
+  if (scope === 'review' && PORTAL_OBSERVE_EXERCISE_NAMES.has(toolName)) return true;
   return scope === 'review' && toolName === RUN_PROJECT_TESTS_TOOL;
 }
 
@@ -432,6 +480,9 @@ export function isToolDeniedForScope(
   role: TeamRole | null = null,
 ): boolean {
   if (teamRoleDeniedTools(role).includes(toolName)) return true;
+  if (role !== null && (teamRolePortalDeniedTools(role).includes(toolName) || toolName.startsWith(`${BROWSER_EXTENSION_SERVER}__`))) {
+    return true;
+  }
   if (scope === 'full') return false;
   const denied = new Set(mergeToolScopeDisallowedTools(undefined, scope, mcpServerKeys, role) ?? []);
   if (denied.has(toolName)) return true;

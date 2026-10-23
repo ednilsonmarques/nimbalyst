@@ -615,5 +615,15 @@
     "detailNoEmail": "This invitation was opened from a link, so it did not come from inside Nimbalyst. Joining gives your signed-in account access to this organization's shared projects and documents. Only continue if you were expecting this invitation.",
     "confirm": "Join organization",
     "cancel": "Cancel"
+  },
+  "portalTestData": {
+    "title": "Allow agents to interact with local previews?",
+    "messageEnable": "Mark \"{{project}}\" as test data?",
+    "messagePorts": "Let agents interact with more localhost ports in \"{{project}}\"?",
+    "detailEnable": "Agents working in this project will be able to click, type and run scripts in previews of its files and on localhost pages served from these ports: {{ports}}. They can change data there, so continue only if those pages hold test data. Localhost pages on other ports stay view-only.",
+    "detailEnableNoPorts": "Agents working in this project will be able to click, type and run scripts in previews of its files. They can change data there, so continue only if those previews hold test data. Localhost pages stay view-only until you declare ports.",
+    "detailPorts": "Agents working in this project will be able to click, type and run scripts on localhost pages served from these ports: {{ports}}. They can change data there, so continue only if those pages hold test data.",
+    "confirm": "Allow",
+    "cancel": "Cancel"
   }
 }

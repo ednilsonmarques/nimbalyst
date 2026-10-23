@@ -78,6 +78,19 @@ export class FakeSession extends EventEmitter {
     get: (): Promise<Array<{ name: string; value: string }>> =>
       Promise.resolve([...this.cookieJar].map(([name, value]) => ({ name, value }))),
   };
+  /** Counts request-level hooks: portal confinement must not install any (subresources stay free). */
+  webRequestHooks = 0;
+  webRequest = {
+    onBeforeRequest: (): void => {
+      this.webRequestHooks++;
+    },
+    onBeforeSendHeaders: (): void => {
+      this.webRequestHooks++;
+    },
+    onHeadersReceived: (): void => {
+      this.webRequestHooks++;
+    },
+  };
   storageCleared = 0;
   clearStorageData(): Promise<void> {
     this.storageCleared++;

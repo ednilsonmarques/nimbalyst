@@ -259,6 +259,14 @@ describe('McpConfigService', () => {
       });
     });
 
+    it('names the calling AI session on the extension-dev URL (scope policy of extension_test_ai_tool)', async () => {
+      service = new McpConfigService(mockDeps);
+      const config = await service.getMcpServersConfig({ workspacePath: '/test/workspace', sessionId: 'sess 1' });
+      expect(config['nimbalyst-extension-dev'].url).toBe(
+        'http://127.0.0.1:3002/mcp?workspacePath=%2Ftest%2Fworkspace&aiSessionId=sess%201',
+      );
+    });
+
     describe('Bearer-token plumbing (Issue #146)', () => {
       it('emits Authorization header on every nimbalyst-* server when mcpAuthToken is set', async () => {
         mockDeps.mcpAuthToken = 'token-abc123';

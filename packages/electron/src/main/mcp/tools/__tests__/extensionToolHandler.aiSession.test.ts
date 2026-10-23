@@ -1,13 +1,22 @@
 // @vitest-environment node
 /**
- * Portal F1.1 -- the MCP session that made the tool call is turned by main into
- * a one-call actor token, and that token (not the raw session id) is what the
- * renderer carries as `context.aiSessionId`. A call with no MCP session id is
- * rejected: there is no placeholder actor any more.
+ * Portal F1.1 / F1.2 -- attribution of extension tool calls.
+ *
+ * The MCP session that made the tool call is turned by main into a one-call
+ * actor token, and that token (not the raw session id) is what the renderer
+ * carries as `context.aiSessionId` for the tools that still run there. A call
+ * with no MCP session id is rejected: there is no placeholder actor.
+ *
+ * F1.2: the browser tools no longer run in the renderer at all (main runs them
+ * with the MCP session as actor, see browserToolInMain.test.ts), so the token
+ * path below is exercised with a non-browser extension tool.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { requestFromRenderer } = vi.hoisted(() => ({ requestFromRenderer: vi.fn() }));
+const { requestFromRenderer, runBrowserToolInMain } = vi.hoisted(() => ({
+  requestFromRenderer: vi.fn(),
+  runBrowserToolInMain: vi.fn(),
+}));
 
 vi.mock('electron', () => ({ BrowserWindow: { fromId: () => ({}) } }));
 vi.mock('@modelcontextprotocol/sdk/types.js', () => ({
@@ -16,10 +25,14 @@ vi.mock('@modelcontextprotocol/sdk/types.js', () => ({
 }));
 vi.mock('../../mcpWorkspaceResolver', () => ({
   findWindowIdForWorkspacePath: async () => 1,
-  getAvailableExtensionTools: async () => [{ name: 'browser.navigate' }, { name: 'other.tool' }],
+  getAvailableExtensionTools: async () => [{ name: 'browser.navigate' }, { name: 'browser.click' }, { name: 'other.tool' }],
   documentStateBySession: new Map(),
 }));
 vi.mock('../../rendererRequest', () => ({ requestFromRenderer }));
+vi.mock('../browserToolInMain', () => ({
+  isBrowserToolName: (name: string) => /^browser[._]/.test(name),
+  runBrowserToolInMain,
+}));
 vi.mock('../../../utils/logger', () => ({
   logger: { main: { info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn() } },
 }));
@@ -31,6 +44,8 @@ beforeEach(() => {
   __resetActorTokensForTests();
   requestFromRenderer.mockReset();
   requestFromRenderer.mockResolvedValue({ status: 'ok', response: { success: true, message: 'ok' } });
+  runBrowserToolInMain.mockReset();
+  runBrowserToolInMain.mockResolvedValue({ success: true, message: 'ran in main' });
 });
 
 function sentContext(): Record<string, unknown> {
@@ -39,21 +54,20 @@ function sentContext(): Record<string, unknown> {
 
 describe('handleExtensionTool attribution', () => {
   it('hands the renderer a main-issued token that resolves to the MCP session id', async () => {
-    await handleExtensionTool('browser.navigate', 'browser.navigate', { url: 'https://example.com' }, 'ai-session-A', '/ws');
+    await handleExtensionTool('other.tool', 'other.tool', { url: 'https://example.com' }, 'ai-session-A', '/ws');
     const token = sentContext().aiSessionId as string;
     expect(token).not.toContain('ai-session-A');
     expect(resolveCaller('ai-session-A').ok).toBe(false);
-    // resolved while the call is still open: ask from inside the renderer request
   });
 
-  it('the token is valid during the call and revoked once it ends', async () => {
+  it('the token is valid during the call, carries the project, and is revoked once it ends', async () => {
     let during: unknown;
     requestFromRenderer.mockImplementation(async (_w: unknown, _c: string, payload: any) => {
       during = resolveCaller(payload.context.aiSessionId);
       return { status: 'ok', response: { success: true, message: 'ok' } };
     });
-    await handleExtensionTool('browser.navigate', 'browser.navigate', {}, 'ai-session-A', '/ws');
-    expect(during).toEqual({ ok: true, actor: 'ai-session-A' });
+    await handleExtensionTool('other.tool', 'other.tool', {}, 'ai-session-A', '/ws');
+    expect(during).toEqual({ ok: true, actor: 'ai-session-A', workspacePath: '/ws' });
     expect(resolveCaller(sentContext().aiSessionId).ok).toBe(false);
   });
 
@@ -64,11 +78,11 @@ describe('handleExtensionTool attribution', () => {
       return { status: 'ok', response: { success: true, message: 'ok' } };
     });
     await handleExtensionTool(
-      'browser.navigate', 'browser.navigate',
+      'other.tool', 'other.tool',
       { url: 'https://example.com', aiSessionId: 'ai-session-B', context: { aiSessionId: 'ai-session-B' } },
       'ai-session-A', '/ws',
     );
-    expect(during).toEqual({ ok: true, actor: 'ai-session-A' });
+    expect(during).toMatchObject({ ok: true, actor: 'ai-session-A' });
   });
 
   it.each([undefined, ''])('rejects a call with MCP session id %j and never reaches the renderer', async (sid) => {
@@ -76,6 +90,7 @@ describe('handleExtensionTool attribution', () => {
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toMatch(/attribut|session/i);
     expect(requestFromRenderer).not.toHaveBeenCalled();
+    expect(runBrowserToolInMain).not.toHaveBeenCalled();
   });
 
   it('rejects an unattributed call to any extension tool, not only browser.*', async () => {
@@ -88,24 +103,26 @@ describe('handleExtensionTool attribution', () => {
     const result = await handleExtensionTool('browser.navigate', 'browser.navigate', {}, undefined, '/ws');
     expect(JSON.stringify(result)).not.toContain('unattributed-ai-session');
   });
+});
 
-  it('flags a browser tool whose result came back without the token ever being presented', async () => {
-    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
-    await handleExtensionTool('browser.navigate', 'browser.navigate', { url: 'https://example.com/?token=secret' }, 'ai-session-A', '/ws');
-    const lines = err.mock.calls.map((c) => c.join(' '));
-    expect(lines.some((l) => l.includes('browser.navigate') && /attribution/i.test(l))).toBe(true);
-    expect(lines.join(' | ')).not.toContain('secret');
-    err.mockRestore();
+describe('browser tools take no renderer hop (F1.2)', () => {
+  it('runs in main with the MCP session as actor and the project, and never asks the renderer', async () => {
+    const result = await handleExtensionTool('browser.navigate', 'browser.navigate', { url: 'https://example.com' }, 'ai-session-A', '/ws');
+    expect(requestFromRenderer).not.toHaveBeenCalled();
+    expect(runBrowserToolInMain).toHaveBeenCalledWith('browser.navigate', { url: 'https://example.com' }, { actor: 'ai-session-A', workspacePath: '/ws' });
+    expect(result.isError).toBe(false);
+    expect(result.content[0].text).toBe('ran in main');
   });
 
-  it('does not flag it when the token was presented', async () => {
-    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
-    requestFromRenderer.mockImplementation(async (_w: unknown, _c: string, payload: any) => {
-      resolveCaller(payload.context.aiSessionId);
-      return { status: 'ok', response: { success: true, message: 'ok' } };
-    });
-    await handleExtensionTool('browser.navigate', 'browser.navigate', {}, 'ai-session-A', '/ws');
-    expect(err.mock.calls.filter((c) => /attribution/i.test(c.join(' ')))).toEqual([]);
-    err.mockRestore();
+  it('a tool argument cannot change the actor', async () => {
+    await handleExtensionTool('browser.navigate', 'browser.navigate', { aiSessionId: 'ai-session-B', actor: 'ai-session-B' }, 'ai-session-A', '/ws');
+    expect(runBrowserToolInMain.mock.calls[0][2]).toEqual({ actor: 'ai-session-A', workspacePath: '/ws' });
+  });
+
+  it('turns a refusal from main into an error result', async () => {
+    runBrowserToolInMain.mockResolvedValue({ success: false, error: 'not allowed' });
+    const result = await handleExtensionTool('browser.click', 'browser.click', {}, 'ai-session-A', '/ws');
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('not allowed');
   });
 });

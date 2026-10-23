@@ -9,147 +9,10 @@ type McpToolResult = {
 };
 
 import { withActorToken } from "../../services/BrowserAuthority";
+import { isBrowserToolName, runBrowserToolInMain, type MainBrowserToolResult } from "./browserToolInMain";
 
-/** Tools that drive the embedded browser; they must present their actor token. */
-const BROWSER_TOOL = /^browser[._]/;
-
-export async function handleExtensionTool(
-  toolName: string,
-  originalName: string,
-  args: any,
-  sessionId: string | undefined,
-  workspacePath: string | undefined
-): Promise<McpToolResult> {
-  // No attribution, no execution: a call without an MCP session id has no actor
-  // and must not run, or create or own anything, as a stand-in.
-  if (!sessionId) {
-    console.warn(`[MCP Server] Rejected extension tool "${originalName}": no MCP session id (unattributed call)`);
-    return {
-      content: [
-        { type: "text", text: `Error: extension tool calls must be attributed to an MCP session; this call had no session id` },
-      ],
-      isError: true,
-    };
-  }
-
-  // Check if this is an extension tool - use session-specific state
-  const currentDocState = sessionId
-    ? documentStateBySession.get(sessionId)
-    : undefined;
-  const extensionTools = await getAvailableExtensionTools(
-    workspacePath,
-    currentDocState?.filePath
-  );
-
-  // Tool names may have been sanitized (dots replaced with underscores) for
-  // providers that don't accept dots. Try the incoming name first, then
-  // fall back to reversing common sanitization patterns.
-  let extensionTool = extensionTools.find((t) => t.name === toolName);
-  if (!extensionTool) {
-    // Try matching with dots restored (e.g., "automations_list" -> "automations.list")
-    // Extension tools use "prefix.action" format, so try replacing the first
-    // underscore after a namespace-like prefix with a dot
-    for (const tool of extensionTools) {
-      if (tool.name.includes('.') && tool.name.replace(/\./g, '_') === toolName) {
-        extensionTool = tool;
-        break;
-      }
-    }
-  }
-  if (!extensionTool) {
-    throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${originalName}`);
-  }
-
-  // Execute extension tool via IPC to renderer
-  if (!workspacePath) {
-    return {
-      content: [
-        { type: "text", text: `Error: workspacePath is required to execute extension tools` },
-      ],
-      isError: true,
-    };
-  }
-
-  // Find the correct window for this workspace (resolves worktree paths to parent project)
-  const windowId = await findWindowIdForWorkspacePath(workspacePath);
-  if (!windowId) {
-    return {
-      content: [
-        { type: "text", text: `Error: No window found for workspace: ${workspacePath}` },
-      ],
-      isError: true,
-    };
-  }
-
-  const targetWindow = BrowserWindow.fromId(windowId);
-  if (!targetWindow) {
-    return {
-      content: [{ type: "text", text: `Error: Window no longer exists` }],
-      isError: true,
-    };
-  }
-
-  // Prefer filePath from tool args (agent targeting a specific file) over session state
-  const activeFilePath = args?.filePath || currentDocState?.filePath;
-  const TOOL_TIMEOUT_MS = 30000;
-
-  // Send IPC to renderer to execute the tool.
-  // Use the extension's original name (may contain dots) since the
-  // renderer matches against the name defined in extension code.
-  // Attribution comes from the MCP connection, never from `args`. The renderer
-  // receives an opaque token main minted for this call, not the session id, so
-  // it cannot present an identity of its own; main resolves the token back to
-  // the session id on every browser IPC and revokes it when the call ends.
-  const { value: outcome, used: tokenPresented } = await withActorToken(sessionId, (actorToken) =>
-    requestFromRenderer<any>(
-      targetWindow,
-      "mcp:executeExtensionTool",
-      {
-        toolName: extensionTool!.name,
-        args: args || {},
-        context: {
-          workspacePath,
-          activeFilePath,
-          aiSessionId: actorToken,
-        },
-      },
-      { timeoutMs: TOOL_TIMEOUT_MS, resultChannelPrefix: "mcp-extension-result" }
-    )
-  );
-  if (!tokenPresented && BROWSER_TOOL.test(extensionTool.name)) {
-    // Tool name only: arguments may carry secrets.
-    console.error(
-      `[MCP Server] Browser tool "${extensionTool.name}" finished without presenting its actor token; attribution was lost between main and the browser IPC`
-    );
-  }
-
-  if (outcome.status === "timedOut") {
-    console.error(`[MCP Server] Extension tool timed out:`, {
-      toolName,
-      timeoutMs: TOOL_TIMEOUT_MS,
-      activeFilePath,
-    });
-
-    const timeoutMessage = [
-      `Extension Tool Timeout`,
-      `  Tool: ${toolName}`,
-      `  Timeout: ${TOOL_TIMEOUT_MS / 1000}s`,
-      ``,
-      `The tool did not respond in time. This could mean:`,
-      `1. The tool is performing a long-running operation`,
-      `2. The tool is stuck in an infinite loop`,
-      `3. There was a silent error in the tool handler`,
-      ``,
-      `Check the extension logs for more details.`,
-    ].join("\n");
-
-    return {
-      content: [{ type: "text", text: timeoutMessage }],
-      isError: true,
-    };
-  }
-
-  const result = outcome.response;
+/** Turns a tool's `{ success, message, data, error }` result into the MCP reply. */
+function formatToolResult(result: any): McpToolResult {
   const hasExplicitSuccess = typeof result?.success === "boolean";
   const hasError = !!result?.error;
   const success = hasExplicitSuccess ? result.success : !hasError;
@@ -221,4 +84,153 @@ export async function handleExtensionTool(
     content: [{ type: "text", text: responseText }],
     isError: !success,
   };
+}
+
+export async function handleExtensionTool(
+  toolName: string,
+  originalName: string,
+  args: any,
+  sessionId: string | undefined,
+  workspacePath: string | undefined
+): Promise<McpToolResult> {
+  // No attribution, no execution: a call without an MCP session id has no actor
+  // and must not run, or create or own anything, as a stand-in.
+  if (!sessionId) {
+    console.warn(`[MCP Server] Rejected extension tool "${originalName}": no MCP session id (unattributed call)`);
+    return {
+      content: [
+        { type: "text", text: `Error: extension tool calls must be attributed to an MCP session; this call had no session id` },
+      ],
+      isError: true,
+    };
+  }
+
+  // Check if this is an extension tool - use session-specific state
+  const currentDocState = sessionId
+    ? documentStateBySession.get(sessionId)
+    : undefined;
+  const extensionTools = await getAvailableExtensionTools(
+    workspacePath,
+    currentDocState?.filePath
+  );
+
+  // Tool names may have been sanitized (dots replaced with underscores) for
+  // providers that don't accept dots. Try the incoming name first, then
+  // fall back to reversing common sanitization patterns.
+  let extensionTool = extensionTools.find((t) => t.name === toolName);
+  if (!extensionTool) {
+    // Try matching with dots restored (e.g., "automations_list" -> "automations.list")
+    // Extension tools use "prefix.action" format, so try replacing the first
+    // underscore after a namespace-like prefix with a dot
+    for (const tool of extensionTools) {
+      if (tool.name.includes('.') && tool.name.replace(/\./g, '_') === toolName) {
+        extensionTool = tool;
+        break;
+      }
+    }
+  }
+  if (!extensionTool) {
+    throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${originalName}`);
+  }
+
+  // The agent's browser tools never take the renderer hop. Main runs the whole
+  // tool with the actor from this MCP connection, so there is no hop that could
+  // drop the actor (the browser IPC reads an absent actor as the user's own UI).
+  // Any tool named like a browser tool is handled here, known or not: an unknown
+  // one is refused, never forwarded.
+  if (isBrowserToolName(extensionTool.name)) {
+    const result: MainBrowserToolResult = await runBrowserToolInMain(extensionTool.name, args, {
+      actor: sessionId,
+      workspacePath,
+    });
+    return formatToolResult(result);
+  }
+
+  // Execute extension tool via IPC to renderer
+  if (!workspacePath) {
+    return {
+      content: [
+        { type: "text", text: `Error: workspacePath is required to execute extension tools` },
+      ],
+      isError: true,
+    };
+  }
+
+  // Find the correct window for this workspace (resolves worktree paths to parent project)
+  const windowId = await findWindowIdForWorkspacePath(workspacePath);
+  if (!windowId) {
+    return {
+      content: [
+        { type: "text", text: `Error: No window found for workspace: ${workspacePath}` },
+      ],
+      isError: true,
+    };
+  }
+
+  const targetWindow = BrowserWindow.fromId(windowId);
+  if (!targetWindow) {
+    return {
+      content: [{ type: "text", text: `Error: Window no longer exists` }],
+      isError: true,
+    };
+  }
+
+  // Prefer filePath from tool args (agent targeting a specific file) over session state
+  const activeFilePath = args?.filePath || currentDocState?.filePath;
+  const TOOL_TIMEOUT_MS = 30000;
+
+  // Send IPC to renderer to execute the tool.
+  // Use the extension's original name (may contain dots) since the
+  // renderer matches against the name defined in extension code.
+  // Attribution comes from the MCP connection, never from `args`. The renderer
+  // receives an opaque token main minted for this call, not the session id, so
+  // it cannot present an identity of its own; main resolves the token back to
+  // the session id on every browser IPC and revokes it when the call ends.
+  const { value: outcome } = await withActorToken(
+    sessionId,
+    (actorToken) =>
+      requestFromRenderer<any>(
+        targetWindow,
+        "mcp:executeExtensionTool",
+        {
+          toolName: extensionTool!.name,
+          args: args || {},
+          context: {
+            workspacePath,
+            activeFilePath,
+            aiSessionId: actorToken,
+          },
+        },
+        { timeoutMs: TOOL_TIMEOUT_MS, resultChannelPrefix: "mcp-extension-result" }
+      ),
+    { workspacePath }
+  );
+
+  if (outcome.status === "timedOut") {
+    console.error(`[MCP Server] Extension tool timed out:`, {
+      toolName,
+      timeoutMs: TOOL_TIMEOUT_MS,
+      activeFilePath,
+    });
+
+    const timeoutMessage = [
+      `Extension Tool Timeout`,
+      `  Tool: ${toolName}`,
+      `  Timeout: ${TOOL_TIMEOUT_MS / 1000}s`,
+      ``,
+      `The tool did not respond in time. This could mean:`,
+      `1. The tool is performing a long-running operation`,
+      `2. The tool is stuck in an infinite loop`,
+      `3. There was a silent error in the tool handler`,
+      ``,
+      `Check the extension logs for more details.`,
+    ].join("\n");
+
+    return {
+      content: [{ type: "text", text: timeoutMessage }],
+      isError: true,
+    };
+  }
+
+  return formatToolResult(outcome.response);
 }

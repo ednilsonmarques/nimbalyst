@@ -29,6 +29,7 @@
 import { AISessionsRepository } from '@nimbalyst/runtime/storage/repositories/AISessionsRepository';
 import { resolveTeamContext, type TeamRole } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 import {
+  PORTAL_TOOLS,
   isToolDeniedForScope,
   resolveChildToolScope,
   teamRoleDeniedTools,
@@ -167,8 +168,23 @@ function endpointConfigKey(endpoint: McpEndpointSelection): string {
   return 'nimbalyst-fallback';
 }
 
+/** The only provider (`ai_sessions.provider`) that gets `portal_*`. */
+const PORTAL_PROVIDER = 'claude-code';
+
+/**
+ * Portal V1 is Claude Code only (decision recorded in manifest M-9). An
+ * ALLOWLIST: every other provider (openai-codex, openai-codex-acp, any future
+ * one) and a session whose provider is unknown get no `portal_*` tool.
+ * `claude-code-cli` stays excluded in V1 too: that is a coordinator decision,
+ * not an oversight, so do not add it here without a new decision.
+ */
+function isPortalToolForNonClaude(policy: SessionToolPolicy, endpoint: McpEndpointSelection, toolName: string): boolean {
+  return policy.provider !== PORTAL_PROVIDER && endpointConfigKey(endpoint) === 'nimbalyst' && PORTAL_TOOLS.includes(toolName);
+}
+
 /** Whether `toolName` (bare, as the endpoint lists it) must not be served to a session under `policy`. */
 export function isToolDeniedForSession(policy: SessionToolPolicy, endpoint: McpEndpointSelection, toolName: string): boolean {
+  if (isPortalToolForNonClaude(policy, endpoint, toolName)) return true;
   if (!isRestrictedToolPolicy(policy)) return false;
   const configKey = endpointConfigKey(endpoint);
   // The endpoint's own server key is passed so an extension server is denied
@@ -182,7 +198,8 @@ export function filterToolsForSession<T extends { name: string }>(
   policy: SessionToolPolicy,
   endpoint: McpEndpointSelection,
 ): T[] {
-  if (!isRestrictedToolPolicy(policy)) return [...tools];
+  // A non-Claude session is filtered even when unrestricted (it gets no portal tool).
+  if (!isRestrictedToolPolicy(policy) && policy.provider === PORTAL_PROVIDER) return [...tools];
   return tools.filter((tool) => !isToolDeniedForSession(policy, endpoint, tool.name));
 }
 
@@ -192,6 +209,12 @@ export function sessionToolDenial(
   endpoint: McpEndpointSelection,
   toolName: string,
 ): { content: Array<{ type: 'text'; text: string }>; isError: true } {
+  if (isPortalToolForNonClaude(policy, endpoint, toolName)) {
+    return {
+      content: [{ type: 'text', text: `Error: Tool "${toolName}" is not available to this session: Portal tools are available to Claude Code sessions only (Portal V1). Nothing was executed.` }],
+      isError: true,
+    };
+  }
   const name = policyToolName(endpoint, toolName);
   const text = policy.role && teamRoleDeniedTools(policy.role).includes(name)
     ? teamRoleDenialReason(policy.role, toolName)

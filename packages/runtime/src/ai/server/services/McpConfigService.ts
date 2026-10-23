@@ -275,7 +275,10 @@ export class McpConfigService {
 
     // Include extension dev MCP server if it's started (provides build, install, reload tools)
     if (!isMetaAgent && !isScoped && this.deps.extensionDevServerPort !== null) {
-      const params = workspacePath ? `?workspacePath=${encodeURIComponent(workspacePath)}` : '';
+      // aiSessionId lets extension_test_ai_tool apply THIS session's scope policy to the browser tools it drives.
+      const params = workspacePath
+        ? `?workspacePath=${encodeURIComponent(workspacePath)}${sessionId ? `&aiSessionId=${encodeURIComponent(sessionId)}` : ''}`
+        : '';
       config['nimbalyst-extension-dev'] = {
         type: 'sse',
         transport: 'sse',

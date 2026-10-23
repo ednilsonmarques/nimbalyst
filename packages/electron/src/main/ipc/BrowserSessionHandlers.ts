@@ -24,24 +24,27 @@
  */
 
 import { BrowserWindow } from 'electron';
-import { relative, isAbsolute, resolve, join } from 'path';
-import { mkdir, realpath, writeFile } from 'fs/promises';
+import { isAbsolute } from 'path';
 import {
   BrowserSessionService,
   type BrowserSessionBounds,
   type BrowserNavigationState,
 } from '../services/BrowserSessionService';
-import {
-  encodeNimPreviewUrl,
-  getNimPreviewWorkspaceRoots,
-  previewPathsEqual,
-  previewPathInsideRoot,
-} from '../protocols/nimPreviewProtocol';
 import { logger } from '../utils/logger';
 import { resolveCaller } from '../services/BrowserAuthority';
+import { assertAgentMayExerciseOn, type PortalExerciseAction } from '../services/portalTestData';
+import {
+  BROWSER_TRANSCRIPT_IMAGE_DIRNAME,
+  buildPreviewUrlForFile,
+  captureScreenshotToFile,
+  getBrowserTranscriptImageDir,
+  resolveRegisteredWorkspace,
+} from '../services/BrowserAgentFiles';
 import { safeHandle } from '../utils/ipcRegistry';
 
-export const BROWSER_TRANSCRIPT_IMAGE_DIRNAME = 'transcript-images';
+// The file helpers moved to BrowserAgentFiles (shared with the main-run agent
+// browser tools); re-exported so existing importers keep working.
+export { BROWSER_TRANSCRIPT_IMAGE_DIRNAME, getBrowserTranscriptImageDir, resolveRegisteredWorkspace };
 
 /**
  * Who is calling (decided by BrowserAuthority). The user's own UI sends no
@@ -79,7 +82,7 @@ interface NavigatePayload extends ActorPayload {
   url: string;
 }
 
-type Authorization = { ok: true; actor: string | undefined } | { ok: false; error: string };
+type Authorization = { ok: true; actor: string | undefined; workspacePath?: string } | { ok: false; error: string };
 
 const readActor = (payload: ActorPayload | undefined) => resolveCaller(payload?.actorSessionId);
 
@@ -92,57 +95,30 @@ function authorize(service: BrowserSessionService, payload: SessionIdPayload): A
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
-  return { ok: true, actor: who.actor };
-}
-
-export function getBrowserTranscriptImageDir(workspacePath: string): string {
-  return join(resolve(workspacePath), '.nimbalyst', BROWSER_TRANSCRIPT_IMAGE_DIRNAME);
+  return { ok: true, actor: who.actor, workspacePath: who.workspacePath };
 }
 
 /**
- * Resolve a caller-supplied workspace path to a registered open workspace.
- * Accepted: a path equal to or inside a root the app registered for an open
- * workspace window, or the exact path of a known worktree whose project is
- * registered. Returns the normalised path, or null when it is neither (or does
- * not exist, or resolves out of its root through a link).
+ * An agent actor (a main-issued token) may click, type or evaluate only in a
+ * project the user marked as test data. The user's own UI (no actor) is never
+ * gated. A token minted without a project fails closed.
  */
-export async function resolveRegisteredWorkspace(workspacePath: string): Promise<string | null> {
-  const candidate = resolve(workspacePath);
-  const roots = getNimPreviewWorkspaceRoots();
-
-  const root = roots.find((r) => previewPathInsideRoot(r, candidate));
-  if (root) {
-    try {
-      const [realRoot, realCandidate] = await Promise.all([realpath(root), realpath(candidate)]);
-      return previewPathInsideRoot(realRoot, realCandidate) ? candidate : null;
-    } catch {
-      return null;
-    }
-  }
-
-  const projectPath = await lookupWorktreeProjectPath(candidate);
-  if (!projectPath) return null;
-  const project = resolve(projectPath);
-  if (!roots.some((r) => previewPathInsideRoot(r, project))) return null;
+async function gateAgentExercise(
+  service: BrowserSessionService,
+  sessionId: string,
+  auth: Authorization,
+  action: PortalExerciseAction,
+): Promise<string | null> {
+  if (!auth.ok || auth.actor === undefined) return null;
   try {
-    await realpath(candidate);
-  } catch {
-    return null;
-  }
-  return candidate;
-}
-
-async function lookupWorktreeProjectPath(workspacePath: string): Promise<string | null> {
-  try {
-    const { getDatabase } = await import('../database/initialize');
-    const { createWorktreeStore } = await import('../services/WorktreeStore');
-    const worktree = await createWorktreeStore(getDatabase()).getByPath(workspacePath);
-    return worktree?.projectPath ?? null;
-  } catch (err) {
-    logger.main.warn(
-      `[BrowserSessionHandlers] worktree lookup failed: ${err instanceof Error ? err.message : String(err)}`,
+    // Only a LOCAL preview is gated (see portalTestData.assertAgentMayExerciseOn).
+    await assertAgentMayExerciseOn(
+      { url: service.getCurrentUrl(sessionId) ?? '', boundProject: service.getProjectPath(sessionId), openedByProject: service.getOpenedByProject(sessionId) },
+      action,
     );
     return null;
+  } catch (err) {
+    return err instanceof Error ? err.message : String(err);
   }
 }
 
@@ -187,6 +163,7 @@ export function registerBrowserSessionHandlers(): void {
         headless: payload.headless,
         viewport: payload.viewport,
         ownerSessionId: who.actor,
+        openedByProject: who.actor === undefined ? undefined : who.workspacePath,
       });
       return { success: true, state };
     } catch (err) {
@@ -330,38 +307,11 @@ export function registerBrowserSessionHandlers(): void {
       if (!payload?.filePath) {
         return { success: false, error: 'filePath is required' };
       }
-      if (!isAbsolute(payload.filePath)) {
-        return { success: false, error: 'filePath must be absolute' };
+      try {
+        return { success: true, url: buildPreviewUrlForFile(payload.filePath, payload.workspacePath) };
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : String(err) };
       }
-      const resolvedFile = resolve(payload.filePath);
-      const roots = getNimPreviewWorkspaceRoots();
-      let matchedRoot: string | null = null;
-      if (payload.workspacePath) {
-        const candidate = resolve(payload.workspacePath);
-        // Match against the registered root (not the caller's spelling) so the
-        // encoded root always equals an allowlisted entry, even when drive
-        // letter or path casing differs on Windows (issue #612).
-        const registered = roots.find((r) => previewPathsEqual(r, candidate));
-        if (registered && previewPathInsideRoot(registered, resolvedFile)) {
-          matchedRoot = registered;
-        }
-      }
-      if (!matchedRoot) {
-        for (const root of roots) {
-          if (previewPathInsideRoot(root, resolvedFile)) {
-            matchedRoot = root;
-            break;
-          }
-        }
-      }
-      if (!matchedRoot) {
-        return { success: false, error: 'File is not under any active workspace root' };
-      }
-      const rel = relative(matchedRoot, resolvedFile);
-      return {
-        success: true,
-        url: encodeNimPreviewUrl(matchedRoot, rel),
-      };
     },
   );
 
@@ -398,33 +348,7 @@ export function registerBrowserSessionHandlers(): void {
       const auth = authorize(service, payload);
       if (!auth.ok) return { success: false, error: auth.error };
       try {
-        // The caller names the workspace, so it is only trusted once it is a
-        // registered open workspace (or a worktree of one). Nothing is
-        // captured or written otherwise.
-        const workspace = await resolveRegisteredWorkspace(payload.workspacePath);
-        if (!workspace) {
-          return { success: false, error: 'workspacePath is not a registered open workspace' };
-        }
-        const buffer = await service.captureScreenshot(payload.sessionId);
-        // Persist transcript-linked screenshots in a durable .nimbalyst
-        // subdirectory instead of the transient browser-shots path.
-        const dir = getBrowserTranscriptImageDir(workspace);
-        const realWorkspace = await realpath(workspace);
-        // A `.nimbalyst` that is a link leaving the workspace must not become
-        // the write target (checked before mkdir, which would follow it).
-        const realNimbalyst = await realpath(join(workspace, '.nimbalyst')).catch(() => null);
-        if (realNimbalyst && !previewPathInsideRoot(realWorkspace, realNimbalyst)) {
-          return { success: false, error: '.nimbalyst resolves outside the workspace' };
-        }
-        await mkdir(dir, { recursive: true });
-        if (!previewPathInsideRoot(realWorkspace, await realpath(dir))) {
-          return { success: false, error: 'Screenshot directory resolves outside the workspace' };
-        }
-        const safeLabel = (payload.label || payload.sessionId)
-          .replace(/[^a-zA-Z0-9_-]+/g, '-')
-          .slice(0, 60);
-        const filePath = join(dir, `${safeLabel}-${Date.now()}.png`);
-        await writeFile(filePath, buffer);
+        const filePath = await captureScreenshotToFile(service, payload.sessionId, payload.workspacePath, payload.label);
         return { success: true, path: filePath };
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -442,6 +366,8 @@ export function registerBrowserSessionHandlers(): void {
       }
       const auth = authorize(service, payload);
       if (!auth.ok) return { success: false, error: auth.error };
+      const refused = await gateAgentExercise(service, payload.sessionId, auth, 'evaluate');
+      if (refused) return { success: false, error: refused };
       try {
         const result = await service.evaluate(payload.sessionId, payload.script);
         return { success: true, result };
@@ -476,6 +402,8 @@ export function registerBrowserSessionHandlers(): void {
       }
       const auth = authorize(service, payload);
       if (!auth.ok) return { success: false, error: auth.error };
+      const refused = await gateAgentExercise(service, payload.sessionId, auth, 'click');
+      if (refused) return { success: false, error: refused };
       try {
         await service.click(payload.sessionId, payload);
         return { success: true };
@@ -496,6 +424,8 @@ export function registerBrowserSessionHandlers(): void {
       }
       const auth = authorize(service, payload);
       if (!auth.ok) return { success: false, error: auth.error };
+      const refused = await gateAgentExercise(service, payload.sessionId, auth, 'type');
+      if (refused) return { success: false, error: refused };
       try {
         await service.type(payload.sessionId, payload);
         return { success: true };
