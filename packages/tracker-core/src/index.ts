@@ -13,4 +13,5 @@ export * from "./trackerStatusCategory.js";
 export * from "./types.js";
 export * from "./protectedTypes/teamNoteRules.js";
 export * from "./protectedTypes/toolManifestRules.js";
+export * from "./protectedTypes/teamFrontRules.js";
 export * from "./protectedTypes/protectedTrackerTypes.js";

@@ -35,6 +35,8 @@ import citationYaml from './builtins/citation.yaml?raw';
 // Team mode memory: distilled notes written by a coordinator (fork feature).
 import teamNoteYaml from './builtins/team-note.yaml?raw';
 import toolManifestYaml from './builtins/tool-manifest.yaml?raw';
+// Team lifecycle: the permanent fronts the missions advance. Builtin only, protected.
+import teamFrontYaml from './builtins/team-front.yaml?raw';
 // import featureYaml from './builtins/feature.yaml?raw';
 // import automationYaml from './builtins/automation.yaml?raw';
 
@@ -57,6 +59,7 @@ export const BUILTIN_TRACKER_YAML: ReadonlyArray<{ type: string; yaml: string }>
   { type: 'citation', yaml: citationYaml },
   { type: 'team-note', yaml: teamNoteYaml },
   { type: 'tool-manifest', yaml: toolManifestYaml },
+  { type: 'team-front', yaml: teamFrontYaml },
   // { type: 'feature', yaml: featureYaml },
   // { type: 'automation', yaml: automationYaml },
 ];

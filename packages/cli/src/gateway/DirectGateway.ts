@@ -771,7 +771,14 @@ export class DirectGateway implements TrackerGateway {
         );
       }
       this.assertProtectedWrite(() => {
-        assertProtectedTrackerUpdate(row.type, { ...input, type: newType !== row.type ? newType : undefined }, before, data);
+        // A new description is stored as the body too (below); otherwise the stored body stays.
+        assertProtectedTrackerUpdate(
+          row.type,
+          { ...input, type: newType !== row.type ? newType : undefined },
+          before,
+          data,
+          { storedBody: description !== undefined ? description : (row.content ?? null), writesBody: description !== undefined },
+        );
         if (description !== undefined) assertProtectedTrackerBody(row.type, description);
       });
 

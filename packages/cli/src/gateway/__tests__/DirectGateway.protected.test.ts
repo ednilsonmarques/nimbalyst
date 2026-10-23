@@ -240,6 +240,119 @@ describe('team-note offline (NIB.26)', () => {
   });
 });
 
+describe('team-front offline (F1 S1)', () => {
+  /** A front as the app stores it: created by the user, one mission active. */
+  const FRONT_DATA = {
+    title: 'Team Mode',
+    status: 'active',
+    priority: 'medium',
+    description: 'Estado inicial. Autoridade: ESTADO.md.',
+    currentMission: 'root-1',
+    createdByAgent: false,
+  };
+  beforeEach(() => {
+    seed({ id: 'team-front_1', type: 'team-front', data: FRONT_DATA, content: FRONT_DATA.description });
+  });
+
+  it('the user creates a front from the terminal: active, manual, with no mission', async () => {
+    const created = await gateway().createTracker(WORKSPACE, { type: 'team-front', title: 'Portal', description: 'Estado do Portal.' });
+    const row = rawRow(created.id);
+    expect(row.type).toBe('team-front');
+    expect(row.data).toMatchObject({ title: 'Portal', status: 'active', description: 'Estado do Portal.', createdByAgent: false });
+    expect(row.data.currentMission).toBeUndefined();
+    const paused = await gateway().createTracker(WORKSPACE, { type: 'team-front', title: 'Office', status: 'paused', description: 'Estado do Office.' });
+    expect(rawRow(paused.id).data.status).toBe('paused');
+  });
+
+  it('needs its state: a front with no description is refused, whitespace included, and nothing is written', async () => {
+    const refused = /A team-front needs its state: write a description or a body\./;
+    await expect(gateway().createTracker(WORKSPACE, { type: 'team-front', title: 'Portal' })).rejects.toThrow(refused);
+    await expect(gateway().createTracker(WORKSPACE, { type: 'team-front', title: 'Portal', description: '   ' })).rejects.toThrow(refused);
+    await expect(gateway().createTracker(WORKSPACE, { type: 'team-front', title: 'Portal', description: '' })).rejects.toThrow(refused);
+    const db = openDatabase(dbPath, { readonly: true });
+    expect(db.prepare(`SELECT COUNT(*) AS n FROM tracker_items WHERE type = 'team-front'`).get()).toEqual({ n: 1 });
+    db.close();
+  });
+
+  it('the description is also the body offline, so it satisfies the state on its own; clearing it clears the body too and is refused', async () => {
+    const created = await gateway().createTracker(WORKSPACE, { type: 'team-front', title: 'Portal', description: 'Estado do Portal.' });
+    expect(rawRow(created.id).content).toBe(JSON.stringify('Estado do Portal.'));
+    await expect(gateway().updateTracker(WORKSPACE, created.id, { description: '' })).rejects.toThrow(/A team-front needs its state/);
+    await expect(gateway().updateTracker(WORKSPACE, created.id, { description: '  ' })).rejects.toThrow(/A team-front needs its state/);
+    expect(rawRow(created.id).data.description).toBe('Estado do Portal.');
+    // Replacing it is fine, and an edit that leaves it alone is too.
+    await gateway().updateTracker(WORKSPACE, created.id, { description: 'Estado novo.' });
+    await gateway().updateTracker(WORKSPACE, created.id, { status: 'paused' });
+    expect(rawRow(created.id).data).toMatchObject({ description: 'Estado novo.', status: 'paused' });
+  });
+
+  it('keeps its policy: no hand-set mission, one of three statuses, a state of at most 2,000 characters, never a type tag', async () => {
+    await expect(gateway().createTracker(WORKSPACE, { type: 'team-front', title: 'Forged', fields: { currentMission: 'root-9' } })).rejects.toThrow(/currentMission is set by Nimbalyst/);
+    await expect(gateway().createTracker(WORKSPACE, { type: 'team-front', title: 'Status', status: 'done' })).rejects.toThrow(/status must be one of: active, paused, closed/);
+    await expect(gateway().createTracker(WORKSPACE, { type: 'team-front', title: 'Long', description: 'x'.repeat(2001) })).rejects.toThrow(/limit is 2000/);
+    await expect(gateway().createTracker(WORKSPACE, { type: 'task', title: 'x', typeTags: ['team-front'] })).rejects.toThrow(/not a type tag/);
+    const db = openDatabase(dbPath, { readonly: true });
+    expect(db.prepare(`SELECT COUNT(*) AS n FROM tracker_items WHERE type = 'team-front'`).get()).toEqual({ n: 1 });
+    db.close();
+  });
+
+  it('the user edits title, status and description; the mission, the type and the caps hold', async () => {
+    await gateway().updateTracker(WORKSPACE, 'team-front_1', { title: 'Team Mode v2', status: 'paused', description: 'Estado novo.' });
+    expect(rawRow('team-front_1').data).toMatchObject({ title: 'Team Mode v2', status: 'paused', description: 'Estado novo.', currentMission: 'root-1' });
+    await gateway().updateTracker(WORKSPACE, 'team-front_1', { status: 'closed' });
+    expect(rawRow('team-front_1').data.status).toBe('closed');
+    await expect(gateway().updateTracker(WORKSPACE, 'team-front_1', { fields: { currentMission: 'root-9' } })).rejects.toThrow(/currentMission is set by Nimbalyst/);
+    await expect(gateway().updateTracker(WORKSPACE, 'team-front_1', { unsetFields: ['currentMission'] })).rejects.toThrow(/currentMission is set by Nimbalyst/);
+    await expect(gateway().updateTracker(WORKSPACE, 'team-front_1', { status: 'done' })).rejects.toThrow(/status must be one of: active, paused, closed/);
+    await expect(gateway().updateTracker(WORKSPACE, 'team-front_1', { description: 'y'.repeat(2001) })).rejects.toThrow(/limit is 2000/);
+    await expect(gateway().updateTracker(WORKSPACE, 'team-front_1', { primaryType: 'task' })).rejects.toThrow(/cannot change type/);
+    await expect(gateway().updateTracker(WORKSPACE, 'task_1', { typeTags: ['task', 'team-front'] })).rejects.toThrow(/cannot be turned into a team-front/);
+    await expect(gateway().updateTracker(WORKSPACE, 'task_1', { primaryType: 'team-front' })).rejects.toThrow(/cannot be turned into a team-front/);
+    expect(rawRow('team-front_1').data.currentMission).toBe('root-1');
+    expect(rawRow('task_1').type).toBe('task');
+  });
+});
+
+describe('a front whose state is only its body, offline (F1 S1)', () => {
+  const BODY = 'Estado da frente';
+  beforeEach(() => {
+    seed({ id: 'team-front_body', type: 'team-front', data: { title: 'Só corpo', status: 'active', priority: 'medium', description: '', createdByAgent: false }, content: BODY });
+    // A front synced from an older peer: neither a description nor a body.
+    seed({ id: 'team-front_legacy', type: 'team-front', data: { title: 'Antiga', status: 'active', priority: 'medium', createdByAgent: false } });
+  });
+
+  it('keeps its body: an empty or blank description is refused (it would overwrite the body) and nothing is persisted', async () => {
+    const before = rawRow('team-front_body');
+    for (const input of [{ description: '' }, { description: '   ' }, { description: ' \n ' }]) {
+      await expect(gateway().updateTracker(WORKSPACE, 'team-front_body', input), JSON.stringify(input)).rejects.toThrow(/A team-front needs its state: write a description or a body\./);
+    }
+    const after = rawRow('team-front_body');
+    expect(after.data).toEqual(before.data);
+    expect(after.content).toBe(before.content);
+    expect(after.body_version).toBe(before.body_version);
+    expect(after.updated).toBe(before.updated);
+    expect(after.content).toBe(JSON.stringify(BODY));
+  });
+
+  it('a title or status edit that does not touch the description leaves the body alone and is accepted', async () => {
+    await gateway().updateTracker(WORKSPACE, 'team-front_body', { title: 'Só corpo v2', status: 'paused' });
+    const row = rawRow('team-front_body');
+    expect(row.data).toMatchObject({ title: 'Só corpo v2', status: 'paused', description: '' });
+    expect(row.content).toBe(JSON.stringify(BODY));
+  });
+
+  it('a real description replaces the body and is the state', async () => {
+    await gateway().updateTracker(WORKSPACE, 'team-front_body', { description: 'Estado novo.' });
+    expect(rawRow('team-front_body').content).toBe(JSON.stringify('Estado novo.'));
+  });
+
+  it('a legacy front with neither description nor body still takes a title and a status edit', async () => {
+    await gateway().updateTracker(WORKSPACE, 'team-front_legacy', { title: 'Antiga v2' });
+    await gateway().updateTracker(WORKSPACE, 'team-front_legacy', { status: 'closed' });
+    expect(rawRow('team-front_legacy').data).toMatchObject({ title: 'Antiga v2', status: 'closed' });
+  });
+});
+
 describe('ordinary types offline (NIB.26)', () => {
   it('create, update, comment and archive work exactly as before', async () => {
     const created = await gateway().createTracker(WORKSPACE, { type: 'bug', title: 'Login times out', priority: 'high', fields: { severity: 'critical' } });

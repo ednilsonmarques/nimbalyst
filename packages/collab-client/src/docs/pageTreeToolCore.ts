@@ -22,6 +22,7 @@ import {
   type ListPagesResult,
   type PageTreeNodeSummary,
 } from '@nimbalyst/collab-protocol';
+import { isProtectedTrackerType } from '@nimbalyst/tracker-core';
 import {
   isTypePageDocumentId,
   pageDisplayName,
@@ -468,6 +469,12 @@ export async function setPageTypeTool(env: PageTreeToolEnv, args: Record<string,
   const page = findPage(context, pageId);
   if (!page || isTypePageDocumentId(pageId)) return fail(`No plain page "${pageId}" in the ${context.section} section.`);
   if (!context.resolver.typeName(typeId)) return fail(`"${typeId}" is not a ${context.section} type.`);
+  // This tool is an agent's. A protected type (team-front, team-note, tool-manifest) is made
+  // by the user, or by Nimbalyst, never by an agent turning a page into one; the Set type
+  // picker in the sidebar does not go through here.
+  if (isProtectedTrackerType(typeId)) {
+    return fail(`"${typeId}" is a protected type: a tool does not turn a page into one. The user creates it in the Tracker.`);
+  }
   const outcome = await env.setPageType(context.section, context.session, page, typeId);
   if (outcome.status === 'done') return { success: true, ...(outcome.itemId ? { itemId: outcome.itemId } : {}) };
   return fail(`${outcome.status === 'refused' ? 'Set type refused' : 'Set type did not finish'}: ${outcome.message ?? 'no reason given'}`);

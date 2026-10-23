@@ -3321,6 +3321,220 @@ describe('tracker_update of a superseding tool-manifest by its coordinator (NIB.
   });
 });
 
+describe('an agent and a team-front (F1 S1): fronts are the user\'s, the coordinator keeps only the description current', () => {
+  const sessions: Record<string, unknown> = { root: { agentRole: 'standard', metadata: { teamMode: true } } };
+  const frontRow = () => makeRow({
+    id: 'team-front_1',
+    issue_key: null,
+    issue_number: null,
+    type: 'team-front',
+    type_tags: ['team-front'],
+    workspace: '/tmp/ws',
+    source: 'native',
+    document_path: '',
+    data: JSON.stringify({
+      title: 'Team Mode',
+      status: 'active',
+      priority: 'medium',
+      description: 'Estado inicial. Autoridade: ESTADO.md.',
+      currentMission: 'root-1',
+      createdByAgent: false,
+    }),
+  });
+  const updateCall = () => mockQuery.mock.calls.find((c) => String(c[0]).includes('UPDATE tracker_items SET data = $1'));
+  const insertCall = () => mockQuery.mock.calls.find((c) => /INSERT INTO tracker_items/.test(String(c[0])));
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDocumentServices.clear();
+    mockGlobalRegistry.validate.mockReturnValue({ valid: true, errors: [] });
+    vi.mocked(getEffectiveTrackerSharingPolicy).mockReturnValue({ sharing: 'personal', draftByDefault: false });
+    vi.mocked(shouldSyncTrackerItem).mockReturnValue(false);
+    vi.mocked(isTrackerSyncActive).mockReturnValue(false);
+    (mockGlobalRegistry.get as any).mockReturnValue({
+      sharing: 'team',
+      draftByDefault: false,
+      fields: [
+        { name: 'title', type: 'string' },
+        { name: 'status', type: 'select' },
+        { name: 'description', type: 'text' },
+        { name: 'currentMission', type: 'string', readOnly: true },
+      ],
+    });
+    const row = frontRow();
+    mockQuery.mockImplementation(async (sql: unknown) => {
+      const text = String(sql);
+      if (/^\s*(UPDATE|DELETE|INSERT)/i.test(text)) return { rows: [] };
+      return { rows: [row] };
+    });
+    AISessionsRepository.setStore({ get: async (id: string) => sessions[id] ?? null } as never);
+  });
+  afterEach(() => {
+    AISessionsRepository.clearStore();
+    mockQuery.mockReset();
+  });
+
+  it('the coordinator updates the description, and the rest of the front travels untouched', async () => {
+    const result = await handleTrackerUpdate({ id: 'team-front_1', description: 'Estado novo. Autoridade: ESTADO.md.' }, '/tmp/ws', 'root');
+    expect(result.isError, result.content[0]?.text).toBe(false);
+    const written = JSON.parse(updateCall()![1]![0] as string);
+    expect(written.description).toBe('Estado novo. Autoridade: ESTADO.md.');
+    expect(written.title).toBe('Team Mode');
+    expect(written.status).toBe('active');
+    expect(written.currentMission ?? written.customFields?.currentMission).toBe('root-1');
+  });
+
+  it('the description in the fields bag is the same update', async () => {
+    const result = await handleTrackerUpdate({ id: 'team-front_1', fields: { description: 'Estado via fields.' } }, '/tmp/ws', 'root');
+    expect(result.isError, result.content[0]?.text).toBe(false);
+    expect(JSON.parse(updateCall()![1]![0] as string).description).toBe('Estado via fields.');
+  });
+
+  it('refuses everything else an agent may ask: title, status, currentMission, other fields, archiving, unsetting', async () => {
+    // A known target type, so the primaryType case reaches the rule instead of the registry check.
+    (mockGlobalRegistry as any).has = vi.fn(() => true);
+    // Each refusal names the refused key(s), not a generic message.
+    for (const [args, message] of [
+      [{ id: 'team-front_1', title: 'Renamed' }, /only the description of a team-front; refused: title\. /],
+      [{ id: 'team-front_1', status: 'closed' }, /refused: status\. /],
+      [{ id: 'team-front_1', fields: { status: 'paused' } }, /refused: fields\.status\. /],
+      [{ id: 'team-front_1', fields: { currentMission: 'root-9' } }, /refused: fields\.currentMission\. /],
+      [{ id: 'team-front_1', unsetFields: ['currentMission'] }, /refused: unsetFields, currentMission\. /],
+      [{ id: 'team-front_1', priority: 'high' }, /refused: priority\. /],
+      [{ id: 'team-front_1', archived: true }, /refused: archived\. /],
+      [{ id: 'team-front_1', linkSession: 'some-session' }, /refused: linkSession\. /],
+      [{ id: 'team-front_1', description: 'ok', title: 'sneaky' }, /refused: title\. /],
+      [{ id: 'team-front_1', primaryType: 'task' }, /cannot change type/],
+    ] as Array<[Record<string, unknown>, RegExp]>) {
+      const result = await handleTrackerUpdate(args, '/tmp/ws', 'root');
+      expect(result.isError, JSON.stringify(args)).toBe(true);
+      expect(result.content[0]?.text, JSON.stringify(args)).toMatch(message);
+    }
+    expect(updateCall()).toBeUndefined();
+  });
+
+  describe('the state of a front is a description or a body', () => {
+    const refuseText = /A team-front needs its state: write a description or a body\./;
+    const withBody = (content: unknown) => {
+      const row = frontRow();
+      (row as any).content = content;
+      mockQuery.mockImplementation(async (sql: unknown) => (/^\s*(UPDATE|DELETE|INSERT)/i.test(String(sql)) ? { rows: [] } : { rows: [row] }));
+    };
+
+    it('an agent cannot clear the description of a front with no body', async () => {
+      for (const args of [
+        { id: 'team-front_1', description: '' },
+        { id: 'team-front_1', description: '   ' },
+        { id: 'team-front_1', fields: { description: '' } },
+      ] as Array<Record<string, unknown>>) {
+        const result = await handleTrackerUpdate(args, '/tmp/ws', 'root');
+        expect(result.isError, JSON.stringify(args)).toBe(true);
+        expect(result.content[0]?.text, JSON.stringify(args)).toMatch(refuseText);
+      }
+      expect(updateCall()).toBeUndefined();
+    });
+
+    it('the agent funnel writes a new description as the body too (the fields bag is lifted to it), so clearing it leaves no state even over a stored body', async () => {
+      withBody(JSON.stringify('Estado no corpo.'));
+      for (const args of [
+        { id: 'team-front_1', description: '' },
+        { id: 'team-front_1', fields: { description: '' } },
+      ] as Array<Record<string, unknown>>) {
+        const result = await handleTrackerUpdate(args, '/tmp/ws', 'root');
+        expect(result.isError, JSON.stringify(args)).toBe(true);
+        expect(result.content[0]?.text, JSON.stringify(args)).toMatch(refuseText);
+      }
+    });
+
+    it('a front whose state is only its body keeps it: an empty or blank description is refused and nothing is persisted', async () => {
+      // description '' + body: the funnel would overwrite the body with the new description.
+      const row = frontRow();
+      (row as any).data = JSON.stringify({ ...JSON.parse((row as any).data), description: '' });
+      (row as any).content = JSON.stringify('Estado da frente');
+      mockQuery.mockImplementation(async (sql: unknown) => (/^\s*(UPDATE|DELETE|INSERT)/i.test(String(sql)) ? { rows: [] } : { rows: [row] }));
+      for (const args of [
+        { id: 'team-front_1', description: '' },
+        { id: 'team-front_1', description: '   ' },
+        { id: 'team-front_1', fields: { description: '' } },
+        { id: 'team-front_1', fields: { description: '  \n ' } },
+      ] as Array<Record<string, unknown>>) {
+        const result = await handleTrackerUpdate(args, '/tmp/ws', 'root');
+        expect(result.isError, JSON.stringify(args)).toBe(true);
+        expect(result.content[0]?.text, JSON.stringify(args)).toMatch(refuseText);
+      }
+      // Nothing reached the row: no data write, no body write.
+      expect(mockQuery.mock.calls.filter((call) => /^\s*(UPDATE|DELETE|INSERT)/i.test(String(call[0])))).toEqual([]);
+      expect((row as any).content).toBe(JSON.stringify('Estado da frente'));
+      // A real description replaces the body and is accepted.
+      const ok = await handleTrackerUpdate({ id: 'team-front_1', description: 'Estado novo.' }, '/tmp/ws', 'root');
+      expect(ok.isError, ok.content[0]?.text).toBe(false);
+    });
+
+    it('a new non-empty description is fine whatever the body', async () => {
+      const result = await handleTrackerUpdate({ id: 'team-front_1', description: 'Estado novo.' }, '/tmp/ws', 'root');
+      expect(result.isError, result.content[0]?.text).toBe(false);
+    });
+  });
+
+  it('refuses a description over 2,000 characters', async () => {
+    const result = await handleTrackerUpdate({ id: 'team-front_1', description: 'x'.repeat(2001) }, '/tmp/ws', 'root');
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toMatch(/limit is 2000/);
+    expect(updateCall()).toBeUndefined();
+  });
+
+  it('tracker_create of a team-front is refused: the user creates fronts', async () => {
+    for (const sessionId of ['root', undefined]) {
+      const result = await handleTrackerCreate({ type: 'team-front', title: 'Portal' }, '/tmp/ws', sessionId);
+      expect(result.isError, String(sessionId)).toBe(true);
+      expect(result.content[0]?.text).toMatch(/created by the user/);
+    }
+    expect(insertCall()).toBeUndefined();
+  });
+
+  it('tracker_import cannot make a front: the import service creates through this same handler, with an upstream-shaped payload', async () => {
+    // What TrackerImportService.runImport passes for `primaryType: 'team-front'`.
+    const result = await handleTrackerCreate(
+      {
+        id: 'imported_1',
+        type: 'team-front',
+        title: 'From upstream',
+        description: 'upstream body',
+        status: 'active',
+        priority: 'medium',
+        labels: [],
+        origin: { kind: 'external', external: { providerId: 'p', externalId: '1', urn: 'p:1' } },
+        createdByAgent: false,
+      },
+      '/tmp/ws',
+    );
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toMatch(/created by the user in the Tracker UI/);
+    expect(insertCall()).toBeUndefined();
+  });
+
+  it('an agent cannot attach an upstream origin to a front (what would make tracker_resnapshot rewrite its title and status)', async () => {
+    const result = await handleTrackerUpdate(
+      { id: 'team-front_1', origin: { kind: 'external', external: { providerId: 'p', externalId: '1', urn: 'p:1' } } },
+      '/tmp/ws',
+      'root',
+    );
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toMatch(/refused: origin\. /);
+    expect(updateCall()).toBeUndefined();
+  });
+
+  it('a team-front cannot be made out of another item by tracker_update', async () => {
+    const taskRow = makeRow({ id: 'task_1', type: 'task', type_tags: ['task'], workspace: '/tmp/ws', source: 'native', document_path: '' });
+    mockQuery.mockImplementation(async (sql: unknown) => (/^\s*(UPDATE|DELETE|INSERT)/i.test(String(sql)) ? { rows: [] } : { rows: [taskRow] }));
+    (mockGlobalRegistry as any).has = vi.fn(() => true);
+    const result = await handleTrackerUpdate({ id: 'task_1', primaryType: 'team-front' }, '/tmp/ws', 'root');
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toMatch(/cannot be turned into a team-front/);
+    expect(updateCall()).toBeUndefined();
+  });
+});
+
 describe('the Tool Manifest reference the host emits resolves in tracker_get / tracker_update (pilot G: "Tracker item not found: WOK.1")', () => {
   const sessions: Record<string, unknown> = { root: { agentRole: 'standard', metadata: { teamMode: true } } };
   // The coordinator ran in a worktree: its tracker tools are scoped to that path.

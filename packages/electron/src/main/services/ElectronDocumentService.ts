@@ -44,7 +44,7 @@ import {
   readStoredFieldValue,
   writeStoredFieldValue,
 } from './tracker/relationshipFieldStorage';
-import { assertProtectedTrackerBody, assertProtectedTrackerUpdate, isProtectedTrackerType } from '@nimbalyst/tracker-core';
+import { assertProtectedTrackerBody, assertProtectedTrackerUpdate, isProtectedTrackerType, prepareProtectedTrackerCreate } from '@nimbalyst/tracker-core';
 import { projectionWouldChange } from './tracker/projectionUpdateGuard';
 import { assignLocalKeysToRows } from './tracker/localKeyAllocator';
 import { workspaceLocalKeyStore } from './tracker/workspaceLocalKeyStore';
@@ -182,6 +182,32 @@ function normalizeResolvedFullDocumentFrontmatter(
       status: normalization.status,
     },
   };
+}
+
+/**
+ * Frontmatter is file content: any session can write it, an agent included, and
+ * the three writers that project it into tracker rows are not the host's own
+ * persistence. So they judge a protected type (team-note, tool-manifest,
+ * team-front) with the one rule every local funnel applies, as a writer an agent
+ * can reach: a file never creates a front or a manifest, never forges a note's
+ * provenance and never moves a protected row. Returns the refusal, or null.
+ */
+function protectedFrontmatterProjectionError(
+  type: string,
+  existingData: Record<string, any> | null,
+  nextData: Record<string, any>,
+): string | null {
+  if (!isProtectedTrackerType(type)) return null;
+  try {
+    if (existingData) {
+      assertProtectedTrackerUpdate(type, { fields: nextData }, existingData, { ...existingData, ...nextData }, { agent: true });
+    } else {
+      prepareProtectedTrackerCreate(type, { ...nextData }, { agent: true });
+    }
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
 }
 
 function resolveFullDocumentFrontmatter(
@@ -1541,6 +1567,16 @@ export class ElectronDocumentService implements DocumentService {
       }
     }
 
+    const protectedRefusal = protectedFrontmatterProjectionError(
+      resolved.trackerType,
+      existing ? (parseJsonColumn<Record<string, any>>(existing.data) ?? {}) : null,
+      data,
+    );
+    if (protectedRefusal) {
+      console.warn(`[DocumentService] ${relativePath} not projected as ${resolved.trackerType}: ${protectedRefusal}`);
+      return null;
+    }
+
     if (existing && existing.id !== canonicalId) {
       await database.query(
         `UPDATE tracker_items
@@ -1636,6 +1672,12 @@ export class ElectronDocumentService implements DocumentService {
       for (const [key, value] of Object.entries(resolved.trackerData)) {
         if (key === 'type' || key === 'trackerStatus' || key === 'activity' || key === 'trackerId') continue;
         if (value !== undefined && value !== null) newFields[key] = value;
+      }
+
+      const protectedRefusal = protectedFrontmatterProjectionError(type, existingData, newFields);
+      if (protectedRefusal) {
+        console.warn(`[DocumentService] ${relativePath} not captured as ${type}: ${protectedRefusal}`);
+        return;
       }
 
       let identity: unknown = null;
@@ -2071,9 +2113,11 @@ export class ElectronDocumentService implements DocumentService {
     // survives the sync re-serialization and inverse-write reads find it (NIM-1305).
     nestRelationshipFieldsIntoCustomFields(data, globalRegistry.get(row.type)?.fields ?? [], { writtenFields });
 
-    // Protected types (team-note, tool-manifest): the one rule every local write
-    // funnel applies, here for every edit through this funnel (UI fields, batch).
-    assertProtectedTrackerUpdate(row.type, updates, protectedBefore, data);
+    // Protected types (team-note, tool-manifest, team-front): the one rule every
+    // local write funnel applies, here for every edit through this funnel (UI
+    // fields, batch). The body is a separate column this funnel does not write, so
+    // the stored one is what a team-front's state is judged against.
+    assertProtectedTrackerUpdate(row.type, updates, protectedBefore, data, { storedBody: row.content ?? null });
     options.beforeWrite?.(this.rowToTrackerItem({ ...row, data, type_tags: newTypeTags ?? row.type_tags }));
     if (newTypeTags) {
       await database.query(`UPDATE tracker_items SET type_tags = $1 WHERE id = $2`, [newTypeTags, row.id]);
@@ -2332,8 +2376,9 @@ export class ElectronDocumentService implements DocumentService {
     if (trackerContentMatches(row.content, content, contentJson)) {
       return;
     }
-    assertProtectedTrackerBody(row.type, content);
     const data = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+    // A team-front's body may not be emptied while its description is empty too.
+    assertProtectedTrackerBody(row.type, content, { description: readStoredFieldValue(data, 'description') });
     const modifierIdentity = getCurrentIdentity(row.workspace);
     appendActivity(data, modifierIdentity, 'updated', { field: 'content' });
     // Phase 4b: every body save bumps `body_version` and writes a row
@@ -2908,6 +2953,12 @@ export class ElectronDocumentService implements DocumentService {
       [id]
     );
     const hadRow = existingRow.rows.length > 0;
+    const protectedRefusal = protectedFrontmatterProjectionError(
+      trackerType,
+      hadRow ? (parseJsonColumn<Record<string, any>>(existingRow.rows[0].data) ?? {}) : null,
+      data,
+    );
+    if (protectedRefusal) return { item: null, skipped: false, error: protectedRefusal };
     const changed = !hadRow || projectionWouldChange(
       parseJsonColumn<Record<string, unknown>>(existingRow.rows[0].data) ?? {},
       data,

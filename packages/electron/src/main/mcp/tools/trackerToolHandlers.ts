@@ -2041,9 +2041,11 @@ export async function handleTrackerCreate(
     }
     await pinCitedRevisions(db, workspacePath, id, data, globalRegistry.get(args.type)?.fields ?? []);
 
-    // Protected types (team-note, tool-manifest): the one rule every local write
-    // funnel applies, under the guards above (they decided who may call and
-    // filled a Team Note's provenance from the calling session).
+    // Protected types (team-note, tool-manifest, team-front): the one rule every
+    // local write funnel applies, under the guards above (they decided who may
+    // call and filled a Team Note's provenance from the calling session). This is
+    // the agent's funnel: `provenanceFromHost` is also what makes the rule refuse
+    // a team-front, which only the user creates.
     try {
       prepareProtectedTrackerCreate(args.type, data, { provenanceFromHost: true, body: args.description, typeTags: args.typeTags });
     } catch (error) {
@@ -2755,10 +2757,16 @@ export async function handleTrackerUpdate(
         });
       }
 
-      // Protected types (team-note, tool-manifest): the one rule every local write
-      // funnel applies, under the guards above.
+      // Protected types (team-note, tool-manifest, team-front): the one rule every
+      // local write funnel applies, under the guards above. This is the agent's
+      // funnel: a team-front accepts only its description from here.
       try {
-        assertProtectedTrackerUpdate(oldType, { ...args, type: primaryTypeChanged ? row.type : undefined }, oldDataSnapshot, data);
+        // The body after this call: the new description is written as the body too,
+        // otherwise the stored one stays. A team-front's state is judged against it.
+        const bodyAfter = args.description !== undefined
+          ? String(args.description).replace(/\\n/g, '\n')
+          : (row.content ?? null);
+        assertProtectedTrackerUpdate(oldType, { ...args, type: primaryTypeChanged ? row.type : undefined }, oldDataSnapshot, data, { agent: true, storedBody: bodyAfter, writesBody: args.description !== undefined });
         if (args.description !== undefined) assertProtectedTrackerBody(oldType, String(args.description).replace(/\\n/g, '\n'));
       } catch (error) {
         return { content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }], isError: true };

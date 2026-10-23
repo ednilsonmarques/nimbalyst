@@ -9,6 +9,7 @@ import {
   assertProtectedTrackerUpdate,
   isProtectedTrackerType,
   prepareProtectedTrackerCreate,
+  protectedTrackerSchemaChangeError,
   protectedTrackerTypeChangeError,
   protectedTrackerTypeTagError,
 } from "../index";
@@ -39,11 +40,32 @@ const note = {
 };
 
 describe("the protected set", () => {
-  it("is team-note and tool-manifest, nothing else", () => {
-    expect([...PROTECTED_TRACKER_TYPES]).toEqual(["team-note", "tool-manifest"]);
+  it("is team-note, tool-manifest and team-front, nothing else", () => {
+    expect([...PROTECTED_TRACKER_TYPES]).toEqual(["team-note", "tool-manifest", "team-front"]);
     expect(isProtectedTrackerType("team-note")).toBe(true);
     expect(isProtectedTrackerType("tool-manifest")).toBe(true);
+    expect(isProtectedTrackerType("team-front")).toBe(true);
     for (const type of ["task", "bug", "plan", "decision", "", undefined, null, 42]) expect(isProtectedTrackerType(type), String(type)).toBe(false);
+  });
+
+  it("the protected set is frozen", () => {
+    expect(Object.isFrozen(PROTECTED_TRACKER_TYPES)).toBe(true);
+  });
+
+  it("a team-front is never a tag on another item", () => {
+    expect(protectedTrackerTypeTagError("task", ["task", "team-front"])).toMatch(/team-front can only be the primary type/);
+    expect(protectedTrackerTypeTagError("team-front", ["team-front"])).toBeNull();
+  });
+
+  it("a protected type's schema is never patched or overridden (NIB.130); every other type is not affected", () => {
+    for (const type of ["team-note", "tool-manifest", "team-front"]) {
+      const message = protectedTrackerSchemaChangeError(type);
+      expect(message, type).toContain(`'${type}'`);
+      expect(message, type).toMatch(/protected/);
+    }
+    for (const type of ["task", "bug", "plan", "decision", "idea", "my-custom", "", undefined, null, 42]) {
+      expect(protectedTrackerSchemaChangeError(type), String(type)).toBeNull();
+    }
   });
 
   it("a protected type is never a tag on another item", () => {

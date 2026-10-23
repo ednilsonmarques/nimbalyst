@@ -413,7 +413,7 @@ export async function handleToolPermission(
  *
  * Fire-and-forget: a linking failure must not fail the commit that succeeded.
  */
-async function linkCommitToTrackerItems(
+export async function linkCommitToTrackerItems(
   commitHash: string,
   commitMessage: string,
   sessionId: string,

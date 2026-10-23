@@ -786,3 +786,110 @@ fields:
     expect(layered?.fields.map((f) => f.name)).toEqual(expect.arrayContaining(['title', 'channel']));
   });
 });
+
+describe('TrackerSchemaService refuses to patch or override a protected type (NIB.130)', () => {
+  const PROTECTED = ['team-note', 'tool-manifest', 'team-front'] as const;
+  let workspacePath: string;
+  let trackersDir: string;
+  let service: TrackerSchemaServiceModule;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    vi.clearAllMocks();
+
+    workspacePath = await fs.mkdtemp(path.join(os.tmpdir(), 'tracker-schema-protected-'));
+    trackersDir = path.join(workspacePath, '.nimbalyst', 'trackers');
+    await fs.mkdir(trackersDir, { recursive: true });
+
+    service = (await import('../TrackerSchemaService')) as unknown as TrackerSchemaServiceModule;
+    service.initTrackerSchemaService(workspacePath);
+  });
+
+  afterEach(async () => {
+    service.updateTrackerSchemaWorkspace(null);
+    await fs.rm(workspacePath, { recursive: true, force: true });
+  });
+
+  async function trackerFiles(): Promise<string[]> {
+    return (await fs.readdir(trackersDir)).filter((name) => !name.endsWith('.bak'));
+  }
+
+  for (const type of PROTECTED) {
+    it(`${type}: the builtin is in force, and a patch of any kind is refused with a clear error and writes nothing`, async () => {
+      expect(service.isBuiltinTrackerSchema(type)).toBe(true);
+      const before = JSON.stringify(service.getTrackerSchema(type));
+      const patches: Array<Record<string, unknown>> = [
+        { type, fields: [{ name: 'extra', set: { type: 'string' } }] },
+        { type, fields: [{ name: 'status', options: { set: [{ value: 'sneaky', label: 'Sneaky' }] } }] },
+        { type, sharing: 'personal' },
+        { type, roles: { workflowStatus: 'priority' } },
+        { type, archived: true },
+        { type, icon: 'bolt', color: '#000000', displayName: 'Renamed' },
+      ];
+      for (const patch of patches) {
+        await expect(service.upsertWorkspaceTrackerSchemaPatch(workspacePath, patch), JSON.stringify(patch))
+          .rejects.toThrow(new RegExp(`'${type}' is protected.*cannot be patched or overridden`));
+      }
+      // Not even with the destructive-change opt-in.
+      await expect(service.upsertWorkspaceTrackerSchemaPatch(workspacePath, { type, icon: 'bolt' }, { confirmDestructive: true, overwrite: true }))
+        .rejects.toThrow(/is protected/);
+      expect(await trackerFiles()).toEqual([]);
+      expect(JSON.stringify(service.getTrackerSchema(type))).toBe(before);
+    });
+
+    it(`${type}: customizing it (a full override file) is refused too, so no <type>.yaml is ever materialized`, async () => {
+      await expect(service.customizeWorkspaceTrackerSchema(workspacePath, type)).rejects.toThrow(/is protected/);
+      await expect(
+        service.upsertWorkspaceTrackerSchema(workspacePath, buildCustomYaml(type, 'Override'), { allowBuiltinOverride: true }),
+      ).rejects.toThrow(/is protected/);
+      expect(await trackerFiles()).toEqual([]);
+      expect(await service.getWorkspaceTrackerSchemaOverride(workspacePath, type)).toEqual({ overridden: false });
+    });
+  }
+
+  it('a patch on a non-protected builtin is still accepted and written, right after a refused protected one', async () => {
+    await expect(service.upsertWorkspaceTrackerSchemaPatch(workspacePath, { type: 'team-front', icon: 'bolt' })).rejects.toThrow(/is protected/);
+    const result = await service.upsertWorkspaceTrackerSchemaPatch(workspacePath, {
+      type: 'bug',
+      fields: [{ name: 'status', options: { set: [{ value: 'cannot-reproduce', label: 'Cannot Reproduce' }] } }],
+    });
+    expect(path.basename(result.filePath)).toBe('bug.patch.yaml');
+    expect(statusOptionValues(service, 'bug')).toContain('cannot-reproduce');
+    expect(await trackerFiles()).toEqual(['bug.patch.yaml']);
+  });
+
+  it('custom types are unaffected: define one, then patch it', async () => {
+    const defined = await service.upsertWorkspaceTrackerSchema(workspacePath, buildCustomYaml('marketing', 'Marketing'));
+    expect(defined.model.type).toBe('marketing');
+    const patched = await service.upsertWorkspaceTrackerSchemaPatch(workspacePath, { type: 'marketing', icon: 'bolt' });
+    expect(patched.model.type).toBe('marketing');
+  });
+
+  it('resetting an existing override of a protected type stays possible: it is the way back to the shipped schema', async () => {
+    // An override written before the guard existed (or by hand), loaded from disk.
+    await fs.writeFile(
+      path.join(trackersDir, 'team-note.patch.yaml'),
+      `type: team-note\nfields:\n  - name: status\n    options:\n      set:\n        - value: legacy\n          label: Legacy\n`,
+      'utf-8',
+    );
+    service.updateTrackerSchemaWorkspace(null);
+    service.updateTrackerSchemaWorkspace(workspacePath);
+    expect(statusOptionValues(service, 'team-note')).toContain('legacy');
+
+    const reset = await service.resetWorkspaceTrackerSchemaOverride(workspacePath, 'team-note', { confirmDestructive: true });
+    expect(reset.reset).toBe(true);
+    expect(statusOptionValues(service, 'team-note')).not.toContain('legacy');
+  });
+
+  it('the on-disk loader path is untouched by the guard: a hand-placed patch of a non-protected type still loads', async () => {
+    await fs.writeFile(
+      path.join(trackersDir, 'task.patch.yaml'),
+      `type: task\nfields:\n  - name: status\n    options:\n      set:\n        - value: from-disk\n          label: From Disk\n`,
+      'utf-8',
+    );
+    service.updateTrackerSchemaWorkspace(null);
+    service.updateTrackerSchemaWorkspace(workspacePath);
+    // A non-protected type, only to prove the loader path is unchanged by the new guard.
+    expect(statusOptionValues(service, 'task')).toContain('from-disk');
+  });
+});

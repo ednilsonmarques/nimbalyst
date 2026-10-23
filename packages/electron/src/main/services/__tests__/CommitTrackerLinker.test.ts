@@ -172,6 +172,55 @@ describe('CommitTrackerLinker', () => {
       expect(closePayload.status).toBe('done');
     });
 
+    // A commit message is text any session can write, with no identity attached.
+    // The protected-type rule holds for it as for an agent's tracker_update: a
+    // team-front's status is the user's, so "Closes <front>" never closes it.
+    it('never closes a team-front, and leaves its status and every field untouched', async () => {
+      const query = vi.fn();
+      const linker = linkerWithSession(query);
+      const front = { title: 'Team Mode', status: 'active', description: 'Estado.', currentMission: 'root-1' };
+      query
+        .mockResolvedValueOnce({ rows: [{ id: 'tracker-1', issue_key: 'nim-42' }] })
+        .mockResolvedValueOnce({ rows: [{ type: 'team-front', data: { ...front } }] })
+        .mockResolvedValueOnce({ rows: [] });
+
+      const result = await linker.linkBySession('abcdef0', 'feat: land the thing\n\nCloses NIM-42', 'session-1', '/workspace');
+
+      // Nothing was closed, so nothing is reported: the caller marks the session complete on a non-empty list.
+      expect(result.closedItemIds).toEqual([]);
+
+      // The commit is still recorded on the item (the second UPDATE of the queue is its link)...
+      const writes = query.mock.calls
+        .filter((call) => /UPDATE tracker_items SET data/.test(String(call[0])))
+        .map((call) => JSON.parse(call[1]?.[0] as string));
+      // ...but no write carries a closed status or touches the front's own fields.
+      expect(writes.some((data) => data.status === 'closed' || data.status === 'done')).toBe(false);
+      for (const data of writes) {
+        if (data.title !== undefined) expect(data).toMatchObject({ status: 'active' });
+      }
+      // Only the commit link write (from appendCommitToItem) may exist: nothing after the close SELECT.
+      const closeSelect = query.mock.calls.findIndex((call) => /SELECT type, data FROM tracker_items/.test(String(call[0])));
+      expect(closeSelect).toBeGreaterThan(-1);
+      expect(query.mock.calls.slice(closeSelect + 1).some((call) => /UPDATE tracker_items/.test(String(call[0])))).toBe(false);
+    });
+
+    it('still resolves a team-note a commit closes: its own rules allow that status', async () => {
+      const query = vi.fn();
+      const linker = linkerWithSession(query);
+      const note = { title: 'Decision', status: 'active', noteKind: 'decision', sourceSession: 'root-1', teamRootSession: 'root-1', agentRole: 'coordinator' };
+      query
+        .mockResolvedValueOnce({ rows: [{ id: 'tracker-1', issue_key: 'nim-42' }] })
+        .mockResolvedValueOnce({ rows: [{ type: 'team-note', data: { ...note } }] })
+        .mockResolvedValueOnce({ rows: [] });
+
+      const result = await linker.linkBySession('abcdef0', 'feat: land the thing\n\nCloses NIM-42', 'session-1', '/workspace');
+
+      expect(result.closedItemIds).toEqual(['tracker-1']);
+      const closePayload = JSON.parse(query.mock.calls[5]?.[1]?.[0] as string);
+      expect(closePayload.status).toBe('resolved');
+      expect(closePayload.sourceSession).toBe('root-1');
+    });
+
     it('closes a plan into the status a plan actually has', async () => {
       // `done` is not in plan's option list. Writing it anyway produced a status
       // no filter, board column, or picker could match -- it survived only
@@ -267,7 +316,7 @@ describe('CommitTrackerLinker', () => {
         .mockResolvedValueOnce({ rows: [{ id: 'tracker-1', issue_key: 'nim-42' }] })
         .mockResolvedValueOnce({ rows: [{ type: 'bug', data: { status: 'wont-do' } }] });
 
-      await linker.linkBySession(
+      const result = await linker.linkBySession(
         'abcdef0',
         'chore: tidy up\n\nFixes NIM-42',
         'session-1',
@@ -276,6 +325,8 @@ describe('CommitTrackerLinker', () => {
 
       // Read only -- no UPDATE follows the status read.
       expect(query).toHaveBeenCalledTimes(5);
+      // And an item the commit did not close is not reported as closed.
+      expect(result.closedItemIds).toEqual([]);
     });
 
     it('leaves the item open for a bare reference with no closing keyword', async () => {

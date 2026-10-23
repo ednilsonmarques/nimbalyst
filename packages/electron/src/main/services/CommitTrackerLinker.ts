@@ -24,6 +24,7 @@ import type { TrackerAutomationSettings } from '../utils/store';
 import { getEffectiveTrackerAutomation } from '../utils/store';
 import { getCurrentIdentity } from './TrackerIdentityService';
 import { appendActivity } from './tracker/trackerActivity';
+import { assertProtectedTrackerUpdate, isProtectedTrackerType } from '@nimbalyst/tracker-core';
 import type { LinkedCommit } from '@nimbalyst/runtime';
 import type { TrackerIdentity } from '@nimbalyst/runtime/core/DocumentService';
 import {
@@ -264,9 +265,12 @@ export class CommitTrackerLinker {
       );
       if (closingKeys.size === 0) return { closedItemIds: [] };
 
-      const closedItemIds = await this.resolveClosableIds(trackerIds, closingKeys, workspacePath);
-      for (const itemId of closedItemIds) {
-        await this.closeTrackerItem(itemId, commitHash, workspacePath);
+      // Only items the commit really closed: the caller marks the session complete
+      // on a non-empty list, so a front kept open or an item already closed is not one.
+      const candidateIds = await this.resolveClosableIds(trackerIds, closingKeys, workspacePath);
+      const closedItemIds: string[] = [];
+      for (const itemId of candidateIds) {
+        if (await this.closeTrackerItem(itemId, commitHash, workspacePath)) closedItemIds.push(itemId);
       }
       return { closedItemIds };
     } catch (error) {
@@ -431,20 +435,24 @@ export class CommitTrackerLinker {
    * `completed`, a release on `released` -- so hardcoding `'done'` stamped a
    * status that was not in the type's option list at all, surviving only
    * because the validator downgrades unknown select values to warnings.
+   *
+   * @returns whether the item was actually closed. False for an item that is
+   *   already terminal, has no done status, or that the protected-type rule
+   *   keeps open: callers report and react (session complete) only to a real close.
    */
   private async closeTrackerItem(
     itemId: string,
     commitHash: string,
     workspacePath: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const db = this.getDb();
-    if (!db) return;
+    if (!db) return false;
 
     const result = await db.query(
       `SELECT type, data FROM tracker_items WHERE id = $1 AND workspace = $2`,
       [itemId, workspacePath]
     );
-    if (result.rows.length === 0) return;
+    if (result.rows.length === 0) return false;
 
     const data = typeof result.rows[0].data === 'string'
       ? JSON.parse(result.rows[0].data)
@@ -456,7 +464,7 @@ export class CommitTrackerLinker {
 
     // Already terminal -- including cancelled. A commit must not reopen an
     // abandoned item by "closing" it.
-    if (isTerminalStatus(type, oldStatus)) return;
+    if (isTerminalStatus(type, oldStatus)) return false;
 
     const closingStatus = getDoneStatusValue(type);
     if (!closingStatus) {
@@ -467,10 +475,26 @@ export class CommitTrackerLinker {
       logger.main.info(
         `[CommitTrackerLinker] ${itemId} (${type}) has no completed status; leaving it open`,
       );
-      return;
+      return false;
     }
 
+    // Protected types: the one rule every local write funnel applies. A commit
+    // message is text any session can write and carries no identity, so the close
+    // is judged as an agent's update: a team-front's status stays the user's.
+    const protectedBefore = isProtectedTrackerType(type) ? JSON.parse(JSON.stringify(data)) : null;
+
     data[statusField] = closingStatus;
+
+    if (protectedBefore) {
+      try {
+        assertProtectedTrackerUpdate(type, { fields: { [statusField]: closingStatus } }, protectedBefore, data, { agent: true });
+      } catch (error) {
+        logger.main.warn(
+          `[CommitTrackerLinker] ${itemId} (${type}) not closed via commit: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        return false;
+      }
+    }
 
     // Through the shared writer, never a raw push: sync merges the trail on
     // entry `id` and sorts on a numeric `timestamp`, so a hand-built entry
@@ -488,6 +512,7 @@ export class CommitTrackerLinker {
     );
 
     logger.main.info(`[CommitTrackerLinker] Auto-closed ${itemId} via commit ${commitHash.slice(0, 7)}`);
+    return true;
   }
 }
 
