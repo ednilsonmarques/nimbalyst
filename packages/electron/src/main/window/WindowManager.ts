@@ -32,8 +32,9 @@ import { ExtensionLogService } from '../services/ExtensionLogService';
 import { getMcpConfigService } from '../mcpConfigServiceRef';
 import { addNimAssetRoot } from '../protocols/nimAssetProtocol';
 import { addNimPreviewWorkspaceRoot } from '../protocols/nimPreviewProtocol';
+import { releaseWorkspacePreviewRoots } from '../services/BrowserAgentFiles';
 import { scheduleAttachmentStagingCleanup } from '../services/attachments/attachmentStagingCleanup';
-import { windows, windowStates, resolveDocumentServicePath, getWindowIdForWindow } from './windowState';
+import { windows, windowStates, resolveDocumentServicePath, getWindowIdForWindow, listOpenWorkspacePaths } from './windowState';
 import {
     matchWorkspaceWindow,
     type WorkspaceWindowCandidate,
@@ -532,6 +533,8 @@ export function createWindow(
 
                 for (const path of referencedPaths) {
                     releaseWhenWorkspaceUnused(path, () => {
+                        // First, so a throwing destroy below cannot leave the closed project served.
+                        releaseWorkspacePreviewRoots(path, listOpenWorkspacePaths());
                         const docService = documentServices.get(path);
                         if (docService) {
                             docService.destroy();

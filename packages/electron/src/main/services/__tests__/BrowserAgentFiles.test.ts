@@ -10,8 +10,10 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('../../utils/logger', () => ({
   logger: { main: { info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn() } },
 }));
-const { registered, worktrees, links, realPaths } = vi.hoisted(() => ({
+const { registered, removed, worktrees, links, realPaths } = vi.hoisted(() => ({
   registered: [] as string[],
+  // roots taken out of the allowlist (removeNimPreviewWorkspaceRoot)
+  removed: new Set<string>(),
   // paths that are symlinks / junctions (lstat), and what realpath resolves a path to
   links: new Set<string>(),
   realPaths: new Map<string, string>(),
@@ -46,18 +48,24 @@ vi.mock('../../protocols/nimPreviewProtocol', async () => {
     return r === '' || (!r.startsWith('..') && !isAbsolute(r));
   };
   return {
-    getNimPreviewWorkspaceRoots: () => [resolve('/proj'), resolve('/other'), ...registered],
+    getNimPreviewWorkspaceRoots: () => [resolve('/proj'), resolve('/other'), ...registered].filter((r) => !removed.has(r)),
     addNimPreviewWorkspaceRoot: (root: string) => {
-      registered.push(resolve(root));
+      removed.delete(resolve(root));
+      if (!registered.includes(resolve(root))) registered.push(resolve(root));
+    },
+    removeNimPreviewWorkspaceRoot: (root: string) => {
+      removed.add(resolve(root));
     },
     previewPathInsideRoot: inside,
-    previewPathsEqual: (a: string, b: string) => resolve(a) === resolve(b),
+    // Case-insensitive on Windows, like the real helper.
+    previewPathsEqual: (a: string, b: string) =>
+      process.platform === 'win32' ? resolve(a).toLowerCase() === resolve(b).toLowerCase() : resolve(a) === resolve(b),
     encodeNimPreviewUrl: (root: string, rel: string) => `nim-preview://${Buffer.from(root).toString('hex')}/${rel.split(String.fromCharCode(92)).join('/')}`,
   };
 });
 
 import { beforeEach } from 'vitest';
-import { buildPreviewUrlForFile, registerWorktreeRoot } from '../BrowserAgentFiles';
+import { buildPreviewUrlForFile, registerWorktreeRoot, releaseWorkspacePreviewRoots } from '../BrowserAgentFiles';
 
 import { resolve } from 'path';
 const hex = (s: string) => Buffer.from(resolve(s)).toString('hex');
@@ -164,5 +172,87 @@ describe('registerWorktreeRoot (a member in a worktree can open its own files)',
     realPaths.set(resolve('/wt/feat'), resolve('/wt/feat').toUpperCase());
     await registerWorktreeRoot('/wt/feat');
     expect(registered).toEqual([resolve('/wt/feat')]);
+  });
+});
+
+describe('releaseWorkspacePreviewRoots (a closed workspace is no longer served)', () => {
+  const served = () => [resolve('/proj'), resolve('/other'), ...registered].filter((r) => !removed.has(r));
+
+  beforeEach(() => {
+    // Forget the worktree owners earlier tests recorded, then start from /proj and /other open.
+    releaseWorkspacePreviewRoots('/proj', []);
+    releaseWorkspacePreviewRoots('/other', []);
+    registered.length = 0;
+    removed.clear();
+    worktrees.clear();
+    links.clear();
+    realPaths.clear();
+    worktrees.set(resolve('/wt/feat'), '/proj');
+    worktrees.set(resolve('/wt/beta'), '/other');
+  });
+
+  it('stops serving the released workspace and nothing else', () => {
+    releaseWorkspacePreviewRoots('/proj', ['/other']);
+    expect(served()).toEqual([resolve('/other')]);
+    expect(() => buildPreviewUrlForFile('/proj/index.html', '/proj', { confineToRoot: true })).toThrow(/active workspace root/);
+  });
+
+  it('also stops serving the worktree roots registered for it', async () => {
+    await registerWorktreeRoot('/wt/feat');
+    releaseWorkspacePreviewRoots('/proj', ['/other']);
+    expect(served()).toEqual([resolve('/other')]);
+    expect(() => buildPreviewUrlForFile('/wt/feat/index.html', '/wt/feat', { confineToRoot: true })).toThrow(/active workspace root/);
+  });
+
+  it('keeps the worktree roots of another project', async () => {
+    await registerWorktreeRoot('/wt/feat');
+    await registerWorktreeRoot('/wt/beta');
+    releaseWorkspacePreviewRoots('/proj', ['/other']);
+    expect(served()).toEqual([resolve('/other'), resolve('/wt/beta')]);
+  });
+
+  it('keeps a worktree root that is open as a workspace of its own, until that one is released', async () => {
+    await registerWorktreeRoot('/wt/feat');
+    releaseWorkspacePreviewRoots('/proj', ['/other', '/wt/feat']);
+    expect(served()).toEqual([resolve('/other'), resolve('/wt/feat')]);
+
+    releaseWorkspacePreviewRoots('/wt/feat', ['/other']);
+    expect(served()).toEqual([resolve('/other')]);
+  });
+
+  it('keeps a released worktree root while its project is still served, and drops it with the project', async () => {
+    await registerWorktreeRoot('/wt/feat');
+    releaseWorkspacePreviewRoots('/wt/feat', ['/proj', '/other']);
+    expect(served()).toContain(resolve('/wt/feat'));
+
+    releaseWorkspacePreviewRoots('/proj', ['/other']);
+    expect(served()).toEqual([resolve('/other')]);
+  });
+
+  it('is idempotent and order-independent', async () => {
+    await registerWorktreeRoot('/wt/feat');
+    await registerWorktreeRoot('/wt/beta');
+    releaseWorkspacePreviewRoots('/other', ['/proj']);
+    releaseWorkspacePreviewRoots('/proj', []);
+    releaseWorkspacePreviewRoots('/proj', []);
+    releaseWorkspacePreviewRoots('/wt/feat', []);
+    expect(served()).toEqual([]);
+  });
+
+  it('a worktree of a released project cannot be registered again', async () => {
+    releaseWorkspacePreviewRoots('/proj', ['/other']);
+    await registerWorktreeRoot('/wt/feat');
+    expect(registered).toEqual([]);
+  });
+
+  it.runIf(process.platform === 'win32')('on Windows a case-only difference in the released path still releases', async () => {
+    await registerWorktreeRoot('/wt/feat');
+    releaseWorkspacePreviewRoots(resolve('/proj').toUpperCase(), ['/other']);
+    expect(served()).toEqual([resolve('/other')]);
+  });
+
+  it.runIf(process.platform === 'win32')('on Windows a root another window still holds under another spelling stays', () => {
+    releaseWorkspacePreviewRoots('/proj', [resolve('/proj').toUpperCase(), '/other']);
+    expect(served()).toEqual([resolve('/proj'), resolve('/other')]);
   });
 });

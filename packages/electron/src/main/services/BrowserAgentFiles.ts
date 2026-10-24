@@ -14,6 +14,7 @@ import {
   getNimPreviewWorkspaceRoots,
   previewPathsEqual,
   previewPathInsideRoot,
+  removeNimPreviewWorkspaceRoot,
 } from '../protocols/nimPreviewProtocol';
 import { logger } from '../utils/logger';
 
@@ -44,10 +45,7 @@ export async function resolveRegisteredWorkspace(workspacePath: string): Promise
     }
   }
 
-  const projectPath = await lookupWorktreeProjectPath(candidate);
-  if (!projectPath) return null;
-  const project = resolve(projectPath);
-  if (!roots.some((r) => previewPathInsideRoot(r, project))) return null;
+  if (!(await worktreeOwnerRoot(candidate))) return null;
   try {
     await realpath(candidate);
   } catch {
@@ -79,10 +77,48 @@ export async function registerWorktreeRoot(workspacePath: string): Promise<void>
   } catch {
     return; // cannot be inspected: do not serve it
   }
-  if (await resolveRegisteredWorkspace(candidate)) {
-    addNimPreviewWorkspaceRoot(candidate);
-    logger.main.info(`[BrowserAgentFiles] Registered worktree root for previews: ${candidate}`);
+  const owner = await worktreeOwnerRoot(candidate);
+  if (!owner) return;
+  addNimPreviewWorkspaceRoot(candidate);
+  worktreeRootOwners.set(candidate, owner);
+  logger.main.info(`[BrowserAgentFiles] Registered worktree root for previews: ${candidate}`);
+}
+
+/** Worktree roots `registerWorktreeRoot` added -> the registered project root that vouched for each. */
+const worktreeRootOwners = new Map<string, string>();
+
+/**
+ * Stop serving a workspace that is no longer in use. Called where its other
+ * services are freed (`releaseWhenWorkspaceUnused`), so a workspace another
+ * window or an unfinished turn still uses never gets here. Removes the
+ * workspace's own root, unless it is a worktree root whose project is still
+ * served, and the worktree roots registered for it. A root still open as a
+ * workspace (`openWorkspaces`, the paths windows reference now) always stays.
+ * Idempotent; paths compare as the allowlist does (case-insensitive on Windows).
+ */
+export function releaseWorkspacePreviewRoots(workspacePath: string, openWorkspaces: readonly string[]): void {
+  const released = resolve(workspacePath);
+  const roots = getNimPreviewWorkspaceRoots();
+  const isOpen = (root: string) => openWorkspaces.some((p) => previewPathsEqual(resolve(p), root));
+  for (const root of roots) {
+    const owner = worktreeRootOwners.get(root);
+    if (previewPathsEqual(root, released)) {
+      // Another window may hold the same path spelled differently (case on Windows).
+      if (isOpen(root) || (owner && roots.some((r) => previewPathsEqual(r, owner)))) continue;
+    } else if (!owner || !previewPathsEqual(owner, released) || isOpen(root)) {
+      continue;
+    }
+    removeNimPreviewWorkspaceRoot(root);
+    worktreeRootOwners.delete(root);
   }
+}
+
+/** The registered root that serves the project of a known worktree (WorktreeStore), if any. */
+async function worktreeOwnerRoot(worktreePath: string): Promise<string | undefined> {
+  const projectPath = await lookupWorktreeProjectPath(worktreePath);
+  if (!projectPath) return undefined;
+  const project = resolve(projectPath);
+  return getNimPreviewWorkspaceRoots().find((r) => previewPathInsideRoot(r, project));
 }
 
 async function lookupWorktreeProjectPath(workspacePath: string): Promise<string | null> {

@@ -1072,6 +1072,91 @@ test('OBS capture: a portal page\'s console and network are recorded, classified
 }));
 
 // ---------------------------------------------------------------------------
+// ROOTS nim-preview workspace roots follow the open workspaces (NIB.116-4)
+// ---------------------------------------------------------------------------
+/** Whether nim-preview serves `ws`: the product's own URL builder accepts it, and main's fetch of `url` returns 200. */
+async function previewState(ws: string, url?: string): Promise<{ build: boolean; url?: string; status?: number | string }> {
+  const built = await invoke(host, 'browser-session:build-preview-url', { filePath: path.join(ws, 'index.html'), workspacePath: ws });
+  const target = url ?? (built.success ? built.url : undefined);
+  const status = target
+    ? await app.evaluate(({ net }, u) => net.fetch(u).then((r) => r.status).catch((e: Error) => `error: ${e.message}`), target)
+    : undefined;
+  return { build: built.success === true, url: built.success ? built.url : undefined, status };
+}
+
+async function waitFor<T>(read: () => Promise<T>, done: (v: T) => boolean, ms = 10_000): Promise<T> {
+  const until = Date.now() + ms;
+  let v = await read();
+  while (!done(v) && Date.now() < until) {
+    await sleep(250);
+    v = await read();
+  }
+  return v;
+}
+
+test('ROOTS workspace roots: a closed workspace is no longer served; a root still shown elsewhere stays; N cycles', guarded('ROOTS', async () => {
+  const rec = begin(
+    'ROOTS',
+    'nim-preview workspace roots follow the open workspaces',
+    'a project added to the rail is served and stops being served (URL refused, fetch 403) when it is closed, also after N cycles; a project still open in another window stays served until that window closes; the window project ws1 is served throughout',
+  );
+  const ws3 = runTempDir('nib-portal-ws-');
+  const ws4 = runTempDir('nib-portal-ws-');
+  fs.writeFileSync(path.join(ws3, 'index.html'), '<!doctype html><title>ws3</title>');
+  fs.writeFileSync(path.join(ws4, 'index.html'), '<!doctype html><title>ws4</title>');
+
+  const base3 = await previewState(ws3);
+  check(rec, 'baseline: a project that was never opened is not served', !base3.build, base3);
+
+  // Rail: open, serve, close.
+  const reg = await invoke(host, 'workspace:register-additional', { workspacePath: ws3 });
+  const open3 = await previewState(ws3);
+  check(rec, 'rail-open project is served (URL built, fetch 200)', reg.success === true && open3.build && open3.status === 200, { reg, open3 });
+  const unreg = await invoke(host, 'workspace:unregister-additional', { workspacePath: ws3 });
+  const closed3 = await previewState(ws3, open3.url);
+  check(rec, 'rail-closed project is no longer served (URL refused, old URL 403)', unreg.success === true && !closed3.build && closed3.status === 403, { unreg, closed3 });
+
+  // N cycles: every close returns to "not served".
+  const cycles: Array<{ open: boolean; closed: boolean; status?: number | string }> = [];
+  for (let i = 0; i < 10; i++) {
+    await invoke(host, 'workspace:register-additional', { workspacePath: ws3 });
+    const o = await previewState(ws3);
+    await invoke(host, 'workspace:unregister-additional', { workspacePath: ws3 });
+    const c = await previewState(ws3, o.url);
+    cycles.push({ open: o.build, closed: !c.build, status: c.status });
+  }
+  check(rec, '10 open/close cycles: served while open, not served after each close', cycles.every((c) => c.open && c.closed && c.status === 403), cycles);
+
+  // Shared: ws4 in its own window AND in the host's rail; closing it in the rail keeps it, closing the window releases it.
+  const windowsBefore = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().map((w) => w.id));
+  const opened = await invoke(host, 'workspace-manager:open-workspace', ws4);
+  const newIds = await waitFor(
+    () => app.evaluate(({ BrowserWindow }, before) => BrowserWindow.getAllWindows().map((w) => w.id).filter((id) => !before.includes(id)), windowsBefore),
+    (ids) => ids.length > 0,
+    30_000,
+  );
+  const open4 = await previewState(ws4);
+  check(rec, 'project in its own window is served', opened.success === true && newIds.length === 1 && open4.build && open4.status === 200, { opened, newIds, open4 });
+  await invoke(host, 'workspace:register-additional', { workspacePath: ws4 });
+  await invoke(host, 'workspace:unregister-additional', { workspacePath: ws4 });
+  const kept4 = await previewState(ws4, open4.url);
+  check(rec, 'closed in the rail but still open in another window: still served', kept4.build && kept4.status === 200, kept4);
+
+  await app.evaluate(({ BrowserWindow }, id) => BrowserWindow.fromId(id)?.close(), newIds[0]);
+  const gone = await waitFor(
+    () => app.evaluate(({ BrowserWindow }, id) => BrowserWindow.fromId(id) === null, newIds[0]),
+    (v) => v,
+    30_000,
+  );
+  const closed4 = await waitFor(() => previewState(ws4, open4.url), (s) => !s.build, 10_000);
+  check(rec, 'its window closed: no longer served (URL refused, old URL 403)', gone && !closed4.build && closed4.status === 403, { gone, closed4 });
+
+  const ws1State = await previewState(ws1);
+  check(rec, 'the window project ws1 is still served after all of it', ws1State.build && ws1State.status === 200, ws1State);
+  flush();
+}));
+
+// ---------------------------------------------------------------------------
 // SUMMARY
 // ---------------------------------------------------------------------------
 test('SUMMARY every recorded check passed', async () => {
