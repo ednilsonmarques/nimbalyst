@@ -483,10 +483,26 @@ export class BrowserSessionService extends EventEmitter {
     } catch (err) {
       // Whatever got built before the failure goes away with it. An agent
       // partition was this call's alone; a user partition is shared and stays.
-      if (this.sessions.has(opts.sessionId)) {
-        this.destroySession(opts.sessionId);
-      } else if (ownerSessionId !== null) {
-        releaseAgentPartition(partitionName);
+      // A failing cleanup never replaces the create error: it is logged, and
+      // the partition is still released (idempotent) and the entry dropped.
+      try {
+        if (this.sessions.has(opts.sessionId)) {
+          this.destroySession(opts.sessionId);
+        } else if (ownerSessionId !== null) {
+          releaseAgentPartition(partitionName);
+        }
+      } catch (cleanupErr) {
+        logger.main.warn(
+          `[BrowserSessionService] Cleanup after failed create of ${opts.sessionId} threw: ${(cleanupErr as Error)?.message}`,
+        );
+        this.sessions.delete(opts.sessionId);
+        if (ownerSessionId !== null) {
+          try {
+            releaseAgentPartition(partitionName);
+          } catch {
+            // releaseAgentPartition does not throw; belt and braces
+          }
+        }
       }
       throw err;
     }

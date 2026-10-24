@@ -21,8 +21,13 @@ vi.mock('../../protocols/nimPreviewProtocol', () => ({
 }));
 
 import { BrowserSessionService } from '../BrowserSessionService';
-import { agentPartitionCount, MAX_PORTALS_PER_AGENT, __resetAgentPartitionsForTests } from '../BrowserAuthority';
-import { fakeState, FakeBrowserWindow, type FakeSession } from './helpers/fakeElectronBrowser';
+import {
+  agentPartitionCount,
+  MAX_PORTALS_PER_AGENT,
+  releaseAgentPartition,
+  __resetAgentPartitionsForTests,
+} from '../BrowserAuthority';
+import { fakeState, FakeBrowserWindow, FakeSession, FakeWebContents } from './helpers/fakeElectronBrowser';
 
 const svc = () => BrowserSessionService.getInstance();
 
@@ -163,6 +168,157 @@ describe('agent portal cleanup', () => {
     protocolHook.fail = false;
     openAgent('agent-browser:2', 'ai-session-A');
     openAgent('agent-browser:3', 'ai-session-A');
+  });
+
+  it('a successful create keeps its storage: nothing is wiped or released', () => {
+    const ses = openAgent('agent-browser:1', 'ai-session-A');
+    expect(ses.storageCleared).toBe(0);
+    expect(agentPartitionCount()).toBe(1);
+    expect(svc().hasSession('agent-browser:1')).toBe(true);
+  });
+
+  it('a failed create leaves another portal (same agent, other agent, user tab) untouched', () => {
+    const own = openAgent('agent-browser:1', 'ai-session-A');
+    const other = openAgent('agent-browser:2', 'ai-session-B');
+    svc().createSession({ sessionId: 'browser:doc:1', url: 'about:blank' });
+    const user = fakeState.sessions.get('browser-preview') as FakeSession;
+    protocolHook.fail = true;
+    expect(() => openAgent('agent-browser:3', 'ai-session-A')).toThrow(/protocol setup failed/);
+    expect(own.storageCleared).toBe(0);
+    expect(other.storageCleared).toBe(0);
+    expect(user.storageCleared).toBe(0);
+    expect(agentPartitionCount()).toBe(2);
+    expect(svc().hasSession('agent-browser:1')).toBe(true);
+    expect(svc().hasSession('agent-browser:2')).toBe(true);
+    expect(svc().hasSession('browser:doc:1')).toBe(true);
+    expect(svc().hasSession('agent-browser:3')).toBe(false);
+  });
+
+  it('cleanup is idempotent: destroying a failed create again wipes nothing twice', () => {
+    protocolHook.fail = true;
+    expect(() => openAgent('agent-browser:1', 'ai-session-A')).toThrow(/protocol setup failed/);
+    const [ses] = [...fakeState.sessions.values()] as FakeSession[];
+    svc().destroySession('agent-browser:1');
+    releaseAgentPartition([...fakeState.sessions.keys()][0]);
+    expect(ses.storageCleared).toBe(1);
+    expect(agentPartitionCount()).toBe(0);
+  });
+
+  it('a wipe that rejects does not mask the create error and is not an unhandled rejection', async () => {
+    const unhandled = vi.fn();
+    process.on('unhandledRejection', unhandled);
+    try {
+      vi.spyOn(FakeSession.prototype, 'clearStorageData').mockImplementation(() => Promise.reject(new Error('wipe rejected')));
+      protocolHook.fail = true;
+      expect(() => openAgent('agent-browser:1', 'ai-session-A')).toThrow(/protocol setup failed/);
+      await new Promise((r) => setTimeout(r, 0));
+      expect(unhandled).not.toHaveBeenCalled();
+      expect(agentPartitionCount()).toBe(0);
+    } finally {
+      process.off('unhandledRejection', unhandled);
+      vi.restoreAllMocks();
+    }
+  });
+
+  it('a failure after the headless host window exists removes the session, the view and the host window', () => {
+    vi.spyOn(FakeBrowserWindow.prototype, 'getContentSize').mockImplementation(() => {
+      throw new Error('attach failed');
+    });
+    const destroy = vi.spyOn(FakeBrowserWindow.prototype, 'destroy');
+    try {
+      expect(() => openAgent('agent-browser:1', 'ai-session-A')).toThrow(/attach failed/);
+      const [ses] = [...fakeState.sessions.values()] as FakeSession[];
+      expect(ses.storageCleared).toBe(1);
+      expect(agentPartitionCount()).toBe(0);
+      expect(svc().hasSession('agent-browser:1')).toBe(false);
+      expect(fakeState.views[0].webContents.closed).toBe(true);
+      expect(destroy).toHaveBeenCalledTimes(1);
+      expect(fakeState.windows[0].children).toEqual([]);
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  describe('when the rest of the teardown throws during a failed create', () => {
+    afterEach(() => vi.restoreAllMocks());
+    const failAttach = () =>
+      vi.spyOn(FakeBrowserWindow.prototype, 'getContentSize').mockImplementation(() => {
+        throw new Error('attach failed');
+      });
+
+    it('reports the ORIGINAL create error when destroying the host window throws', () => {
+      failAttach();
+      vi.spyOn(FakeBrowserWindow.prototype, 'destroy').mockImplementation(() => {
+        throw new Error('host destroy exploded');
+      });
+      expect(() => openAgent('agent-browser:1', 'ai-session-A')).toThrow(/attach failed/);
+      const [ses] = [...fakeState.sessions.values()] as FakeSession[];
+      expect(svc().hasSession('agent-browser:1')).toBe(false);
+      expect(agentPartitionCount()).toBe(0);
+      expect(ses.storageCleared).toBe(1);
+    });
+
+    it('a failed headless USER create with a throwing host destroy keeps the original error and the shared partition', () => {
+      failAttach();
+      vi.spyOn(FakeBrowserWindow.prototype, 'destroy').mockImplementation(() => {
+        throw new Error('host destroy exploded');
+      });
+      expect(() =>
+        svc().createSession({ sessionId: 'browser:doc:1', url: 'about:blank', headless: true }),
+      ).toThrow(/attach failed/);
+      const user = fakeState.sessions.get('browser-preview') as FakeSession;
+      expect(svc().hasSession('browser:doc:1')).toBe(false);
+      expect(user.storageCleared).toBe(0);
+      expect(agentPartitionCount()).toBe(0);
+    });
+
+    it('reports the ORIGINAL create error when webContents.close throws', () => {
+      failAttach();
+      vi.spyOn(FakeWebContents.prototype, 'close').mockImplementation(() => {
+        throw new Error('close exploded');
+      });
+      expect(() => openAgent('agent-browser:1', 'ai-session-A')).toThrow(/attach failed/);
+      expect(svc().hasSession('agent-browser:1')).toBe(false);
+      expect(agentPartitionCount()).toBe(0);
+    });
+  });
+
+  describe('when the wipe itself throws synchronously', () => {
+    afterEach(() => vi.restoreAllMocks());
+    const breakWipe = () =>
+      vi.spyOn(FakeSession.prototype, 'clearStorageData').mockImplementation(() => {
+        throw new Error('wipe exploded');
+      });
+
+    it('reports the ORIGINAL create error, not the cleanup error (before the view exists)', () => {
+      breakWipe();
+      protocolHook.fail = true;
+      expect(() => openAgent('agent-browser:1', 'ai-session-A')).toThrow(/protocol setup failed/);
+      expect(agentPartitionCount()).toBe(0);
+    });
+
+    it('reports the ORIGINAL create error and still tears down view, host window and registry (after the view exists)', () => {
+      breakWipe();
+      vi.spyOn(FakeBrowserWindow.prototype, 'getContentSize').mockImplementation(() => {
+        throw new Error('attach failed');
+      });
+      const destroy = vi.spyOn(FakeBrowserWindow.prototype, 'destroy');
+      expect(() => openAgent('agent-browser:1', 'ai-session-A')).toThrow(/attach failed/);
+      expect(svc().hasSession('agent-browser:1')).toBe(false);
+      expect(fakeState.views[0].webContents.closed).toBe(true);
+      expect(destroy).toHaveBeenCalledTimes(1);
+      expect(agentPartitionCount()).toBe(0);
+    });
+
+    it('does not leak the portal slot: the agent can still open two portals', () => {
+      breakWipe();
+      protocolHook.fail = true;
+      expect(() => openAgent('agent-browser:1', 'ai-session-A')).toThrow();
+      vi.restoreAllMocks();
+      protocolHook.fail = false;
+      openAgent('agent-browser:2', 'ai-session-A');
+      openAgent('agent-browser:3', 'ai-session-A');
+    });
   });
 
   it('a failed user create does not touch the registry or wipe anything', () => {

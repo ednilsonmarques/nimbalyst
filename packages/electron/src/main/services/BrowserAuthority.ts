@@ -225,11 +225,20 @@ export function releaseAgentPartition(label: string): void {
   const ses = agentPartitions.get(label);
   if (!ses) return;
   agentPartitions.delete(label);
-  void Promise.resolve(ses.clearStorageData?.())
-    .then(() => ses.clearCache?.())
-    .catch((err: unknown) => {
-      console.warn(
-        `[BrowserAuthority] Could not wipe agent partition ${label}: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    });
+  const warn = (err: unknown) => {
+    console.warn(
+      `[BrowserAuthority] Could not wipe agent partition ${label}: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  };
+  // A wipe that throws before returning its promise must never escape: callers
+  // run this inside a failed-create catch (it would replace the original error)
+  // and before the host window is torn down.
+  let wipe: Promise<unknown>;
+  try {
+    wipe = Promise.resolve(ses.clearStorageData?.());
+  } catch (err) {
+    warn(err);
+    return;
+  }
+  void wipe.then(() => ses.clearCache?.()).catch(warn);
 }
