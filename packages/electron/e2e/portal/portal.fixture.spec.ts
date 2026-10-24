@@ -18,6 +18,7 @@
  * from what ran, not from what was meant to run.
  */
 import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
+import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -847,6 +848,101 @@ test('C8 no session id: no extension tools listed, forced calls refused, no port
   check(rec, 'forced portal_open without a session id is refused', forcedPortal.isError === true, forcedPortal.text.slice(0, 200));
   await sleep(1200);
   check(rec, 'no portal/web contents was created and the preview server saw no request', (await webContentsCount(app)) === wcBefore && s1.requests.length === s1Before, { wc: [wcBefore, await webContentsCount(app)], s1Hits: s1.requests.length - s1Before });
+  flush();
+}));
+
+// ---------------------------------------------------------------------------
+// EXT external scheme and the remaining permissions (NIB.125 item 1; F1.1 fixture plan item 5)
+// ---------------------------------------------------------------------------
+test('EXT external scheme: an unregistered scheme never leaves the portal; clipboard-read, midi and fullscreen are denied', guarded('EXT', async () => {
+  const rec = begin(
+    'EXT',
+    'External scheme and remaining permissions',
+    'a page-initiated navigation to an unregistered scheme (script, link click, iframe) is blocked by the product guard (a positive navigation-blocked record for each), leaves the portal on its page and reaches neither shell.openExternal, the renderer nor a new web contents; clipboard-read and midi query as denied; fullscreen is never granted',
+  );
+  const D = conns['sess-D'];
+  await closeAll(D);
+  // Unregistered on purpose: a registered scheme (mailto:, ms-settings:) could open a real application if the guard failed.
+  // Checked first: if this machine has a handler for it, the navigations are not attempted.
+  const scheme = 'nib-fixture-unregistered';
+  // Only "key not found" (reg exits 1) counts as unregistered; any other failure is an unknown state and fails the precondition.
+  let registered: boolean | 'unknown' = false;
+  try {
+    execFileSync('reg', ['query', `HKCR\\${scheme}`], { stdio: 'ignore', windowsHide: true });
+    registered = true;
+  } catch (err) {
+    if ((err as { status?: number }).status !== 1) registered = 'unknown';
+  }
+  check(rec, `precondition: no handler is registered for ${scheme}: on this machine`, registered === false, { registered });
+  if (registered || !capture) {
+    check(rec, 'the capture is installed (the blocked-navigation records are the positive proof)', !!capture, { capture: !!capture });
+    flush();
+    return;
+  }
+
+  // This case holds exactly 2 portals of sess-D at once (the per-agent cap); a third would be refused.
+  const p = await openPortal(D, `${s1.origin}/`);
+  const before = await snapshot(app);
+  const wcBefore = await webContentsCount(app);
+  // Wait for the product guard's verdict as recorded by the capture (no fixed sleep).
+  const blocked = async (probe: string, frame: 'main' | 'sub'): Promise<any[]> => {
+    for (const deadline = Date.now() + 8000; ; await sleep(250)) {
+      await capture!.pull(app);
+      const rows = readJsonl(capture!.write().files[1]).filter(
+        (r) => r.case === 'EXT' && r.kind === 'navigation-blocked' && r.frame === frame && String(r.url ?? '').startsWith(`${scheme}://probe/${probe}`),
+      );
+      if (rows.length || Date.now() >= deadline) return rows;
+    }
+  };
+
+  await evalInPartition(app, p.partition, `location.href = '${scheme}://probe/script'; true`);
+  const byScript = await blocked('script', 'main');
+  const afterScript = await urlInPartition(app, p.partition);
+  await evalInPartition(app, p.partition, `(() => { const a = document.createElement('a'); a.href = '${scheme}://probe/link'; document.body.appendChild(a); a.click(); return true; })()`, true);
+  const byLink = await blocked('link', 'main');
+  const afterLink = await urlInPartition(app, p.partition);
+  await evalInPartition(app, p.partition, `(() => { const f = document.createElement('iframe'); f.src = '${scheme}://probe/frame'; document.body.appendChild(f); return true; })()`);
+  const byFrame = await blocked('frame', 'sub');
+  await sleep(1000); // settle before the negative checks below
+  const after = await snapshot(app);
+
+  const brief = (rows: any[]) => rows.map((r) => ({ kind: r.kind, frame: r.frame, error: r.error }));
+  check(rec, 'script navigation to the scheme is blocked by the guard (navigation-blocked, main frame)', byScript.length > 0, brief(byScript));
+  check(rec, 'link click (with a user gesture) to the scheme is blocked by the guard (navigation-blocked, main frame)', byLink.length > 0, brief(byLink));
+  check(rec, 'iframe to the scheme is blocked by the guard (navigation-blocked, sub frame)', byFrame.length > 0, brief(byFrame));
+  check(rec, 'script navigation to the scheme: the portal stays on its page', afterScript === `${s1.origin}/`, afterScript);
+  check(rec, 'link click (with a user gesture) to the scheme: the portal stays on its page', afterLink === `${s1.origin}/`, afterLink);
+  check(rec, 'shell.openExternal was never called', after.openExternal.length === before.openExternal.length, after.openExternal.slice(before.openExternal.length));
+  const extNav = after.sends.slice(before.sends.length).filter((s) => /external-nav/.test(s.channel));
+  check(rec, 'no external-nav event reached the renderer', extNav.length === 0, extNav);
+  check(rec, 'no web contents or window was created', (await webContentsCount(app)) === wcBefore, { before: wcBefore, after: await webContentsCount(app) });
+
+  // Remaining permissions on the hostile page (C4 collects clipboard-read and midi but does not assert them).
+  const h = await openPortal(D, `${s1.origin}/hostile.html`);
+  const hostile = await waitInPartition<any>(app, h.partition, 'window.__hostile && window.__hostile.done && window.__hostile', 20_000);
+  check(rec, 'permissions.query(clipboard-read) is "denied"', hostile?.permissionsQuery?.['clipboard-read'] === 'denied', hostile?.permissionsQuery ?? 'hostile page did not finish');
+  check(rec, 'permissions.query(midi) is "denied"', hostile?.permissionsQuery?.midi === 'denied', hostile?.permissionsQuery ?? 'hostile page did not finish');
+  // Seen in real Electron 43: in an agent portal the request neither resolves nor rejects (it stays pending), so it is
+  // started without awaiting and the outcome is read back. The contract is "the page never becomes fullscreen".
+  await evalInPartition(
+    app,
+    h.partition,
+    `window.__fs = 'pending'; document.documentElement.requestFullscreen().then(() => { window.__fs = 'granted'; document.exitFullscreen().catch(() => {}); }, (e) => { window.__fs = 'rejected:' + e.name; }); true`,
+    true,
+  );
+  const fsState = async () => ({
+    ...(await evalInPartition<{ outcome: string; element: boolean }>(app, h.partition, `({ outcome: window.__fs, element: !!document.fullscreenElement })`)),
+    hostFullscreen: await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().some((w) => !w.isDestroyed() && w.isFullScreen())),
+  });
+  await sleep(2000);
+  const fullscreen = await fsState();
+  check(rec, 'requestFullscreen (with a user gesture) is not granted, the page is not fullscreen and no window is fullscreen', fullscreen.outcome !== 'granted' && !fullscreen.element && !fullscreen.hostFullscreen, fullscreen);
+  rec.checks.push({ desc: 'INFO requestFullscreen outcome after 2 s (pending = neither granted nor rejected)', ok: true, observed: JSON.stringify(fullscreen) });
+  await sleep(2000);
+  const later = await fsState();
+  check(rec, 'still not fullscreen 4 s after the request', later.outcome !== 'granted' && !later.element && !later.hostFullscreen, later);
+
+  await closeAll(D);
   flush();
 }));
 

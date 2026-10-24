@@ -1,8 +1,9 @@
 # Portal fixture (M-9): real Electron, isolated profile
 
 Gate before agents may use the Portal. Covers F0-F1.2 (cases C0-C8 in `portal.fixture.spec.ts`;
-C9, capture of the first request, belongs to F1.3 and is marked NOT RUN). Case OBS checks the test-side console and
-network capture (F1.3a, see below).
+C9, capture of the first request, belongs to F1.3 and is marked NOT RUN). Case EXT covers a page-initiated navigation
+to an unregistered external scheme (script, link click, iframe) and the permissions C4 collects but does not assert
+(clipboard-read, midi) plus fullscreen. Case OBS checks the test-side console and network capture (F1.3a, see below).
 
 Only `playwright.portal.config.ts` runs it. The default configs (`playwright.config.ts`,
 `playwright-extension.config.ts`) have `testIgnore: '**/e2e/portal/**'`, and the spec skips itself unless
@@ -159,7 +160,17 @@ What the portal pages print and load is recorded while the cases run, without to
   window-closed / failed-create wipe paths are not exercised in real Electron (see the fixture report).
 - Windows only (registry, PowerShell process queries).
 
+- EXT uses an unregistered scheme on purpose: a registered one (`mailto:`, `ms-settings:`) could open a real application if
+  the guard ever failed. It first checks `HKCR\nib-fixture-unregistered` and does not navigate if a handler exists. The
+  positive proof that the guard stopped each navigation is the capture's `navigation-blocked` record; if the guard ever failed,
+  Windows could still show its "look for an app" prompt. In an agent portal on Electron 43, `requestFullscreen()` was observed to
+  stay pending (neither granted nor rejected); EXT asserts that neither the page nor any window becomes fullscreen.
+- Observed in C5 on every run: after the product blocks the INITIAL redirect of a new portal, its renderer logs
+  `Cannot destructure property 'preloadScripts' of 'binding.startupData'`. Probably the cancelled first navigation leaves the
+  blank sandboxed renderer without startup data (an inference, not proven); the capture reports it.
+
 ## Pending (recorded, not implemented)
 
-- Page navigation to an external scheme (an unregistered scheme, observed through `will-navigate`) before F2.
-- The wipe of storage when the portal's create fails.
+- The wipe of storage when the portal's create fails (product change), and the wipe through the reaper or a closed window
+  (not exercised: the reaper runs after 5 minutes).
+- The user tab keeping today's permissions, downloads and external popup (F1.1 plan item 10): only the popup is checked (C4).
