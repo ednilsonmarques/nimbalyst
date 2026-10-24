@@ -23,7 +23,8 @@ import * as os from 'os';
 import * as path from 'path';
 import { launchIsolated, listeningPorts, readRegistryKey, stillAlive, type IsolatedLaunch } from './isolatedLaunch';
 import { ENV, runTempDir } from './runGuard';
-import { startOtherServer, startPrimaryServer, type FixtureServer } from './fixtureServers';
+import { deadOrigin, OBS_CANARIES, startOtherServer, startPrimaryServer, type FixtureServer } from './fixtureServers';
+import { installCapture, PortalCapture } from './capture';
 import { McpConnection } from './mcpClient';
 import {
   evalInPartition,
@@ -98,6 +99,19 @@ let mcpPort: number;
 let mcpToken: string;
 const conns: Record<string, McpConnection> = {};
 const EXT_BUILD = path.join(os.tmpdir(), 'nib-portal-extbuild');
+// F1.3a: console and network capture (capture.ts). Observes only; it never fails a case by itself.
+let capture: PortalCapture | undefined;
+
+/** Write the capture artifacts; a failure to write is evidence, not a crash of the case. */
+function writeCapture(): ReturnType<PortalCapture['write']> | undefined {
+  try {
+    return capture?.write();
+  } catch (err) {
+    const message = String((err as Error)?.message ?? err);
+    evidence.captureWriteError = (capture ? capture.redact(message) : '(capture unavailable)').slice(0, 300);
+    return undefined;
+  }
+}
 
 async function agent(id: string, workspace: string): Promise<McpConnection> {
   const created = await invoke(host, 'sessions:create', { session: { id, provider: 'claude-code', title: id }, workspaceId: workspace });
@@ -144,6 +158,7 @@ async function getMark(project: string): Promise<{ enabled: boolean; ports: numb
 test.beforeAll(async () => {
   other = await startOtherServer();
   s1 = await startPrimaryServer(() => other.origin);
+  capture = new PortalCapture(() => ({ s1, other }));
   ws1 = runTempDir('nib-portal-ws-');
   ws2 = runTempDir('nib-portal-ws-');
   fs.writeFileSync(path.join(ws1, 'index.html'), '<!doctype html><title>ws1 index</title><button id="b" onclick="document.title=\'ws1 clicked\'">b</button>');
@@ -152,11 +167,13 @@ test.beforeAll(async () => {
   run = await launchIsolated({ workspace: ws1, extensionsFrom: EXT_BUILD });
   app = run.app;
   host = await app.firstWindow();
+  await installCapture(app);
   await host.waitForLoadState('domcontentloaded');
   await host.waitForSelector('.workspace-sidebar', { timeout: 60_000 });
   await sleep(5000); // let the extension system and MCP config settle
   mcpPort = (await invoke(host, 'mcp:get-server-port')).port;
   mcpToken = (await invoke(host, 'mcp:get-auth-token')).token;
+  capture.addSecrets(mcpToken);
   await installProbes(app);
 
   evidence.startup = {
@@ -178,8 +195,19 @@ test.beforeAll(async () => {
   flush();
 });
 
+// Each case's time window lets the capture attribute events to it; the buffer in main is emptied after every case.
+test.beforeEach(async ({}, testInfo) => {
+  capture?.caseStart(testInfo.title.split(' ')[0]);
+});
+test.afterEach(async () => {
+  capture?.caseEnd();
+  await capture?.pull(app);
+  writeCapture();
+});
+
 test.afterAll(async () => {
   try {
+    await capture?.pull(app); // before the app goes away
     evidence.listenersAtEnd = listeningPorts(run?.pids ?? []);
     evidence.registryBeforeShutdown = readRegistryKey();
   } catch {
@@ -191,6 +219,14 @@ test.afterAll(async () => {
   } finally {
     await s1?.close();
     await other?.close();
+    const written = writeCapture();
+    if (written) {
+      // "Did the Portal err while the case passed?": portal-context failures of cases whose own checks passed.
+      const portalErrorsInPassingCases = Object.entries(written.summary.portalFailuresByCase)
+        .filter(([id]) => cases.get(id)?.status === 'PASS')
+        .map(([id, n]) => ({ case: id, portalFailures: n }));
+      evidence.capture = { dir: capture?.dir, policy: written.summary.policy, answers: written.summary.answers, portal: written.summary.portal, portalErrorsInPassingCases, health: written.summary.capture };
+    }
   }
   if (shutdown) {
     evidence.shutdown = shutdown;
@@ -811,6 +847,131 @@ test('C8 no session id: no extension tools listed, forced calls refused, no port
   check(rec, 'forced portal_open without a session id is refused', forcedPortal.isError === true, forcedPortal.text.slice(0, 200));
   await sleep(1200);
   check(rec, 'no portal/web contents was created and the preview server saw no request', (await webContentsCount(app)) === wcBefore && s1.requests.length === s1Before, { wc: [wcBefore, await webContentsCount(app)], s1Hits: s1.requests.length - s1Before });
+  flush();
+}));
+
+// ---------------------------------------------------------------------------
+// OBS console and network capture (F1.3a, test-only)
+// ---------------------------------------------------------------------------
+const readJsonl = (file: string): any[] =>
+  fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
+
+test('OBS capture: a portal page\'s console and network are recorded, classified and redacted', guarded('OBS', async () => {
+  const rec = begin(
+    'OBS',
+    'Console and network capture (F1.3a)',
+    'known stimuli of a portal page appear in portal-console.jsonl / portal-network.jsonl with the right kind, level, status, context and class; no planted secret, token or personal path is written; the capture lost nothing',
+  );
+  if (!capture) throw new Error('capture not installed');
+  const D = conns['sess-D'];
+  await closeAll(D);
+  capture.addSecrets(OBS_CANARIES.known); // the only planted value the capture is told about; the rest must be caught by the rules
+  const dead = await deadOrigin(); // a fixture-range port with nothing listening: a real connection refused
+  const p = await openPortal(D, `${s1.origin}/obs.html?token=${OBS_CANARIES.query}&q=ok&dead=${encodeURIComponent(dead)}`);
+  const ran = await waitInPartition<string>(app, p.partition, 'window.__obs && window.__obs.done && JSON.stringify(window.__obs)', 20_000);
+  check(rec, 'the stimuli page ran to the end', !!ran, ran ?? 'not done');
+  await sleep(1500); // console and load events are delivered to main asynchronously
+  await capture.pull(app);
+  const written = capture.write();
+  const [consoleFile, networkFile, summaryFile] = written.files;
+  const lines = readJsonl(consoleFile).filter((r) => r.case === 'OBS');
+  const net = readJsonl(networkFile).filter((r) => r.case === 'OBS');
+  const mine = (r: any) => r.partition === p.partition;
+  const line = (text: string) => lines.find((r) => mine(r) && String(r.message).includes(text));
+  const brief = (r: any) => (r ? { kind: r.kind, level: r.level, class: r.class, rule: r.rule, context: r.context, page: r.page, message: r.message } : 'missing');
+
+  // console
+  const log = line('obs log line');
+  check(rec, 'console.log is captured from the portal page (level info, context portal, its partition)', log?.level === 'info' && log?.context === 'portal' && log?.class === 'event', brief(log));
+  const info = line('obs info line');
+  check(rec, 'console.info is captured (level info)', info?.level === 'info', brief(info));
+  const warn = line('obs warn line');
+  check(rec, 'console.warn is captured (level warning, class event)', warn?.level === 'warning' && warn?.class === 'event', brief(warn));
+  const err = line('obs error line');
+  check(rec, 'console.error is captured (level error, class failure)', err?.level === 'error' && err?.class === 'failure', brief(err));
+  const uncaught = line('obs uncaught exception');
+  check(rec, 'an uncaught exception is captured (kind uncaught-exception)', uncaught?.kind === 'uncaught-exception' && uncaught?.class === 'failure', brief(uncaught));
+  const rejection = line('obs unhandled rejection');
+  check(rec, 'an unhandled rejection is captured (kind unhandled-rejection)', rejection?.kind === 'unhandled-rejection' && rejection?.class === 'failure', brief(rejection));
+  const debug = line('obs debug line');
+  rec.checks.push({ desc: 'INFO console.debug (Chromium delivers log and info at the same level)', ok: true, observed: JSON.stringify(brief(debug)) });
+
+  // network
+  const doc = net.find((r) => r.source === 'webcontents' && mine(r) && r.kind === 'response' && r.frame === 'main' && String(r.url).includes('/obs.html'));
+  check(rec, 'the portal document load is captured with its HTTP status (webcontents, main frame, 200)', doc?.status === 200 && doc?.context === 'portal', doc ?? 'missing');
+  const server = (pathPrefix: string) => net.find((r) => r.source === 'fixture-server:s1' && String(r.url).startsWith(`${s1.origin}${pathPrefix}`));
+  const api = server('/obs-api?api_key=');
+  check(rec, 'a fetch is captured by the fixture server log with method and status (GET 200, context fixture-server)', api?.method === 'GET' && api?.status === 200 && api?.context === 'fixture-server', api ?? 'missing');
+  const e500 = server('/obs-500');
+  check(rec, 'a 5xx response is captured and classified as failure', e500?.status === 500 && e500?.class === 'failure', e500 ?? 'missing');
+  const redir = server('/redir?to=%2Fobs-api');
+  const afterRedir = server('/obs-api?after=redirect');
+  check(rec, 'a redirect is captured (302, then the target answered 200)', redir?.status === 302 && afterRedir?.status === 200, { redir: redir ?? 'missing', target: afterRedir ?? 'missing' });
+  const frameRedirect = net.find((r) => r.source === 'webcontents' && mine(r) && r.kind === 'redirect' && r.frame === 'sub' && String(r.url).includes('/frame-doc?obs=1'));
+  check(rec, 'a frame redirect is captured from the portal web contents (kind redirect, sub frame)', !!frameRedirect, frameRedirect ?? net.filter((r) => mine(r) && r.frame === 'sub').map((r) => `${r.kind} ${r.url}`));
+  const refusedSub = net.filter((r) => mine(r) && String(r.url).startsWith(`${dead}/obs-refused`));
+  rec.checks.push({
+    desc: 'INFO limit: a refused SUBRESOURCE (fetch/img to a dead port) is not observable without webRequest/CDP/NetLog (Chromium does not emit its "Failed to load resource" line as console-message); the page itself saw it fail',
+    ok: true,
+    observed: JSON.stringify({ capturedRecords: refusedSub.length, pageSaw: ran ? { fetch: JSON.parse(ran).refusedFetch, img: JSON.parse(ran).refusedImg } : null }),
+  });
+  // A refused DOCUMENT load is observable: a second portal opened on the dead port.
+  const refusedDesc = 'a refused request (document load on a dead port) is captured as a failed request with its net error (class failure)';
+  let latest = written;
+  try {
+    const deadPortal = await openPortal(D, `${dead}/obs-refused-doc`, 4000);
+    // Poll the capture until the failed load arrives (no fixed wait), at most ~8 s.
+    let after: any[] = [];
+    let refusedDoc: any;
+    for (const deadline = Date.now() + 8000; Date.now() < deadline; await sleep(250)) {
+      await capture.pull(app);
+      latest = capture.write();
+      after = readJsonl(latest.files[1]).filter((r) => r.case === 'OBS');
+      refusedDoc = after.find((r) => r.partition === deadPortal.partition && r.kind === 'load-failed' && r.frame === 'main' && String(r.url).startsWith(`${dead}/obs-refused-doc`));
+      if (refusedDoc) break;
+    }
+    check(rec, refusedDesc, !!refusedDoc && /\(-102\)/.test(refusedDoc.error) && refusedDoc.class === 'failure', refusedDoc ?? after.filter((r) => r.partition === deadPortal.partition).map((r) => `${r.kind} ${r.url} ${r.error ?? ''}`));
+  } catch (e) {
+    check(rec, refusedDesc, false, `portal_open on ${dead} failed: ${(e as Error).message.slice(0, 200)}`);
+  }
+  const sources = new Set(net.filter((r) => String(r.url ?? '').includes('/obs')).map((r) => `${r.source}|${r.context}`));
+  check(rec, 'fixture-server traffic and portal-page events are kept apart (source and context)', [...sources].every((s) => s === 'fixture-server:s1|fixture-server' || s.endsWith('|portal')) && sources.has('fixture-server:s1|fixture-server') && [...sources].some((s) => s.startsWith('webcontents|portal')), [...sources]);
+  const misattributed = lines.filter((r) => String(r.message).startsWith('obs ') && !mine(r));
+  check(rec, 'every OBS console line is attributed to the portal page that printed it', misattributed.length === 0, misattributed.map(brief));
+
+  // redaction: the raw text of the three artifacts
+  const text = [consoleFile, networkFile, summaryFile].map((f) => fs.readFileSync(f, 'utf8')).join('\n');
+  // Every value is searched as written, with forward slashes, and as it appears inside JSON text (backslashes doubled).
+  const forms = (v: string) => Array.from(new Set([v, v.replace(/\\/g, '/'), JSON.stringify(v).slice(1, -1)]));
+  const planted: Array<[string, string]> = [
+    ...Object.entries(OBS_CANARIES).map(([k, v]) => [`canary ${k}`, v] as [string, string]),
+    ['MCP auth token', mcpToken],
+    ['home directory', os.homedir()],
+    ['temp directory', os.tmpdir()],
+  ];
+  const lower = text.toLowerCase();
+  const leaked = planted.filter(([, v]) => v && forms(v).some((f) => lower.includes(f.toLowerCase()))).map(([k]) => k);
+  const user = os.userInfo().username;
+  // The user name as a whole token (the `<user>` marker itself must not count as a hit for a user called "user").
+  if (user.length >= 4 && new RegExp(`(?<![A-Za-z0-9_<-])${user.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z0-9_>-])`, 'i').test(text)) leaked.push('user name');
+  check(rec, 'no planted secret, token, personal path or user name is in the artifacts', leaked.length === 0, leaked);
+  check(rec, 'no header field is written', !/"headers"\s*:/.test(text), 'searched for a "headers" key');
+  const markers = ['token=REDACTED', 'api_key=REDACTED', 'Authorization: [REDACTED]', 'password=[REDACTED]', 'obs_sid=[REDACTED]', 'obs leak plain [REDACTED]', '<HOME>'];
+  const missing = markers.filter((m) => !text.includes(m));
+  check(rec, 'the planted values were replaced by redaction markers (not just dropped lines)', missing.length === 0, { missing });
+
+  // capture health
+  const health = latest.summary.capture;
+  check(
+    rec,
+    'the capture lost nothing (no listener error, no drain error, nothing dropped in main, in the test process or at write)',
+    health.listenerErrors.length === 0 && health.drainErrors.length === 0 && health.mainDropped === 0 && health.rawDropped === 0 && health.linesDropped.console === 0 && health.linesDropped.network === 0 &&
+      Object.values(health.summaryListsCut).every((n) => n === 0),
+    health,
+  );
+  rec.checks.push({ desc: 'INFO OBS summary (report-only policy)', ok: true, observed: JSON.stringify({ portal: written.summary.portal, answers: written.summary.answers }) });
+
+  await closeAll(D);
   flush();
 }));
 

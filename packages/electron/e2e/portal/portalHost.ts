@@ -28,6 +28,8 @@ export async function installProbes(app: ElectronApplication): Promise<void> {
       dialogCalls: [] as any[],
       dialogQueue: [] as number[],
       sends: [] as any[],
+      // session -> partition name, for the capture (capture.ts). Weak: it never keeps a session alive (C3 counts them).
+      partitionOf: new WeakMap<object, string>(),
     });
 
     // Every partition the app asks Electron for, and a download recorder on the agent ones. The recorder
@@ -35,6 +37,7 @@ export async function installProbes(app: ElectronApplication): Promise<void> {
     const original = session.fromPartition.bind(session);
     (session as any).fromPartition = (name: string, options?: unknown) => {
       const ses = original(name, options as never);
+      probe.partitionOf.set(ses, name);
       if (!probe.partitions.includes(name)) {
         probe.partitions.push(name);
         if (name.startsWith('agent-portal-')) {
@@ -201,6 +204,7 @@ export async function probePartitionStorage(
     async ({ BrowserWindow, session }, arg) => {
       const ses = session.fromPartition(arg.partition);
       const win = new BrowserWindow({ show: false, width: 400, height: 300, webPreferences: { partition: arg.partition, sandbox: true, contextIsolation: true } });
+      (win.webContents as any).__nibHarness = true; // the capture labels this window's events as the test's own
       try {
         await win.loadURL(arg.url);
         const page = await win.webContents.executeJavaScript(`(async () => ({

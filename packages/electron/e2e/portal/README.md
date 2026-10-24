@@ -1,7 +1,8 @@
 # Portal fixture (M-9): real Electron, isolated profile
 
 Gate before agents may use the Portal. Covers F0-F1.2 (cases C0-C8 in `portal.fixture.spec.ts`;
-C9, capture of the first request, belongs to F1.3 and is marked NOT RUN).
+C9, capture of the first request, belongs to F1.3 and is marked NOT RUN). Case OBS checks the test-side console and
+network capture (F1.3a, see below).
 
 Only `playwright.portal.config.ts` runs it. The default configs (`playwright.config.ts`,
 `playwright-extension.config.ts`) have `testIgnore: '**/e2e/portal/**'`, and the spec skips itself unless
@@ -51,7 +52,7 @@ would not see it.
 Ctrl+C / SIGTERM: the handler kills the recorded trees first (synchronously, same checks), then restores the registry. In the
 runner it does not call `process.exit` (Playwright's own handling finishes the run and still runs `globalTeardown`); a worker exits.
 
-**Unit tests of the harness** (`processes.test.ts`): they live outside the package vitest include (`src/**`) and outside
+**Unit tests of the harness** (`processes.test.ts`, `captureFormat.test.ts`): they live outside the package vitest include (`src/**`) and outside
 `tsconfig`, so **no default gate (`test:prepush`, `typecheck`, `test:e2e`) runs them**. Run them by hand after touching the
 harness, with their own config:
 
@@ -103,6 +104,48 @@ npx playwright test -c playwright.portal.config.ts
 ```
 
 Before and after, list `%APPDATA%\@nimbalyst\electron` and the real DB mtime.
+
+## Console and network capture (F1.3a, test-only: `capture.ts`, `captureFormat.ts`, case OBS)
+
+What the portal pages print and load is recorded while the cases run, without touching product code.
+
+- **How it observes:** listeners installed in main through `electronApp.evaluate` on every web contents (`console-message`,
+  `did-start-navigation`, `did-redirect-navigation`, `did-frame-navigate`, `did-fail-load`, `render-process-gone`,
+  `preload-error`, and `will-navigate` / `will-frame-navigate` / `will-redirect` read back after the product's guard to record
+  blocked navigations), plus the fixture servers' request logs (method, path, status, arrival time). **Never** `session.webRequest`
+  (one listener per event: it would replace the product's guards), no debugging port, no `preventDefault`, nothing injected into a page.
+  Which page an event came from is resolved when it happens: `portal` (an `agent-portal-*` partition), `user-tab`
+  (`browser-preview`), `harness` (a window the test opened), `host` (the app's own window), `fixture-server`.
+- **Artifacts:** `%TEMP%\nib-portal-capture\` (or `PORTAL_FIXTURE_CAPTURE_DIR`, which must be under `%TEMP%`; never the repo):
+  `portal-console.jsonl`, `portal-network.jsonl` (one JSON object per line, sorted by time) and `portal-capture-summary.json`.
+  Rewritten after every case, so a crashed run still leaves what it saw. They are evidence and are not removed by the teardown.
+  Fields: `ts`, `seq`, `case`, `kind`, `level`, `class`, `rule`, `context`, `page`, `partition`, `frame`, `pageUrl`, `message`,
+  `source` (console); `ts`, `seq`, `case`, `source`, `kind`, `class`, `rule`, `context`, `page`, `partition`, `frame`, `method`, `url`,
+  `status`, `error` (network).
+- **Redaction (before anything is written):** headers are never written. Cookie and authorization values the fixture servers
+  received, the MCP token and other known secrets are replaced wherever they appear; sensitive query and fragment values
+  (`token`, `key`, `secret`, `password`, `session`, `code`, `sig`, ...), user info in URLs, `Authorization`/`Cookie` lines, bearer
+  tokens, `key=value` secrets, opaque blobs of 40+ characters, data URL bodies, the temp dir, the repo, the home dir and the user name
+  are redacted (also inside JSON text and in the query of `file:` and other URLs). Messages are cut at 500 characters, URLs at 300.
+- **Bounds:** 20,000 buffered events in main between drains, 100,000 in the test process, 5,000 lines per file, 100 entries per
+  summary list; whatever is cut is counted in `capture` of the summary (`mainDropped`, `rawDropped`, `linesDropped`,
+  `summaryListsCut`). A drain that does not answer in 10 s is recorded as a `drainErrors` entry, so the shutdown is always reached.
+- **Filtering (`FILTER_RULES`, written into the summary):** `class` is `failure` (console error, uncaught exception or rejection,
+  failed load, HTTP >= 400, unexpected request or origin, renderer gone), `noise` (a named rule: `harness-window`,
+  `fixture-extensions-missing`, `favicon-404`, `aborted-navigation`; kept in the file, labelled) or `event`. The only thing
+  dropped is the host window's info/debug output (counted in `dropped`); its warnings and errors are kept.
+- **Failure policy: report-only.** The capture never fails a case. The summary answers: console error? uncaught exception?
+  failed request? 4xx/5xx? unexpected request? `results.json` -> `evidence.capture.portalErrorsInPassingCases` lists portal
+  failures inside cases that passed. The **OBS** case checks the capture itself against a page of known stimuli
+  (`/obs.html`: each console level, an uncaught exception, an unhandled rejection, a fetch, a 500, a redirect, a frame
+  redirect, refused requests, planted secrets) and fails only if the capture misses or leaks them.
+- **Limits:** a subresource (fetch, img) that fails before reaching a server (connection refused) is NOT observable:
+  Chromium keeps its "Failed to load resource" line for DevTools and does not emit it as `console-message` (seen in
+  Electron 43); seeing it would need `webRequest`, CDP or a NetLog. Subresources that reach a fixture server are seen in its log,
+  but the log cannot tell which page sent them. Failed document and frame loads are observable. `console.log` and
+  `console.info` arrive at the same level (`info`). Port 1 is refused by Chromium as an unsafe port (`ERR_UNSAFE_PORT`),
+  not by the network; OBS uses a released port of the fixture range for a real "connection refused". A page whose session
+  was not obtained through `session.fromPartition` is labelled `other`, not `portal` (today every portal goes through it).
 
 ## Known limits
 
