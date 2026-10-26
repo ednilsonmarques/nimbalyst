@@ -17,7 +17,7 @@
  *
  * Not applied to incoming sync: refusing a remote row would break convergence.
  */
-import { teamNoteBodyLength } from './teamNoteRules.js';
+import { teamNoteStoredBodyLength } from './teamNoteRules.js';
 
 export const TEAM_FRONT_TYPE = 'team-front';
 /** The state of the front (description) and a rich body, in visible characters. */
@@ -74,18 +74,7 @@ export const TEAM_FRONT_STATE_ERROR = 'A team-front needs its state: write a des
  * either of those JSON-encoded (a JSON-quoted string, or a document as text).
  */
 export function teamFrontBodyLength(body: unknown): number {
-  if (typeof body === 'string') {
-    const trimmed = body.trim();
-    if (trimmed.startsWith('"')) {
-      try {
-        const parsed: unknown = JSON.parse(trimmed);
-        if (typeof parsed === 'string') return teamNoteBodyLength(parsed);
-      } catch {
-        // Not a JSON-quoted string: a plain text that starts with a quote.
-      }
-    }
-  }
-  return teamNoteBodyLength(body);
+  return teamNoteStoredBodyLength(body);
 }
 
 function descriptionLength(description: unknown): number {
@@ -351,9 +340,11 @@ export function assertTeamFrontUpdate(
 
 /**
  * Refuse a rich-body save that exceeds the team-front cap, or that empties the
- * body of a front whose description is empty too. `item.description` is the
- * stored description, when the funnel can see it; without it only the cap is
- * judged. No-op for other types.
+ * body of a front whose description is empty too. `item` is the stored item the
+ * funnel can see: when it is given AT ALL the state is judged, and a missing
+ * `item.description` reads as empty, so a caller cannot skip the check by
+ * leaving the key out. Only a funnel that sees no item (the body is written
+ * apart from it) is judged on the cap alone. No-op for other types.
  */
 export function assertTeamFrontBody(type: string, body: unknown, item?: { description?: unknown }): void {
   if (type !== TEAM_FRONT_TYPE) return;

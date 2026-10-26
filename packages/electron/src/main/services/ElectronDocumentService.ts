@@ -2378,7 +2378,10 @@ export class ElectronDocumentService implements DocumentService {
     }
     const data = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
     // A team-front's body may not be emptied while its description is empty too.
-    assertProtectedTrackerBody(row.type, content, { description: readStoredFieldValue(data, 'description') });
+    assertProtectedTrackerBody(row.type, content, {
+      description: readStoredFieldValue(data, 'description'),
+      noteKind: readStoredFieldValue(data, 'noteKind'),
+    });
     const modifierIdentity = getCurrentIdentity(row.workspace);
     appendActivity(data, modifierIdentity, 'updated', { field: 'content' });
     // Phase 4b: every body save bumps `body_version` and writes a row

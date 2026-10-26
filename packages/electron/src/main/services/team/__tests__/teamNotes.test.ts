@@ -22,7 +22,7 @@ describe('decideTeamNoteWriter', () => {
     const decision = decideTeamNoteWriter('root', { ...ROOT, worktreeId: 'wt', worktreePath: '/p_worktrees/x' }, { branch: 'worktree/x', path: '/p_worktrees/x' });
     expect(decision).toEqual({
       allowed: true,
-      provenance: { sourceSession: 'root', teamRootSession: 'root', agentRole: 'coordinator', branch: 'worktree/x', worktree: '/p_worktrees/x' },
+      provenance: { sourceSession: 'root', teamRootSession: 'root', agentRole: 'coordinator', branch: 'worktree/x', worktree: '/p_worktrees/x', front: null },
     });
   });
 
@@ -30,7 +30,7 @@ describe('decideTeamNoteWriter', () => {
     const decision = decideTeamNoteWriter('plain', { agentRole: 'standard', metadata: {} }, null);
     expect(decision).toEqual({
       allowed: true,
-      provenance: { sourceSession: 'plain', teamRootSession: null, agentRole: 'standalone', branch: null, worktree: null },
+      provenance: { sourceSession: 'plain', teamRootSession: null, agentRole: 'standalone', branch: null, worktree: null, front: null },
     });
   });
 
@@ -38,6 +38,47 @@ describe('decideTeamNoteWriter', () => {
     const decision = decideTeamNoteWriter('child', member(role), null);
     expect(decision.allowed).toBe(false);
     expect(decision.allowed === false && decision.reason).toMatch(/Suggested notes/);
+  });
+});
+
+describe('the front of a note (F1 S2): copied by the host from the mission root', () => {
+  const rootWith = (metadata: Record<string, unknown>) => ({ agentRole: 'standard', metadata: { teamMode: true, ...metadata }, worktreeId: null, worktreePath: null });
+
+  it('a coordinator whose root carries a teamFront writes notes with that front', () => {
+    const decision = decideTeamNoteWriter('root', rootWith({ teamFront: 'team-front_1' }), null);
+    expect(decision.allowed && decision.provenance.front).toBe('team-front_1');
+    expect(decision.allowed && decision.provenance).toEqual({
+      sourceSession: 'root', teamRootSession: 'root', agentRole: 'coordinator', branch: null, worktree: null, front: 'team-front_1',
+    });
+  });
+
+  it('a root with no teamFront (an older mission, one started without a front) leaves front empty', () => {
+    expect((decideTeamNoteWriter('root', rootWith({}), null) as any).provenance.front).toBeNull();
+    for (const bad of ['', '   ', 42, null, { itemId: 'x' }, ['x']]) {
+      expect((decideTeamNoteWriter('root', rootWith({ teamFront: bad }), null) as any).provenance.front, JSON.stringify(bad)).toBeNull();
+    }
+  });
+
+  it('a session outside any team never gets a front, even if its metadata names one', () => {
+    const decision = decideTeamNoteWriter('plain', { agentRole: 'standard', metadata: { teamFront: 'team-front_1' } }, null);
+    expect((decision as any).provenance.front).toBeNull();
+  });
+
+  it('a member never writes, front or no front', () => {
+    const decision = decideTeamNoteWriter('child', { ...member('implementer'), metadata: { ...member('implementer').metadata, teamFront: 'team-front_1' } }, null);
+    expect(decision.allowed).toBe(false);
+  });
+
+  it('is read from the calling session stored in the repository', async () => {
+    try {
+      AISessionsRepository.setStore({ get: async (id: string) => (id === 'root-front' ? rootWith({ teamFront: 'team-front_7' }) : id === 'root-plain' ? rootWith({}) : null) } as never);
+      const withFront = await resolveTeamNoteWriter('root-front', async () => null);
+      const without = await resolveTeamNoteWriter('root-plain', async () => null);
+      expect(withFront.allowed && withFront.provenance.front).toBe('team-front_7');
+      expect(without.allowed && without.provenance.front).toBeNull();
+    } finally {
+      AISessionsRepository.clearStore();
+    }
   });
 });
 
@@ -70,8 +111,15 @@ describe('note content rules', () => {
     expect(checkTeamNoteBody(undefined)).toBeNull();
   });
 
-  it('requires one of the six kinds', () => {
-    for (const kind of ['decision', 'discovery', 'risk', 'pending', 'test', 'context']) expect(checkTeamNoteKind(kind)).toBeNull();
+  it('a handoff may carry 2,500 characters, any other kind 600, and no kind means the strict cap', () => {
+    expect(checkTeamNoteBody('x'.repeat(2500), 'handoff')).toBeNull();
+    expect(checkTeamNoteBody('x'.repeat(2501), 'handoff')).toMatch(/limit is 2500/);
+    expect(checkTeamNoteBody('x'.repeat(601), 'decision')).toMatch(/limit is 600/);
+    expect(checkTeamNoteBody('x'.repeat(601))).toMatch(/limit is 600/);
+  });
+
+  it('requires one of the seven kinds', () => {
+    for (const kind of ['decision', 'discovery', 'risk', 'pending', 'test', 'context', 'handoff']) expect(checkTeamNoteKind(kind)).toBeNull();
     expect(checkTeamNoteKind('idea')).toMatch(/noteKind/);
     expect(checkTeamNoteKind(undefined)).toMatch(/noteKind/);
   });
@@ -79,6 +127,13 @@ describe('note content rules', () => {
   it('drops agent-supplied provenance and keeps everything else', () => {
     expect(stripTeamNoteProvenance({ noteKind: 'risk', sourceSession: 'forged', agentRole: 'coordinator', branch: 'x', worktree: 'y', teamRootSession: 'z', files: ['a'] }))
       .toEqual({ noteKind: 'risk', files: ['a'] });
+  });
+
+  it('drops an agent-supplied front too, in every shape, and keeps the new handoff fields', () => {
+    for (const front of ['team-front_9', { itemId: 'team-front_9' }, ['team-front_9']]) {
+      expect(stripTeamNoteProvenance({ noteKind: 'handoff', front, nextAction: 'n', result: 'completed', commits: ['a'], pendings: ['p'], relatedNotes: ['r'] }), JSON.stringify(front))
+        .toEqual({ noteKind: 'handoff', nextAction: 'n', result: 'completed', commits: ['a'], pendings: ['p'], relatedNotes: ['r'] });
+    }
   });
 
   it('lists a note in one compact line with kind, status, ref and short origin', () => {

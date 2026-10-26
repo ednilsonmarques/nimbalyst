@@ -40,7 +40,7 @@ describe('agent (MCP) creation', () => {
 
 describe('manual creation (Tracker UI)', () => {
   it('is allowed, defaults to active and is marked manual without inventing provenance', () => {
-    const data: Record<string, unknown> = { title: 'Confirm the waste formula with PCP', noteKind: 'pending' };
+    const data: Record<string, unknown> = { title: 'Confirm the waste formula with PCP', noteKind: 'pending', nextAction: 'Ask PCP which formula is official.' };
     prepareManualTeamNoteCreate('team-note', data, lexical('Ask PCP which formula is official.'));
     expect(data.status).toBe('active');
     expect(data.createdByAgent).toBe(false);

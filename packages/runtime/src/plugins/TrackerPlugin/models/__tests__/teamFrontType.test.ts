@@ -64,9 +64,11 @@ describe('team-front tracker type', () => {
     expect(model.idPrefix).toBe('tfr');
   });
 
-  it('adds none of the team-note fields: front, nextAction and handoff belong to a later slice', () => {
-    const names = globalRegistry.get('team-note')!.fields.map((f) => f.name);
-    expect(names).not.toContain('front');
-    expect(names).not.toContain('nextAction');
+  it('does not carry the team-note lifecycle fields (S2 put them on team-note): no front, nextAction or handoff structure here', () => {
+    const names = globalRegistry.get('team-front')!.fields.map((f) => f.name);
+    for (const name of ['front', 'nextAction', 'result', 'commits', 'pendings', 'relatedNotes']) expect(names, name).not.toContain(name);
+    // They are on team-note now.
+    const noteNames = globalRegistry.get('team-note')!.fields.map((f) => f.name);
+    for (const name of ['front', 'nextAction', 'result', 'commits', 'pendings', 'relatedNotes']) expect(noteNames, name).toContain(name);
   });
 });

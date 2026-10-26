@@ -179,7 +179,7 @@ export function assertProtectedTrackerUpdate(
   options: ProtectedTrackerUpdateOptions = {},
 ): void {
   const normalized = { ...updates, type: updates.primaryType ?? updates.type };
-  assertTeamNoteUpdate(currentType, normalized, before, after);
+  assertTeamNoteUpdate(currentType, normalized, before, after, { storedBody: options.storedBody });
   assertToolManifestUpdate(currentType, normalized, before, after);
   // The agent rule reads what the caller asked for, so it gets `updates` with the normalized type.
   assertTeamFrontUpdate(currentType, { ...updates, type: normalized.type }, before, after, options);
@@ -189,10 +189,16 @@ export function assertProtectedTrackerUpdate(
  * Refuse a rich-body save the type does not allow (a cap, or any edit at all).
  * `item.description` is the item's stored description when the funnel can see
  * it: a team-front's body may not be emptied while its description is empty.
+ * `item.noteKind` is a team-note's kind when the funnel can see it: a handoff
+ * may carry a larger body than the other kinds.
  * No-op for other types.
  */
-export function assertProtectedTrackerBody(type: string, body: unknown, item?: { description?: unknown }): void {
-  assertTeamNoteBody(type, body);
+export function assertProtectedTrackerBody(
+  type: string,
+  body: unknown,
+  item?: { description?: unknown; noteKind?: unknown },
+): void {
+  assertTeamNoteBody(type, body, item);
   assertToolManifestBody(type);
   assertTeamFrontBody(type, body, item);
 }

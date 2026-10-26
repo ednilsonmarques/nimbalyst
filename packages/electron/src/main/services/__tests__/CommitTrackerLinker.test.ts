@@ -221,6 +221,25 @@ describe('CommitTrackerLinker', () => {
       expect(closePayload.sourceSession).toBe('root-1');
     });
 
+    it('resolves a legacy pending team-note (no nextAction, front stored as an id) and a handoff the commit closes (F1 S2)', async () => {
+      for (const note of [
+        { title: 'Old pending', status: 'active', noteKind: 'pending', sourceSession: 'root-1', front: 'team-front_1' },
+        { title: 'Handoff', status: 'active', noteKind: 'handoff', nextAction: 'Run C0.', result: 'partial', sourceSession: 'root-1', front: { itemId: 'team-front_1' } },
+      ]) {
+        const query = vi.fn();
+        const linker = linkerWithSession(query);
+        query
+          .mockResolvedValueOnce({ rows: [{ id: 'tracker-1', issue_key: 'nim-42' }] })
+          .mockResolvedValueOnce({ rows: [{ type: 'team-note', data: { ...note } }] })
+          .mockResolvedValueOnce({ rows: [] });
+        const result = await linker.linkBySession('abcdef0', 'feat: land the thing\n\nCloses NIM-42', 'session-1', '/workspace');
+        expect(result.closedItemIds, note.noteKind).toEqual(['tracker-1']);
+        const closePayload = JSON.parse(query.mock.calls[5]?.[1]?.[0] as string);
+        expect(closePayload.status, note.noteKind).toBe('resolved');
+        expect(closePayload.front, note.noteKind).toEqual(note.front);
+      }
+    });
+
     it('closes a plan into the status a plan actually has', async () => {
       // `done` is not in plan's option list. Writing it anyway produced a status
       // no filter, board column, or picker could match -- it survived only

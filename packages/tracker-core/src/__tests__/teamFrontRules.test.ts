@@ -226,8 +226,19 @@ describe("the state of a front is required: a description or a body (user decisi
       expect(() => assertProtectedTrackerBody("team-front", "  ", { description: " " })).toThrow(TEAM_FRONT_STATE_ERROR);
       expect(() => assertTeamFrontBody("team-front", "", { description: "Estado." })).not.toThrow();
       expect(() => assertTeamFrontBody("team-front", "Estado.", { description: "" })).not.toThrow();
-      // Without the description in view, only the cap is checked (the gap).
+      // Without any item in view, only the cap is checked (the gap).
       expect(() => assertTeamFrontBody("team-front", "")).not.toThrow();
+    });
+
+    it("an item context that lacks `description` is still judged: a caller cannot skip the state check by omission (a missing description reads as empty)", () => {
+      expect(() => assertTeamFrontBody("team-front", "", {})).toThrow(TEAM_FRONT_STATE_ERROR);
+      expect(() => assertTeamFrontBody("team-front", "  ", { noteKind: "decision" } as never)).toThrow(TEAM_FRONT_STATE_ERROR);
+      expect(() => assertProtectedTrackerBody("team-front", "", { noteKind: "decision" })).toThrow(TEAM_FRONT_STATE_ERROR);
+      expect(() => assertProtectedTrackerBody("team-front", null, {})).toThrow(TEAM_FRONT_STATE_ERROR);
+      // A body that says something is a state by itself.
+      expect(() => assertProtectedTrackerBody("team-front", "Estado.", { noteKind: "decision" })).not.toThrow();
+      // And other types never read it.
+      expect(() => assertProtectedTrackerBody("task", "", {})).not.toThrow();
     });
   });
 });

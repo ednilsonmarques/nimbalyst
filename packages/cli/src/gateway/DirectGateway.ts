@@ -19,6 +19,7 @@ import {
   assertProtectedTrackerUpdate,
   isProtectedTrackerType,
   prepareProtectedTrackerCreate,
+  readTeamNoteField,
   type Readiness,
   type TrackerRecord,
   type TrackerTypeModel,
@@ -779,7 +780,7 @@ export class DirectGateway implements TrackerGateway {
           data,
           { storedBody: description !== undefined ? description : (row.content ?? null), writesBody: description !== undefined },
         );
-        if (description !== undefined) assertProtectedTrackerBody(row.type, description);
+        if (description !== undefined) assertProtectedTrackerBody(row.type, description, { noteKind: readTeamNoteField(data, 'noteKind') });
       });
 
       if (newType !== row.type) {

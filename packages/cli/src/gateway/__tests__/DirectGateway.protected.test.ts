@@ -240,6 +240,59 @@ describe('team-note offline (NIB.26)', () => {
   });
 });
 
+describe('team-note offline (F1 S2): nextAction, handoff, front', () => {
+  beforeEach(() => {
+    // From before nextAction existed: a pending note without one, with a front stored as a plain id.
+    seed({ id: 'team-note_legacy', type: 'team-note', data: { ...NOTE_DATA, noteKind: 'pending', front: 'team-front_1' }, content: NOTE_DATA.description });
+    seed({ id: 'team-note_handoff', type: 'team-note', data: { ...NOTE_DATA, noteKind: 'handoff', nextAction: 'Run C0.', result: 'partial', front: 'team-front_1' }, content: NOTE_DATA.description });
+  });
+
+  it('a pending note needs a next action; with one it is stored', async () => {
+    await expect(gateway().createTracker(WORKSPACE, { type: 'team-note', title: 'No step', fields: { noteKind: 'pending' } })).rejects.toThrow(/nextAction/);
+    await expect(gateway().createTracker(WORKSPACE, { type: 'team-note', title: 'No step', fields: { noteKind: 'pending', nextAction: '   ' } })).rejects.toThrow(/nextAction/);
+    const created = await gateway().createTracker(WORKSPACE, { type: 'team-note', title: 'With step', description: 'Short.', fields: { noteKind: 'pending', nextAction: 'Ask PCP.' } });
+    expect(rawRow(created.id).data).toMatchObject({ noteKind: 'pending', nextAction: 'Ask PCP.', createdByAgent: false });
+  });
+
+  it('a handoff needs its result and next action and takes a body up to 2,500 characters (its description is the body offline)', async () => {
+    await expect(gateway().createTracker(WORKSPACE, { type: 'team-note', title: 'H', fields: { noteKind: 'handoff', nextAction: 'n' } })).rejects.toThrow(/result/);
+    await expect(gateway().createTracker(WORKSPACE, { type: 'team-note', title: 'H', fields: { noteKind: 'handoff', result: 'completed' } })).rejects.toThrow(/nextAction/);
+    await expect(gateway().createTracker(WORKSPACE, { type: 'team-note', title: 'H', description: 'h'.repeat(2501), fields: { noteKind: 'handoff', nextAction: 'n', result: 'completed' } })).rejects.toThrow(/limit is 2500/);
+    await expect(gateway().createTracker(WORKSPACE, { type: 'team-note', title: 'D', description: 'h'.repeat(601), fields: { noteKind: 'decision' } })).rejects.toThrow(/limit is 600/);
+    const created = await gateway().createTracker(WORKSPACE, { type: 'team-note', title: 'H', description: 'h'.repeat(2500), fields: { noteKind: 'handoff', nextAction: 'n', result: 'completed', commits: ['abc1234 add rules'] } });
+    expect(rawRow(created.id).data).toMatchObject({ noteKind: 'handoff', result: 'completed', commits: ['abc1234 add rules'] });
+  });
+
+  it('the handoff-only fields are refused on every other kind, and nobody sets the front by hand', async () => {
+    await expect(gateway().createTracker(WORKSPACE, { type: 'team-note', title: 'D', fields: { noteKind: 'decision', result: 'completed' } })).rejects.toThrow(/only for notes of kind handoff/);
+    await expect(gateway().createTracker(WORKSPACE, { type: 'team-note', title: 'D', fields: { noteKind: 'decision', front: 'team-front_1' } })).rejects.toThrow(/front is set by Nimbalyst/);
+  });
+
+  it('a legacy pending note without nextAction still resolves, goes obsolete and takes a new title', async () => {
+    await gateway().updateTracker(WORKSPACE, 'team-note_legacy', { title: 'Renamed' });
+    await gateway().updateTracker(WORKSPACE, 'team-note_legacy', { status: 'resolved' });
+    await gateway().updateTracker(WORKSPACE, 'team-note_legacy', { status: 'obsolete' });
+    expect(rawRow('team-note_legacy').data).toMatchObject({ title: 'Renamed', status: 'obsolete', front: 'team-front_1' });
+  });
+
+  it('clearing the next action of a pending note or a handoff is refused; the front cannot be changed or cleared', async () => {
+    await gateway().updateTracker(WORKSPACE, 'team-note_legacy', { fields: { nextAction: 'Ask PCP.' } });
+    await expect(gateway().updateTracker(WORKSPACE, 'team-note_legacy', { fields: { nextAction: '' } })).rejects.toThrow(/nextAction/);
+    await expect(gateway().updateTracker(WORKSPACE, 'team-note_handoff', { unsetFields: ['nextAction'] })).rejects.toThrow(/nextAction/);
+    await expect(gateway().updateTracker(WORKSPACE, 'team-note_handoff', { fields: { front: 'team-front_9' } })).rejects.toThrow(/front records where the note came from/);
+    await expect(gateway().updateTracker(WORKSPACE, 'team-note_handoff', { unsetFields: ['front'] })).rejects.toThrow(/front records/);
+    expect(rawRow('team-note_handoff').data).toMatchObject({ nextAction: 'Run C0.', front: 'team-front_1' });
+  });
+
+  it('the body cap on update follows the kind: 2,000 on a handoff, 600 on a decision', async () => {
+    await gateway().updateTracker(WORKSPACE, 'team-note_handoff', { description: 'h'.repeat(2000) });
+    expect(rawRow('team-note_handoff').data.description).toHaveLength(2000);
+    await expect(gateway().updateTracker(WORKSPACE, 'team-note_handoff', { description: 'h'.repeat(2501) })).rejects.toThrow(/limit is 2500/);
+    await expect(gateway().updateTracker(WORKSPACE, 'team-note_1', { description: 'y'.repeat(2000) })).rejects.toThrow(/limit is 600/);
+    await expect(gateway().updateTracker(WORKSPACE, 'team-note_handoff', { fields: { noteKind: 'decision' } })).rejects.toThrow(/only for notes of kind handoff/);
+  });
+});
+
 describe('team-front offline (F1 S1)', () => {
   /** A front as the app stores it: created by the user, one mission active. */
   const FRONT_DATA = {

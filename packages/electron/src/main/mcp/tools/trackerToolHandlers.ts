@@ -47,7 +47,7 @@ import {
 } from '@nimbalyst/runtime/plugins/TrackerPlugin/models/trackerBlockerVisibility';
 import { trackerItemToRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import { getRecordStatus, getRecordTitle, resolveRoleFieldName } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
-import { buildTrackerRadar, getRecentTeammateActivity, assertProtectedTrackerBody, assertProtectedTrackerUpdate, prepareProtectedTrackerCreate } from '@nimbalyst/tracker-core';
+import { buildTrackerRadar, getRecentTeammateActivity, assertProtectedTrackerBody, assertProtectedTrackerUpdate, prepareProtectedTrackerCreate, readTeamNoteField } from '@nimbalyst/tracker-core';
 import { getVisibleTrackerLinkedSessions, shouldPersistTrackerLinkedSessions } from '../../../shared/trackerSessionLinks';
 import { buildFullDocumentTrackerId } from '@nimbalyst/runtime/plugins/TrackerPlugin/documentHeader/frontmatterUtils';
 import { normalizeLegacyLabelValues } from '@nimbalyst/runtime/sync';
@@ -2308,7 +2308,11 @@ export async function handleTrackerUpdate(
       }
 
       // Team Notes: members cannot write, provenance cannot be rewritten, body cap.
-      const teamNoteRefusal = await guardTeamNoteUpdate(args, item.type, sessionId);
+      // The note's kind sets its body cap. The stored row is what holds it: an item
+      // the document service resolved may not carry noteKind in its customFields.
+      const storedRowData = typeof row?.data === 'string' ? JSON.parse(row.data) : row?.data;
+      const currentNoteKind = readTeamNoteField(storedRowData, 'noteKind') ?? item.customFields?.noteKind;
+      const teamNoteRefusal = await guardTeamNoteUpdate(args, item.type, sessionId, currentNoteKind);
       if (teamNoteRefusal) return teamNoteRefusal;
 
       // Tool Manifests: only the team's coordinator, only to accept (Phase 1B).
@@ -2767,7 +2771,8 @@ export async function handleTrackerUpdate(
           ? String(args.description).replace(/\\n/g, '\n')
           : (row.content ?? null);
         assertProtectedTrackerUpdate(oldType, { ...args, type: primaryTypeChanged ? row.type : undefined }, oldDataSnapshot, data, { agent: true, storedBody: bodyAfter, writesBody: args.description !== undefined });
-        if (args.description !== undefined) assertProtectedTrackerBody(oldType, String(args.description).replace(/\\n/g, '\n'));
+        // The kind the note ends up with decides its body cap (a handoff gets more).
+        if (args.description !== undefined) assertProtectedTrackerBody(oldType, bodyAfter, { noteKind: readTeamNoteField(data, 'noteKind') });
       } catch (error) {
         return { content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }], isError: true };
       }

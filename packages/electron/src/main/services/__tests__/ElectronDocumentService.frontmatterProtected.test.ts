@@ -78,6 +78,18 @@ describe('a frontmatter edit (live capture)', () => {
     });
   }
 
+  it('judges a note by the S2 rules too: a pending note without a next action, a handoff without a result, a hand-set front', async () => {
+    for (const note of [
+      { type: 'team-note', title: 'Pending', noteKind: 'pending', status: 'active' },
+      { type: 'team-note', title: 'Handoff', noteKind: 'handoff', status: 'active', nextAction: 'n' },
+      { type: 'team-note', title: 'Fronted', noteKind: 'decision', status: 'active', front: 'team-front_1' },
+      { type: 'team-note', title: 'Result on a decision', noteKind: 'decision', status: 'active', result: 'completed' },
+    ]) {
+      await (service as any).captureFrontmatterTrackerTransition(REL, { trackerStatus: { ...note } });
+      expect(writes(), note.title).toEqual([]);
+    }
+  });
+
   it('does not move an existing protected row either', async () => {
     const existing = { id: `fm:team-front:${REL}`, type: 'team-front', source: 'frontmatter', source_ref: REL, data: JSON.stringify({ title: 'Team Mode', status: 'active', currentMission: 'root-1' }) };
     mockQuery.mockResolvedValue({ rows: [existing] });
