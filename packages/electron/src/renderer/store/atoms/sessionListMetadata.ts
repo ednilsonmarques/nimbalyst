@@ -39,6 +39,10 @@ export function sessionListMetadata(
     ...(s.teamMission && { teamMission: s.teamMission }),
     ...(s.effortLevel && { effortLevel: s.effortLevel }),
     ...(s.toolScope && { toolScope: s.toolScope }),
+    // Mission lifecycle of a team root (host-owned: the renderer reads, never writes)
+    ...(s.teamFront && { teamFront: s.teamFront }),
+    ...(s.teamGoal && { teamGoal: s.teamGoal }),
+    ...(s.teamMissionStatus && { teamMissionStatus: s.teamMissionStatus }),
     ...(s.agentRole && { agentRole: s.agentRole }),
     ...(s.createdBySessionId !== undefined && {
       createdBySessionId: s.createdBySessionId,

@@ -66,6 +66,11 @@ export function projectSessionList(
       teamMission: entry.teamMission || undefined,
       effortLevel: entry.effortLevel || undefined,
       toolScope: entry.toolScope || undefined,
+      // Mission lifecycle of a team root (host-owned, read-only for the renderer).
+      // The bootstrap context and the done criterion are main-only and never listed.
+      teamFront: entry.teamFront || undefined,
+      teamGoal: entry.teamGoal || undefined,
+      teamMissionStatus: entry.teamMissionStatus || undefined,
       metadata: {},
     };
   });

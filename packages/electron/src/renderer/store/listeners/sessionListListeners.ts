@@ -94,6 +94,10 @@ export function initSessionListListeners(): () => void {
         ...(typeof updates.teamMission === 'string' && { teamMission: updates.teamMission }),
         ...(typeof updates.effortLevel === 'string' && { effortLevel: updates.effortLevel }),
         ...(typeof updates.toolScope === 'string' && { toolScope: updates.toolScope }),
+        // Mission lifecycle of a team root: main -> renderer only, well formed only.
+        ...(typeof updates.teamFront === 'string' && updates.teamFront.trim() && { teamFront: updates.teamFront }),
+        ...(typeof updates.teamGoal === 'string' && updates.teamGoal.trim() && { teamGoal: updates.teamGoal }),
+        ...((updates.teamMissionStatus === 'active' || updates.teamMissionStatus === 'closed') && { teamMissionStatus: updates.teamMissionStatus }),
       });
       store.set(sessionRegistryAtom, registry);
     }

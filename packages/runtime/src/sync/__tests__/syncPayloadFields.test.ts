@@ -81,3 +81,40 @@ describe('buildSyncPayload (create/metadata_updated push payload)', () => {
     expect('updatedAt' in metadata).toBe(false);
   });
 });
+
+// F1 S3: the team root's lifecycle keys are local to the machine that runs the
+// mission. The push path projects a whitelist, so a key that is not named here
+// never reaches another device; adding one is a decision this closed list makes
+// visible (the index/bulk path is pinned in PGLiteSessionStore.test.ts).
+describe('the team lifecycle root keys never ride the real-time push', () => {
+  const LIFECYCLE_KEYS = ['teamFront', 'teamGoal', 'teamMissionStatus', 'teamMissionContext', 'teamDoneCriterion'];
+
+  it('SYNC_RELEVANT_FIELDS.metadataKeys is exactly phase, tags and hostDeviceId', () => {
+    expect([...SYNC_RELEVANT_FIELDS.metadataKeys]).toEqual(['phase', 'tags', 'hostDeviceId']);
+    for (const key of LIFECYCLE_KEYS) {
+      expect(SYNC_RELEVANT_FIELDS.metadataKeys as readonly string[], key).not.toContain(key);
+      expect(SYNC_RELEVANT_FIELDS.columns as readonly string[], key).not.toContain(key);
+    }
+  });
+
+  it('a create or update payload for a team root pushes none of them', () => {
+    const metadata = {
+      teamMode: true,
+      teamFront: 'team-front_1',
+      teamGoal: 'Ship F1',
+      teamMissionStatus: 'active',
+      teamMissionContext: 'Bootstrap block',
+      teamDoneCriterion: 'S3 green',
+      phase: 'implementing',
+      tags: ['sync'],
+    };
+    for (const payload of [
+      { id: 'root', title: 'Root', provider: 'claude-code', metadata },
+      { metadata },
+    ]) {
+      const pushed = buildSyncPayload(payload as never, { forceUpdatedAt: true });
+      expect(pushed.phase).toBe('implementing');
+      for (const key of [...LIFECYCLE_KEYS, 'teamMode']) expect(key in pushed, key).toBe(false);
+    }
+  });
+});

@@ -70,6 +70,25 @@ export const TOOL_MANIFEST_PROMPT_ORIGIN = 'tool_manifest';
 export const TOOL_MANIFEST_REF_METADATA_KEY = 'toolManifestRef';
 
 /**
+ * Lifecycle keys of a team root (a mission): which front it works for, its goal,
+ * its status, the bootstrap block and the done criterion. HOST-OWNED: written
+ * only by the host with the root row (applyHostTeamRootLifecycle) and, for the
+ * status, by the host when the mission closes. Every ordinary metadata write
+ * drops them and a renderer create cannot carry them, so a note's `front` (copied
+ * from `teamFront`) cannot be forged by choosing it at creation. Local to the
+ * machine: they are not in the sync whitelists.
+ */
+export const TEAM_FRONT_METADATA_KEY = 'teamFront';
+export const TEAM_GOAL_METADATA_KEY = 'teamGoal';
+export const TEAM_MISSION_STATUS_METADATA_KEY = 'teamMissionStatus';
+export const TEAM_MISSION_CONTEXT_METADATA_KEY = 'teamMissionContext';
+export const TEAM_DONE_CRITERION_METADATA_KEY = 'teamDoneCriterion';
+
+/** `teamMissionStatus`: `active` from creation, `closed` once the host closes the mission. */
+export const TEAM_MISSION_STATUSES = ['active', 'closed'] as const;
+export type TeamMissionStatus = (typeof TEAM_MISSION_STATUSES)[number];
+
+/**
  * Longest mission a team member may be created with. A mission is one or two
  * plain sentences of focus, never a brief: the brief is the first prompt.
  */
