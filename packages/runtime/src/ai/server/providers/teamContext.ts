@@ -145,11 +145,27 @@ export function normalizeTeamMission(raw: unknown): string | undefined {
   return mission ? mission : undefined;
 }
 
+/**
+ * What the user stated when the host created a mission root, as the coordinator's
+ * prompt quotes it: the front (the item id of a `team-front`), the goal and, when
+ * there is one, the completion criterion. Read from the stored row by
+ * `resolveTeamContext`, only for a root carrying the host marker. Deliberately not
+ * `teamMissionContext`: that block holds the front's description, which stays out of
+ * the prompt until it is treated as untrusted text (F2).
+ */
+export interface TeamRootMission {
+  front: string;
+  goal: string;
+  doneCriterion?: string;
+}
+
 export interface TeamContext {
   /** This session is a team root. */
   teamMode: boolean;
   /** This session was created inside a team. */
   teamChild: TeamChild | null;
+  /** The mission of a root the host created with one (absent on a legacy root, a member and an ordinary session). */
+  teamMission?: TeamRootMission;
 }
 
 export const NO_TEAM: TeamContext = Object.freeze({ teamMode: false, teamChild: null });
@@ -171,9 +187,30 @@ export function parseTeamChild(raw: unknown): TeamChild | null {
   return mission ? { role, rootSessionId, depth, mission } : { role, rootSessionId, depth };
 }
 
+function nonBlank(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+/**
+ * The mission of a root the host created (`isHostMissionRoot`), or undefined. A
+ * `teamFront` or `teamGoal` on a root without the marker predates the host-owned
+ * keys and proves nothing, so it is not a mission; a mission without a front or a
+ * goal is not one either. The bootstrap block, the status and the marker are never
+ * read here.
+ */
+export function readTeamRootMission(metadata: Record<string, unknown> | null | undefined): TeamRootMission | undefined {
+  if (!isHostMissionRoot(metadata)) return undefined;
+  const front = nonBlank(metadata[TEAM_FRONT_METADATA_KEY]);
+  const goal = nonBlank(metadata[TEAM_GOAL_METADATA_KEY]);
+  if (!front || !goal) return undefined;
+  const doneCriterion = nonBlank(metadata[TEAM_DONE_CRITERION_METADATA_KEY]);
+  return { front, goal, ...(doneCriterion && { doneCriterion }) };
+}
+
 /**
  * Team context of a session from its metadata. Meta-agents never take part:
- * they have their own orchestration persona and tool set.
+ * they have their own orchestration persona and tool set. Only a mission root
+ * carries `teamMission`: every other context keeps exactly the shape it had.
  */
 export function resolveTeamContext(
   metadata: Record<string, unknown> | null | undefined,
@@ -183,7 +220,8 @@ export function resolveTeamContext(
   const teamChild = parseTeamChild(metadata[TEAM_CHILD_METADATA_KEY]);
   const teamMode = metadata[TEAM_MODE_METADATA_KEY] === true && !teamChild;
   if (!teamMode && !teamChild) return NO_TEAM;
-  return { teamMode, teamChild };
+  const teamMission = teamMode ? readTeamRootMission(metadata) : undefined;
+  return teamMission ? { teamMode, teamChild, teamMission } : { teamMode, teamChild };
 }
 
 export type TeamRootPresetId = 'standard' | 'large' | 'critical';

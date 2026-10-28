@@ -79,7 +79,7 @@ export function decideTeamNoteWriter(
       allowed: false,
       reason:
         `Team members cannot write Team Notes. Add it to your final report under "Suggested notes" ` +
-        `("- [KIND] title — short summary") and your coordinator will decide whether to record it.`,
+        `("- [KIND] title — short summary (a pending item also names its next action)") and your coordinator will decide whether to record it.`,
     };
   }
   return {

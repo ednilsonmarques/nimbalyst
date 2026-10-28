@@ -39,6 +39,11 @@ describe('decideTeamNoteWriter', () => {
     expect(decision.allowed).toBe(false);
     expect(decision.allowed === false && decision.reason).toMatch(/Suggested notes/);
   });
+
+  it('the refusal teaches the same suggestion format the members\' prompt does, next action included', () => {
+    const decision = decideTeamNoteWriter('child', member('reviewer'), null);
+    expect(decision.allowed === false && decision.reason).toContain('("- [KIND] title — short summary (a pending item also names its next action)")');
+  });
 });
 
 describe('the front of a note (F1 S2): copied by the host from the mission root', () => {

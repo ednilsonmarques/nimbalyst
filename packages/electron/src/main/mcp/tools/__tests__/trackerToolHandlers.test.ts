@@ -3537,7 +3537,8 @@ describe('an agent and a team-front (F1 S1): fronts are the user\'s, the coordin
 
 describe('team-note through the MCP funnel (F1 S2): front, nextAction and handoff', () => {
   const sessions: Record<string, unknown> = {
-    'root-front': { agentRole: 'standard', metadata: { teamMode: true, teamFront: 'team-front_1' } },
+    // A mission root as the host creates it: since S4 the front is only trusted with the host marker.
+    'root-front': { agentRole: 'standard', metadata: { teamMode: true, teamMissionVersion: 1, teamFront: 'team-front_1' } },
     'root-plain': { agentRole: 'standard', metadata: { teamMode: true } },
   };
   const NOTE_MODEL = {
@@ -3753,6 +3754,132 @@ describe('team-note through the MCP funnel (F1 S2): front, nextAction and handof
       expect((await update({ fields: { result: 'bogus' } })).isError).toBe(true);
       expect(updateCall()).toBeUndefined();
       expect((await update({ fields: { result: 'abandoned' } })).isError).toBe(false);
+    });
+  });
+
+  // The coordinator prompt tells a coordinator which form to write in `pendings`, `relatedNotes` and
+  // `supersedes`. These pin what the real funnel does with each form (P1 follow-up, point 1).
+  describe('relationship targets: what a key becomes', () => {
+    const itemIdsOf = (value: unknown) => (Array.isArray(value) ? value : [value]).map((entry: any) => entry?.itemId ?? entry);
+    const storedRelationship = (data: any, name: string) => data[name] ?? data.customFields?.[name];
+    const lookedUp = (needle: string) => mockQuery.mock.calls.some((call) => /^\s*SELECT/i.test(String(call[0])) && JSON.stringify(call[1] ?? []).includes(needle));
+    const handoff = (links: Record<string, unknown>) => ({ noteKind: 'handoff', nextAction: 'n', result: 'partial', ...links });
+
+    it.each(['NIB.12', 'NIB-12', 'WOK.1'])('create: %s in pendings and relatedNotes is neither resolved nor refused: the string is stored as the target, dangling', async (key) => {
+      const result = await create(handoff({ pendings: [key], relatedNotes: [key] }));
+      expect(result.isError, result.content[0]?.text).toBe(false);
+      const data = insertedData();
+      expect(itemIdsOf(storedRelationship(data, 'pendings'))).toEqual([key]);
+      expect(itemIdsOf(storedRelationship(data, 'relatedNotes'))).toEqual([key]);
+      // Nothing looked the key up to turn it into an item id.
+      expect(lookedUp(key)).toBe(false);
+    });
+
+    it('create: the id that tracker_create returns is what a relationship takes, and it is stored as given', async () => {
+      const first = await create({ noteKind: 'pending', nextAction: 'Ask PCP.' });
+      expect(first.isError, first.content[0]?.text).toBe(false);
+      const id = JSON.parse(String(first.content[0]?.text)).structured.item.id as string;
+      expect(id).toMatch(/^team-note_/);
+      mockQuery.mockClear();
+      useRow(noteRow({}));
+      const result = await create(handoff({ pendings: [id], relatedNotes: [id] }));
+      expect(result.isError, result.content[0]?.text).toBe(false);
+      const data = insertedData();
+      expect(itemIdsOf(storedRelationship(data, 'pendings'))).toEqual([id]);
+      expect(itemIdsOf(storedRelationship(data, 'relatedNotes'))).toEqual([id]);
+    });
+
+    it('update: a key in supersedes is stored as written too (no resolution), an item id likewise', async () => {
+      for (const target of ['NIB-12', 'NIB.12', 'team-note_0']) {
+        mockQuery.mockClear();
+        const result = await update({ fields: { supersedes: [target] } });
+        expect(result.isError, `${target}: ${result.content[0]?.text}`).toBe(false);
+        expect(itemIdsOf(storedRelationship(writtenData(), 'supersedes')), target).toEqual([target]);
+        expect(lookedUp(target), target).toBe(false);
+      }
+    });
+
+    it('update: a key in a handoff\'s relatedNotes and pendings is stored as written', async () => {
+      useRow(noteRow({ noteKind: 'handoff', nextAction: 'n', result: 'completed' }));
+      const result = await update({ fields: { relatedNotes: ['NIB-12'], pendings: ['NIB.13'] } });
+      expect(result.isError, result.content[0]?.text).toBe(false);
+      expect(itemIdsOf(storedRelationship(writtenData(), 'relatedNotes'))).toEqual(['NIB-12']);
+      expect(itemIdsOf(storedRelationship(writtenData(), 'pendings'))).toEqual(['NIB.13']);
+    });
+  });
+
+  // The caps, at their exact edge, against the real validators (P1 follow-up, point 2).
+  describe('body boundaries', () => {
+    const text = (length: number) => ({ description: 'h'.repeat(length) });
+
+    it('create: a pending note with a next action takes 600 characters and refuses 601', async () => {
+      const fields = { noteKind: 'pending', nextAction: 'Ask PCP.' };
+      const ok = await create(fields, text(600));
+      expect(ok.isError, ok.content[0]?.text).toBe(false);
+      expect(insertCall()).toBeDefined();
+      mockQuery.mockClear();
+      const refused = await create(fields, text(601));
+      expect(refused.isError).toBe(true);
+      expect(refused.content[0]?.text).toMatch(/is 601 characters; the limit is 600/);
+      expect(insertCall()).toBeUndefined();
+    });
+
+    it('create: a handoff takes 2,500 characters and refuses 2,501', async () => {
+      const fields = { noteKind: 'handoff', nextAction: 'n', result: 'completed' };
+      const ok = await create(fields, text(2500));
+      expect(ok.isError, ok.content[0]?.text).toBe(false);
+      expect(insertCall()).toBeDefined();
+      mockQuery.mockClear();
+      const refused = await create(fields, text(2501));
+      expect(refused.isError).toBe(true);
+      expect(refused.content[0]?.text).toMatch(/is 2501 characters; the limit is 2500/);
+      expect(insertCall()).toBeUndefined();
+    });
+
+    it('update: the same edges on a stored pending note and a stored handoff', async () => {
+      useRow(noteRow({ noteKind: 'pending', nextAction: 'Ask PCP.' }));
+      expect((await update(text(600))).isError).toBe(false);
+      mockQuery.mockClear();
+      expect((await update(text(601))).content[0]?.text).toMatch(/limit is 600/);
+      expect(updateCall()).toBeUndefined();
+      useRow(noteRow({ noteKind: 'handoff', nextAction: 'n', result: 'completed' }));
+      expect((await update(text(2500))).isError).toBe(false);
+      mockQuery.mockClear();
+      expect((await update(text(2501))).content[0]?.text).toMatch(/limit is 2500/);
+      expect(updateCall()).toBeUndefined();
+    });
+  });
+
+  // What the prompt claims about the fields Nimbalyst fills in (P1 follow-up, point 2). Through the agent's
+  // tracker_create AND tracker_update the value is dropped, never refused: refusal belongs to the manual
+  // writers (Tracker UI, IPC, CLI), which the shared rules cover in their own suites.
+  describe('provenance the agent passes is discarded', () => {
+    const FORGED = {
+      sourceSession: 'forged-source',
+      teamRootSession: 'forged-root',
+      agentRole: 'forged-role',
+      branch: 'forged-branch',
+      worktree: 'forged-worktree',
+      front: 'team-front_forged',
+    };
+
+    it('create: every protected field passed by the agent is replaced by the host\'s, or absent', async () => {
+      const result = await create({ noteKind: 'decision', ...FORGED });
+      expect(result.isError, result.content[0]?.text).toBe(false);
+      const data = insertedData();
+      expect(JSON.stringify(data)).not.toContain('forged');
+      expect(data).toMatchObject({ sourceSession: 'root-front', teamRootSession: 'root-front', agentRole: 'coordinator' });
+      expect(data.front).toMatchObject({ itemId: 'team-front_1' });
+    });
+
+    it('update: the same fields are not refused, nothing forged is written and the stored provenance stays', async () => {
+      useRow(noteRow({ front: { itemId: 'team-front_1' } }));
+      const result = await update({ status: 'resolved', fields: { ...FORGED } });
+      expect(result.isError, result.content[0]?.text).toBe(false);
+      const written = writtenData();
+      expect(JSON.stringify(written)).not.toContain('forged');
+      expect(written).toMatchObject({ sourceSession: 'root-front', teamRootSession: 'root-front', agentRole: 'coordinator', status: 'resolved' });
+      expect(written.front?.itemId ?? written.customFields?.front?.itemId).toBe('team-front_1');
     });
   });
 });
