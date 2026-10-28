@@ -29,27 +29,25 @@ import * as path from 'path';
 import type { CreateSessionPayload } from '@nimbalyst/runtime/ai/adapters/sessionStore';
 import { isHostMissionRoot } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 import { TEAM_FRONT_TYPE } from '@nimbalyst/tracker-core';
+import {
+  TEAM_MISSION_GOAL_MAX_CHARS,
+  TEAM_MISSION_DONE_CRITERION_MAX_CHARS,
+  type TeamMissionErrorCode,
+} from '../../../shared/teamMission';
 import { applyHostTeamRootLifecycle } from './teamSessionMetadata';
 import { buildTeamMissionContext, detectPolicyFiles } from './teamMissionContext';
 
 /** The id of a tracker item is at most this long (and made of the characters below). */
 export const TEAM_MISSION_FRONT_ID_MAX_CHARS = 128;
-/** A mission goal is one or two plain sentences. */
-export const TEAM_MISSION_GOAL_MAX_CHARS = 400;
-export const TEAM_MISSION_DONE_CRITERION_MAX_CHARS = 400;
+// The goal/done-criterion limits and the error codes are shared with the renderer's creation
+// dialog (shared/teamMission.ts): one source, re-exported here so every import keeps working.
+export { TEAM_MISSION_GOAL_MAX_CHARS, TEAM_MISSION_DONE_CRITERION_MAX_CHARS } from '../../../shared/teamMission';
+export type { TeamMissionErrorCode } from '../../../shared/teamMission';
 
 const FRONT_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 // eslint-disable-next-line no-control-regex
 const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 const REQUEST_KEYS: readonly string[] = ['front', 'goal', 'doneCriterion'];
-
-export type TeamMissionErrorCode =
-  | 'invalid-request'
-  | 'not-a-team-root'
-  | 'session-exists'
-  | 'front-not-found'
-  | 'front-unavailable'
-  | 'mission-active';
 
 /** A refusal the caller can show: a stable code and a message that says what to do. Never an unexpected failure. */
 export class TeamMissionError extends Error {

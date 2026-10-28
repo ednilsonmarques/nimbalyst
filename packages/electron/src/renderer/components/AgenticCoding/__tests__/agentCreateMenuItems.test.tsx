@@ -42,6 +42,7 @@ interface MockHandlers extends AgentCreateMenuHandlers {
   openSuperLoopDialog: Mock<() => void>;
   handleNewMetaAgent: Mock<() => void>;
   handleNewTeamSession: Mock<(preset: TeamRootPreset) => void>;
+  handleNewTeamMission: Mock<() => void>;
   handleNewEccArchitectSession: Mock<() => void>;
 }
 
@@ -53,6 +54,7 @@ function handlers(): MockHandlers {
     openSuperLoopDialog: vi.fn<() => void>(),
     handleNewMetaAgent: vi.fn<() => void>(),
     handleNewTeamSession: vi.fn<(preset: TeamRootPreset) => void>(),
+    handleNewTeamMission: vi.fn<() => void>(),
     handleNewEccArchitectSession: vi.fn<() => void>(),
   };
 }
@@ -65,7 +67,7 @@ afterEach(async () => {
 describe('where the action is', () => {
   it('is the last item of the Team mode group, set apart by a divider, behind the Team view flag', () => {
     const items = buildAgentCreateMenuItems({ ...allOff, isAgentTeamViewEnabled: true }, tAgent, handlers);
-    expect(items.map((item) => item.id)).toEqual(['team-session-standard', 'team-session-large', 'team-session-critical', 'ecc-architect']);
+    expect(items.map((item) => item.id)).toEqual(['team-session-standard', 'team-session-large', 'team-session-critical', 'team-mission', 'ecc-architect']);
     const action = items[items.length - 1];
     expect(action.testId).toBe(ECC_ARCHITECT_MENU_TEST_ID);
     expect(action.icon).toBe('architecture');
@@ -81,17 +83,17 @@ describe('where the action is', () => {
     expect(buildAgentCreateMenuItems(allOff, tAgent, handlers)).toEqual([]);
 
     const withFlag = buildAgentCreateMenuItems(allOn, tAgent, handlers);
-    expect(withFlag.map((item) => item.id)).toEqual([...withoutFlag.map((item) => item.id), 'team-session-standard', 'team-session-large', 'team-session-critical', 'ecc-architect']);
+    expect(withFlag.map((item) => item.id)).toEqual([...withoutFlag.map((item) => item.id), 'team-session-standard', 'team-session-large', 'team-session-critical', 'team-mission', 'ecc-architect']);
   });
 
   it('is labelled "Preparar com ECC Architect" in pt-BR and "Prepare with ECC Architect" in English', async () => {
     await setLanguage('pt-BR');
     let items = buildAgentCreateMenuItems({ ...allOff, isAgentTeamViewEnabled: true }, tAgent, handlers);
-    expect(items[3].label).toBe('Preparar com ECC Architect');
+    expect(items.find((item) => item.id === 'ecc-architect')!.label).toBe('Preparar com ECC Architect');
     expect(items[0].label).toBe('Nova sessão em Modo Equipe: Padrão (Opus, high)');
     await setLanguage('en');
     items = buildAgentCreateMenuItems({ ...allOff, isAgentTeamViewEnabled: true }, tAgent, handlers);
-    expect(items[3].label).toBe('Prepare with ECC Architect');
+    expect(items.find((item) => item.id === 'ecc-architect')!.label).toBe('Prepare with ECC Architect');
     expect(items[0].label).toBe('New Team mode session: Standard (Opus, high)');
   });
 
@@ -185,5 +187,37 @@ describe('what the action does', () => {
     // Items that need a git repository stay disabled as before; the action does not depend on one.
     expect(items.find((item) => item.id === 'worktree')!.disabled).toBe(true);
     expect(items.find((item) => item.id === 'ecc-architect')!.disabled).toBeUndefined();
+  });
+});
+
+describe('the "new mission" item', () => {
+  it('sits after the presets and before the ECC divider, behind the same flag, and only opens the dialog', () => {
+    const current = handlers();
+    const items = buildAgentCreateMenuItems({ ...allOff, isAgentTeamViewEnabled: true }, tAgent, () => current);
+    const mission = items.find((item) => item.id === 'team-mission')!;
+    expect(items.indexOf(mission)).toBe(3);
+    expect(items[4].id).toBe('ecc-architect');
+    expect(mission.testId).toBe('new-team-mission-button');
+    expect(mission.separatorBefore).toBeUndefined();
+    expect(mission.disabled).toBeUndefined();
+
+    mission.onSelect();
+    expect(current.handleNewTeamMission).toHaveBeenCalledTimes(1);
+    // It creates nothing itself: no preset session, no ECC architect.
+    expect(current.handleNewTeamSession).not.toHaveBeenCalled();
+    expect(current.handleNewEccArchitectSession).not.toHaveBeenCalled();
+  });
+
+  it('is absent without the flag', () => {
+    const items = buildAgentCreateMenuItems({ ...allOn, isAgentTeamViewEnabled: false }, tAgent, handlers);
+    expect(items.some((item) => item.id === 'team-mission')).toBe(false);
+  });
+
+  it('has a label in English and in Brazilian Portuguese', async () => {
+    const english = buildAgentCreateMenuItems({ ...allOff, isAgentTeamViewEnabled: true }, tAgent, handlers).find((item) => item.id === 'team-mission')!;
+    expect(english.label).toBe('New Team mode mission…');
+    await setLanguage('pt-BR');
+    const portuguese = buildAgentCreateMenuItems({ ...allOff, isAgentTeamViewEnabled: true }, tAgent, handlers).find((item) => item.id === 'team-mission')!;
+    expect(portuguese.label).toBe('Nova missão em Modo Equipe…');
   });
 });

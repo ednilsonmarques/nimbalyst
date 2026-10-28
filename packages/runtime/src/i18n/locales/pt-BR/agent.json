@@ -172,6 +172,7 @@
       "newMetaAgent": "Novo meta-agente",
       "remoteUnavailable": "Esta operação não está disponível na máquina remota selecionada.",
       "remoteDestination": "Máquina remota selecionada",
+      "newTeamMission": "Nova missão em Modo Equipe…",
       "newTeamSession": {
         "standard": "Nova sessão em Modo Equipe: Padrão (Opus, high)",
         "large": "Nova sessão em Modo Equipe: Grande (Fable, high)",
@@ -813,6 +814,47 @@
     "cancel": "Cancelar",
     "creating": "Criando...",
     "createAndStart": "Criar e iniciar"
+  },
+  "teamMissionDialog": {
+    "title": "Nova missão",
+    "subtitle": "Inicie uma sessão em Modo Equipe que trabalha em uma frente do projeto rumo a um objetivo.",
+    "frontLabel": "Frente",
+    "loadingFronts": "Carregando frentes…",
+    "loadFailed": "Não foi possível carregar as frentes.",
+    "retry": "Tentar de novo",
+    "noFronts": "Nenhuma frente de equipe ativa encontrada. Se você esperava uma, crie ou reative uma Team Front no Rastreador e tente de novo.",
+    "noActiveFront": "Nenhuma frente está ativa. Defina uma frente como Ativa (Active) no Rastreador para iniciar uma missão nela.",
+    "onlyActiveHint": "Só uma frente ativa pode iniciar uma nova missão.",
+    "selectedFrontGone": "A frente selecionada não está mais ativa. Escolha outra frente.",
+    "status": {
+      "active": "Ativa",
+      "paused": "Pausada",
+      "closed": "Fechada",
+      "unknown": "Status desconhecido"
+    },
+    "goalLabel": "Objetivo da missão",
+    "goalPlaceholder": "O que esta equipe deve alcançar?",
+    "goalRequired": "O objetivo é obrigatório.",
+    "doneLabel": "Critério de conclusão (opcional)",
+    "donePlaceholder": "Como você saberá que terminou?",
+    "counter": "{{used}}/{{max}}",
+    "tooLong": "Longo demais: {{used}} de {{max}} caracteres. Reduza o texto; nada é cortado por você.",
+    "detailsLine": "Detalhes: {{message}}",
+    "cancel": "Cancelar",
+    "create": "Iniciar missão",
+    "creating": "Iniciando…",
+    "errors": {
+      "generic": "Não foi possível iniciar a missão.",
+      "invalidRequest": "O Nimbalyst rejeitou os dados da missão. Revise a frente, o objetivo e o critério de conclusão.",
+      "notATeamRoot": "Uma missão só pode começar em uma nova sessão em Modo Equipe.",
+      "sessionExists": "Essa sessão já existe ou foi criada no mesmo instante. Tente de novo.",
+      "frontNotFound": "Esta frente não existe mais neste espaço de trabalho. A lista foi atualizada.",
+      "frontUnavailable": "Esta frente não pode mais receber uma nova missão (está pausada, fechada ou arquivada). A lista foi atualizada.",
+      "missionActive": "Esta frente já tem uma missão ativa. Arquive essa missão ou escolha outra frente.",
+      "noWorkspace": "Abra um espaço de trabalho primeiro.",
+      "remoteHost": "Uma missão só pode ser iniciada em um espaço de trabalho local, não em uma máquina remota.",
+      "presetUnavailable": "O preset de coordenador Padrão não está disponível, então nenhuma missão foi iniciada."
+    }
   },
   "worktreePicker": {
     "nameErrors": {

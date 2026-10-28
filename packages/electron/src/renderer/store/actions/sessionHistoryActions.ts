@@ -19,7 +19,7 @@ import {selectedMachineAtom, machineSessionSelectionsAtom} from '../atoms/remote
  * longer change identity when component state changes either.
  */
 
-import { atom } from 'jotai';
+import { atom, type Setter } from 'jotai';
 import { atomFamily } from '../debug/atomFamilyRegistry';
 import { resolveProviderFromModel } from '../../utils/modelUtils';
 import type { SessionLaunchSource } from '../../../shared/analytics/sessionLaunch';
@@ -49,6 +49,11 @@ import {
   setWorktreeActiveSessionAtom,
 } from '../atoms/workstreamState';
 import type { WorktreeCreateResult, SessionCreateResult } from '../../../shared/ipc/types';
+import type {
+  TeamMissionClientErrorCode,
+  TeamMissionErrorCode,
+  TeamMissionRequestPayload,
+} from '../../../shared/teamMission';
 
 // ============================================================
 // Signal / state atoms that replace pass-through props
@@ -121,6 +126,61 @@ export interface CreateNewSessionOptions {
 
 function getWorkspacePath(get: (a: any) => any): string | null {
   return get(activeWorkspacePathAtom);
+}
+
+/**
+ * What a successful `sessions:create` does in the renderer: add the new session
+ * to the list, keep its draft and select it. Shared by the ordinary creation and
+ * the mission creation so both register a root the same way.
+ */
+function registerCreatedSession(
+  set: Setter,
+  args: {
+    id: string;
+    title: string;
+    provider: string;
+    model: string;
+    workspacePath: string;
+    options: CreateNewSessionOptions;
+  },
+): void {
+  const { id, title, provider, model, workspacePath, options } = args;
+  set(addSessionFullAtom, {
+    id,
+    title,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    provider,
+    model,
+    sessionType: 'session',
+    messageCount: 0,
+    workspaceId: workspacePath,
+    isArchived: false,
+    isPinned: false,
+    parentSessionId: null,
+    worktreeId: null,
+    childCount: 0,
+    uncommittedCount: 0,
+    // A Team mode root is one from its first frame, not only after the next list refresh.
+    ...(options.metadata?.teamMode === true && { teamMode: true }),
+    ...(typeof options.metadata?.effortLevel === 'string' && { effortLevel: options.metadata.effortLevel }),
+  });
+
+  if (options.initialDraft) {
+    set(setSessionDraftInputAtom, {
+      sessionId: id,
+      draftInput: options.initialDraft,
+      workspacePath,
+      persist: true,
+    });
+  }
+
+  if (options.selectSession !== false) {
+    set(setSelectedWorkstreamAtom, {
+      workspacePath,
+      selection: { type: 'session', id },
+    });
+  }
 }
 
 /**
@@ -461,49 +521,85 @@ export const createNewSessionActionAtom = atom(
       });
 
       if (result.success && result.id) {
-        set(addSessionFullAtom, {
-          id: result.id,
-          title,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          provider,
-          model,
-          sessionType: 'session',
-          messageCount: 0,
-          workspaceId: workspacePath,
-          isArchived: false,
-          isPinned: false,
-          parentSessionId: null,
-          worktreeId: null,
-          childCount: 0,
-          uncommittedCount: 0,
-          // A Team mode root is one from its first frame, not only after the next list refresh.
-          ...(options.metadata?.teamMode === true && { teamMode: true }),
-          ...(typeof options.metadata?.effortLevel === 'string' && { effortLevel: options.metadata.effortLevel }),
-        });
-
-        if (options.initialDraft) {
-          set(setSessionDraftInputAtom, {
-            sessionId: result.id,
-            draftInput: options.initialDraft,
-            workspacePath,
-            persist: true,
-          });
-        }
-
-        if (options.selectSession !== false) {
-          set(setSelectedWorkstreamAtom, {
-            workspacePath,
-            selection: { type: 'session', id: result.id },
-          });
-        }
-
+        registerCreatedSession(set, { id: result.id, title, provider, model, workspacePath, options });
         return result.id;
       }
     } catch (error) {
       console.error('[sessionHistoryActions] Failed to create session:', error);
     }
     return undefined;
+  },
+);
+
+export interface CreateTeamMissionInput {
+  /** The explicit `teamMission` field of `sessions:create`: the user's choice, validated again by the main. */
+  teamMission: TeamMissionRequestPayload;
+  /** The coordinator preset of the new root (model + effort), as for any Team mode root. */
+  model: string;
+  effortLevel: string;
+  launchSource?: SessionLaunchSource;
+}
+
+export type TeamMissionCreateOutcome =
+  | { ok: true; sessionId: string }
+  | {
+      ok: false;
+      /** A refusal code of the main, or a client one when the request never reached it. */
+      errorCode?: TeamMissionErrorCode | TeamMissionClientErrorCode;
+      /** The main's own message, kept as the authoritative detail. */
+      message?: string;
+    };
+
+/**
+ * Start a MISSION: a Team mode root created with the explicit `teamMission`
+ * field. Unlike `createNewSessionActionAtom` it reports WHY a creation failed
+ * (the dialog shows the refusal) instead of swallowing it. Sends only what the
+ * ordinary Team root sends plus `teamMission`: no mission key ever goes in the
+ * session metadata, and the main alone decides whether the mission starts.
+ * Each attempt uses a new session id, so a retry is never a re-emission.
+ */
+export const createTeamMissionActionAtom = atom(
+  null,
+  async (get, set, input: CreateTeamMissionInput): Promise<TeamMissionCreateOutcome> => {
+    const workspacePath = getWorkspacePath(get);
+    if (!workspacePath || typeof window === 'undefined' || !window.electronAPI) {
+      return { ok: false, errorCode: 'no-workspace' };
+    }
+    // The remote path creates a plain remote session and carries no mission: never pretend otherwise.
+    if (get(selectedMachineAtom(workspacePath))) return { ok: false, errorCode: 'remote-host' };
+
+    const title = 'New Session';
+    const sessionId = crypto.randomUUID();
+    const provider = resolveProviderFromModel(input.model);
+    const metadata = { teamMode: true, effortLevel: input.effortLevel };
+    try {
+      const result = await window.electronAPI.invoke('sessions:create', {
+        session: { id: sessionId, provider, model: input.model, title, metadata },
+        workspaceId: workspacePath,
+        launchSource: input.launchSource,
+        hadPrefilledPrompt: false,
+        teamMission: input.teamMission,
+      });
+      if (result.success && result.id) {
+        registerCreatedSession(set, {
+          id: result.id,
+          title,
+          provider,
+          model: input.model,
+          workspacePath,
+          options: { metadata },
+        });
+        return { ok: true, sessionId: result.id };
+      }
+      return {
+        ok: false,
+        errorCode: result.errorCode as TeamMissionErrorCode | undefined,
+        message: result.error,
+      };
+    } catch (error) {
+      console.error('[sessionHistoryActions] Failed to create team mission:', error);
+      return { ok: false, message: String(error) };
+    }
   },
 );
 

@@ -27,6 +27,8 @@ import { MaterialSymbol } from '@nimbalyst/runtime/ui/icons/MaterialSymbol';
 import type { TeamRootPreset } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 import { buildAgentCreateMenuItems } from './agentCreateMenuItems';
 import { eccArchitectCreateOptions } from './eccArchitectAction';
+import { NewTeamMissionDialog } from './NewTeamMissionDialog';
+import { buildTeamMissionCreateInput } from './teamMissionDialog';
 import { useTranslation } from '@nimbalyst/runtime/i18n/react';
 import { t as translate } from '@nimbalyst/runtime/i18n';
 import {
@@ -57,6 +59,7 @@ import {
   renameSessionActionAtom,
   branchSessionActionAtom,
   createNewSessionActionAtom,
+  createTeamMissionActionAtom,
   createNewWorktreeSessionActionAtom,
   addSessionToWorktreeActionAtom,
   openNewBlitzDialogActionAtom,
@@ -265,6 +268,8 @@ const SessionHistoryComponent: React.FC = () => {
   const dispatchRenameSession = useSetAtom(renameSessionActionAtom);
   const dispatchBranchSession = useSetAtom(branchSessionActionAtom);
   const dispatchCreateNewSession = useSetAtom(createNewSessionActionAtom);
+  const dispatchCreateTeamMission = useSetAtom(createTeamMissionActionAtom);
+  const [newTeamMissionDialogOpen, setNewTeamMissionDialogOpen] = useState(false);
   const dispatchCreateNewWorktreeSession = useSetAtom(createNewWorktreeSessionActionAtom);
   const dispatchAddSessionToWorktree = useSetAtom(addSessionToWorktreeActionAtom);
   const dispatchOpenNewBlitzDialog = useSetAtom(openNewBlitzDialogActionAtom);
@@ -375,6 +380,10 @@ const SessionHistoryComponent: React.FC = () => {
   const handleNewEccArchitectSession = () => {
     void dispatchCreateNewSession(eccArchitectCreateOptions(t));
   };
+
+  // "New mission": opens the dialog that picks the front and writes the goal. The Team root
+  // is created by the dialog's submit (createTeamMissionActionAtom), never by this handler.
+  const handleNewTeamMission = () => setNewTeamMissionDialogOpen(true);
 
   const handleNewMetaAgent = async () => {
     try {
@@ -2117,6 +2126,7 @@ const SessionHistoryComponent: React.FC = () => {
     openSuperLoopDialog,
     handleNewMetaAgent,
     handleNewTeamSession,
+    handleNewTeamMission,
     handleNewEccArchitectSession,
   });
   createHandlersRef.current = {
@@ -2127,6 +2137,7 @@ const SessionHistoryComponent: React.FC = () => {
     openSuperLoopDialog,
     handleNewMetaAgent,
     handleNewTeamSession,
+    handleNewTeamMission,
     handleNewEccArchitectSession,
   };
 
@@ -2965,6 +2976,21 @@ const SessionHistoryComponent: React.FC = () => {
     />
   );
 
+  // Mounted in both return paths below (like the worktree picker), so the menu item works in the
+  // empty state too.
+  const newTeamMissionDialogPortal = (
+    <NewTeamMissionDialog
+      isOpen={newTeamMissionDialogOpen}
+      onSubmit={async (teamMission) => {
+        // Standard coordinator preset, or nothing: never another preset's model by fallback.
+        const input = buildTeamMissionCreateInput(teamMission);
+        if (!input) return { ok: false, errorCode: 'preset-unavailable' };
+        return dispatchCreateTeamMission(input);
+      }}
+      onClose={() => setNewTeamMissionDialogOpen(false)}
+    />
+  );
+
   if (sessions.length === 0 && !hasSearchQuery && !hasTagFilter) {
     // No sessions at all - show simple empty state without search.
     // When a search or tag filter is active we fall through to the main render so
@@ -3022,6 +3048,7 @@ const SessionHistoryComponent: React.FC = () => {
             from this return path - the previous render site was only in the
             main return below. See #306. */}
         {worktreeBaseBranchPickerPortal}
+        {newTeamMissionDialogPortal}
       </div>
     );
   }
@@ -3756,6 +3783,7 @@ const SessionHistoryComponent: React.FC = () => {
       {/* New Super Loop dialog */}
       <NewSuperLoopDialog workspacePath={workspacePath} />
       {worktreeBaseBranchPickerPortal}
+      {newTeamMissionDialogPortal}
     </div>
   );
 };
