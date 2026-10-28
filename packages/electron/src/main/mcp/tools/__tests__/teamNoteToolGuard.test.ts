@@ -72,7 +72,10 @@ describe('tracker_create of a team-note', () => {
 
 describe('the front and the handoff (F1 S2)', () => {
   const frontSessions: Record<string, unknown> = {
-    'root-front': { agentRole: 'standard', metadata: { teamMode: true, teamFront: 'team-front_1' }, worktreePath: null },
+    // A mission root as the host creates it (S4): the front comes with the host marker.
+    'root-front': { agentRole: 'standard', metadata: { teamMode: true, teamFront: 'team-front_1', teamMissionVersion: 1 }, worktreePath: null },
+    // A root whose front was stored before the keys were host-owned (no marker): a legacy root.
+    'root-pre-s3': { agentRole: 'standard', metadata: { teamMode: true, teamFront: 'team-front_forged' }, worktreePath: null },
     root: sessions.root,
   };
   beforeEach(() => {
@@ -83,6 +86,12 @@ describe('the front and the handoff (F1 S2)', () => {
     const args: any = note({ fields: { noteKind: 'decision', front: 'team-front_forged' } });
     expect(await guardTeamNoteCreate(args, 'root-front')).toBeNull();
     expect(args.fields).toEqual({ noteKind: 'decision', sourceSession: 'root-front', teamRootSession: 'root-front', agentRole: 'coordinator', front: 'team-front_1' });
+  });
+
+  it('a root with a front stored without the host marker (pre-S3) writes a note with no front', async () => {
+    const args: any = note({ fields: { noteKind: 'decision' } });
+    expect(await guardTeamNoteCreate(args, 'root-pre-s3')).toBeNull();
+    expect(args.fields).toEqual({ noteKind: 'decision', sourceSession: 'root-pre-s3', teamRootSession: 'root-pre-s3', agentRole: 'coordinator' });
   });
 
   it('a root with no front writes a note with no front, whatever the agent sent', async () => {

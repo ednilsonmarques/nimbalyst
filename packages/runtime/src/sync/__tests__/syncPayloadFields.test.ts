@@ -87,7 +87,7 @@ describe('buildSyncPayload (create/metadata_updated push payload)', () => {
 // never reaches another device; adding one is a decision this closed list makes
 // visible (the index/bulk path is pinned in PGLiteSessionStore.test.ts).
 describe('the team lifecycle root keys never ride the real-time push', () => {
-  const LIFECYCLE_KEYS = ['teamFront', 'teamGoal', 'teamMissionStatus', 'teamMissionContext', 'teamDoneCriterion'];
+  const LIFECYCLE_KEYS = ['teamFront', 'teamGoal', 'teamMissionStatus', 'teamMissionContext', 'teamDoneCriterion', 'teamMissionVersion'];
 
   it('SYNC_RELEVANT_FIELDS.metadataKeys is exactly phase, tags and hostDeviceId', () => {
     expect([...SYNC_RELEVANT_FIELDS.metadataKeys]).toEqual(['phase', 'tags', 'hostDeviceId']);
@@ -105,6 +105,7 @@ describe('the team lifecycle root keys never ride the real-time push', () => {
       teamMissionStatus: 'active',
       teamMissionContext: 'Bootstrap block',
       teamDoneCriterion: 'S3 green',
+      teamMissionVersion: 1,
       phase: 'implementing',
       tags: ['sync'],
     };

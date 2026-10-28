@@ -7,9 +7,9 @@
  * rule and a renderer create can never carry one.
  *
  * The mission keys of a team root (`teamFront`, `teamGoal`, `teamMissionStatus`,
- * `teamMissionContext`, `teamDoneCriterion`, TEAM_ROOT_LIFECYCLE_KEYS) are
- * host-owned the same way: creation-only for the store and dropped by the renderer
- * create sanitizer. Their only creation-time writer is `applyHostTeamRootLifecycle`
+ * `teamMissionContext`, `teamDoneCriterion`, plus the host provenance marker
+ * `teamMissionVersion`: TEAM_ROOT_LIFECYCLE_KEYS) are host-owned the same way:
+ * creation-only for the store and dropped by the renderer create sanitizer. Their only creation-time writer is `applyHostTeamRootLifecycle`
  * below, so the `front` a team note copies from a root cannot be chosen by the
  * renderer. They never travel through sync.
  *
@@ -39,6 +39,8 @@ import {
   TEAM_GOAL_METADATA_KEY,
   TEAM_MISSION_CONTEXT_METADATA_KEY,
   TEAM_MISSION_STATUS_METADATA_KEY,
+  TEAM_MISSION_VERSION,
+  TEAM_MISSION_VERSION_METADATA_KEY,
   TEAM_MODE_METADATA_KEY,
   TOOL_MANIFEST_REF_METADATA_KEY,
 } from '@nimbalyst/runtime/ai/server/providers/teamContext';
@@ -49,7 +51,7 @@ import { isRecommendedTeamRootModel } from './teamPolicy';
 export const TOOL_SCOPE_METADATA_KEY = 'toolScope';
 
 /**
- * The mission keys of a team root (F1 S3). Host-owned: the host writes them with
+ * The mission keys of a team root (F1 S3) and the host provenance marker (S4). Host-owned: the host writes them with
  * the root row (`applyHostTeamRootLifecycle`) and, for the status, when it closes
  * the mission; nothing else sets, replaces or clears them. A team note's `front`
  * is copied from `teamFront` (teamNotes.ts), so this is what makes that source
@@ -61,6 +63,7 @@ export const TEAM_ROOT_LIFECYCLE_KEYS = [
   TEAM_MISSION_STATUS_METADATA_KEY,
   TEAM_MISSION_CONTEXT_METADATA_KEY,
   TEAM_DONE_CRITERION_METADATA_KEY,
+  TEAM_MISSION_VERSION_METADATA_KEY,
 ] as const;
 
 export const CREATION_ONLY_KEYS = [
@@ -190,6 +193,7 @@ export function applyHostTeamRootLifecycle(
       [TEAM_FRONT_METADATA_KEY]: front,
       [TEAM_GOAL_METADATA_KEY]: goal,
       [TEAM_MISSION_STATUS_METADATA_KEY]: 'active',
+      [TEAM_MISSION_VERSION_METADATA_KEY]: TEAM_MISSION_VERSION,
       ...(context ? { [TEAM_MISSION_CONTEXT_METADATA_KEY]: context } : {}),
       ...(doneCriterion ? { [TEAM_DONE_CRITERION_METADATA_KEY]: doneCriterion } : {}),
     },

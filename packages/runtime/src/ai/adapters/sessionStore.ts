@@ -2,6 +2,7 @@ import type { AgentRole, SessionData, SessionMode, SessionType, TranscriptViewMe
 import {
   TEAM_FRONT_METADATA_KEY,
   TEAM_GOAL_METADATA_KEY,
+  isHostMissionRoot,
   TEAM_MISSION_STATUSES,
   TEAM_MISSION_STATUS_METADATA_KEY,
   type TeamMissionStatus,
@@ -87,15 +88,17 @@ function nonBlankString(value: unknown): string | undefined {
 
 /**
  * The renderer-facing mission keys of a team root: front, goal, status. Read only
- * for a team root (`teamMode === true`): the keys are host-owned and written only
- * on a root, so a value on any other session is not a mission and is not exposed.
- * A legacy root (teamMode without a front) yields nothing. The context and the
- * done criterion are never read here: they stay main-only.
+ * for a mission root the host created (`isHostMissionRoot`): the keys are host-owned
+ * and written only on a root, with the host marker. A value on any other session, or
+ * on a root without the marker (written before S3, when a renderer could set it), is
+ * not a mission and is not exposed. A legacy root (teamMode without a front) yields
+ * nothing. The context, the done criterion and the marker are never read here: they
+ * stay main-only.
  */
 function readTeamMissionFields(
   metadata: Record<string, unknown> | null | undefined,
 ): Pick<SessionMeta, 'teamFront' | 'teamGoal' | 'teamMissionStatus'> {
-  if (metadata?.teamMode !== true) return {};
+  if (!isHostMissionRoot(metadata)) return {};
   const front = nonBlankString(metadata[TEAM_FRONT_METADATA_KEY]);
   const goal = nonBlankString(metadata[TEAM_GOAL_METADATA_KEY]);
   const status = (TEAM_MISSION_STATUSES as readonly unknown[]).includes(metadata[TEAM_MISSION_STATUS_METADATA_KEY])

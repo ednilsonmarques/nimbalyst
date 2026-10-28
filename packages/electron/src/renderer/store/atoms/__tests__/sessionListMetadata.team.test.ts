@@ -63,6 +63,7 @@ describe('team mission lifecycle projection', () => {
     teamGoal: 'Ship F1',
     teamMissionStatus: 'active',
     teamMissionContext: 'Bootstrap block',
+    teamMissionVersion: 1,
   };
   const exposed = { teamMode: true, teamFront: 'team-front_1', teamGoal: 'Ship F1', teamMissionStatus: 'active' } as const;
   const EXPOSED_FIELDS = ['teamFront', 'teamGoal', 'teamMissionStatus'] as const;
@@ -70,6 +71,15 @@ describe('team mission lifecycle projection', () => {
   it('reads exactly the three exposed keys of a team root, never the context or the done criterion', () => {
     expect(readTeamSessionFields({ ...root, teamDoneCriterion: 'S3 green' })).toEqual(exposed);
     expect('teamMissionContext' in readTeamSessionFields({ ...root })).toBe(false);
+  });
+
+  it('a root with mission keys but no host marker (stored before S3) gains nothing, and the marker itself is never exposed', () => {
+    const { teamMissionVersion: _marker, ...preS3 } = root;
+    expect(readTeamSessionFields({ ...preS3, teamDoneCriterion: 'x' })).toEqual({ teamMode: true });
+    for (const marker of [0, 2, '1', true, null]) {
+      expect(readTeamSessionFields({ ...preS3, teamMissionVersion: marker } as never), String(marker)).toEqual({ teamMode: true });
+    }
+    expect('teamMissionVersion' in readTeamSessionFields({ ...root })).toBe(false);
   });
 
   it('a legacy root (teamMode without a front) gains nothing', () => {
@@ -87,10 +97,10 @@ describe('team mission lifecycle projection', () => {
 
   it('ignores a value that is not a non-blank string, and a status outside active/closed', () => {
     for (const bad of [{ teamFront: '' }, { teamFront: '   ' }, { teamFront: 7 }, { teamFront: null }, { teamGoal: {} }, { teamMissionContext: [] }, { teamMissionStatus: 'paused' }, { teamMissionStatus: true }]) {
-      const fields = readTeamSessionFields({ teamMode: true, ...bad } as never) as Record<string, unknown>;
+      const fields = readTeamSessionFields({ teamMode: true, teamMissionVersion: 1, ...bad } as never) as Record<string, unknown>;
       expect(fields, JSON.stringify(bad)).toEqual({ teamMode: true });
     }
-    expect(readTeamSessionFields({ teamMode: true, teamMissionStatus: 'closed' })).toEqual({ teamMode: true, teamMissionStatus: 'closed' });
+    expect(readTeamSessionFields({ teamMode: true, teamMissionVersion: 1, teamMissionStatus: 'closed' })).toEqual({ teamMode: true, teamMissionStatus: 'closed' });
   });
 
   it('carries the three keys from the store entry to the registry entry and a normal session gains none', () => {

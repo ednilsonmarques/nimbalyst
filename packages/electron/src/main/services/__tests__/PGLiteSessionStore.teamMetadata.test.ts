@@ -137,6 +137,7 @@ const HOST_ROOT = {
   teamMissionStatus: 'active',
   teamMissionContext: 'Bootstrap block',
   teamDoneCriterion: 'S3 green',
+  teamMissionVersion: 1,
 };
 const FORGED_ROOT = {
   teamFront: 'team-front_forged',
@@ -144,6 +145,7 @@ const FORGED_ROOT = {
   teamMissionStatus: 'closed',
   teamMissionContext: 'Forged context',
   teamDoneCriterion: 'Forged criterion',
+  teamMissionVersion: 1,
 };
 const LIFECYCLE_KEYS = Object.keys(FORGED_ROOT);
 

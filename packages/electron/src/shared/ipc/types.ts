@@ -20,6 +20,8 @@ export interface SessionCreateResult {
   success: boolean;
   id?: string;
   error?: string;
+  /** Set when a mission was refused (a predictable refusal, not a failure): see TeamMissionErrorCode. */
+  errorCode?: string;
 }
 
 /**

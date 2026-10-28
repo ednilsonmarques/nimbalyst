@@ -48,6 +48,7 @@ const MISSION = {
   teamMissionStatus: 'active',
   teamMissionContext: 'Bootstrap block',
   teamDoneCriterion: 'S3 green',
+  teamMissionVersion: 1,
 };
 
 describe.each<Backend>(['sqlite', 'pglite'])('mission keys on the %s row shape', (backend) => {
@@ -141,6 +142,9 @@ describe.each<Backend>(['sqlite', 'pglite'])('mission keys on the %s row shape',
     it('exposes front, goal and status only on a team root, and never the context or done criterion', async () => {
       await seed('root', { teamMode: true, ...MISSION });
       await seed('legacy', { teamMode: true });
+      // A root whose mission keys were stored before S3 (no host marker): untrusted, so a legacy root.
+      const { teamMissionVersion: _marker, ...preS3 } = MISSION;
+      await seed('preS3', { teamMode: true, ...preS3 });
       await seed('plain', { phase: 'x', ...MISSION });
       await seed('flagfalse', { teamMode: false, ...MISSION });
       await seed('member', { teamChild: { role: 'explorer', rootSessionId: 'root', depth: 1 }, ...MISSION });
@@ -152,17 +156,19 @@ describe.each<Backend>(['sqlite', 'pglite'])('mission keys on the %s row shape',
       expect(byId.root.teamMissionContext).toBeUndefined();
       expect(byId.root.teamDoneCriterion).toBeUndefined();
 
-      for (const id of ['legacy', 'plain', 'flagfalse', 'member']) {
+      for (const id of ['legacy', 'preS3', 'plain', 'flagfalse', 'member']) {
         for (const key of Object.keys(MISSION)) expect(byId[id][key], `${id} ${key}`).toBeUndefined();
       }
       expect(byId.legacy.teamMode).toBe(true);
+      expect(byId.preS3.teamMode).toBe(true);
+      expect(byId.root.teamMissionVersion).toBeUndefined();
 
       // The IPC projection carries the same three keys and nothing more.
       const projected = projectSessionList(listed, new Map());
       const projectedById = Object.fromEntries(projected.map((s) => [s.id, s as Record<string, unknown>]));
       expect(projectedById.root).toMatchObject({ teamFront: 'team-front_1', teamGoal: 'Ship F1', teamMissionStatus: 'active' });
       expect(projectedById.root.teamMissionContext).toBeUndefined();
-      for (const id of ['legacy', 'plain', 'flagfalse', 'member']) {
+      for (const id of ['legacy', 'preS3', 'plain', 'flagfalse', 'member']) {
         for (const key of Object.keys(MISSION)) expect(projectedById[id][key], `${id} ${key}`).toBeUndefined();
       }
     });

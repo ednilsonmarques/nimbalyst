@@ -83,6 +83,27 @@ export const TEAM_GOAL_METADATA_KEY = 'teamGoal';
 export const TEAM_MISSION_STATUS_METADATA_KEY = 'teamMissionStatus';
 export const TEAM_MISSION_CONTEXT_METADATA_KEY = 'teamMissionContext';
 export const TEAM_DONE_CRITERION_METADATA_KEY = 'teamDoneCriterion';
+/**
+ * Host provenance marker of a mission root (F1 S4): `1`, written only by the host
+ * together with the other lifecycle keys when it creates a mission, never by any
+ * ordinary write. The other keys were open to a renderer before S3, so a stored
+ * `teamFront` alone proves nothing; a root counts as a mission only when it also
+ * carries this marker (`isHostMissionRoot`). A root with a front but no marker is
+ * a legacy root: its mission keys are ignored and never rewritten.
+ */
+export const TEAM_MISSION_VERSION_METADATA_KEY = 'teamMissionVersion';
+export const TEAM_MISSION_VERSION = 1;
+
+/**
+ * Whether stored metadata is a mission root the host created: a team root
+ * (`teamMode` exactly `true`, not a member) carrying the host marker. The one
+ * test every consumer of the mission keys applies before trusting them.
+ */
+export function isHostMissionRoot(metadata: Record<string, unknown> | null | undefined): metadata is Record<string, unknown> {
+  return metadata?.[TEAM_MODE_METADATA_KEY] === true
+    && !metadata[TEAM_CHILD_METADATA_KEY]
+    && metadata[TEAM_MISSION_VERSION_METADATA_KEY] === TEAM_MISSION_VERSION;
+}
 
 /** `teamMissionStatus`: `active` from creation, `closed` once the host closes the mission. */
 export const TEAM_MISSION_STATUSES = ['active', 'closed'] as const;

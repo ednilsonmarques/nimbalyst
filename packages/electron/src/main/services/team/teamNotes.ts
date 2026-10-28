@@ -10,7 +10,7 @@
  */
 
 import { AISessionsRepository } from '@nimbalyst/runtime/storage/repositories/AISessionsRepository';
-import { resolveTeamContext } from '@nimbalyst/runtime/ai/server/providers/teamContext';
+import { isHostMissionRoot, resolveTeamContext } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 import {
   TEAM_NOTE_PROVENANCE_FIELDS,
   teamNoteBodyError,
@@ -95,8 +95,13 @@ export function decideTeamNoteWriter(
   };
 }
 
-/** The front a mission root recorded, or null: only a non-blank string counts. */
+/**
+ * The front a mission root recorded, or null: only a non-blank string counts, and
+ * only on a root the host created (it carries the host marker). A `teamFront` stored
+ * without the marker predates the host-owned keys (F1 S3) and is not trusted.
+ */
 function missionFront(metadata: Record<string, unknown> | null | undefined): string | null {
+  if (!isHostMissionRoot(metadata)) return null;
   const front = metadata?.teamFront;
   return typeof front === 'string' && front.trim().length > 0 ? front.trim() : null;
 }

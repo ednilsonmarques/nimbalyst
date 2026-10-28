@@ -236,7 +236,7 @@ describe('PGLiteSessionStore personal sync snapshot', () => {
   // that is not named here never reaches the phone or another device; adding
   // one is a decision, and this closed list makes it a visible one.
   describe('the team lifecycle root keys stay local', () => {
-    const LIFECYCLE_KEYS = ['teamFront', 'teamGoal', 'teamMissionStatus', 'teamMissionContext'];
+    const LIFECYCLE_KEYS = ['teamFront', 'teamGoal', 'teamMissionStatus', 'teamMissionContext', 'teamMissionVersion'];
 
     it('are not in SYNCED_METADATA_KEYS, and the list is exactly the seven keys the wire consumes', () => {
       for (const key of LIFECYCLE_KEYS) expect(SYNCED_METADATA_KEYS as readonly string[], key).not.toContain(key);
@@ -265,6 +265,7 @@ describe('PGLiteSessionStore personal sync snapshot', () => {
         teamGoal: 'Ship F1',
         teamMissionStatus: 'active',
         teamMissionContext: 'Bloco de contexto da missão',
+        teamMissionVersion: 1,
       };
       const db = {
         query: vi.fn(async () => ({

@@ -19,21 +19,22 @@ import {
 } from '../teamSessionMetadata';
 import { decideTeamNoteWriter } from '../teamNotes';
 
-const LIFECYCLE = ['teamFront', 'teamGoal', 'teamMissionStatus', 'teamMissionContext', 'teamDoneCriterion'];
+const LIFECYCLE = ['teamFront', 'teamGoal', 'teamMissionStatus', 'teamMissionContext', 'teamDoneCriterion', 'teamMissionVersion'];
 const forged = {
   teamFront: 'team-front_forged',
   teamGoal: 'Forged goal',
   teamMissionStatus: 'closed',
   teamMissionContext: 'Forged context',
   teamDoneCriterion: 'Forged criterion',
+  teamMissionVersion: 1,
 };
 
 describe('closed lists are exact', () => {
-  it('TEAM_ROOT_LIFECYCLE_KEYS is exactly the five lifecycle keys', () => {
+  it('TEAM_ROOT_LIFECYCLE_KEYS is exactly the five lifecycle keys plus the host provenance marker', () => {
     expect([...TEAM_ROOT_LIFECYCLE_KEYS]).toEqual(LIFECYCLE);
   });
 
-  it('CREATION_ONLY_KEYS is exactly the six existing keys plus the five lifecycle keys', () => {
+  it('CREATION_ONLY_KEYS is exactly the six existing keys plus the five lifecycle keys and the marker', () => {
     expect([...CREATION_ONLY_KEYS]).toEqual([
       'teamMode',
       'teamChild',
@@ -47,7 +48,7 @@ describe('closed lists are exact', () => {
 });
 
 describe('a renderer cannot inject the lifecycle keys at creation', () => {
-  it('drops all five from a team root create and keeps teamMode and the rest', () => {
+  it('drops all six from a team root create and keeps teamMode and the rest', () => {
     expect(sanitizeRendererCreateTeamMetadata({ teamMode: true, effortLevel: 'high', ...forged }, 'claude-code:opus'))
       .toEqual({ teamMode: true, effortLevel: 'high' });
   });
@@ -65,7 +66,7 @@ describe('a renderer cannot inject the lifecycle keys at creation', () => {
 });
 
 describe('no metadata update sets, replaces or clears them', () => {
-  it('strips all five from an update and keeps the unrelated fields', () => {
+  it('strips all six from an update and keeps the unrelated fields', () => {
     expect(stripCreationOnlyTeamMetadata({ phase: 'x', tags: ['a'], ...forged })).toEqual({ phase: 'x', tags: ['a'] });
   });
 
@@ -92,7 +93,7 @@ describe('applyHostTeamRootLifecycle: the host entry', () => {
     const result = applyHostTeamRootLifecycle({ teamMode: true, effortLevel: 'high' }, lifecycle);
     expect(result).toEqual({
       applied: true,
-      metadata: { teamMode: true, effortLevel: 'high', teamFront: 'team-front_1', teamGoal: 'Ship F1 identity and data', teamMissionStatus: 'active' },
+      metadata: { teamMode: true, effortLevel: 'high', teamFront: 'team-front_1', teamGoal: 'Ship F1 identity and data', teamMissionStatus: 'active', teamMissionVersion: 1 },
     });
   });
 
@@ -100,7 +101,7 @@ describe('applyHostTeamRootLifecycle: the host entry', () => {
     const result = applyHostTeamRootLifecycle({ teamMode: true }, { ...lifecycle, context: 'Bootstrap block', doneCriterion: 'S3 green' });
     expect(result).toMatchObject({
       applied: true,
-      metadata: { teamMissionContext: 'Bootstrap block', teamDoneCriterion: 'S3 green', teamMissionStatus: 'active' },
+      metadata: { teamMissionContext: 'Bootstrap block', teamDoneCriterion: 'S3 green', teamMissionStatus: 'active', teamMissionVersion: 1 },
     });
   });
 
@@ -162,9 +163,36 @@ describe('applyHostTeamRootLifecycle: the host entry', () => {
     expect(legacyDecision).toMatchObject({ allowed: true, provenance: { front: null, teamRootSession: 'root' } });
   });
 
+  it('a pre-S3 style root (teamFront stored, no host marker) is a legacy root: its front is not copied to a note', () => {
+    const preS3 = { teamMode: true, teamFront: 'team-front_forged', teamGoal: 'g', teamMissionStatus: 'active' };
+    expect(decideTeamNoteWriter('root', { agentRole: 'standard', metadata: preS3 }, null))
+      .toMatchObject({ allowed: true, provenance: { front: null, teamRootSession: 'root' } });
+    // Not even a wrong marker value counts.
+    for (const marker of [0, 2, '1', true, null]) {
+      expect(decideTeamNoteWriter('root', { agentRole: 'standard', metadata: { ...preS3, teamMissionVersion: marker } }, null), String(marker))
+        .toMatchObject({ provenance: { front: null } });
+    }
+  });
+
   it('the output survives the store rules: a re-issued create and an update leave it as written', () => {
     const { metadata } = applyHostTeamRootLifecycle({ teamMode: true }, lifecycle);
     expect(preserveStoredTeamMetadata({ ...forged }, metadata)).toEqual(metadata);
     expect(stripCreationOnlyTeamMetadata({ ...forged, phase: 'x' })).toEqual({ phase: 'x' });
+  });
+});
+
+describe('applyHostTeamRootLifecycle stamps the host provenance marker', () => {
+  it('writes teamMissionVersion: 1 with the keys, and never when it refuses', () => {
+    expect(applyHostTeamRootLifecycle({ teamMode: true }, { front: 'f', goal: 'g' }).metadata).toMatchObject({ teamMissionVersion: 1 });
+    expect('teamMissionVersion' in applyHostTeamRootLifecycle({ teamMode: false, teamMissionVersion: 1 }, { front: 'f', goal: 'g' }).metadata).toBe(false);
+    expect('teamMissionVersion' in applyHostTeamRootLifecycle({ teamMode: true, teamMissionVersion: 1 }, { front: '', goal: 'g' }).metadata).toBe(false);
+  });
+
+  it('a renderer cannot send the marker on a plain create, and an update cannot set or clear it', () => {
+    expect(sanitizeRendererCreateTeamMetadata({ teamMode: true, teamMissionVersion: 1 }, 'claude-code:opus')).toEqual({ teamMode: true });
+    expect(sanitizeRendererCreateTeamMetadata({ teamMissionVersion: 1 }, 'claude-code:opus')).toEqual({});
+    expect(stripCreationOnlyTeamMetadata({ teamMissionVersion: 1, phase: 'x' })).toEqual({ phase: 'x' });
+    expect(stripCreationOnlyTeamMetadata({ teamMissionVersion: null, phase: 'x' })).toEqual({ phase: 'x' });
+    expect(preserveStoredTeamMetadata({ teamMissionVersion: 1 }, { teamMode: true })).toEqual({ teamMode: true });
   });
 });

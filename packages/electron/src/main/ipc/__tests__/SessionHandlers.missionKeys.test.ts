@@ -45,6 +45,7 @@ const MISSION_KEYS = {
   teamMissionStatus: 'closed',
   teamMissionContext: 'c',
   teamDoneCriterion: 'd',
+  teamMissionVersion: 1,
 };
 
 beforeAll(async () => {
@@ -93,7 +94,7 @@ describe('sessions:list-children (renderer-facing projection of a stored row)', 
     created_at: new Date(1), updated_at: new Date(2), is_archived: false, is_pinned: false, message_count: 0, child_count: 0,
     metadata,
   });
-  const keys = ['teamFront', 'teamGoal', 'teamMissionStatus', 'teamMissionContext', 'teamDoneCriterion'];
+  const keys = ['teamFront', 'teamGoal', 'teamMissionStatus', 'teamMissionContext', 'teamDoneCriterion', 'teamMissionVersion'];
 
   async function children(rows: any[]) {
     query.mockResolvedValue({ rows });
@@ -118,6 +119,7 @@ describe('sessions:list-children (renderer-facing projection of a stored row)', 
     const byId = await children([
       row('root', { teamMode: true, ...MISSION_KEYS, teamMissionStatus: 'active' }),
       row('legacy', { teamMode: true }),
+      row('preS3', { teamMode: true, teamFront: 'x', teamGoal: 'g', teamMissionStatus: 'active' }),
     ]);
     expect(byId.root).toMatchObject({ teamMode: true, teamFront: 'x', teamGoal: 'g', teamMissionStatus: 'active' });
     // Main-only keys stay out of the renderer-facing list even for a real root.
@@ -125,5 +127,8 @@ describe('sessions:list-children (renderer-facing projection of a stored row)', 
     expect(byId.root.teamDoneCriterion).toBeUndefined();
     for (const key of keys) expect(byId.legacy[key], key).toBeUndefined();
     expect(byId.legacy.teamMode).toBe(true);
+    // Mission keys stored without the host marker are not a mission (written before S3).
+    for (const key of keys) expect(byId.preS3[key], key).toBeUndefined();
+    expect(byId.preS3.teamMode).toBe(true);
   });
 });

@@ -43,9 +43,11 @@ describe('decideTeamNoteWriter', () => {
 
 describe('the front of a note (F1 S2): copied by the host from the mission root', () => {
   const rootWith = (metadata: Record<string, unknown>) => ({ agentRole: 'standard', metadata: { teamMode: true, ...metadata }, worktreeId: null, worktreePath: null });
+  // A mission root as the host creates it (S4): the front comes with the host provenance marker.
+  const hostRootWith = (metadata: Record<string, unknown>) => rootWith({ teamMissionVersion: 1, ...metadata });
 
   it('a coordinator whose root carries a teamFront writes notes with that front', () => {
-    const decision = decideTeamNoteWriter('root', rootWith({ teamFront: 'team-front_1' }), null);
+    const decision = decideTeamNoteWriter('root', hostRootWith({ teamFront: 'team-front_1' }), null);
     expect(decision.allowed && decision.provenance.front).toBe('team-front_1');
     expect(decision.allowed && decision.provenance).toEqual({
       sourceSession: 'root', teamRootSession: 'root', agentRole: 'coordinator', branch: null, worktree: null, front: 'team-front_1',
@@ -55,8 +57,13 @@ describe('the front of a note (F1 S2): copied by the host from the mission root'
   it('a root with no teamFront (an older mission, one started without a front) leaves front empty', () => {
     expect((decideTeamNoteWriter('root', rootWith({}), null) as any).provenance.front).toBeNull();
     for (const bad of ['', '   ', 42, null, { itemId: 'x' }, ['x']]) {
-      expect((decideTeamNoteWriter('root', rootWith({ teamFront: bad }), null) as any).provenance.front, JSON.stringify(bad)).toBeNull();
+      expect((decideTeamNoteWriter('root', hostRootWith({ teamFront: bad }), null) as any).provenance.front, JSON.stringify(bad)).toBeNull();
     }
+  });
+
+  it('a root with a stored teamFront but no host marker (written before S3) is a legacy root: front stays empty', () => {
+    const preS3 = decideTeamNoteWriter('root', rootWith({ teamFront: 'team-front_forged', teamGoal: 'g', teamMissionStatus: 'active' }), null);
+    expect(preS3).toMatchObject({ allowed: true, provenance: { front: null, teamRootSession: 'root', agentRole: 'coordinator' } });
   });
 
   it('a session outside any team never gets a front, even if its metadata names one', () => {
@@ -71,7 +78,7 @@ describe('the front of a note (F1 S2): copied by the host from the mission root'
 
   it('is read from the calling session stored in the repository', async () => {
     try {
-      AISessionsRepository.setStore({ get: async (id: string) => (id === 'root-front' ? rootWith({ teamFront: 'team-front_7' }) : id === 'root-plain' ? rootWith({}) : null) } as never);
+      AISessionsRepository.setStore({ get: async (id: string) => (id === 'root-front' ? hostRootWith({ teamFront: 'team-front_7' }) : id === 'root-plain' ? rootWith({}) : null) } as never);
       const withFront = await resolveTeamNoteWriter('root-front', async () => null);
       const without = await resolveTeamNoteWriter('root-plain', async () => null);
       expect(withFront.allowed && withFront.provenance.front).toBe('team-front_7');

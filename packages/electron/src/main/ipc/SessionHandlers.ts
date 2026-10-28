@@ -28,6 +28,7 @@ import { destroyProviderForArchivedSession } from '../services/ai/archiveSession
 import { resolveSessionModelSelection } from '../services/ai/sessionModelSelection';
 import { inheritedOwnership, stripOwnerControlledMetadata } from '../services/extensionSessions/sessionOwnership';
 import { sanitizeRendererCreateTeamMetadata } from '../services/team/teamSessionMetadata';
+import { TeamMissionError, createTeamMissionRoot, withSessionIdLock } from '../services/team/teamMissions';
 
 // Initialize session manager
 const sessionManager = new SessionManager();
@@ -227,9 +228,16 @@ export async function registerSessionHandlers() {
         launchSource?: string;
         /** A boolean, deliberately never the draft text itself. */
         hadPrefilledPrompt?: boolean;
+        /**
+         * Starts a MISSION: a Team mode root that works for a front. The only way the
+         * mission keys reach a new session, always validated and written by the main
+         * (services/team/teamMissions.ts); never read from `session.metadata`. Absent =
+         * a plain (legacy) root, accepted as before. Raw on purpose: parsed in main.
+         */
+        teamMission?: unknown;
     }): Promise<SessionCreateResult> => {
         try {
-            const { session, workspaceId, launchSource, hadPrefilledPrompt } = payload;
+            const { session, workspaceId, launchSource, hadPrefilledPrompt, teamMission } = payload;
 
             const requestedProvider = session.provider as AIProviderType;
             const { provider, model } = resolveSessionModelSelection(requestedProvider, session.model);
@@ -262,7 +270,19 @@ export async function registerSessionHandlers() {
             };
             // console.log('[SessionHandlers] Creating session with payload:', JSON.stringify(createPayload));
 
-            await AISessionsRepository.create(createPayload);
+            if (teamMission !== undefined) {
+                // A mission: validated, checked against the front's active mission under the
+                // session and front locks, written by the host in one insert and read back. A
+                // refusal before the insert leaves no row (see createTeamMissionRoot for the rest).
+                // Loaded on demand: only a mission needs the tracker and workspace lookups.
+                const { defaultTeamMissionPorts } = await import('../services/team/teamMissionPortsDefault');
+                await createTeamMissionRoot({ payload: createPayload, request: teamMission }, defaultTeamMissionPorts());
+            } else {
+                // Same session-id lock as a mission, so a plain create and a mission create with one
+                // id cannot interleave (the insert is an upsert that keeps the first row's team keys).
+                // No front lock: a legacy root takes no part in the one-mission-per-front rule.
+                await withSessionIdLock(createPayload.id, () => AISessionsRepository.create(createPayload));
+            }
             trackCreateAISession(provider, {
                 worktreeId: createPayload.worktreeId,
                 parentSessionId: (session.parentSessionId as string | null | undefined) ?? null,
@@ -273,6 +293,10 @@ export async function registerSessionHandlers() {
 
             return { success: true, id: session.id };
         } catch (error) {
+            if (error instanceof TeamMissionError) {
+                // A refusal, not a failure: the code and the message tell the user what to change.
+                return { success: false, error: error.message, errorCode: error.code };
+            }
             console.error('[SessionHandlers] Error creating session:', error);
             return { success: false, error: String(error) };
         }
