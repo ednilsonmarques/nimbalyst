@@ -83,6 +83,7 @@ vi.mock('../../window/windowState', () => ({
     if (state.workspacePath === path) return true;
     return state.additionalWorkspacePaths?.includes(path) === true;
   },
+  listOpenWorkspacePaths: () => [...mocks.windowStates.values()].flatMap((s) => [s.workspacePath, ...(s.additionalWorkspacePaths ?? [])].filter(Boolean)),
   anyWindowReferencesWorkspace: (path: string, excludeWindowId?: number) => {
     for (const [id, state] of mocks.windowStates) {
       if (excludeWindowId !== undefined && id === excludeWindowId) continue;
@@ -140,6 +141,9 @@ vi.mock('../../utils/logger', () => ({
 
 // Imported AFTER mocks are wired so `safeHandle` calls capture into our map.
 import { registerMultiProjectRailHandlers } from '../MultiProjectRailHandlers';
+// The real nim-preview allowlist (not mocked): the roots the Portal may serve.
+import { clearNimPreviewWorkspaceRoots, getNimPreviewWorkspaceRoots } from '../../protocols/nimPreviewProtocol';
+import { resolve } from 'path';
 
 function makeState(partial: Partial<WindowState> = {}): WindowState {
   return {
@@ -343,6 +347,76 @@ describe('MultiProjectRailHandlers', () => {
       expect(mocks.stopWorkspaceWatcher).toHaveBeenCalledWith(1);
       expect(mocks.clearFileSystemService).toHaveBeenCalled();
       expect(mocks.windowStates.get(1)?.activeWorkspacePath).toBeNull();
+    });
+  });
+
+  describe('nim-preview workspace roots', () => {
+    const roots = () => getNimPreviewWorkspaceRoots();
+
+    beforeEach(() => {
+      clearNimPreviewWorkspaceRoots();
+      mocks.windowStates.set(1, makeState({ workspacePath: '/ws/a', activeWorkspacePath: '/ws/a' }));
+    });
+
+    it('serves a rail project while it is open and stops when it closes', async () => {
+      await invoke('workspace:register-additional', { workspacePath: '/ws/b' }, 1);
+      expect(roots()).toEqual([resolve('/ws/b')]);
+
+      await invoke('workspace:unregister-additional', { workspacePath: '/ws/b' }, 1);
+      expect(roots()).toEqual([]);
+    });
+
+    it('returns to the baseline after repeated open/close cycles', async () => {
+      const baseline = roots().length;
+      for (let i = 0; i < 25; i++) {
+        await invoke('workspace:register-additional', { workspacePath: `/ws/p${i}` }, 1);
+        await invoke('workspace:unregister-additional', { workspacePath: `/ws/p${i}` }, 1);
+      }
+      for (let i = 0; i < 25; i++) {
+        await invoke('workspace:register-additional', { workspacePath: '/ws/same' }, 1);
+        await invoke('workspace:unregister-additional', { workspacePath: '/ws/same' }, 1);
+      }
+      expect(roots()).toHaveLength(baseline);
+    });
+
+    it('keeps the root while another window still shows the project', async () => {
+      mocks.windowStates.set(2, makeState({ workspacePath: '/ws/b' }));
+      await invoke('workspace:register-additional', { workspacePath: '/ws/b' }, 1);
+
+      await invoke('workspace:unregister-additional', { workspacePath: '/ws/b' }, 1);
+      expect(roots()).toEqual([resolve('/ws/b')]);
+    });
+
+    it('releases only the closed project, never another one', async () => {
+      await invoke('workspace:register-additional', { workspacePath: '/ws/b' }, 1);
+      await invoke('workspace:register-additional', { workspacePath: '/ws/c' }, 1);
+
+      await invoke('workspace:unregister-additional', { workspacePath: '/ws/b' }, 1);
+      expect(roots()).toEqual([resolve('/ws/c')]);
+    });
+
+    it('tolerates a duplicate close', async () => {
+      await invoke('workspace:register-additional', { workspacePath: '/ws/b' }, 1);
+      await invoke('workspace:register-additional', { workspacePath: '/ws/c' }, 1);
+
+      await invoke('workspace:unregister-additional', { workspacePath: '/ws/b' }, 1);
+      await invoke('workspace:unregister-additional', { workspacePath: '/ws/b' }, 1);
+      expect(roots()).toEqual([resolve('/ws/c')]);
+    });
+
+    it('a throwing service teardown cannot leave the closed project served', async () => {
+      await invoke('workspace:register-additional', { workspacePath: '/ws/b' }, 1);
+      mocks.documentServices.get('/ws/b').destroy.mockImplementation(() => { throw new Error('destroy failed'); });
+
+      await expect(invoke('workspace:unregister-additional', { workspacePath: '/ws/b' }, 1)).rejects.toThrow('destroy failed');
+      expect(roots()).toEqual([]);
+    });
+
+    it('a project reopened after closing is served again', async () => {
+      await invoke('workspace:register-additional', { workspacePath: '/ws/b' }, 1);
+      await invoke('workspace:unregister-additional', { workspacePath: '/ws/b' }, 1);
+      await invoke('workspace:register-additional', { workspacePath: '/ws/b' }, 1);
+      expect(roots()).toEqual([resolve('/ws/b')]);
     });
   });
 });

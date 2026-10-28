@@ -4,6 +4,10 @@ Gate before agents may use the Portal. Covers F0-F1.2 (cases C0-C8 in `portal.fi
 C9, capture of the first request, belongs to F1.3 and is marked NOT RUN). Case EXT covers a page-initiated navigation
 to an unregistered external scheme (script, link click, iframe) and the permissions C4 collects but does not assert
 (clipboard-read, midi) plus fullscreen. Case OBS checks the test-side console and network capture (F1.3a, see below).
+Case ROOTS checks that `nim-preview:` serves a project only while it is open: closed in the rail (also over 10 cycles) or
+with its own window closed, the preview URL is refused and an old URL answers 403; a project still open in another window
+stays served. It uses only existing IPC (`workspace:register-additional`, `workspace:unregister-additional`,
+`workspace-manager:open-workspace`, `browser-session:build-preview-url`) and a `net.fetch` in main.
 
 Only `playwright.portal.config.ts` runs it. The default configs (`playwright.config.ts`,
 `playwright-extension.config.ts`) have `testIgnore: '**/e2e/portal/**'`, and the spec skips itself unless

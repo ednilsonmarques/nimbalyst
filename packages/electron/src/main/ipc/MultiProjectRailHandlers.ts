@@ -41,12 +41,13 @@ import {
   stopRootWatcher,
   stopWorkspaceWatcher,
 } from '../file/WorkspaceWatcher.ts';
-import { anyWindowReferencesWorkspace, resolveDocumentServicePath, windows } from '../window/windowState';
+import { anyWindowReferencesWorkspace, listOpenWorkspacePaths, resolveDocumentServicePath, windows } from '../window/windowState';
 import { ElectronDocumentService, setupDocumentServiceHandlers } from '../services/ElectronDocumentService';
 import { ElectronFileSystemService } from '../services/ElectronFileSystemService';
 import { clearWorkspaceRepoCache } from '../services/workspaceRepos';
 import { addNimAssetRoot } from '../protocols/nimAssetProtocol';
 import { addNimPreviewWorkspaceRoot } from '../protocols/nimPreviewProtocol';
+import { releaseWorkspacePreviewRoots } from '../services/BrowserAgentFiles';
 import { getMcpConfigService } from '../index';
 import {
   addToRecentItems,
@@ -223,6 +224,8 @@ export function registerMultiProjectRailHandlers(): void {
 
         // Free services only if no other window references the path.
         releaseWhenWorkspaceUnused(workspacePath, () => {
+            // First, so a throwing destroy below cannot leave the closed project served.
+            releaseWorkspacePreviewRoots(workspacePath, listOpenWorkspacePaths());
             const docService = documentServices.get(workspacePath);
             if (docService) {
                 docService.destroy();
