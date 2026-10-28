@@ -727,3 +727,73 @@ describe('focus after a refusal', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 });
+
+describe('the refusal is always visible (F-1)', () => {
+  // jsdom has no layout, so this tests the structure the fix relies on: the error is NOT inside the
+  // scrollable body (where it used to sit at the end, below the fold), it is a fixed row between
+  // that body and the buttons, so however many fronts there are it cannot be scrolled out of sight.
+  const MANY = Array.from({ length: 11 }, (_, i) => ({ id: `tfr_many${i}`, type: 'team-front', title: `Front ${i}`, status: 'active', archived: false }));
+
+  async function refuse(message = 'Front "Portal" already has an active mission (session abc).') {
+    const result = setup(async () => ({ ok: false, errorCode: 'mission-active', message }));
+    await ready();
+    pick('tfr_active');
+    type('team-mission-goal', 'My goal');
+    fireEvent.click(createButton());
+    const alert = await screen.findByRole('alert');
+    return { ...result, alert };
+  }
+
+  it('renders the error outside the scrollable body, in a fixed row above the buttons', async () => {
+    const { alert } = await refuse();
+    const body = screen.getByTestId('team-mission-body');
+    const dialog = screen.getByTestId('team-mission-dialog');
+
+    expect(body.className).toContain('overflow-y-auto');
+    expect(body.contains(alert)).toBe(false);
+    // Not inside any other scroll region of the dialog either (its own cap is allowed).
+    expect(alert.parentElement!.closest('.overflow-y-auto')).toBeNull();
+    // A direct row of the dialog, right after the body and right before the footer with the buttons.
+    expect(alert.parentElement).toBe(dialog);
+    expect(alert.previousElementSibling).toBe(body);
+    expect(alert.nextElementSibling!.contains(createButton())).toBe(true);
+    // A long main message cannot push the buttons out: the row has its own cap.
+    expect(alert.className).toContain('shrink-0');
+    expect(alert.className).toContain('max-h-');
+  });
+
+  it('keeps it outside the scroll region with many fronts too, and keeps the dialog behaviour', async () => {
+    fronts = [...MANY, FRONT_ACTIVE];
+    const { alert, onClose, submit } = await refuse();
+    expect(screen.getAllByRole('radio').length).toBe(12);
+    expect(screen.getByTestId('team-mission-body').contains(alert)).toBe(false);
+    expect(alert.getAttribute('role')).toBe('alert');
+    expect(alert.getAttribute('data-error-code')).toBe('mission-active');
+    // Nothing else changed: dialog open, text kept, form usable again, list reloaded.
+    expect(onClose).not.toHaveBeenCalled();
+    expect((screen.getByTestId('team-mission-goal') as HTMLTextAreaElement).value).toBe('My goal');
+    expect(createButton().disabled).toBe(false);
+    await waitFor(() => expect(invoke.mock.calls.filter(([c]) => c === 'document-service:tracker-items-by-type')).toHaveLength(2));
+    expect(submit).toHaveBeenCalledTimes(1);
+  });
+
+  it('the focus trap still wraps with the error showing (Tab at the last control goes to the first)', async () => {
+    await refuse();
+    const create = createButton();
+    create.focus();
+    fireEvent.keyDown(create, { key: 'Tab' });
+    expect(document.activeElement).toBe(screen.getByTestId('team-mission-front-tfr_active'));
+  });
+
+  it('clears the error when the dialog is submitted again', async () => {
+    const outcomes = [{ ok: false as const, errorCode: 'mission-active' as const, message: 'busy' }, { ok: true as const, sessionId: 's' }];
+    const { onClose } = setup(async () => outcomes.shift()!);
+    await ready();
+    pick('tfr_active');
+    type('team-mission-goal', 'Goal');
+    fireEvent.click(createButton());
+    await screen.findByRole('alert');
+    fireEvent.click(createButton());
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+  });
+});

@@ -31,12 +31,20 @@ import {
   TEAM_MISSION_GOAL_MAX_CHARS,
   type TeamMissionRequestPayload,
 } from '../../../shared/teamMission';
-import type { TeamMissionCreateOutcome } from '../../store/actions/sessionHistoryActions';
+import type {
+  ActiveMissionCandidate,
+  FindActiveMissionsOutcome,
+  TeamMissionCreateOutcome,
+} from '../../store/actions/sessionHistoryActions';
 import { subscribeTrackerItemsChanged } from '../../store/listeners/trackerItemsChangedListeners';
 import {
+  MAX_LISTED_ACTIVE_MISSIONS,
+  TEAM_MISSION_LOOKUP_KEYS,
   TEAM_MISSION_REFRESH_CODES,
   buildTeamMissionRequest,
   fieldUsage,
+  shortMissionId,
+  shouldLookUpActiveMission,
   teamFrontStatusLabelKey,
   teamMissionErrorKey,
   toTeamFrontOptions,
@@ -49,6 +57,13 @@ interface NewTeamMissionDialogProps {
   onSubmit: (request: TeamMissionRequestPayload) => Promise<TeamMissionCreateOutcome>;
   /** Closes the dialog (cancel, ESC, overlay, and after a successful creation). */
   onClose: () => void;
+  /**
+   * Finds the mission(s) that occupy a front, from a fresh host list. Asked after a mission-active
+   * refusal or a failure with no code. Navigation only: it never changes the outcome of the attempt.
+   */
+  findActiveMissions?: (front: string) => Promise<FindActiveMissionsOutcome>;
+  /** Opens a mission found by the lookup; false if it can no longer be opened. */
+  onOpenMission?: (missionId: string) => Promise<boolean>;
 }
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -58,13 +73,23 @@ interface SubmitError {
   message?: string;
 }
 
+type MissionLookup =
+  | { state: 'idle' }
+  | { state: 'looking' }
+  | { state: 'found'; missions: ActiveMissionCandidate[] }
+  /** `afterFailure`: the trigger was a failure with no code, so nothing is known to exist on the front. */
+  | { state: 'none'; afterFailure: boolean }
+  | { state: 'failed' };
+
+const IDLE_LOOKUP: MissionLookup = { state: 'idle' };
+
 async function fetchFronts(): Promise<TeamFrontOption[]> {
   if (!window.electronAPI) return [];
   const items = await window.electronAPI.invoke('document-service:tracker-items-by-type', 'team-front');
   return toTeamFrontOptions(items);
 }
 
-export function NewTeamMissionDialog({ isOpen, onSubmit, onClose }: NewTeamMissionDialogProps) {
+export function NewTeamMissionDialog({ isOpen, onSubmit, onClose, findActiveMissions, onOpenMission }: NewTeamMissionDialogProps) {
   const { t } = useTranslation('agent');
   const [loadState, setLoadState] = useState<LoadState>('loading');
   const [fronts, setFronts] = useState<TeamFrontOption[]>([]);
@@ -74,6 +99,9 @@ export function NewTeamMissionDialog({ isOpen, onSubmit, onClose }: NewTeamMissi
   const [doneCriterion, setDoneCriterion] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<SubmitError | null>(null);
+  const [lookup, setLookup] = useState<MissionLookup>(IDLE_LOOKUP);
+  const [openFailed, setOpenFailed] = useState(false);
+  const [openingId, setOpeningId] = useState<string | null>(null);
 
   // Everything the previous session left behind is cleared in the render that opens the dialog
   // (state adjusted during render, not in an effect), so no frame ever shows a stale form.
@@ -89,12 +117,20 @@ export function NewTeamMissionDialog({ isOpen, onSubmit, onClose }: NewTeamMissi
       setDoneCriterion('');
       setIsSubmitting(false);
       setSubmitError(null);
+      setLookup(IDLE_LOOKUP);
+      setOpenFailed(false);
+      setOpeningId(null);
     }
   }
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const groupRef = useRef<HTMLDivElement>(null);
   const initialFocusDoneRef = useRef(false);
+  // Like loadSeqRef, for the active-mission lookup: only the answer to the latest question counts.
+  const lookupSeqRef = useRef(0);
+  const openingRef = useRef(false);
+  // What started the lookup: a failure with no code (true) or a refusal that says the front is taken (false).
+  const lookupAfterFailureRef = useRef(false);
   // Synchronous guard: state updates are batched, two fast clicks could both read `false`.
   const submittingRef = useRef(false);
   // Drops the answer of a load that a newer load (or closing) has made obsolete.
@@ -113,6 +149,10 @@ export function NewTeamMissionDialog({ isOpen, onSubmit, onClose }: NewTeamMissi
       const current = selectedRef.current;
       if (current && !options.some((o) => o.id === current && o.selectable)) {
         setSelectedFront('');
+        // What the lookup found was for that front: drop it, and any answer still on its way.
+        lookupSeqRef.current += 1;
+        setLookup(IDLE_LOOKUP);
+        setOpenFailed(false);
         // After a refusal the error message already says it; a quiet change deserves the note.
         setFrontGone(reason === 'change');
       }
@@ -131,7 +171,9 @@ export function NewTeamMissionDialog({ isOpen, onSubmit, onClose }: NewTeamMissi
       return;
     }
     submittingRef.current = false;
+    openingRef.current = false;
     initialFocusDoneRef.current = false;
+    lookupSeqRef.current += 1;
     void loadFronts('open');
     // A front paused, closed or renamed in the Tracker while the dialog is open.
     const unsubscribe = subscribeTrackerItemsChanged(() => {
@@ -139,6 +181,7 @@ export function NewTeamMissionDialog({ isOpen, onSubmit, onClose }: NewTeamMissi
     });
     return () => {
       loadSeqRef.current += 1;
+      lookupSeqRef.current += 1;
       unsubscribe();
     };
   }, [isOpen, loadFronts]);
@@ -204,12 +247,77 @@ export function NewTeamMissionDialog({ isOpen, onSubmit, onClose }: NewTeamMissi
     !goalUsage.over &&
     !doneUsage.over;
 
+  // The user picks a front: what was found for the previous attempt no longer applies.
+  const chooseFront = useCallback((id: string) => {
+    lookupSeqRef.current += 1;
+    setLookup(IDLE_LOOKUP);
+    setOpenFailed(false);
+    setSelectedFront(id);
+    setFrontGone(false);
+  }, []);
+
+  // Look for the mission that occupies `front`. Only the answer to the latest question is used (a late
+  // answer, a closed dialog or another workspace are dropped), and a failure never hides the refusal.
+  const runLookup = useCallback(
+    async (front: string) => {
+      if (!findActiveMissions) return;
+      const seq = ++lookupSeqRef.current;
+      setLookup({ state: 'looking' });
+      let outcome: FindActiveMissionsOutcome;
+      try {
+        outcome = await findActiveMissions(front);
+      } catch (error) {
+        console.error('[NewTeamMissionDialog] Failed to look for the active mission:', error);
+        outcome = { ok: false };
+      }
+      if (seq !== lookupSeqRef.current) return;
+      if (!outcome.ok) {
+        setLookup(outcome.stale ? IDLE_LOOKUP : { state: 'failed' });
+        return;
+      }
+      setLookup(
+        outcome.missions.length > 0
+          ? { state: 'found', missions: outcome.missions }
+          : { state: 'none', afterFailure: lookupAfterFailureRef.current },
+      );
+    },
+    [findActiveMissions],
+  );
+
+  const handleOpenMission = useCallback(
+    async (missionId: string) => {
+      if (!onOpenMission || openingRef.current || submittingRef.current) return;
+      openingRef.current = true;
+      setOpeningId(missionId);
+      setOpenFailed(false);
+      let opened = false;
+      try {
+        opened = await onOpenMission(missionId);
+      } catch (error) {
+        console.error('[NewTeamMissionDialog] Failed to open the mission:', error);
+      }
+      if (opened) {
+        // Navigation: the dialog has done its job. The guard stays set so nothing opens twice.
+        onClose();
+        return;
+      }
+      openingRef.current = false;
+      setOpeningId(null);
+      setOpenFailed(true);
+      if (selectedRef.current) void runLookup(selectedRef.current);
+    },
+    [onClose, onOpenMission, runLookup],
+  );
+
   const handleSubmit = useCallback(async () => {
     if (!canSubmit || submittingRef.current) return;
     submittingRef.current = true;
     setIsSubmitting(true);
     setSubmitError(null);
     setFrontGone(false);
+    lookupSeqRef.current += 1;
+    setLookup(IDLE_LOOKUP);
+    setOpenFailed(false);
     let outcome: TeamMissionCreateOutcome;
     try {
       outcome = await onSubmit(buildTeamMissionRequest({ front: selectedFront, goal, doneCriterion }));
@@ -231,7 +339,12 @@ export function NewTeamMissionDialog({ isOpen, onSubmit, onClose }: NewTeamMissi
     if (outcome.errorCode && (TEAM_MISSION_REFRESH_CODES as readonly string[]).includes(outcome.errorCode)) {
       void loadFronts('refusal');
     }
-  }, [canSubmit, doneCriterion, goal, loadFronts, onClose, onSubmit, selectedFront]);
+    // The front is taken, or the outcome is unknown: show which mission holds it. The refusal stays.
+    if (findActiveMissions && shouldLookUpActiveMission(outcome.errorCode)) {
+      lookupAfterFailureRef.current = outcome.errorCode === undefined;
+      void runLookup(selectedFront);
+    }
+  }, [canSubmit, doneCriterion, findActiveMissions, goal, loadFronts, onClose, onSubmit, runLookup, selectedFront]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -281,8 +394,7 @@ export function NewTeamMissionDialog({ isOpen, onSubmit, onClose }: NewTeamMissi
       ? (forward ? 0 : pickable.length - 1)
       : (index + (forward ? 1 : -1) + pickable.length) % pickable.length;
     const next = pickable[nextIndex];
-    setSelectedFront(next.id);
-    setFrontGone(false);
+    chooseFront(next.id);
     // Found among the rendered radios, not through a selector built from the id.
     Array.from(groupRef.current?.querySelectorAll<HTMLElement>('[role="radio"]') ?? [])
       .find((radio) => radio.dataset.frontId === next.id)
@@ -315,7 +427,7 @@ export function NewTeamMissionDialog({ isOpen, onSubmit, onClose }: NewTeamMissi
           <p className="m-0 mt-1 text-[13px] text-nim-muted">{t('teamMissionDialog.subtitle')}</p>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-5">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 flex flex-col gap-5" data-testid="team-mission-body">
           <div className="flex flex-col gap-1.5" data-testid="team-mission-front-field">
             <span className="text-[12px] font-semibold text-nim uppercase tracking-wider">
               {t('teamMissionDialog.frontLabel')}
@@ -392,10 +504,7 @@ export function NewTeamMissionDialog({ isOpen, onSubmit, onClose }: NewTeamMissi
                         } ${isSelected ? 'bg-[var(--nim-primary)]/15' : 'bg-transparent'}`}
                         data-testid={`team-mission-front-${front.id}`}
                         data-status={front.status}
-                        onClick={() => {
-                          setSelectedFront(front.id);
-                          setFrontGone(false);
-                        }}
+                        onClick={() => chooseFront(front.id)}
                       >
                         <span className="flex-1 truncate">{front.title}</span>
                         <span
@@ -446,23 +555,70 @@ export function NewTeamMissionDialog({ isOpen, onSubmit, onClose }: NewTeamMissi
             requiredNote={null}
             disabled={isSubmitting}
           />
-
-          {submitError && (
-            <div
-              className="text-[12px] text-[var(--nim-error)] px-3 py-2 rounded-md border border-[var(--nim-error)] bg-[var(--nim-error)]/10 flex flex-col gap-1"
-              data-testid="team-mission-submit-error"
-              data-error-code={submitError.code ?? ''}
-              role="alert"
-            >
-              <span data-testid="team-mission-error-message">{t(teamMissionErrorKey(submitError.code))}</span>
-              {submitError.message && (
-                <span className="text-nim-muted break-words" data-testid="team-mission-error-details">
-                  {t('teamMissionDialog.detailsLine', { message: submitError.message })}
-                </span>
-              )}
-            </div>
-          )}
         </div>
+
+        {/* The refusal is a fixed row between the scrollable form and the buttons, not the last item
+            of the scroll area: it used to sit below the fold and a refusal looked like "nothing
+            happened". It has its own cap so a long message from the main cannot push the buttons out. */}
+        {submitError && (
+          <div
+            className="shrink-0 max-h-[30vh] overflow-y-auto mx-6 mb-3 text-[12px] text-[var(--nim-error)] px-3 py-2 rounded-md border border-[var(--nim-error)] bg-[var(--nim-error)]/10 flex flex-col gap-1"
+            data-testid="team-mission-submit-error"
+            data-error-code={submitError.code ?? ''}
+            role="alert"
+          >
+            <span data-testid="team-mission-error-message">{t(teamMissionErrorKey(submitError.code))}</span>
+            {submitError.message && (
+              <span className="text-nim-muted break-words" data-testid="team-mission-error-details">
+                {t('teamMissionDialog.detailsLine', { message: submitError.message })}
+              </span>
+            )}
+            {/* Which mission holds the front: navigation only. The refusal above stays a refusal. */}
+            {lookup.state === 'looking' && (
+              <span className="text-nim-muted" data-testid="team-mission-active-looking">{t(TEAM_MISSION_LOOKUP_KEYS.looking)}</span>
+            )}
+            {lookup.state === 'failed' && (
+              <span className="text-nim-muted" data-testid="team-mission-active-failed">{t(TEAM_MISSION_LOOKUP_KEYS.failed)}</span>
+            )}
+            {lookup.state === 'none' && (
+              <span className="text-nim-muted" data-testid="team-mission-active-none">{t(lookup.afterFailure ? TEAM_MISSION_LOOKUP_KEYS.noneAfterFailure : TEAM_MISSION_LOOKUP_KEYS.none)}</span>
+            )}
+            {openFailed && (
+              <span className="text-nim-muted" data-testid="team-mission-active-open-failed">{t(TEAM_MISSION_LOOKUP_KEYS.openFailed)}</span>
+            )}
+            {lookup.state === 'found' && (
+              <div className="flex flex-col gap-1.5 text-nim" data-testid="team-mission-active-list">
+                <span className="font-semibold" data-testid="team-mission-active-heading">
+                  {t(lookup.missions.length > 1 ? TEAM_MISSION_LOOKUP_KEYS.headingMany : TEAM_MISSION_LOOKUP_KEYS.heading)}
+                </span>
+                {lookup.missions.slice(0, MAX_LISTED_ACTIVE_MISSIONS).map((mission) => (
+                  <div
+                    key={mission.id}
+                    className="flex items-center gap-2 rounded-md border border-nim bg-nim-secondary px-2 py-1.5"
+                    data-testid={`team-mission-active-${mission.id}`}
+                  >
+                    <span className="flex-1 min-w-0 break-words">
+                      {mission.goal ?? t(TEAM_MISSION_LOOKUP_KEYS.noGoal)}
+                      <span className="ml-2 font-mono text-[11px] text-nim-muted">{shortMissionId(mission.id)}</span>
+                    </span>
+                    <button
+                      type="button"
+                      className="nim-btn-secondary px-3 py-1 text-[12px] rounded-md shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                      data-testid={`team-mission-open-${mission.id}`}
+                      disabled={openingId !== null || isSubmitting}
+                      onClick={() => void handleOpenMission(mission.id)}
+                    >
+                      {t(TEAM_MISSION_LOOKUP_KEYS.open)}
+                    </button>
+                  </div>
+                ))}
+                {lookup.missions.length > MAX_LISTED_ACTIVE_MISSIONS && (
+                  <span className="text-nim-muted" data-testid="team-mission-active-more">{t(TEAM_MISSION_LOOKUP_KEYS.more)}</span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="flex justify-end gap-3 px-6 py-4 border-t border-nim">
           <button

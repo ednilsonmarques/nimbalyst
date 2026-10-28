@@ -146,6 +146,36 @@ const ERROR_KEY_BY_CODE: Record<TeamMissionErrorCode | TeamMissionClientErrorCod
   'preset-unavailable': 'teamMissionDialog.errors.presetUnavailable',
 };
 
+/**
+ * After which outcomes the dialog looks for the mission that occupies the front: the front is taken
+ * (mission-active), or the outcome is unknown (no code at all: the write may have happened).
+ */
+export function shouldLookUpActiveMission(errorCode: string | undefined): boolean {
+  return errorCode === undefined || errorCode === 'mission-active';
+}
+
+/** How many found missions the dialog lists before saying there are more. */
+export const MAX_LISTED_ACTIVE_MISSIONS = 5;
+
+/** The short form of a session id shown next to the goal. */
+export function shortMissionId(id: string): string {
+  return id.slice(0, 8);
+}
+
+/** One static key per text of the active-mission lookup (the JSON has exactly these, no more). */
+export const TEAM_MISSION_LOOKUP_KEYS = {
+  heading: 'teamMissionDialog.activeMission.heading',
+  headingMany: 'teamMissionDialog.activeMission.headingMany',
+  open: 'teamMissionDialog.activeMission.open',
+  noGoal: 'teamMissionDialog.activeMission.noGoal',
+  none: 'teamMissionDialog.activeMission.none',
+  noneAfterFailure: 'teamMissionDialog.activeMission.noneAfterFailure',
+  failed: 'teamMissionDialog.activeMission.failed',
+  openFailed: 'teamMissionDialog.activeMission.openFailed',
+  looking: 'teamMissionDialog.activeMission.looking',
+  more: 'teamMissionDialog.activeMission.more',
+} as const;
+
 /** The i18n key (namespace `agent`) of the message for an error code; the generic one when unknown or absent. */
 export function teamMissionErrorKey(code: string | undefined): string {
   if (code === undefined || !Object.prototype.hasOwnProperty.call(ERROR_KEY_BY_CODE, code)) return GENERIC_ERROR_KEY;

@@ -60,6 +60,8 @@ import {
   branchSessionActionAtom,
   createNewSessionActionAtom,
   createTeamMissionActionAtom,
+  findActiveTeamMissionsActionAtom,
+  openTeamMissionActionAtom,
   createNewWorktreeSessionActionAtom,
   addSessionToWorktreeActionAtom,
   openNewBlitzDialogActionAtom,
@@ -269,6 +271,8 @@ const SessionHistoryComponent: React.FC = () => {
   const dispatchBranchSession = useSetAtom(branchSessionActionAtom);
   const dispatchCreateNewSession = useSetAtom(createNewSessionActionAtom);
   const dispatchCreateTeamMission = useSetAtom(createTeamMissionActionAtom);
+  const dispatchFindActiveMissions = useSetAtom(findActiveTeamMissionsActionAtom);
+  const dispatchOpenTeamMission = useSetAtom(openTeamMissionActionAtom);
   const [newTeamMissionDialogOpen, setNewTeamMissionDialogOpen] = useState(false);
   const dispatchCreateNewWorktreeSession = useSetAtom(createNewWorktreeSessionActionAtom);
   const dispatchAddSessionToWorktree = useSetAtom(addSessionToWorktreeActionAtom);
@@ -2988,6 +2992,8 @@ const SessionHistoryComponent: React.FC = () => {
         return dispatchCreateTeamMission(input);
       }}
       onClose={() => setNewTeamMissionDialogOpen(false)}
+      findActiveMissions={dispatchFindActiveMissions}
+      onOpenMission={dispatchOpenTeamMission}
     />
   );
 

@@ -603,6 +603,92 @@ export const createTeamMissionActionAtom = atom(
   },
 );
 
+/** A mission root that occupies a front, as the host exposes it (read-only) in the session list. */
+export interface ActiveMissionCandidate {
+  id: string;
+  /** The goal recorded at creation; null if the list carried none. */
+  goal: string | null;
+}
+
+export type FindActiveMissionsOutcome =
+  | { ok: true; missions: ActiveMissionCandidate[] }
+  /** `stale`: the workspace changed while the host was answering, so the answer is not for this project. */
+  | { ok: false; stale?: true };
+
+/** The few fields of a listed session the lookup reads (the host filters them to marked mission roots). */
+interface ListedMissionRoot {
+  id: string;
+  createdAt?: number;
+  isArchived?: boolean;
+  remoteHostDeviceId?: string;
+  teamFront?: string;
+  teamGoal?: string;
+  teamMissionStatus?: string;
+}
+
+/**
+ * Where the lookup may find a mission: local, not archived. A session of another device is not ours
+ * to open here, and an archived root does not occupy a front. Presentation only: the main decides
+ * who holds a front, at creation, and this changes nothing about it.
+ */
+function isOpenableMissionRoot(session: ListedMissionRoot): boolean {
+  return !session.isArchived && !session.remoteHostDeviceId;
+}
+
+/**
+ * NAVIGATION ONLY. After a refusal that says a front is taken (or a failure whose outcome is
+ * unknown), find the mission(s) that occupy it, from a FRESH list of the host (not the cached
+ * session atom): the roots whose read-only exposure has this front and a mission that is not closed.
+ * It writes nothing, frees nothing and decides nothing; it never reads a message. A failure is
+ * `{ ok: false }`, never an empty list, and an answer for a workspace that is no longer open is
+ * `stale`.
+ */
+export const findActiveTeamMissionsActionAtom = atom(
+  null,
+  async (get, _set, front: string): Promise<FindActiveMissionsOutcome> => {
+    const workspacePath = getWorkspacePath(get);
+    if (!workspacePath || typeof window === 'undefined' || !window.electronAPI) return { ok: false };
+    try {
+      const result = await window.electronAPI.invoke('sessions:list', workspacePath, { includeArchived: false });
+      if (getWorkspacePath(get) !== workspacePath) return { ok: false, stale: true };
+      if (!result?.success || !Array.isArray(result.sessions)) return { ok: false };
+      const missions = (result.sessions as ListedMissionRoot[])
+        .filter((session) => session.teamFront === front && session.teamMissionStatus !== 'closed' && isOpenableMissionRoot(session))
+        .sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
+        .map((session) => ({ id: session.id, goal: session.teamGoal?.trim() ? session.teamGoal : null }));
+      return { ok: true, missions };
+    } catch (error) {
+      console.error('[sessionHistoryActions] Failed to look for the active mission:', error);
+      return { ok: false };
+    }
+  },
+);
+
+/**
+ * Open a mission found by the lookup, after checking again (fresh list) that it still exists here and
+ * is not archived. False when it cannot be opened, so the caller can say so instead of opening
+ * something else; nothing is selected in that case.
+ */
+export const openTeamMissionActionAtom = atom(
+  null,
+  async (get, set, missionId: string): Promise<boolean> => {
+    const workspacePath = getWorkspacePath(get);
+    if (!workspacePath || typeof window === 'undefined' || !window.electronAPI) return false;
+    try {
+      const result = await window.electronAPI.invoke('sessions:list', workspacePath, { includeArchived: false });
+      if (getWorkspacePath(get) !== workspacePath) return false;
+      if (!result?.success || !Array.isArray(result.sessions)) return false;
+      const exists = (result.sessions as ListedMissionRoot[]).some((session) => session.id === missionId && isOpenableMissionRoot(session));
+      if (!exists) return false;
+      await set(openSessionInTabActionAtom, missionId);
+      return true;
+    } catch (error) {
+      console.error('[sessionHistoryActions] Failed to open the mission:', error);
+      return false;
+    }
+  },
+);
+
 /**
  * Create a new worktree + session. Gated by `worktreesFeatureAvailableAtom`
  * and the per-workspace `isGitRepoAtom`.

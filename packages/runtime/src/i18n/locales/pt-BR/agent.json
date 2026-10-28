@@ -840,6 +840,18 @@
     "counter": "{{used}}/{{max}}",
     "tooLong": "Longo demais: {{used}} de {{max}} caracteres. Reduza o texto; nada é cortado por você.",
     "detailsLine": "Detalhes: {{message}}",
+    "activeMission": {
+      "heading": "Missão ativa nesta frente",
+      "headingMany": "Missões ativas nesta frente",
+      "open": "Abrir missão",
+      "noGoal": "(sem objetivo registrado)",
+      "none": "Não foi possível localizar a missão ativa desta frente. Ela pode estar em outro dispositivo, ou a lista pode precisar ser atualizada.",
+      "noneAfterFailure": "Nenhuma missão foi encontrada nesta frente. Se a criação foi concluída, ela aparecerá na lista de sessões.",
+      "failed": "Não foi possível procurar a missão ativa.",
+      "openFailed": "Não foi possível abrir essa missão (ela pode ter sido arquivada ou excluída). A lista foi atualizada.",
+      "looking": "Procurando a missão ativa…",
+      "more": "Há mais missões ativas nesta frente do que as exibidas."
+    },
     "cancel": "Cancelar",
     "create": "Iniciar missão",
     "creating": "Iniciando…",

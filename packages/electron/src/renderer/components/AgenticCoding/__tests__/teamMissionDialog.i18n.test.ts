@@ -9,7 +9,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { setLanguage, t as translate } from '@nimbalyst/runtime/i18n';
 import { TEAM_MISSION_CLIENT_ERROR_CODES, TEAM_MISSION_ERROR_CODES } from '../../../../shared/teamMission';
-import { teamFrontStatusLabelKey, teamMissionErrorKey, type TeamFrontStatusKind } from '../teamMissionDialog';
+import { TEAM_MISSION_LOOKUP_KEYS, teamFrontStatusLabelKey, teamMissionErrorKey, type TeamFrontStatusKind } from '../teamMissionDialog';
 
 const LOCALES = path.resolve(__dirname, '../../../../../../runtime/src/i18n/locales');
 const load = (language: string) => JSON.parse(readFileSync(path.join(LOCALES, language, 'agent.json'), 'utf8'));
@@ -92,6 +92,43 @@ describe('every key the code can ask for resolves to a real string in both langu
       }
     });
   }
+
+  for (const language of ['en', 'pt-BR'] as const) {
+    it(`every key of the active-mission lookup exists in ${language}`, async () => {
+      await setLanguage(language);
+      const keys = Object.values(TEAM_MISSION_LOOKUP_KEYS);
+      expect(keys.length).toBeGreaterThanOrEqual(10);
+      expect(keys).toContain('teamMissionDialog.activeMission.noneAfterFailure');
+      for (const key of keys) {
+        const text = translate(`agent:${key}`);
+        expect(text, key).not.toBe(key);
+        expect(text, key).not.toBe(`agent:${key}`);
+        expect(text.trim(), key).not.toBe('');
+      }
+    });
+  }
+
+  it('the lookup keys are all in the JSON of both languages (nothing only in the code, nothing orphaned)', () => {
+    const en = missionStrings('en');
+    const pt = missionStrings('pt-BR');
+    for (const key of Object.values(TEAM_MISSION_LOOKUP_KEYS)) {
+      expect(en, key).toHaveProperty([key]);
+      expect(pt, key).toHaveProperty([key]);
+    }
+    const lookupInJson = Object.keys(en).filter((key) => key.startsWith('teamMissionDialog.activeMission.')).sort();
+    expect(lookupInJson).toEqual([...Object.values(TEAM_MISSION_LOOKUP_KEYS)].sort());
+  });
+
+  it('the two "none found" texts are different, and the neutral one does not claim a mission exists', () => {
+    const en = missionStrings('en');
+    const pt = missionStrings('pt-BR');
+    expect(en['teamMissionDialog.activeMission.noneAfterFailure']).toBe('No mission was found on this front. If the creation did go through, it will appear in the session list.');
+    expect(pt['teamMissionDialog.activeMission.noneAfterFailure']).toBe('Nenhuma missão foi encontrada nesta frente. Se a criação foi concluída, ela aparecerá na lista de sessões.');
+    expect(en['teamMissionDialog.activeMission.noneAfterFailure']).not.toBe(en['teamMissionDialog.activeMission.none']);
+    expect(pt['teamMissionDialog.activeMission.noneAfterFailure']).not.toBe(pt['teamMissionDialog.activeMission.none']);
+    expect(en['teamMissionDialog.activeMission.noneAfterFailure']).not.toMatch(/active mission|could not be located/i);
+    expect(pt['teamMissionDialog.activeMission.noneAfterFailure']).not.toMatch(/missão ativa|não foi possível localizar/i);
+  });
 
   it('the generic and unknown fallbacks are what an unknown input gets', () => {
     expect(teamMissionErrorKey('a-code-from-the-future')).toBe('teamMissionDialog.errors.generic');
