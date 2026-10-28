@@ -292,7 +292,10 @@ export function AgenticInput({
 
       if (!validation.valid) {
         console.error('[AgenticInput] File validation failed:', validation.error);
-        errorNotificationService.showError(translate('agent:input.attachmentRejected'), validation.error || translate('agent:input.invalidFile'));
+        const rejectionMessage = validation.code === 'spreadsheet_unsupported'
+          ? translate('ai:attachments.spreadsheetUnsupported')
+          : validation.error || translate('agent:input.invalidFile');
+        errorNotificationService.showError(translate('agent:input.attachmentRejected'), rejectionMessage);
         return;
       }
 

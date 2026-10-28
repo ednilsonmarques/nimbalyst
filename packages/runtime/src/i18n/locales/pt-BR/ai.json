@@ -12,6 +12,7 @@
   "attachments": {
     "rejectedTitle": "Anexo rejeitado",
     "invalidFile": "Arquivo inválido",
+    "spreadsheetUnsupported": "Planilhas não podem ser anexadas. Salve a planilha como CSV e anexe esse arquivo, ou coloque o arquivo no espaço de trabalho e peça ao agente para lê-lo.",
     "failedTitle": "Falha no anexo",
     "saveFailed": "Falha ao salvar o anexo",
     "attachFailed": "Falha ao anexar o arquivo"

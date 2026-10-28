@@ -26,6 +26,8 @@ import {
 export interface AttachmentValidation {
   valid: boolean;
   error?: string;
+  /** Machine-readable reason, so the renderer can show a localized message */
+  code?: 'spreadsheet_unsupported';
 }
 
 /**
@@ -148,6 +150,17 @@ export class AttachmentService {
     // PDF
     '.pdf': 'application/pdf',
   };
+
+  // Binary spreadsheet formats: rejected with a dedicated message that points to CSV
+  private static readonly SPREADSHEET_MIME_TYPES = [
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+    'application/vnd.ms-excel.sheet.macroenabled.12',
+    'application/vnd.ms-excel.sheet.binary.macroenabled.12',
+    'application/vnd.oasis.opendocument.spreadsheet',
+    'application/vnd.apple.numbers'
+  ];
+  private static readonly SPREADSHEET_EXTENSIONS = ['.xlsx', '.xls', '.xlsm', '.xlsb', '.ods', '.numbers'];
 
   // File size limits (in bytes)
   // Images can be larger since we compress them automatically
@@ -351,6 +364,13 @@ export class AttachmentService {
     // Check MIME type
     const type = this.getAttachmentType(resolvedMime);
     if (!type) {
+      if (AttachmentService.isSpreadsheet(resolvedMime, filename)) {
+        return {
+          valid: false,
+          code: 'spreadsheet_unsupported',
+          error: 'Spreadsheets cannot be attached. Save the sheet as CSV and attach that, or put the file in your workspace and ask the agent to read it.'
+        };
+      }
       return {
         valid: false,
         error: `Unsupported file type: ${resolvedMime || '(unknown)'}`
@@ -371,6 +391,19 @@ export class AttachmentService {
     }
 
     return { valid: true };
+  }
+
+  private static isSpreadsheet(mimeType: string, filename?: string): boolean {
+    const ext = filename ? extname(filename).toLowerCase() : '';
+    // A .csv/.tsv is already the format the message asks for: Chromium on Windows
+    // may report it as application/vnd.ms-excel, so keep the generic message for it.
+    if (ext === '.csv' || ext === '.tsv') {
+      return false;
+    }
+    if (AttachmentService.SPREADSHEET_MIME_TYPES.includes((mimeType || '').toLowerCase())) {
+      return true;
+    }
+    return AttachmentService.SPREADSHEET_EXTENSIONS.includes(ext);
   }
 
   /**

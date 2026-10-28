@@ -12,6 +12,7 @@
   "attachments": {
     "rejectedTitle": "Attachment Rejected",
     "invalidFile": "Invalid file",
+    "spreadsheetUnsupported": "Spreadsheets cannot be attached. Save the sheet as CSV and attach that, or put the file in your workspace and ask the agent to read it.",
     "failedTitle": "Attachment Failed",
     "saveFailed": "Failed to save attachment",
     "attachFailed": "Failed to attach file"

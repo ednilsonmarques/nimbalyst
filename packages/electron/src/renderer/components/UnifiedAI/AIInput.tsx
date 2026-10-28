@@ -1055,7 +1055,10 @@ export const AIInput = forwardRef<AIInputRef, AIInputProps>(
         if (!validation.valid) {
           pasteUndoCountRef.current.delete(processingId);
           console.error('[AIInput] File validation failed:', validation.error);
-          errorNotificationService.showError(t('attachments.rejectedTitle'), validation.error || t('attachments.invalidFile'));
+          const rejectionMessage = validation.code === 'spreadsheet_unsupported'
+            ? t('attachments.spreadsheetUnsupported')
+            : validation.error || t('attachments.invalidFile');
+          errorNotificationService.showError(t('attachments.rejectedTitle'), rejectionMessage);
           return;
         }
 
