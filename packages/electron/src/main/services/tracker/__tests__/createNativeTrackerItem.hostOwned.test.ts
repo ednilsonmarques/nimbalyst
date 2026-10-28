@@ -74,6 +74,130 @@ describe('native creation of a tool-manifest', () => {
     expect(db.runTransaction).not.toHaveBeenCalled();
   });
 
+  describe('a team-note through the UI or IPC (F1 S2): nextAction, handoff, front', () => {
+    const note = (customFields: Record<string, unknown>, extra: Record<string, unknown> = {}) =>
+      ({ id: 'team-note_s2', type: 'team-note', title: 'A note', status: 'active', priority: 'medium', workspace: '/ws', description: 'short', customFields, ...extra }) as any;
+    const insertedData = () => {
+      const statements = (db.runTransaction.mock.calls[0] as unknown as [Array<{ sql: string; params: unknown[] }>])[0];
+      return JSON.parse(statements.find((statement) => statement.sql.includes('INSERT INTO tracker_items'))!.params[3] as string);
+    };
+
+    it('a pending note needs a next action; a decision does not', async () => {
+      db.runTransaction.mockClear();
+      await expect(createNativeTrackerItem(note({ noteKind: 'pending' }), dependencies)).rejects.toThrow(/nextAction/);
+      await expect(createNativeTrackerItem(note({ noteKind: 'pending', nextAction: '   ' }), dependencies)).rejects.toThrow(/nextAction/);
+      expect(db.runTransaction).not.toHaveBeenCalled();
+      await createNativeTrackerItem(note({ noteKind: 'pending', nextAction: 'Ask PCP.' }), dependencies);
+      expect(insertedData().nextAction).toBe('Ask PCP.');
+      db.runTransaction.mockClear();
+      await createNativeTrackerItem(note({ noteKind: 'decision' }), dependencies);
+      expect(db.runTransaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('a handoff needs its result and next action, and takes a 2,500-character body (the rich body too), not more', async () => {
+      db.runTransaction.mockClear();
+      await expect(createNativeTrackerItem(note({ noteKind: 'handoff', nextAction: 'n' }), dependencies)).rejects.toThrow(/result/);
+      await createNativeTrackerItem(note({ noteKind: 'handoff', nextAction: 'n', result: 'abandoned' }, { description: 'h'.repeat(2500), content: 'c'.repeat(2500) }), dependencies);
+      expect(insertedData()).toMatchObject({ noteKind: 'handoff', result: 'abandoned' });
+      await expect(createNativeTrackerItem(note({ noteKind: 'handoff', nextAction: 'n', result: 'abandoned' }, { content: 'c'.repeat(2501) }), dependencies)).rejects.toThrow(/limit is 2500/);
+      await expect(createNativeTrackerItem(note({ noteKind: 'decision' }, { content: 'c'.repeat(601) }), dependencies)).rejects.toThrow(/limit is 600/);
+    });
+
+    it('nobody sets the front by hand, and the handoff-only fields stay off the other kinds', async () => {
+      db.runTransaction.mockClear();
+      await expect(createNativeTrackerItem(note({ noteKind: 'decision', front: 'team-front_1' }), dependencies)).rejects.toThrow(/front is set by Nimbalyst/);
+      await expect(createNativeTrackerItem(note({ noteKind: 'decision', result: 'completed' }), dependencies)).rejects.toThrow(/only for notes of kind handoff/);
+      expect(db.runTransaction).not.toHaveBeenCalled();
+    });
+
+    it('a front or a relation that is not shaped like a relationship is refused, not stored as empty', async () => {
+      for (const value of [42, true, {}, [42]]) {
+        db.runTransaction.mockClear();
+        await expect(createNativeTrackerItem(note({ noteKind: 'decision', front: value }), dependencies), JSON.stringify(value)).rejects.toThrow(/front must be empty or a relationship/);
+        await expect(createNativeTrackerItem(note({ noteKind: 'handoff', nextAction: 'n', result: 'completed', pendings: value }), dependencies), JSON.stringify(value)).rejects.toThrow(/pendings must be empty or a relationship/);
+        expect(db.runTransaction).not.toHaveBeenCalled();
+      }
+    });
+  });
+
+  describe('a team-front (the user creates fronts through the UI or IPC)', () => {
+    const front = { id: 'team-front_1', type: 'team-front', title: 'Team Mode', status: 'active', priority: 'medium', workspace: '/ws', description: 'Estado. Autoridade: ESTADO.md.' };
+    const insertedData = () => {
+      const statements = (db.runTransaction.mock.calls[0] as unknown as [Array<{ sql: string; params: unknown[] }>])[0];
+      const insert = statements.find((statement) => statement.sql.includes('INSERT INTO tracker_items'))!;
+      return JSON.parse(insert.params[3] as string);
+    };
+
+    it('is stored active and manual, with no mission', async () => {
+      db.runTransaction.mockClear();
+      await createNativeTrackerItem(front, dependencies);
+      expect(db.runTransaction).toHaveBeenCalledTimes(1);
+      const data = insertedData();
+      expect(data).toMatchObject({ title: 'Team Mode', status: 'active', createdByAgent: false, description: 'Estado. Autoridade: ESTADO.md.' });
+      expect(data.currentMission).toBeUndefined();
+    });
+
+    it('refuses a hand-set currentMission, a status outside the three and a state over 2,000 characters, before any write', async () => {
+      for (const [bad, message] of [
+        [{ ...front, customFields: { currentMission: 'root-1' } }, /currentMission is set by Nimbalyst/],
+        [{ ...front, status: 'to-do' }, /status must be one of: active, paused, closed/],
+        [{ ...front, description: 'd'.repeat(2001) }, /limit is 2000/],
+        [{ ...front, content: 'b'.repeat(2001) }, /limit is 2000/],
+      ] as Array<[typeof front, RegExp]>) {
+        db.runTransaction.mockClear();
+        await expect(createNativeTrackerItem(bad, dependencies), String(message)).rejects.toThrow(message);
+        expect(db.runTransaction).not.toHaveBeenCalled();
+      }
+    });
+
+    describe('its state is a description or a body (the quick-create popup sends the body as `content`)', () => {
+      const { description: _omit, ...noState } = front;
+      const refused = /A team-front needs its state: write a description or a body\./;
+
+      it('is refused with neither, with only whitespace, and with an empty rich document, before any write', async () => {
+        const emptyDoc = { root: { type: 'root', children: [{ type: 'paragraph', children: [{ type: 'text', text: ' ' }] }] } };
+        for (const payload of [
+          noState,
+          { ...noState, description: '   ' },
+          { ...noState, content: '  \n ' },
+          { ...noState, description: ' ', content: ' ' },
+          { ...noState, content: emptyDoc },
+        ]) {
+          db.runTransaction.mockClear();
+          await expect(createNativeTrackerItem(payload as any, dependencies), JSON.stringify(payload)).rejects.toThrow(refused);
+          expect(db.runTransaction).not.toHaveBeenCalled();
+        }
+      });
+
+      it('is accepted with only a body, as markdown or as a rich document, and stored without a description', async () => {
+        for (const content of ['Estado no corpo.', { root: { type: 'root', children: [{ type: 'paragraph', children: [{ type: 'text', text: 'Estado.' }] }] } }]) {
+          db.runTransaction.mockClear();
+          await createNativeTrackerItem({ ...noState, content } as any, dependencies);
+          expect(db.runTransaction).toHaveBeenCalledTimes(1);
+          expect(insertedData().description).toBeUndefined();
+        }
+      });
+
+      it('is accepted with only a description', async () => {
+        db.runTransaction.mockClear();
+        await createNativeTrackerItem({ ...noState, description: 'Só a descrição.' } as any, dependencies);
+        expect(db.runTransaction).toHaveBeenCalledTimes(1);
+        expect(insertedData().description).toBe('Só a descrição.');
+      });
+
+      it('keeps the cap on both', async () => {
+        await expect(createNativeTrackerItem({ ...noState, description: 'd'.repeat(2001) } as any, dependencies)).rejects.toThrow(/limit is 2000/);
+        await expect(createNativeTrackerItem({ ...noState, content: 'b'.repeat(2001) } as any, dependencies)).rejects.toThrow(/limit is 2000/);
+      });
+    });
+
+    it('only the host-owned path may write currentMission', async () => {
+      db.runTransaction.mockClear();
+      await createNativeTrackerItem({ ...front, customFields: { currentMission: 'root-1' } }, dependencies, { hostOwned: true });
+      expect(insertedData().currentMission).toBe('root-1');
+    });
+  });
+
   it('the host-owned path still refuses incomplete provenance', async () => {
     db.runTransaction.mockClear();
     await expect(createNativeTrackerItem({ ...payload, customFields: { manifestId: 'M-1' } }, dependencies, { hostOwned: true }))

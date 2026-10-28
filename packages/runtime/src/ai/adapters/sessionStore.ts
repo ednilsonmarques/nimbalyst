@@ -1,4 +1,12 @@
 import type { AgentRole, SessionData, SessionMode, SessionType, TranscriptViewMessage } from '../server/types';
+import {
+  TEAM_FRONT_METADATA_KEY,
+  TEAM_GOAL_METADATA_KEY,
+  isHostMissionRoot,
+  TEAM_MISSION_STATUSES,
+  TEAM_MISSION_STATUS_METADATA_KEY,
+  type TeamMissionStatus,
+} from '../server/providers/teamContext';
 
 // Type aliases for compatibility
 export type ChatMessage = TranscriptViewMessage;
@@ -57,18 +65,63 @@ export interface SessionMeta {
   effortLevel?: string;
   /** Restricted tool scope of a child session (metadata.toolScope); absent means full. */
   toolScope?: string;
+  // Mission lifecycle of a team root (read-only projections of host-owned metadata: the renderer
+  // reads them and never writes them back; absent on a legacy root and on every non-team session).
+  /** The team-front this mission works for (metadata.teamFront), the id of a `team-front` item. */
+  teamFront?: string;
+  /** The mission's goal (metadata.teamGoal). */
+  teamGoal?: string;
+  /** `active` or `closed` (metadata.teamMissionStatus). */
+  teamMissionStatus?: TeamMissionStatus;
+  // Not here, on purpose: `teamMissionContext` (the bootstrap block, up to ~6,000 characters) and
+  // `teamDoneCriterion` are protected host-owned keys that only main code reads, from the stored row.
   // Branch tracking - SEPARATE from hierarchical parentSessionId
   branchedFromSessionId?: string;
   branchPointMessageId?: number;
   branchedAt?: number;
 }
 
+/** A non-blank string, or undefined: the only shape a mission field is ever read in. */
+function nonBlankString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0 ? value : undefined;
+}
+
+/**
+ * The renderer-facing mission keys of a team root: front, goal, status. Read only
+ * for a mission root the host created (`isHostMissionRoot`): the keys are host-owned
+ * and written only on a root, with the host marker. A value on any other session, or
+ * on a root without the marker (written before S3, when a renderer could set it), is
+ * not a mission and is not exposed. A legacy root (teamMode without a front) yields
+ * nothing. The context, the done criterion and the marker are never read here: they
+ * stay main-only.
+ */
+function readTeamMissionFields(
+  metadata: Record<string, unknown> | null | undefined,
+): Pick<SessionMeta, 'teamFront' | 'teamGoal' | 'teamMissionStatus'> {
+  if (!isHostMissionRoot(metadata)) return {};
+  const front = nonBlankString(metadata[TEAM_FRONT_METADATA_KEY]);
+  const goal = nonBlankString(metadata[TEAM_GOAL_METADATA_KEY]);
+  const status = (TEAM_MISSION_STATUSES as readonly unknown[]).includes(metadata[TEAM_MISSION_STATUS_METADATA_KEY])
+    ? (metadata[TEAM_MISSION_STATUS_METADATA_KEY] as TeamMissionStatus)
+    : undefined;
+  return {
+    ...(front && { teamFront: front }),
+    ...(goal && { teamGoal: goal }),
+    ...(status && { teamMissionStatus: status }),
+  };
+}
+
 /** Team-mode fields of a session row's metadata, as carried on SessionMeta. */
 export function readTeamSessionFields(
   metadata: Record<string, unknown> | null | undefined,
-): Pick<SessionMeta, 'teamMode' | 'teamRole' | 'teamMission' | 'effortLevel' | 'toolScope'> {
+): Pick<
+  SessionMeta,
+  'teamMode' | 'teamRole' | 'teamMission' | 'effortLevel' | 'toolScope'
+  | 'teamFront' | 'teamGoal' | 'teamMissionStatus'
+> {
   const child = metadata?.teamChild as { role?: unknown; mission?: unknown } | null | undefined;
   return {
+    ...readTeamMissionFields(metadata),
     ...(metadata?.teamMode === true && { teamMode: true }),
     ...(child && typeof child.role === 'string' && { teamRole: child.role }),
     ...(child && typeof child.role === 'string' && typeof child.mission === 'string' && child.mission && { teamMission: child.mission }),

@@ -70,6 +70,65 @@ describe('tracker_create of a team-note', () => {
   });
 });
 
+describe('the front and the handoff (F1 S2)', () => {
+  const frontSessions: Record<string, unknown> = {
+    // A mission root as the host creates it (S4): the front comes with the host marker.
+    'root-front': { agentRole: 'standard', metadata: { teamMode: true, teamFront: 'team-front_1', teamMissionVersion: 1 }, worktreePath: null },
+    // A root whose front was stored before the keys were host-owned (no marker): a legacy root.
+    'root-pre-s3': { agentRole: 'standard', metadata: { teamMode: true, teamFront: 'team-front_forged' }, worktreePath: null },
+    root: sessions.root,
+  };
+  beforeEach(() => {
+    AISessionsRepository.setStore({ get: async (id: string) => frontSessions[id] ?? null } as never);
+  });
+
+  it('the host copies the root\'s front into the note; the agent\'s own front is dropped', async () => {
+    const args: any = note({ fields: { noteKind: 'decision', front: 'team-front_forged' } });
+    expect(await guardTeamNoteCreate(args, 'root-front')).toBeNull();
+    expect(args.fields).toEqual({ noteKind: 'decision', sourceSession: 'root-front', teamRootSession: 'root-front', agentRole: 'coordinator', front: 'team-front_1' });
+  });
+
+  it('a root with a front stored without the host marker (pre-S3) writes a note with no front', async () => {
+    const args: any = note({ fields: { noteKind: 'decision' } });
+    expect(await guardTeamNoteCreate(args, 'root-pre-s3')).toBeNull();
+    expect(args.fields).toEqual({ noteKind: 'decision', sourceSession: 'root-pre-s3', teamRootSession: 'root-pre-s3', agentRole: 'coordinator' });
+  });
+
+  it('a root with no front writes a note with no front, whatever the agent sent', async () => {
+    for (const front of ['team-front_forged', { itemId: 'team-front_forged' }]) {
+      const args: any = note({ fields: { noteKind: 'decision', front } });
+      expect(await guardTeamNoteCreate(args, 'root')).toBeNull();
+      expect(args.fields, JSON.stringify(front)).toEqual({ noteKind: 'decision', sourceSession: 'root', teamRootSession: 'root', agentRole: 'coordinator' });
+    }
+  });
+
+  it('accepts handoff as a kind, with the larger body, and keeps 600 for the others', async () => {
+    const long = 'x'.repeat(2500);
+    expect(await guardTeamNoteCreate(note({ description: long, fields: { noteKind: 'handoff', nextAction: 'n', result: 'completed' } }), 'root')).toBeNull();
+    expect((await guardTeamNoteCreate(note({ description: 'x'.repeat(2501), fields: { noteKind: 'handoff' } }), 'root'))?.content[0].text).toMatch(/limit is 2500/);
+    expect((await guardTeamNoteCreate(note({ description: 'x'.repeat(601), fields: { noteKind: 'pending' } }), 'root'))?.content[0].text).toMatch(/limit is 600/);
+    // The same body in the fields bag.
+    expect(await guardTeamNoteCreate(note({ description: undefined, fields: { noteKind: 'handoff', description: long } }), 'root')).toBeNull();
+  });
+
+  it('an update is held to the cap of the kind it names, else of the note\'s own kind, else the strict one', async () => {
+    const long = 'x'.repeat(2000);
+    expect((await guardTeamNoteUpdate({ id: 'nte_1', description: long }, 'team-note', 'root'))?.content[0].text).toMatch(/limit is 600/);
+    expect(await guardTeamNoteUpdate({ id: 'nte_1', description: long }, 'team-note', 'root', 'handoff')).toBeNull();
+    expect((await guardTeamNoteUpdate({ id: 'nte_1', description: long }, 'team-note', 'root', 'decision'))?.content[0].text).toMatch(/limit is 600/);
+    expect((await guardTeamNoteUpdate({ id: 'nte_1', description: 'x'.repeat(2501) }, 'team-note', 'root', 'handoff'))?.content[0].text).toMatch(/limit is 2500/);
+    // The kind the update names wins over the stored one.
+    expect((await guardTeamNoteUpdate({ id: 'nte_1', description: long, fields: { noteKind: 'risk' } }, 'team-note', 'root', 'handoff'))?.content[0].text).toMatch(/limit is 600/);
+    expect(await guardTeamNoteUpdate({ id: 'nte_1', description: long, fields: { noteKind: 'handoff' } }, 'team-note', 'root', 'decision')).toBeNull();
+  });
+
+  it('an update cannot set or change the front: it is stripped like the other provenance', async () => {
+    const args: any = { id: 'nte_1', fields: { front: 'team-front_9', nextAction: 'new step' } };
+    expect(await guardTeamNoteUpdate(args, 'team-note', 'root-front')).toBeNull();
+    expect(args.fields).toEqual({ nextAction: 'new step' });
+  });
+});
+
 describe('tracker_update of a team-note', () => {
   it('leaves non-note updates untouched', async () => {
     const args: any = { id: 'task_1', fields: { sourceSession: 'kept' } };

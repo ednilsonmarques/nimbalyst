@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 import {
+  SYNCED_METADATA_KEYS,
+  buildSyncedMetadataProjectionSql,
   createPGLiteSessionStore,
   getAllSessionsForSync,
 } from '../PGLiteSessionStore';
@@ -227,6 +229,62 @@ describe('PGLiteSessionStore personal sync snapshot', () => {
       expect(session.metadata).toEqual(present);
       expect('draftInput' in (session.metadata ?? {})).toBe(false);
     }
+  });
+
+  // F1 S1 (G-sync condition 6): the team lifecycle's root keys are local to the
+  // machine that runs the mission. Personal sync projects a whitelist, so a key
+  // that is not named here never reaches the phone or another device; adding
+  // one is a decision, and this closed list makes it a visible one.
+  describe('the team lifecycle root keys stay local', () => {
+    const LIFECYCLE_KEYS = ['teamFront', 'teamGoal', 'teamMissionStatus', 'teamMissionContext', 'teamMissionVersion'];
+
+    it('are not in SYNCED_METADATA_KEYS, and the list is exactly the seven keys the wire consumes', () => {
+      for (const key of LIFECYCLE_KEYS) expect(SYNCED_METADATA_KEYS as readonly string[], key).not.toContain(key);
+      expect([...SYNCED_METADATA_KEYS]).toEqual([
+        'tutorial',
+        'hostDeviceId',
+        'tokenUsage',
+        'phase',
+        'tags',
+        'draftInput',
+        'draftUpdatedAt',
+      ]);
+    });
+
+    it('are not asked of the database by the SQL projection', () => {
+      const sql = buildSyncedMetadataProjectionSql('s.metadata');
+      for (const key of LIFECYCLE_KEYS) expect(sql, key).not.toContain(key);
+    });
+
+    it('never cross the sync boundary even when a row carries them, on either row shape', async () => {
+      const blob = {
+        phase: 'implementing',
+        tags: ['sync'],
+        teamMode: true,
+        teamFront: 'team-front_1',
+        teamGoal: 'Ship F1',
+        teamMissionStatus: 'active',
+        teamMissionContext: 'Bloco de contexto da missão',
+        teamMissionVersion: 1,
+      };
+      const db = {
+        query: vi.fn(async () => ({
+          rows: [
+            { id: 'sqlite-row', workspace_id: '/project', provider: 'claude-code', title: 'A', created_at: new Date(0), updated_at: new Date(0), metadata: JSON.stringify(blob) },
+            { id: 'pglite-row', workspace_id: '/project', provider: 'claude-code', title: 'B', created_at: new Date(0), updated_at: new Date(0), metadata: { ...blob } },
+          ],
+        })),
+      };
+      createPGLiteSessionStore(db as any);
+
+      const sessions = await getAllSessionsForSync();
+
+      expect(sessions).toHaveLength(2);
+      for (const session of sessions) {
+        expect(session.metadata).toEqual({ phase: 'implementing', tags: ['sync'] });
+        for (const key of LIFECYCLE_KEYS) expect(key in (session.metadata ?? {}), key).toBe(false);
+      }
+    });
   });
 });
 

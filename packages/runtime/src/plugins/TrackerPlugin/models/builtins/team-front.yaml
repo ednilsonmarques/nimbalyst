@@ -1,0 +1,81 @@
+type: team-front
+displayName: Team Front
+displayNamePlural: Team Fronts
+icon: flag
+color: "#2563eb"
+
+# A permanent area of work of the project ("Team Mode", "Portal", a slice): the
+# thing a series of Team mode missions advances. Created only by the user (in the
+# Tracker UI, or with the offline nim CLI), never by an agent. The description is the state of
+# the front (goal, situation, pointers, and which project document has
+# precedence); the coordinator may keep it current and may change nothing else.
+# `currentMission` is the one active mission of the front, written only by
+# Nimbalyst. Builtin only: no workspace file ever overrides this schema.
+modes:
+  inline: false
+  fullDocument: false
+
+sharing: team
+draftByDefault: false
+
+idPrefix: tfr
+idFormat: ulid
+
+fields:
+  - name: title
+    type: string
+    required: true
+    displayInline: true
+
+  - name: status
+    type: select
+    default: active
+    options:
+      - value: active
+        label: Active
+        icon: radio_button_checked
+        category: started
+      - value: paused
+        label: Paused
+        icon: pause_circle
+        category: unstarted
+      - value: closed
+        label: Closed
+        icon: check_circle
+        category: done
+
+  # The state of the front: goal, situation, pointers, and the document that has precedence.
+  - name: description
+    type: text
+    maxLength: 2000
+    displayInline: false
+
+  # Projection of the host: the id of the one active mission (root session), empty when none.
+  - name: currentMission
+    type: string
+    displayInline: true
+    readOnly: true
+
+  - name: created
+    type: datetime
+    displayInline: false
+    readOnly: true
+
+  - name: updated
+    type: datetime
+    displayInline: false
+    readOnly: true
+
+statusBarLayout:
+  - row:
+    - field: status
+      width: 160
+    - field: currentMission
+      width: 240
+
+inlineTemplate: "{icon} {title} {status}"
+
+roles:
+  title: title
+  workflowStatus: status
+  tags: tags

@@ -5,8 +5,9 @@ icon: sticky_note_2
 color: "#0d9488"
 
 # Distilled, durable project memory written by a Team mode coordinator: a
-# decision, discovery, risk, pending item, test result or context. Never a
-# transcript; the session it came from keeps the full history.
+# decision, discovery, risk, pending item, test result, context or the handoff
+# that closes a mission. Never a transcript; the session it came from keeps the
+# full history.
 modes:
   inline: false
   fullDocument: false
@@ -46,6 +47,9 @@ fields:
       - value: context
         label: Context
         icon: info
+      - value: handoff
+        label: Handoff
+        icon: assignment_turned_in
 
   - name: status
     type: select
@@ -63,6 +67,49 @@ fields:
         label: Obsolete
         icon: history
         category: cancelled
+
+  # The concrete next step. Required for a pending item and a handoff (the shared
+  # rule enforces it on create and when the kind or the value changes).
+  - name: nextAction
+    type: text
+    displayInline: false
+
+  # Handoff only: how the mission ended, the commits it left, the pendings it
+  # passes on and the notes it relates to. The shared rule refuses these on every
+  # other kind. None declares an inverse field: a handoff never writes onto the
+  # notes it points to.
+  - name: result
+    type: select
+    displayInline: false
+    options:
+      - value: completed
+        label: Completed
+        icon: check_circle
+      - value: partial
+        label: Partial
+        icon: timelapse
+      - value: abandoned
+        label: Abandoned
+        icon: cancel
+
+  - name: commits
+    type: array
+    itemType: string
+    displayInline: false
+
+  - name: pendings
+    type: relationship
+    relationshipTypeKey: hands-off
+    targetTrackerTypes:
+      - team-note
+    multiValue: true
+
+  - name: relatedNotes
+    type: relationship
+    relationshipTypeKey: related
+    targetTrackerTypes:
+      - team-note
+    multiValue: true
 
   - name: files
     type: array
@@ -99,6 +146,16 @@ fields:
 
   - name: worktree
     type: string
+    displayInline: false
+    readOnly: true
+
+  # The front (a team-front) of the mission that wrote the note, copied by the
+  # host from the root session. No inverse: nothing is ever written onto the front.
+  - name: front
+    type: relationship
+    relationshipTypeKey: front
+    targetTrackerTypes:
+      - team-front
     displayInline: false
     readOnly: true
 

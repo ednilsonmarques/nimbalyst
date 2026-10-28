@@ -3530,6 +3530,7 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
       gitContext: this.frozenGitContext,
       sessionDirective: this.frozenSessionDirective,
       teamMode: this.frozenTeamContext.teamMode,
+      teamMission: this.frozenTeamContext.teamMission,
       teamChildRole: this.frozenTeamContext.teamChild?.role,
       teamChildMission: this.frozenTeamContext.teamChild?.mission,
       isVoiceMode,

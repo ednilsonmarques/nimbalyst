@@ -38,6 +38,7 @@ import {
   getRoleField,
   getFieldByRole,
 } from '@nimbalyst/runtime/plugins/TrackerPlugin/models';
+import { protectedTrackerSchemaChangeError } from '@nimbalyst/tracker-core';
 import {
   materializeYamlTrackerTypeDefs,
   listRetractedTeamOwnedTrackerTypes,
@@ -912,6 +913,19 @@ function schemaResetTarget(type: string, previous: TrackerDataModel): TrackerDat
 }
 
 /**
+ * NIB.130: the schema of a protected type (team-note, tool-manifest,
+ * team-front) is the one Nimbalyst ships. Every service writer that creates or
+ * rewrites a type's schema file (the patch upsert, the full upsert behind
+ * "Customize") calls this first, before it touches disk, the registry or the
+ * mirror. Resetting an override is not a write of a schema and stays open.
+ * Not applied to the on-disk loader or to schema received through sync.
+ */
+function assertTypeSchemaNotProtected(type: unknown): void {
+  const refusal = protectedTrackerSchemaChangeError(type);
+  if (refusal) throw new Error(refusal);
+}
+
+/**
  * Price a proposed schema change without applying it, so a confirm surface can
  * show the blast radius before the user commits. Read-only.
  */
@@ -951,6 +965,7 @@ export async function upsertWorkspaceTrackerSchema(
   // which both validates it and gives the gate a full model to compare.
   const model = resolveTrackerTypeDeclaration(parseTrackerTypeYAML(yamlContent));
 
+  assertTypeSchemaNotProtected(model.type);
   if (globalRegistry.isBuiltin(model.type) && !options?.allowBuiltinOverride) {
     throw new Error(`Cannot redefine built-in tracker type '${model.type}'`);
   }
@@ -1007,6 +1022,7 @@ export async function upsertWorkspaceTrackerSchemaPatch(
 ): Promise<{ model: TrackerDataModel; filePath: string; backupPath?: string }> {
   if (!workspacePath) throw new Error('workspacePath is required');
   if (!patch?.type) throw new Error('patch.type is required');
+  assertTypeSchemaNotProtected(patch.type);
 
   const seed = globalRegistry.getBuiltinModel(patch.type) ?? globalRegistry.get(patch.type);
   if (!seed) throw new Error(`Cannot patch unknown tracker type '${patch.type}'`);

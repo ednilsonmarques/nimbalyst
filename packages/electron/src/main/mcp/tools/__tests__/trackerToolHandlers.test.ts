@@ -3321,6 +3321,569 @@ describe('tracker_update of a superseding tool-manifest by its coordinator (NIB.
   });
 });
 
+describe('an agent and a team-front (F1 S1): fronts are the user\'s, the coordinator keeps only the description current', () => {
+  const sessions: Record<string, unknown> = { root: { agentRole: 'standard', metadata: { teamMode: true } } };
+  const frontRow = () => makeRow({
+    id: 'team-front_1',
+    issue_key: null,
+    issue_number: null,
+    type: 'team-front',
+    type_tags: ['team-front'],
+    workspace: '/tmp/ws',
+    source: 'native',
+    document_path: '',
+    data: JSON.stringify({
+      title: 'Team Mode',
+      status: 'active',
+      priority: 'medium',
+      description: 'Estado inicial. Autoridade: ESTADO.md.',
+      currentMission: 'root-1',
+      createdByAgent: false,
+    }),
+  });
+  const updateCall = () => mockQuery.mock.calls.find((c) => String(c[0]).includes('UPDATE tracker_items SET data = $1'));
+  const insertCall = () => mockQuery.mock.calls.find((c) => /INSERT INTO tracker_items/.test(String(c[0])));
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDocumentServices.clear();
+    mockGlobalRegistry.validate.mockReturnValue({ valid: true, errors: [] });
+    vi.mocked(getEffectiveTrackerSharingPolicy).mockReturnValue({ sharing: 'personal', draftByDefault: false });
+    vi.mocked(shouldSyncTrackerItem).mockReturnValue(false);
+    vi.mocked(isTrackerSyncActive).mockReturnValue(false);
+    (mockGlobalRegistry.get as any).mockReturnValue({
+      sharing: 'team',
+      draftByDefault: false,
+      fields: [
+        { name: 'title', type: 'string' },
+        { name: 'status', type: 'select' },
+        { name: 'description', type: 'text' },
+        { name: 'currentMission', type: 'string', readOnly: true },
+      ],
+    });
+    const row = frontRow();
+    mockQuery.mockImplementation(async (sql: unknown) => {
+      const text = String(sql);
+      if (/^\s*(UPDATE|DELETE|INSERT)/i.test(text)) return { rows: [] };
+      return { rows: [row] };
+    });
+    AISessionsRepository.setStore({ get: async (id: string) => sessions[id] ?? null } as never);
+  });
+  afterEach(() => {
+    AISessionsRepository.clearStore();
+    mockQuery.mockReset();
+  });
+
+  it('the coordinator updates the description, and the rest of the front travels untouched', async () => {
+    const result = await handleTrackerUpdate({ id: 'team-front_1', description: 'Estado novo. Autoridade: ESTADO.md.' }, '/tmp/ws', 'root');
+    expect(result.isError, result.content[0]?.text).toBe(false);
+    const written = JSON.parse(updateCall()![1]![0] as string);
+    expect(written.description).toBe('Estado novo. Autoridade: ESTADO.md.');
+    expect(written.title).toBe('Team Mode');
+    expect(written.status).toBe('active');
+    expect(written.currentMission ?? written.customFields?.currentMission).toBe('root-1');
+  });
+
+  it('the description in the fields bag is the same update', async () => {
+    const result = await handleTrackerUpdate({ id: 'team-front_1', fields: { description: 'Estado via fields.' } }, '/tmp/ws', 'root');
+    expect(result.isError, result.content[0]?.text).toBe(false);
+    expect(JSON.parse(updateCall()![1]![0] as string).description).toBe('Estado via fields.');
+  });
+
+  it('refuses everything else an agent may ask: title, status, currentMission, other fields, archiving, unsetting', async () => {
+    // A known target type, so the primaryType case reaches the rule instead of the registry check.
+    (mockGlobalRegistry as any).has = vi.fn(() => true);
+    // Each refusal names the refused key(s), not a generic message.
+    for (const [args, message] of [
+      [{ id: 'team-front_1', title: 'Renamed' }, /only the description of a team-front; refused: title\. /],
+      [{ id: 'team-front_1', status: 'closed' }, /refused: status\. /],
+      [{ id: 'team-front_1', fields: { status: 'paused' } }, /refused: fields\.status\. /],
+      [{ id: 'team-front_1', fields: { currentMission: 'root-9' } }, /refused: fields\.currentMission\. /],
+      [{ id: 'team-front_1', unsetFields: ['currentMission'] }, /refused: unsetFields, currentMission\. /],
+      [{ id: 'team-front_1', priority: 'high' }, /refused: priority\. /],
+      [{ id: 'team-front_1', archived: true }, /refused: archived\. /],
+      [{ id: 'team-front_1', linkSession: 'some-session' }, /refused: linkSession\. /],
+      [{ id: 'team-front_1', description: 'ok', title: 'sneaky' }, /refused: title\. /],
+      [{ id: 'team-front_1', primaryType: 'task' }, /cannot change type/],
+    ] as Array<[Record<string, unknown>, RegExp]>) {
+      const result = await handleTrackerUpdate(args, '/tmp/ws', 'root');
+      expect(result.isError, JSON.stringify(args)).toBe(true);
+      expect(result.content[0]?.text, JSON.stringify(args)).toMatch(message);
+    }
+    expect(updateCall()).toBeUndefined();
+  });
+
+  describe('the state of a front is a description or a body', () => {
+    const refuseText = /A team-front needs its state: write a description or a body\./;
+    const withBody = (content: unknown) => {
+      const row = frontRow();
+      (row as any).content = content;
+      mockQuery.mockImplementation(async (sql: unknown) => (/^\s*(UPDATE|DELETE|INSERT)/i.test(String(sql)) ? { rows: [] } : { rows: [row] }));
+    };
+
+    it('an agent cannot clear the description of a front with no body', async () => {
+      for (const args of [
+        { id: 'team-front_1', description: '' },
+        { id: 'team-front_1', description: '   ' },
+        { id: 'team-front_1', fields: { description: '' } },
+      ] as Array<Record<string, unknown>>) {
+        const result = await handleTrackerUpdate(args, '/tmp/ws', 'root');
+        expect(result.isError, JSON.stringify(args)).toBe(true);
+        expect(result.content[0]?.text, JSON.stringify(args)).toMatch(refuseText);
+      }
+      expect(updateCall()).toBeUndefined();
+    });
+
+    it('the agent funnel writes a new description as the body too (the fields bag is lifted to it), so clearing it leaves no state even over a stored body', async () => {
+      withBody(JSON.stringify('Estado no corpo.'));
+      for (const args of [
+        { id: 'team-front_1', description: '' },
+        { id: 'team-front_1', fields: { description: '' } },
+      ] as Array<Record<string, unknown>>) {
+        const result = await handleTrackerUpdate(args, '/tmp/ws', 'root');
+        expect(result.isError, JSON.stringify(args)).toBe(true);
+        expect(result.content[0]?.text, JSON.stringify(args)).toMatch(refuseText);
+      }
+    });
+
+    it('a front whose state is only its body keeps it: an empty or blank description is refused and nothing is persisted', async () => {
+      // description '' + body: the funnel would overwrite the body with the new description.
+      const row = frontRow();
+      (row as any).data = JSON.stringify({ ...JSON.parse((row as any).data), description: '' });
+      (row as any).content = JSON.stringify('Estado da frente');
+      mockQuery.mockImplementation(async (sql: unknown) => (/^\s*(UPDATE|DELETE|INSERT)/i.test(String(sql)) ? { rows: [] } : { rows: [row] }));
+      for (const args of [
+        { id: 'team-front_1', description: '' },
+        { id: 'team-front_1', description: '   ' },
+        { id: 'team-front_1', fields: { description: '' } },
+        { id: 'team-front_1', fields: { description: '  \n ' } },
+      ] as Array<Record<string, unknown>>) {
+        const result = await handleTrackerUpdate(args, '/tmp/ws', 'root');
+        expect(result.isError, JSON.stringify(args)).toBe(true);
+        expect(result.content[0]?.text, JSON.stringify(args)).toMatch(refuseText);
+      }
+      // Nothing reached the row: no data write, no body write.
+      expect(mockQuery.mock.calls.filter((call) => /^\s*(UPDATE|DELETE|INSERT)/i.test(String(call[0])))).toEqual([]);
+      expect((row as any).content).toBe(JSON.stringify('Estado da frente'));
+      // A real description replaces the body and is accepted.
+      const ok = await handleTrackerUpdate({ id: 'team-front_1', description: 'Estado novo.' }, '/tmp/ws', 'root');
+      expect(ok.isError, ok.content[0]?.text).toBe(false);
+    });
+
+    it('a new non-empty description is fine whatever the body', async () => {
+      const result = await handleTrackerUpdate({ id: 'team-front_1', description: 'Estado novo.' }, '/tmp/ws', 'root');
+      expect(result.isError, result.content[0]?.text).toBe(false);
+    });
+  });
+
+  it('refuses a description over 2,000 characters', async () => {
+    const result = await handleTrackerUpdate({ id: 'team-front_1', description: 'x'.repeat(2001) }, '/tmp/ws', 'root');
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toMatch(/limit is 2000/);
+    expect(updateCall()).toBeUndefined();
+  });
+
+  it('tracker_create of a team-front is refused: the user creates fronts', async () => {
+    for (const sessionId of ['root', undefined]) {
+      const result = await handleTrackerCreate({ type: 'team-front', title: 'Portal' }, '/tmp/ws', sessionId);
+      expect(result.isError, String(sessionId)).toBe(true);
+      expect(result.content[0]?.text).toMatch(/created by the user/);
+    }
+    expect(insertCall()).toBeUndefined();
+  });
+
+  it('tracker_import cannot make a front: the import service creates through this same handler, with an upstream-shaped payload', async () => {
+    // What TrackerImportService.runImport passes for `primaryType: 'team-front'`.
+    const result = await handleTrackerCreate(
+      {
+        id: 'imported_1',
+        type: 'team-front',
+        title: 'From upstream',
+        description: 'upstream body',
+        status: 'active',
+        priority: 'medium',
+        labels: [],
+        origin: { kind: 'external', external: { providerId: 'p', externalId: '1', urn: 'p:1' } },
+        createdByAgent: false,
+      },
+      '/tmp/ws',
+    );
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toMatch(/created by the user in the Tracker UI/);
+    expect(insertCall()).toBeUndefined();
+  });
+
+  it('an agent cannot attach an upstream origin to a front (what would make tracker_resnapshot rewrite its title and status)', async () => {
+    const result = await handleTrackerUpdate(
+      { id: 'team-front_1', origin: { kind: 'external', external: { providerId: 'p', externalId: '1', urn: 'p:1' } } },
+      '/tmp/ws',
+      'root',
+    );
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toMatch(/refused: origin\. /);
+    expect(updateCall()).toBeUndefined();
+  });
+
+  it('a team-front cannot be made out of another item by tracker_update', async () => {
+    const taskRow = makeRow({ id: 'task_1', type: 'task', type_tags: ['task'], workspace: '/tmp/ws', source: 'native', document_path: '' });
+    mockQuery.mockImplementation(async (sql: unknown) => (/^\s*(UPDATE|DELETE|INSERT)/i.test(String(sql)) ? { rows: [] } : { rows: [taskRow] }));
+    (mockGlobalRegistry as any).has = vi.fn(() => true);
+    const result = await handleTrackerUpdate({ id: 'task_1', primaryType: 'team-front' }, '/tmp/ws', 'root');
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toMatch(/cannot be turned into a team-front/);
+    expect(updateCall()).toBeUndefined();
+  });
+});
+
+describe('team-note through the MCP funnel (F1 S2): front, nextAction and handoff', () => {
+  const sessions: Record<string, unknown> = {
+    // A mission root as the host creates it: since S4 the front is only trusted with the host marker.
+    'root-front': { agentRole: 'standard', metadata: { teamMode: true, teamMissionVersion: 1, teamFront: 'team-front_1' } },
+    'root-plain': { agentRole: 'standard', metadata: { teamMode: true } },
+  };
+  const NOTE_MODEL = {
+    sharing: 'team',
+    draftByDefault: false,
+    fields: [
+      { name: 'title', type: 'string' },
+      { name: 'status', type: 'select', default: 'active' },
+      { name: 'description', type: 'text' },
+      { name: 'noteKind', type: 'select' },
+      { name: 'nextAction', type: 'text' },
+      { name: 'result', type: 'select' },
+      { name: 'commits', type: 'array', itemType: 'string' },
+      { name: 'front', type: 'relationship', relationshipTypeKey: 'front', targetTrackerTypes: ['team-front'], readOnly: true },
+      { name: 'supersedes', type: 'relationship', relationshipTypeKey: 'supersedes', targetTrackerTypes: ['team-note'], multiValue: true },
+      { name: 'pendings', type: 'relationship', relationshipTypeKey: 'hands-off', targetTrackerTypes: ['team-note'], multiValue: true },
+      { name: 'relatedNotes', type: 'relationship', relationshipTypeKey: 'related', targetTrackerTypes: ['team-note'], multiValue: true },
+    ],
+  };
+  const stored = {
+    title: 'Port the rules',
+    status: 'active',
+    priority: 'medium',
+    noteKind: 'decision',
+    description: 'Decided with the user.',
+    sourceSession: 'root-front',
+    teamRootSession: 'root-front',
+    agentRole: 'coordinator',
+    createdByAgent: true,
+  };
+  const noteRow = (data: Record<string, unknown>) => makeRow({
+    id: 'team-note_1', issue_key: null, issue_number: null, type: 'team-note', type_tags: ['team-note'],
+    workspace: '/tmp/ws', source: 'native', document_path: '', data: JSON.stringify({ ...stored, ...data }),
+  });
+  const updateCall = () => mockQuery.mock.calls.find((c) => String(c[0]).includes('UPDATE tracker_items SET data = $1'));
+  const writtenData = () => JSON.parse(updateCall()![1]![0] as string);
+  const insertCall = () => mockQuery.mock.calls.find((c) => /INSERT INTO tracker_items/.test(String(c[0])));
+  const insertedData = () => JSON.parse(String(insertCall()![1]![3]));
+  const useRow = (row: Record<string, any>) => mockQuery.mockImplementation(async (sql: unknown) => (/^\s*(UPDATE|DELETE|INSERT)/i.test(String(sql)) ? { rows: [] } : { rows: [row] }));
+  const create = (fields: Record<string, unknown>, extra: Record<string, unknown> = {}, session = 'root-front') =>
+    handleTrackerCreate({ type: 'team-note', title: 'A note', description: 'Short.', fields, ...extra }, '/tmp/ws', session);
+  const update = (args: Record<string, unknown>, session = 'root-front') => handleTrackerUpdate({ id: 'team-note_1', ...args }, '/tmp/ws', session);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDocumentServices.clear();
+    mockGlobalRegistry.validate.mockReturnValue({ valid: true, errors: [] });
+    vi.mocked(getEffectiveTrackerSharingPolicy).mockReturnValue({ sharing: 'personal', draftByDefault: false });
+    vi.mocked(shouldSyncTrackerItem).mockReturnValue(false);
+    vi.mocked(isTrackerSyncActive).mockReturnValue(false);
+    (mockGlobalRegistry.get as any).mockReturnValue(NOTE_MODEL);
+    useRow(noteRow({}));
+    AISessionsRepository.setStore({ get: async (id: string) => sessions[id] ?? null } as never);
+  });
+  afterEach(() => {
+    AISessionsRepository.clearStore();
+    mockQuery.mockReset();
+  });
+
+  describe('create', () => {
+    it('the host fills the front from the root, as a relationship to the team-front; the agent\'s own is replaced', async () => {
+      const result = await create({ noteKind: 'decision', front: 'team-front_forged' });
+      expect(result.isError, result.content[0]?.text).toBe(false);
+      const data = insertedData();
+      expect(data.front).toMatchObject({ itemId: 'team-front_1' });
+      expect(data.sourceSession).toBe('root-front');
+      expect(data.teamRootSession).toBe('root-front');
+    });
+
+    it('a root with no front writes a note with no front at all', async () => {
+      const result = await create({ noteKind: 'decision', front: 'team-front_forged' }, {}, 'root-plain');
+      expect(result.isError, result.content[0]?.text).toBe(false);
+      expect(insertedData().front ?? null).toBeNull();
+    });
+
+    it('a pending note needs a next action; with one it is stored', async () => {
+      const refused = await create({ noteKind: 'pending' });
+      expect(refused.isError).toBe(true);
+      expect(refused.content[0]?.text).toMatch(/nextAction/);
+      expect(insertCall()).toBeUndefined();
+      const ok = await create({ noteKind: 'pending', nextAction: 'Ask PCP which formula is official.' });
+      expect(ok.isError, ok.content[0]?.text).toBe(false);
+      expect(insertedData().nextAction).toBe('Ask PCP which formula is official.');
+    });
+
+    it('a handoff with its result, commits and relations is stored, with relationships canonicalized, and takes 2,000 characters', async () => {
+      const result = await create(
+        { noteKind: 'handoff', nextAction: 'Run C0 on the 26-0146 entries.', result: 'partial', commits: ['abc1234 add rules'], pendings: ['nte_1'], relatedNotes: ['nte_2'] },
+        { description: 'h'.repeat(2000) },
+      );
+      expect(result.isError, result.content[0]?.text).toBe(false);
+      const data = insertedData();
+      expect(data).toMatchObject({ noteKind: 'handoff', result: 'partial', commits: ['abc1234 add rules'] });
+      expect(data.pendings).toEqual([expect.objectContaining({ itemId: 'nte_1' })]);
+      expect(data.relatedNotes).toEqual([expect.objectContaining({ itemId: 'nte_2' })]);
+      expect(data.front).toMatchObject({ itemId: 'team-front_1' });
+    });
+
+    it('refuses a handoff without a result or a next action, a handoff body over 2,500, and a body over 600 on any other kind', async () => {
+      expect((await create({ noteKind: 'handoff', nextAction: 'n' })).content[0]?.text).toMatch(/result/);
+      expect((await create({ noteKind: 'handoff', result: 'completed' })).content[0]?.text).toMatch(/nextAction/);
+      expect((await create({ noteKind: 'handoff', nextAction: 'n', result: 'completed' }, { description: 'h'.repeat(2501) })).content[0]?.text).toMatch(/limit is 2500/);
+      expect((await create({ noteKind: 'decision' }, { description: 'h'.repeat(601) })).content[0]?.text).toMatch(/limit is 600/);
+      expect(insertCall()).toBeUndefined();
+    });
+
+    it('refuses the handoff-only fields on every other kind', async () => {
+      for (const extra of [{ result: 'completed' }, { commits: ['abc1234'] }, { pendings: ['nte_1'] }, { relatedNotes: ['nte_1'] }]) {
+        const result = await create({ noteKind: 'decision', ...extra });
+        expect(result.isError, JSON.stringify(extra)).toBe(true);
+        expect(result.content[0]?.text, JSON.stringify(extra)).toMatch(/only for notes of kind handoff/);
+      }
+      expect(insertCall()).toBeUndefined();
+    });
+  });
+
+  describe('update', () => {
+    it('a legacy pending note (no nextAction, front stored as a plain id) still resolves, goes obsolete, takes a new title and a supersedes link', async () => {
+      useRow(noteRow({ noteKind: 'pending', front: 'team-front_1' }));
+      for (const args of [
+        { status: 'resolved' },
+        { status: 'obsolete' },
+        { title: 'Renamed' },
+        { fields: { supersedes: ['team-note_0'] } },
+        { description: 'A shorter text.' },
+      ] as Array<Record<string, unknown>>) {
+        mockQuery.mockClear();
+        const result = await update(args);
+        expect(result.isError, `${JSON.stringify(args)}: ${result.content[0]?.text}`).toBe(false);
+        // The write kept the same front (the funnel canonicalized the stored id; same target, not a change).
+        const written = writtenData();
+        expect(written.front?.itemId ?? written.customFields?.front?.itemId ?? written.front, JSON.stringify(args)).toBe('team-front_1');
+      }
+    });
+
+    it('an update cannot set, change or clear the front: the agent\'s value is dropped and the stored front stays', async () => {
+      useRow(noteRow({ front: { itemId: 'team-front_1' } }));
+      for (const fields of [{ front: 'team-front_9' }, { front: null }, { front: [] }]) {
+        mockQuery.mockClear();
+        const result = await update({ status: 'resolved', fields });
+        expect(result.isError, JSON.stringify(fields)).toBe(false);
+        const written = writtenData();
+        expect(written.front?.itemId ?? written.customFields?.front?.itemId, JSON.stringify(fields)).toBe('team-front_1');
+      }
+      mockQuery.mockClear();
+      const unset = await update({ unsetFields: ['front'] });
+      expect(unset.isError).toBe(true);
+      expect(updateCall()).toBeUndefined();
+    });
+
+    it('clearing the next action of a pending note is refused; changing it is fine', async () => {
+      useRow(noteRow({ noteKind: 'pending', nextAction: 'Ask PCP.' }));
+      for (const fields of [{ nextAction: '' }, { nextAction: '   ' }]) {
+        const refused = await update({ fields });
+        expect(refused.isError, JSON.stringify(fields)).toBe(true);
+        expect(refused.content[0]?.text).toMatch(/nextAction/);
+      }
+      expect(updateCall()).toBeUndefined();
+      const ok = await update({ fields: { nextAction: 'Ask PCP again.' } });
+      expect(ok.isError, ok.content[0]?.text).toBe(false);
+    });
+
+    it('changing the kind to pending or handoff needs the fields that kind needs', async () => {
+      expect((await update({ fields: { noteKind: 'pending' } })).content[0]?.text).toMatch(/nextAction/);
+      expect((await update({ fields: { noteKind: 'handoff', nextAction: 'n' } })).content[0]?.text).toMatch(/result/);
+      expect(updateCall()).toBeUndefined();
+      const ok = await update({ fields: { noteKind: 'handoff', nextAction: 'n', result: 'completed' } });
+      expect(ok.isError, ok.content[0]?.text).toBe(false);
+    });
+
+    it('the body cap follows the note\'s kind: 2,000 characters on a handoff, not on a decision', async () => {
+      useRow(noteRow({ noteKind: 'handoff', nextAction: 'n', result: 'completed' }));
+      const ok = await update({ description: 'h'.repeat(2000) });
+      expect(ok.isError, ok.content[0]?.text).toBe(false);
+      expect((await update({ description: 'h'.repeat(2501) })).content[0]?.text).toMatch(/limit is 2500/);
+      useRow(noteRow({ noteKind: 'decision' }));
+      mockQuery.mockClear();
+      expect((await update({ description: 'h'.repeat(2000) })).content[0]?.text).toMatch(/limit is 600/);
+      expect(updateCall()).toBeUndefined();
+    });
+
+    it('an item resolved by the document service (no noteKind in its customFields) still gets the cap of its stored kind (F1 S2b)', async () => {
+      const resolved = { id: 'team-note_1', type: 'team-note', title: 'Port the rules', status: 'active', workspace: '/tmp/ws', source: 'native', customFields: {} };
+      try {
+        mockDocumentServices.set('/tmp/ws', mockDocService);
+        mockDocService.getTrackerItemById.mockResolvedValue(resolved);
+        useRow(noteRow({ noteKind: 'handoff', nextAction: 'n', result: 'completed' }));
+        const ok = await update({ description: 'h'.repeat(2000) });
+        expect(ok.isError, ok.content[0]?.text).toBe(false);
+        expect((await update({ description: 'h'.repeat(2501) })).content[0]?.text).toMatch(/limit is 2500/);
+        // A note of any other kind is still held to 600.
+        useRow(noteRow({ noteKind: 'decision' }));
+        mockQuery.mockClear();
+        expect((await update({ description: 'h'.repeat(2000) })).content[0]?.text).toMatch(/limit is 600/);
+        expect(updateCall()).toBeUndefined();
+      } finally {
+        mockDocService.getTrackerItemById.mockResolvedValue(null);
+        mockDocumentServices.clear();
+      }
+    });
+
+    it('the refusal of a missing next action tells the agent where to put it', async () => {
+      const created = await create({ noteKind: 'pending' });
+      expect(created.content[0]?.text).toMatch(/fields\.nextAction/);
+      useRow(noteRow({ noteKind: 'pending', nextAction: 'Ask PCP.' }));
+      const cleared = await update({ fields: { nextAction: '' } });
+      expect(cleared.content[0]?.text).toMatch(/fields\.nextAction/);
+    });
+
+    it('a handoff keeps its result', async () => {
+      useRow(noteRow({ noteKind: 'handoff', nextAction: 'n', result: 'completed' }));
+      expect((await update({ fields: { result: '' } })).isError).toBe(true);
+      expect((await update({ fields: { result: 'bogus' } })).isError).toBe(true);
+      expect(updateCall()).toBeUndefined();
+      expect((await update({ fields: { result: 'abandoned' } })).isError).toBe(false);
+    });
+  });
+
+  // The coordinator prompt tells a coordinator which form to write in `pendings`, `relatedNotes` and
+  // `supersedes`. These pin what the real funnel does with each form (P1 follow-up, point 1).
+  describe('relationship targets: what a key becomes', () => {
+    const itemIdsOf = (value: unknown) => (Array.isArray(value) ? value : [value]).map((entry: any) => entry?.itemId ?? entry);
+    const storedRelationship = (data: any, name: string) => data[name] ?? data.customFields?.[name];
+    const lookedUp = (needle: string) => mockQuery.mock.calls.some((call) => /^\s*SELECT/i.test(String(call[0])) && JSON.stringify(call[1] ?? []).includes(needle));
+    const handoff = (links: Record<string, unknown>) => ({ noteKind: 'handoff', nextAction: 'n', result: 'partial', ...links });
+
+    it.each(['NIB.12', 'NIB-12', 'WOK.1'])('create: %s in pendings and relatedNotes is neither resolved nor refused: the string is stored as the target, dangling', async (key) => {
+      const result = await create(handoff({ pendings: [key], relatedNotes: [key] }));
+      expect(result.isError, result.content[0]?.text).toBe(false);
+      const data = insertedData();
+      expect(itemIdsOf(storedRelationship(data, 'pendings'))).toEqual([key]);
+      expect(itemIdsOf(storedRelationship(data, 'relatedNotes'))).toEqual([key]);
+      // Nothing looked the key up to turn it into an item id.
+      expect(lookedUp(key)).toBe(false);
+    });
+
+    it('create: the id that tracker_create returns is what a relationship takes, and it is stored as given', async () => {
+      const first = await create({ noteKind: 'pending', nextAction: 'Ask PCP.' });
+      expect(first.isError, first.content[0]?.text).toBe(false);
+      const id = JSON.parse(String(first.content[0]?.text)).structured.item.id as string;
+      expect(id).toMatch(/^team-note_/);
+      mockQuery.mockClear();
+      useRow(noteRow({}));
+      const result = await create(handoff({ pendings: [id], relatedNotes: [id] }));
+      expect(result.isError, result.content[0]?.text).toBe(false);
+      const data = insertedData();
+      expect(itemIdsOf(storedRelationship(data, 'pendings'))).toEqual([id]);
+      expect(itemIdsOf(storedRelationship(data, 'relatedNotes'))).toEqual([id]);
+    });
+
+    it('update: a key in supersedes is stored as written too (no resolution), an item id likewise', async () => {
+      for (const target of ['NIB-12', 'NIB.12', 'team-note_0']) {
+        mockQuery.mockClear();
+        const result = await update({ fields: { supersedes: [target] } });
+        expect(result.isError, `${target}: ${result.content[0]?.text}`).toBe(false);
+        expect(itemIdsOf(storedRelationship(writtenData(), 'supersedes')), target).toEqual([target]);
+        expect(lookedUp(target), target).toBe(false);
+      }
+    });
+
+    it('update: a key in a handoff\'s relatedNotes and pendings is stored as written', async () => {
+      useRow(noteRow({ noteKind: 'handoff', nextAction: 'n', result: 'completed' }));
+      const result = await update({ fields: { relatedNotes: ['NIB-12'], pendings: ['NIB.13'] } });
+      expect(result.isError, result.content[0]?.text).toBe(false);
+      expect(itemIdsOf(storedRelationship(writtenData(), 'relatedNotes'))).toEqual(['NIB-12']);
+      expect(itemIdsOf(storedRelationship(writtenData(), 'pendings'))).toEqual(['NIB.13']);
+    });
+  });
+
+  // The caps, at their exact edge, against the real validators (P1 follow-up, point 2).
+  describe('body boundaries', () => {
+    const text = (length: number) => ({ description: 'h'.repeat(length) });
+
+    it('create: a pending note with a next action takes 600 characters and refuses 601', async () => {
+      const fields = { noteKind: 'pending', nextAction: 'Ask PCP.' };
+      const ok = await create(fields, text(600));
+      expect(ok.isError, ok.content[0]?.text).toBe(false);
+      expect(insertCall()).toBeDefined();
+      mockQuery.mockClear();
+      const refused = await create(fields, text(601));
+      expect(refused.isError).toBe(true);
+      expect(refused.content[0]?.text).toMatch(/is 601 characters; the limit is 600/);
+      expect(insertCall()).toBeUndefined();
+    });
+
+    it('create: a handoff takes 2,500 characters and refuses 2,501', async () => {
+      const fields = { noteKind: 'handoff', nextAction: 'n', result: 'completed' };
+      const ok = await create(fields, text(2500));
+      expect(ok.isError, ok.content[0]?.text).toBe(false);
+      expect(insertCall()).toBeDefined();
+      mockQuery.mockClear();
+      const refused = await create(fields, text(2501));
+      expect(refused.isError).toBe(true);
+      expect(refused.content[0]?.text).toMatch(/is 2501 characters; the limit is 2500/);
+      expect(insertCall()).toBeUndefined();
+    });
+
+    it('update: the same edges on a stored pending note and a stored handoff', async () => {
+      useRow(noteRow({ noteKind: 'pending', nextAction: 'Ask PCP.' }));
+      expect((await update(text(600))).isError).toBe(false);
+      mockQuery.mockClear();
+      expect((await update(text(601))).content[0]?.text).toMatch(/limit is 600/);
+      expect(updateCall()).toBeUndefined();
+      useRow(noteRow({ noteKind: 'handoff', nextAction: 'n', result: 'completed' }));
+      expect((await update(text(2500))).isError).toBe(false);
+      mockQuery.mockClear();
+      expect((await update(text(2501))).content[0]?.text).toMatch(/limit is 2500/);
+      expect(updateCall()).toBeUndefined();
+    });
+  });
+
+  // What the prompt claims about the fields Nimbalyst fills in (P1 follow-up, point 2). Through the agent's
+  // tracker_create AND tracker_update the value is dropped, never refused: refusal belongs to the manual
+  // writers (Tracker UI, IPC, CLI), which the shared rules cover in their own suites.
+  describe('provenance the agent passes is discarded', () => {
+    const FORGED = {
+      sourceSession: 'forged-source',
+      teamRootSession: 'forged-root',
+      agentRole: 'forged-role',
+      branch: 'forged-branch',
+      worktree: 'forged-worktree',
+      front: 'team-front_forged',
+    };
+
+    it('create: every protected field passed by the agent is replaced by the host\'s, or absent', async () => {
+      const result = await create({ noteKind: 'decision', ...FORGED });
+      expect(result.isError, result.content[0]?.text).toBe(false);
+      const data = insertedData();
+      expect(JSON.stringify(data)).not.toContain('forged');
+      expect(data).toMatchObject({ sourceSession: 'root-front', teamRootSession: 'root-front', agentRole: 'coordinator' });
+      expect(data.front).toMatchObject({ itemId: 'team-front_1' });
+    });
+
+    it('update: the same fields are not refused, nothing forged is written and the stored provenance stays', async () => {
+      useRow(noteRow({ front: { itemId: 'team-front_1' } }));
+      const result = await update({ status: 'resolved', fields: { ...FORGED } });
+      expect(result.isError, result.content[0]?.text).toBe(false);
+      const written = writtenData();
+      expect(JSON.stringify(written)).not.toContain('forged');
+      expect(written).toMatchObject({ sourceSession: 'root-front', teamRootSession: 'root-front', agentRole: 'coordinator', status: 'resolved' });
+      expect(written.front?.itemId ?? written.customFields?.front?.itemId).toBe('team-front_1');
+    });
+  });
+});
+
 describe('the Tool Manifest reference the host emits resolves in tracker_get / tracker_update (pilot G: "Tracker item not found: WOK.1")', () => {
   const sessions: Record<string, unknown> = { root: { agentRole: 'standard', metadata: { teamMode: true } } };
   // The coordinator ran in a worktree: its tracker tools are scoped to that path.

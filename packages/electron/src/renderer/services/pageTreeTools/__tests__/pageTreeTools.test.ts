@@ -196,6 +196,20 @@ describe('page tree agent tools', () => {
     expect(await setPageTypeTool(env, { section: 'team', pageId: 'missing', typeId: 'module' })).toMatchObject({ success: false });
   });
 
+  it('never turns a page into a protected type: the tool is an agent\'s, and the user makes fronts, notes and manifests elsewhere', async () => {
+    // Team-shared types a real resolver names for its section, so the type check alone lets them through.
+    const named = { ...resolver, typeName: (typeId: string) => (['team-front', 'team-note', 'tool-manifest'].includes(typeId) ? typeId : resolver.typeName(typeId)) };
+    const env = envFor({ team: tree() }, { resolver: () => named });
+    for (const typeId of ['team-front', 'team-note', 'tool-manifest']) {
+      const result = await setPageTypeTool(env, { section: 'team', pageId: 'overview', typeId });
+      expect(result, typeId).toMatchObject({ success: false });
+      expect((result as { error?: string }).error, typeId).toContain(`"${typeId}" is a protected type`);
+    }
+    expect(env.setPageType).not.toHaveBeenCalled();
+    // An ordinary type still goes through.
+    expect(await setPageTypeTool(env, { section: 'team', pageId: 'overview', typeId: 'module' })).toMatchObject({ success: true });
+  });
+
   it('refuses to delete a page that has children unless its subtree goes too', async () => {
     const session = tree();
     const env = envFor({ team: session });

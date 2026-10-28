@@ -9,12 +9,33 @@
  * Not applied to incoming sync: refusing a remote row would break convergence.
  */
 
+import { normalizeRelationshipValue } from '../trackerRelationships.js';
+
 export const TEAM_NOTE_TYPE = 'team-note';
+/** Body cap of every kind but a handoff: a note is a summary, never a transcript. */
 export const TEAM_NOTE_BODY_MAX_CHARS = 600;
-export const TEAM_NOTE_KINDS = ['decision', 'discovery', 'risk', 'pending', 'test', 'context'] as const;
+/** A handoff carries the state a new coordinator starts from, so it gets a larger body. */
+export const TEAM_NOTE_HANDOFF_BODY_MAX_CHARS = 2500;
+export const TEAM_NOTE_KINDS = ['decision', 'discovery', 'risk', 'pending', 'test', 'context', 'handoff'] as const;
 export const TEAM_NOTE_STATUSES = ['active', 'resolved', 'obsolete'] as const;
-/** Set only by Nimbalyst from the calling agent session; never by hand. */
-export const TEAM_NOTE_PROVENANCE_FIELDS = ['sourceSession', 'teamRootSession', 'agentRole', 'branch', 'worktree'] as const;
+/**
+ * Set only by Nimbalyst from the calling agent session; never by hand. `front`
+ * is the team-front the mission belongs to (a relationship; compared by target).
+ */
+export const TEAM_NOTE_PROVENANCE_FIELDS = ['sourceSession', 'teamRootSession', 'agentRole', 'branch', 'worktree', 'front'] as const;
+/** Provenance fields that hold a relationship: compared by their targets, never by shape. */
+const TEAM_NOTE_RELATIONSHIP_PROVENANCE_FIELDS: readonly string[] = ['front'];
+/** A pending item or a handoff without a concrete next step is a note nobody can act on. */
+export const TEAM_NOTE_NEXT_ACTION_KINDS = ['pending', 'handoff'] as const;
+export const TEAM_NOTE_HANDOFF_RESULTS = ['completed', 'partial', 'abandoned'] as const;
+/** Structured fields that only mean something on a handoff; refused on every other kind. */
+export const TEAM_NOTE_HANDOFF_ONLY_FIELDS = ['result', 'commits', 'pendings', 'relatedNotes'] as const;
+
+/** Body cap for a kind. An unknown or missing kind gets the strict one. */
+export function teamNoteBodyLimit(kind: unknown): number {
+  if (kind === 'handoff') return TEAM_NOTE_HANDOFF_BODY_MAX_CHARS;
+  return TEAM_NOTE_BODY_MAX_CHARS;
+}
 
 type Data = Record<string, unknown> | null | undefined;
 
@@ -62,13 +83,37 @@ export function teamNoteBodyLength(body: unknown): number {
   return parts.join('').trim().length;
 }
 
-export function teamNoteBodyError(body: unknown): string | null {
-  const length = teamNoteBodyLength(body);
-  if (length <= TEAM_NOTE_BODY_MAX_CHARS) return null;
+/**
+ * Visible length of a body as the content column stores it: the markdown text
+ * or a rich document JSON-encoded, so a plain body arrives as a JSON-quoted
+ * string. Used for a stored body; a payload body goes through `teamNoteBodyLength`.
+ */
+export function teamNoteStoredBodyLength(body: unknown): number {
+  if (typeof body === 'string') {
+    const trimmed = body.trim();
+    if (trimmed.startsWith('"')) {
+      try {
+        const parsed: unknown = JSON.parse(trimmed);
+        if (typeof parsed === 'string') return teamNoteBodyLength(parsed);
+      } catch {
+        // Not a JSON-quoted string: a plain text that starts with a quote.
+      }
+    }
+  }
+  return teamNoteBodyLength(body);
+}
+
+function bodyLimitError(length: number, kind: unknown): string | null {
+  const limit = teamNoteBodyLimit(kind);
+  if (length <= limit) return null;
   return (
-    `Team Note body is ${length} characters; the limit is ${TEAM_NOTE_BODY_MAX_CHARS}. ` +
+    `Team Note body is ${length} characters; the limit is ${limit}. ` +
     `Keep only the durable summary and point to the session, files or commit for the details.`
   );
+}
+
+export function teamNoteBodyError(body: unknown, kind?: unknown): string | null {
+  return bodyLimitError(teamNoteBodyLength(body), kind);
 }
 
 export function teamNoteKindError(kind: unknown): string | null {
@@ -87,6 +132,14 @@ export interface TeamNoteValidationOptions {
   before?: Data;
   /** Only the host's agent path may set provenance on create. */
   allowProvenance?: boolean;
+  /**
+   * The rich body as stored (the content column), when the funnel can see it
+   * (`null` = empty). On update it is judged against the cap of the RESULTING kind
+   * when the write changes the kind: a handoff that becomes a decision may not
+   * keep a body the decision cap would refuse. Not judged when the kind is
+   * unchanged (an unrelated edit of an old oversized note is not held up by it).
+   */
+  storedBody?: unknown;
 }
 
 /**
@@ -103,24 +156,152 @@ export function validateTeamNoteData(after: Data, options: TeamNoteValidationOpt
     const statusError = teamNoteStatusError(status);
     if (statusError) errors.push(statusError);
   }
-  const bodyError = teamNoteBodyError(readTeamNoteField(after, 'description'));
+  const kind = readTeamNoteField(after, 'noteKind');
+  const bodyError = teamNoteBodyError(readTeamNoteField(after, 'description'), kind);
   if (bodyError) errors.push(bodyError);
+  if (
+    options.mode === 'update'
+    && options.storedBody !== undefined
+    && options.storedBody !== null
+    && readTeamNoteField(options.before, 'noteKind') !== kind
+  ) {
+    const storedError = bodyLimitError(teamNoteStoredBodyLength(options.storedBody), kind);
+    if (storedError) errors.push(storedError);
+  }
+  errors.push(...relationshipShapeProblems(after));
+  if (!kindError) errors.push(...kindFieldProblems(after, kind as string, options));
 
   for (const field of TEAM_NOTE_PROVENANCE_FIELDS) {
     const next = readTeamNoteField(after, field);
+    const relationship = TEAM_NOTE_RELATIONSHIP_PROVENANCE_FIELDS.includes(field);
     if (options.mode === 'create') {
-      if (!options.allowProvenance && !isEmpty(next)) {
+      if (!options.allowProvenance && !(relationship ? isEmptyRelationship(next) : isEmpty(next))) {
         errors.push(`${field} is set by Nimbalyst from the agent session and cannot be set by hand.`);
       }
       continue;
     }
     const previous = readTeamNoteField(options.before, field);
-    const unchanged = (isEmpty(previous) && isEmpty(next)) || previous === next;
     // A top-level write that disagrees with the value every reader sees (the
     // nested customFields bag wins when present) is a change too.
     const top = after?.[field];
-    const shadowed = !isEmpty(top) && top !== previous;
+    let unchanged: boolean;
+    let shadowed: boolean;
+    if (relationship) {
+      // The funnels canonicalize and nest relationship values, so the same target
+      // arrives as an id, an object or a list: compare targets, never shapes.
+      unchanged = sameRelationshipTargets(previous, next);
+      shadowed = !isEmptyRelationship(top) && !sameRelationshipTargets(top, previous);
+    } else {
+      unchanged = (isEmpty(previous) && isEmpty(next)) || previous === next;
+      shadowed = !isEmpty(top) && top !== previous;
+    }
     if (!unchanged || shadowed) errors.push(`${field} records where the note came from and cannot be changed.`);
+  }
+  return errors;
+}
+
+/** Relationship fields a note carries since the team lifecycle: front (one target), pendings and relatedNotes. */
+const RELATIONSHIP_FIELDS_SHAPE_CHECKED = ['front', 'pendings', 'relatedNotes'] as const;
+
+/** One stored target: a non-blank id, or an object naming one (`itemId`, or `id` as the funnels read it). */
+function isRelationshipEntry(entry: unknown): boolean {
+  if (typeof entry === 'string') return entry.trim().length > 0;
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
+  const object = entry as Record<string, unknown>;
+  const id = typeof object.itemId === 'string' ? object.itemId : typeof object.id === 'string' ? object.id : '';
+  return id.trim().length > 0;
+}
+
+/**
+ * Whether a value is something a relationship field can hold: nothing at all
+ * (absent, null, an empty string, an empty list), one target, or a list of
+ * targets. A number, a boolean, an empty object or a list with such entries is
+ * not: the funnels' normalization would read it as "no target" and store the
+ * garbage under a field that looks empty.
+ */
+function isRelationshipShaped(value: unknown): boolean {
+  if (value === undefined || value === null || value === '') return true;
+  if (Array.isArray(value)) return value.every(isRelationshipEntry);
+  return isRelationshipEntry(value);
+}
+
+/** The shape problems of the note's relationship fields, in either storage shape and as a top-level shadow. */
+function relationshipShapeProblems(after: Data): string[] {
+  const errors: string[] = [];
+  for (const field of RELATIONSHIP_FIELDS_SHAPE_CHECKED) {
+    const values = [readTeamNoteField(after, field), after?.[field]];
+    if (!values.every(isRelationshipShaped)) {
+      errors.push(`${field} must be empty or a relationship (an item id, or a list of them).`);
+    } else if (field === 'front' && values.some((value) => relationshipTargets(value).length > 1)) {
+      errors.push('front must be empty or a relationship to one item.');
+    }
+  }
+  return errors;
+}
+
+function relationshipTargets(value: unknown): string[] {
+  return normalizeRelationshipValue(value).map((entry) => entry.itemId).sort();
+}
+
+function isEmptyRelationship(value: unknown): boolean {
+  return relationshipTargets(value).length === 0;
+}
+
+function sameRelationshipTargets(a: unknown, b: unknown): boolean {
+  const left = relationshipTargets(a);
+  const right = relationshipTargets(b);
+  return left.length === right.length && left.every((id, index) => id === right[index]);
+}
+
+/** A field value that says nothing: absent, blank, an empty list, or a relationship with no target. */
+function isBlankField(name: string, value: unknown): boolean {
+  if (isEmpty(value)) return true;
+  if (typeof value === 'string') return value.trim().length === 0;
+  if (Array.isArray(value)) return value.length === 0 || (name === 'pendings' || name === 'relatedNotes' ? isEmptyRelationship(value) : false);
+  return name === 'pendings' || name === 'relatedNotes' ? isEmptyRelationship(value) : false;
+}
+
+/**
+ * The rules that depend on the note's kind: a pending item or a handoff needs a
+ * concrete next step, a handoff carries its result, and the handoff-only fields
+ * mean nothing anywhere else.
+ */
+function kindFieldProblems(after: Data, kind: string, options: TeamNoteValidationOptions): string[] {
+  const errors: string[] = [];
+
+  if ((TEAM_NOTE_NEXT_ACTION_KINDS as readonly string[]).includes(kind)) {
+    const next = readTeamNoteField(after, 'nextAction');
+    if (isBlankField('nextAction', next) || typeof next !== 'string') {
+      // On create always. On update only when the write is what takes it away or what
+      // makes the note need it: a pending note from before nextAction existed keeps
+      // accepting every unrelated edit.
+      let judged = options.mode === 'create';
+      if (!judged) {
+        const previousKind = readTeamNoteField(options.before, 'noteKind');
+        const previousNext = readTeamNoteField(options.before, 'nextAction');
+        judged = previousKind !== kind || !isBlankField('nextAction', previousNext);
+      }
+      if (judged) {
+        errors.push(`A ${kind} Team Note needs nextAction: the concrete next step, in one or two lines (set it as fields.nextAction).`);
+      }
+    }
+  }
+
+  if (kind === 'handoff') {
+    const result = readTeamNoteField(after, 'result');
+    if (typeof result !== 'string' || !(TEAM_NOTE_HANDOFF_RESULTS as readonly string[]).includes(result)) {
+      errors.push(`A handoff Team Note's result must be one of: ${TEAM_NOTE_HANDOFF_RESULTS.join(', ')}.`);
+    }
+    const commits = readTeamNoteField(after, 'commits');
+    if (!isEmpty(commits) && (!Array.isArray(commits) || commits.some((entry) => typeof entry !== 'string'))) {
+      errors.push('A handoff Team Note\'s commits must be a list of strings.');
+    }
+  } else {
+    for (const field of TEAM_NOTE_HANDOFF_ONLY_FIELDS) {
+      if (!isBlankField(field, readTeamNoteField(after, field))) {
+        errors.push(`${field} is only for notes of kind handoff.`);
+      }
+    }
   }
   return errors;
 }
@@ -175,7 +356,7 @@ export function prepareTeamNoteCreate(
   if (isEmpty(readTeamNoteField(data, 'status'))) data.status = 'active';
   const problems = validateTeamNoteData(data, { mode: 'create', allowProvenance });
   if (body !== undefined && body !== null) {
-    const bodyProblem = teamNoteBodyError(body);
+    const bodyProblem = teamNoteBodyError(body, readTeamNoteField(data, 'noteKind'));
     if (bodyProblem) problems.push(bodyProblem);
   }
   fail(problems);
@@ -193,16 +374,21 @@ export function assertTeamNoteUpdate(
   updates: Record<string, unknown>,
   before: Data,
   after: Data,
+  options: { storedBody?: unknown } = {},
 ): void {
   const typeProblem = teamNoteTypeChangeError(type, updates.type, updates.typeTags);
   if (typeProblem) fail([typeProblem]);
   if (type !== TEAM_NOTE_TYPE) return;
-  fail(validateTeamNoteData(after, { mode: 'update', before }));
+  fail(validateTeamNoteData(after, { mode: 'update', before, storedBody: options.storedBody }));
 }
 
-/** Refuse a rich-body save that exceeds the team-note cap. No-op for other types. */
-export function assertTeamNoteBody(type: string, body: unknown): void {
+/**
+ * Refuse a rich-body save that exceeds the team-note cap for its kind.
+ * `item.noteKind` is the note's kind when the funnel can see it; without it the
+ * strict 600 applies. No-op for other types.
+ */
+export function assertTeamNoteBody(type: string, body: unknown, item?: { noteKind?: unknown }): void {
   if (type !== TEAM_NOTE_TYPE) return;
-  const problem = teamNoteBodyError(body);
+  const problem = teamNoteBodyError(body, item?.noteKind);
   if (problem) fail([problem]);
 }

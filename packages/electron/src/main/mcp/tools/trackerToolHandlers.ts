@@ -47,7 +47,7 @@ import {
 } from '@nimbalyst/runtime/plugins/TrackerPlugin/models/trackerBlockerVisibility';
 import { trackerItemToRecord } from '@nimbalyst/runtime/core/TrackerRecord';
 import { getRecordStatus, getRecordTitle, resolveRoleFieldName } from '@nimbalyst/runtime/plugins/TrackerPlugin/trackerRecordAccessors';
-import { buildTrackerRadar, getRecentTeammateActivity, assertProtectedTrackerBody, assertProtectedTrackerUpdate, prepareProtectedTrackerCreate } from '@nimbalyst/tracker-core';
+import { buildTrackerRadar, getRecentTeammateActivity, assertProtectedTrackerBody, assertProtectedTrackerUpdate, prepareProtectedTrackerCreate, readTeamNoteField } from '@nimbalyst/tracker-core';
 import { getVisibleTrackerLinkedSessions, shouldPersistTrackerLinkedSessions } from '../../../shared/trackerSessionLinks';
 import { buildFullDocumentTrackerId } from '@nimbalyst/runtime/plugins/TrackerPlugin/documentHeader/frontmatterUtils';
 import { normalizeLegacyLabelValues } from '@nimbalyst/runtime/sync';
@@ -2041,9 +2041,11 @@ export async function handleTrackerCreate(
     }
     await pinCitedRevisions(db, workspacePath, id, data, globalRegistry.get(args.type)?.fields ?? []);
 
-    // Protected types (team-note, tool-manifest): the one rule every local write
-    // funnel applies, under the guards above (they decided who may call and
-    // filled a Team Note's provenance from the calling session).
+    // Protected types (team-note, tool-manifest, team-front): the one rule every
+    // local write funnel applies, under the guards above (they decided who may
+    // call and filled a Team Note's provenance from the calling session). This is
+    // the agent's funnel: `provenanceFromHost` is also what makes the rule refuse
+    // a team-front, which only the user creates.
     try {
       prepareProtectedTrackerCreate(args.type, data, { provenanceFromHost: true, body: args.description, typeTags: args.typeTags });
     } catch (error) {
@@ -2306,7 +2308,11 @@ export async function handleTrackerUpdate(
       }
 
       // Team Notes: members cannot write, provenance cannot be rewritten, body cap.
-      const teamNoteRefusal = await guardTeamNoteUpdate(args, item.type, sessionId);
+      // The note's kind sets its body cap. The stored row is what holds it: an item
+      // the document service resolved may not carry noteKind in its customFields.
+      const storedRowData = typeof row?.data === 'string' ? JSON.parse(row.data) : row?.data;
+      const currentNoteKind = readTeamNoteField(storedRowData, 'noteKind') ?? item.customFields?.noteKind;
+      const teamNoteRefusal = await guardTeamNoteUpdate(args, item.type, sessionId, currentNoteKind);
       if (teamNoteRefusal) return teamNoteRefusal;
 
       // Tool Manifests: only the team's coordinator, only to accept (Phase 1B).
@@ -2755,11 +2761,18 @@ export async function handleTrackerUpdate(
         });
       }
 
-      // Protected types (team-note, tool-manifest): the one rule every local write
-      // funnel applies, under the guards above.
+      // Protected types (team-note, tool-manifest, team-front): the one rule every
+      // local write funnel applies, under the guards above. This is the agent's
+      // funnel: a team-front accepts only its description from here.
       try {
-        assertProtectedTrackerUpdate(oldType, { ...args, type: primaryTypeChanged ? row.type : undefined }, oldDataSnapshot, data);
-        if (args.description !== undefined) assertProtectedTrackerBody(oldType, String(args.description).replace(/\\n/g, '\n'));
+        // The body after this call: the new description is written as the body too,
+        // otherwise the stored one stays. A team-front's state is judged against it.
+        const bodyAfter = args.description !== undefined
+          ? String(args.description).replace(/\\n/g, '\n')
+          : (row.content ?? null);
+        assertProtectedTrackerUpdate(oldType, { ...args, type: primaryTypeChanged ? row.type : undefined }, oldDataSnapshot, data, { agent: true, storedBody: bodyAfter, writesBody: args.description !== undefined });
+        // The kind the note ends up with decides its body cap (a handoff gets more).
+        if (args.description !== undefined) assertProtectedTrackerBody(oldType, bodyAfter, { noteKind: readTeamNoteField(data, 'noteKind') });
       } catch (error) {
         return { content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }], isError: true };
       }

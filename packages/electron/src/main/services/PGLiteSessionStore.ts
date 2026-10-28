@@ -125,7 +125,7 @@ type SyncedMessage = AgentMessage;
  * else in the blob -- transcript summaries, provider scratch state -- is dead
  * weight this query used to carry for every session in the database.
  */
-const SYNCED_METADATA_KEYS = [
+export const SYNCED_METADATA_KEYS = [
   'tutorial',
   'hostDeviceId',
   'tokenUsage',

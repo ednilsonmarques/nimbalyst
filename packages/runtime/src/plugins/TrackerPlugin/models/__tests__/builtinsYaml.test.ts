@@ -32,6 +32,8 @@ const EXPECTED = [
   // Team mode memory (fork).
   'team-note',
   'tool-manifest',
+  // Team lifecycle fronts (protected, builtin only).
+  'team-front',
 ] as const;
 
 // Behavior-preserving invariants carried over from the pre-migration code array.
@@ -58,6 +60,8 @@ const INVARIANTS: Record<string, {
   'team-note': { idPrefix: 'nte', sharing: 'team', draftByDefault: false },
   // Tool Manifests (Phase 1B) are the architect's deliverable: shared like notes, written only by the host.
   'tool-manifest': { idPrefix: 'tmf', sharing: 'team', draftByDefault: false, creatable: false },
+  // Team fronts: permanent areas of work, created by the user, shared like notes.
+  'team-front': { idPrefix: 'tfr', sharing: 'team', draftByDefault: false },
 };
 
 /** Section 3 pins `modes.fullDocument: false` on all three evidence kinds. */

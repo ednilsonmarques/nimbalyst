@@ -50,6 +50,94 @@ describe('session list pipeline', () => {
   });
 });
 
+// F1 S3: three mission keys (front, goal, status) reach the renderer as read-only
+// fields, only for a team root, only when well formed. The renderer can read them;
+// nothing in this pipeline writes them back. `teamMissionContext` (up to ~6,000
+// characters) and `teamDoneCriterion` stay protected and main-only: nothing in the
+// renderer reads them and the list is refreshed often.
+describe('team mission lifecycle projection', () => {
+  const base = { id: 's', createdAt: 1, updatedAt: 2, title: 'T', provider: 'claude-code' } as SessionMeta;
+  const root = {
+    teamMode: true,
+    teamFront: 'team-front_1',
+    teamGoal: 'Ship F1',
+    teamMissionStatus: 'active',
+    teamMissionContext: 'Bootstrap block',
+    teamMissionVersion: 1,
+  };
+  const exposed = { teamMode: true, teamFront: 'team-front_1', teamGoal: 'Ship F1', teamMissionStatus: 'active' } as const;
+  const EXPOSED_FIELDS = ['teamFront', 'teamGoal', 'teamMissionStatus'] as const;
+
+  it('reads exactly the three exposed keys of a team root, never the context or the done criterion', () => {
+    expect(readTeamSessionFields({ ...root, teamDoneCriterion: 'S3 green' })).toEqual(exposed);
+    expect('teamMissionContext' in readTeamSessionFields({ ...root })).toBe(false);
+  });
+
+  it('a root with mission keys but no host marker (stored before S3) gains nothing, and the marker itself is never exposed', () => {
+    const { teamMissionVersion: _marker, ...preS3 } = root;
+    expect(readTeamSessionFields({ ...preS3, teamDoneCriterion: 'x' })).toEqual({ teamMode: true });
+    for (const marker of [0, 2, '1', true, null]) {
+      expect(readTeamSessionFields({ ...preS3, teamMissionVersion: marker } as never), String(marker)).toEqual({ teamMode: true });
+    }
+    expect('teamMissionVersion' in readTeamSessionFields({ ...root })).toBe(false);
+  });
+
+  it('a legacy root (teamMode without a front) gains nothing', () => {
+    expect(readTeamSessionFields({ teamMode: true })).toEqual({ teamMode: true });
+    expect(readTeamSessionFields({ teamMode: true, effortLevel: 'high' })).toEqual({ teamMode: true, effortLevel: 'high' });
+  });
+
+  it('exposes the keys only for a team root: a forged value on any other session is not read', () => {
+    const forged = { teamFront: 'team-front_forged', teamGoal: 'g', teamMissionStatus: 'active', teamMissionContext: 'c' };
+    for (const metadata of [forged, { ...forged, teamMode: false }, { ...forged, teamMode: 'yes' }, { ...forged, teamChild: { role: 'explorer', rootSessionId: 'r', depth: 1 } }]) {
+      const fields = readTeamSessionFields(metadata as never) as Record<string, unknown>;
+      for (const key of Object.keys(forged)) expect(fields[key], `${JSON.stringify(metadata)} ${key}`).toBeUndefined();
+    }
+  });
+
+  it('ignores a value that is not a non-blank string, and a status outside active/closed', () => {
+    for (const bad of [{ teamFront: '' }, { teamFront: '   ' }, { teamFront: 7 }, { teamFront: null }, { teamGoal: {} }, { teamMissionContext: [] }, { teamMissionStatus: 'paused' }, { teamMissionStatus: true }]) {
+      const fields = readTeamSessionFields({ teamMode: true, teamMissionVersion: 1, ...bad } as never) as Record<string, unknown>;
+      expect(fields, JSON.stringify(bad)).toEqual({ teamMode: true });
+    }
+    expect(readTeamSessionFields({ teamMode: true, teamMissionVersion: 1, teamMissionStatus: 'closed' })).toEqual({ teamMode: true, teamMissionStatus: 'closed' });
+  });
+
+  it('carries the three keys from the store entry to the registry entry and a normal session gains none', () => {
+    const [projected] = projectSessionList([{ ...base, ...exposed }], new Map());
+    expect(projected).toMatchObject(exposed);
+    expect(sessionListMetadata(projected as never, '/ws')).toMatchObject(exposed);
+
+    const [plain] = projectSessionList([base], new Map());
+    const entry = sessionListMetadata(plain as never, '/ws');
+    for (const field of EXPOSED_FIELDS) {
+      expect(entry[field], field).toBeUndefined();
+    }
+  });
+
+  it('neither projection step forwards a context or a done criterion, even if a store entry carried one', () => {
+    const entry = { ...base, ...exposed, teamMissionContext: 'Bootstrap block', teamDoneCriterion: 'S3 green' } as never;
+    const [projected] = projectSessionList([entry], new Map());
+    expect(projected).toMatchObject(exposed);
+    expect(projected).not.toHaveProperty('teamMissionContext', 'Bootstrap block');
+    expect((projected as Record<string, unknown>).teamMissionContext).toBeUndefined();
+    expect((projected as Record<string, unknown>).teamDoneCriterion).toBeUndefined();
+
+    const registry = sessionListMetadata({ ...(projected as object), teamMissionContext: 'Bootstrap block', teamDoneCriterion: 'S3 green' } as never, '/ws') as unknown as Record<string, unknown>;
+    expect(registry.teamMissionContext).toBeUndefined();
+    expect(registry.teamDoneCriterion).toBeUndefined();
+  });
+
+  it('a legacy root entry carries no front through the pipeline', () => {
+    const [projected] = projectSessionList([{ ...base, teamMode: true }], new Map());
+    const entry = sessionListMetadata(projected as never, '/ws');
+    expect(entry).toMatchObject({ teamMode: true });
+    for (const field of EXPOSED_FIELDS) {
+      expect(entry[field], field).toBeUndefined();
+    }
+  });
+});
+
 describe('team mission projection', () => {
   const base = { id: 's', createdAt: 1, updatedAt: 2, title: 'T', provider: 'claude-code' } as SessionMeta;
 

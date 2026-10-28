@@ -28,6 +28,8 @@ export interface AgentCreateMenuHandlers {
   openSuperLoopDialog: () => void;
   handleNewMetaAgent: () => void | Promise<void>;
   handleNewTeamSession: (preset: TeamRootPreset) => void;
+  /** Opens the "new mission" dialog (a Team root for a front, with a goal). */
+  handleNewTeamMission: () => void;
   handleNewEccArchitectSession: () => void;
 }
 
@@ -101,6 +103,15 @@ export function buildAgentCreateMenuItems(
         onSelect: () => handlers().handleNewTeamSession(preset),
       });
     }
+    // "New mission": a Team mode root that works for a front with a goal. Opens a dialog (the
+    // presets above keep creating a plain Team root at once, unchanged).
+    items.push({
+      id: 'team-mission',
+      label: t('sessionList.create.newTeamMission'),
+      icon: 'flag',
+      testId: 'new-team-mission-button',
+      onSelect: () => handlers().handleNewTeamMission(),
+    });
     // "Prepare with ECC Architect": a Team mode root whose coordinator begins
     // with the architect. Offered with the Team presets, behind the same flag,
     // set apart by a divider because it is a way of starting, not a size.

@@ -1,5 +1,6 @@
 import * as path from 'path';
 import { globalRegistry } from '@nimbalyst/tracker-schema';
+import { protectedTrackerSchemaChangeError } from '@nimbalyst/tracker-core';
 import type {
   TrackerDataModel,
   TrackerSchemaPatch,
@@ -285,6 +286,26 @@ async function defineTrackerType(
       };
     }
 
+    // NIB.130: the schema of a protected type is the one Nimbalyst ships. Refused
+    // before ANY effect (the vocabulary below is written, and not rolled back), for
+    // a patch, a full schema and the flat arguments alike; the service refuses the
+    // same writes for its other callers.
+    const requestedDefinition = args?.patch ?? (
+      args?.schema && typeof args.schema === 'object' && !Array.isArray(args.schema)
+        ? args.schema
+        : buildTrackerSchemaFromArgs(args)
+    );
+    const requestedType = typeof requestedDefinition?.type === 'string'
+      ? requestedDefinition.type
+      : undefined;
+    const protectedRefusal = protectedTrackerSchemaChangeError(requestedType);
+    if (protectedRefusal) {
+      return {
+        content: [{ type: 'text', text: `Error: ${protectedRefusal}` }],
+        isError: true,
+      };
+    }
+
     // Vocabulary first: a type declaring `predicate:` on a field needs the verb
     // to exist before the declaration below is checked against the registry.
     let appliedPredicates: PredicateDefinition[] | null = null;
@@ -312,14 +333,6 @@ async function defineTrackerType(
       };
     }
 
-    const requestedDefinition = args?.patch ?? (
-      args?.schema && typeof args.schema === 'object' && !Array.isArray(args.schema)
-        ? args.schema
-        : buildTrackerSchemaFromArgs(args)
-    );
-    const requestedType = typeof requestedDefinition?.type === 'string'
-      ? requestedDefinition.type
-      : undefined;
     const requestedSharing = requestedDefinition?.sharing;
     const existingModel = requestedType ? globalRegistry.get(requestedType) : undefined;
     if (existingModel?.sharing === 'team' && requestedSharing === 'personal') {

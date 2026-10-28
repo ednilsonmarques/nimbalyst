@@ -128,6 +128,89 @@ it('keeps toolScope and sessionDirective creation-only: no update widens a child
   expect((await metadataOf('plain')).toolScope).toBeUndefined();
 });
 
+// F1 S3: the mission keys of a team root are host-owned. The host writes them
+// with the row; nothing else sets, replaces or clears them afterwards.
+const HOST_ROOT = {
+  teamMode: true,
+  teamFront: 'team-front_1',
+  teamGoal: 'Ship F1 identity and data',
+  teamMissionStatus: 'active',
+  teamMissionContext: 'Bootstrap block',
+  teamDoneCriterion: 'S3 green',
+  teamMissionVersion: 1,
+};
+const FORGED_ROOT = {
+  teamFront: 'team-front_forged',
+  teamGoal: 'Forged goal',
+  teamMissionStatus: 'closed',
+  teamMissionContext: 'Forged context',
+  teamDoneCriterion: 'Forged criterion',
+  teamMissionVersion: 1,
+};
+const LIFECYCLE_KEYS = Object.keys(FORGED_ROOT);
+
+it('stores the lifecycle keys the host writes with the root row', async () => {
+  const store = createPGLiteSessionStore(sqlite);
+  await store.create({ id: 'root', provider: 'claude-code', workspaceId: '/p', metadata: { ...HOST_ROOT } });
+  expect(await metadataOf('root')).toMatchObject(HOST_ROOT);
+});
+
+it('keeps the lifecycle keys out of reach of every metadata update: replace, clear and unrelated writes', async () => {
+  const store = createPGLiteSessionStore(sqlite);
+  await store.create({ id: 'root', provider: 'claude-code', workspaceId: '/p', metadata: { ...HOST_ROOT } });
+
+  // Replacing, as the renderer (sessions:update-metadata) or update_session_meta would.
+  await store.updateMetadata('root', { metadata: { ...FORGED_ROOT, phase: 'planning' } });
+  expect(await metadataOf('root')).toMatchObject({ ...HOST_ROOT, phase: 'planning' });
+
+  // Clearing, with every shape a clear can take.
+  for (const cleared of [null, '', undefined]) {
+    await store.updateMetadata('root', { metadata: Object.fromEntries(LIFECYCLE_KEYS.map((key) => [key, cleared])) as never });
+  }
+  expect(await metadataOf('root')).toMatchObject({ ...HOST_ROOT, phase: 'planning' });
+});
+
+it('lets unrelated metadata keep working on a root that has a front', async () => {
+  const store = createPGLiteSessionStore(sqlite);
+  await store.create({ id: 'root', provider: 'claude-code', workspaceId: '/p', metadata: { ...HOST_ROOT } });
+  await store.updateMetadata('root', { metadata: { phase: 'implementing', tags: ['a', 'b'], effortLevel: 'low', draftUpdatedAt: 1 } });
+  await store.updateMetadata('root', { title: 'Renamed' } as never);
+  expect(await metadataOf('root')).toMatchObject({ ...HOST_ROOT, phase: 'implementing', tags: ['a', 'b'], effortLevel: 'low' });
+});
+
+it('a re-issued create (what a renderer can do) keeps the stored lifecycle keys', async () => {
+  const store = createPGLiteSessionStore(sqlite);
+  await store.create({ id: 'root', provider: 'claude-code', workspaceId: '/p', metadata: { ...HOST_ROOT } });
+  await store.create({ id: 'root', provider: 'claude-code', workspaceId: '/p', metadata: { ...FORGED_ROOT, phase: 'implementing' } });
+  expect(await metadataOf('root')).toMatchObject({ ...HOST_ROOT, phase: 'implementing' });
+  await store.create({ id: 'root', provider: 'claude-code', workspaceId: '/p', metadata: { phase: 'done' } });
+  expect(await metadataOf('root')).toMatchObject({ ...HOST_ROOT, phase: 'done' });
+});
+
+it('a legacy root without a front cannot get one by an update or a re-issued create', async () => {
+  const store = createPGLiteSessionStore(sqlite);
+  await store.create({ id: 'legacy', provider: 'claude-code', workspaceId: '/p', metadata: { teamMode: true } });
+
+  await store.updateMetadata('legacy', { metadata: { ...FORGED_ROOT, tags: ['a'] } });
+  const afterUpdate = await metadataOf('legacy');
+  expect(afterUpdate).toMatchObject({ teamMode: true, tags: ['a'] });
+  for (const key of LIFECYCLE_KEYS) expect(key in afterUpdate, `update ${key}`).toBe(false);
+
+  // A re-issued create replaces the ordinary keys (as it always did) but keeps teamMode and adds no front.
+  await store.create({ id: 'legacy', provider: 'claude-code', workspaceId: '/p', metadata: { ...FORGED_ROOT, phase: 'implementing' } });
+  const afterCreate = await metadataOf('legacy');
+  expect(afterCreate).toMatchObject({ teamMode: true, phase: 'implementing' });
+  for (const key of LIFECYCLE_KEYS) expect(key in afterCreate, `create ${key}`).toBe(false);
+});
+
+it('a session that is not a team root cannot get the keys either', async () => {
+  const store = createPGLiteSessionStore(sqlite);
+  await store.create({ id: 'plain', provider: 'claude-code', workspaceId: '/p', metadata: { phase: 'backlog' } });
+  await store.updateMetadata('plain', { metadata: { ...FORGED_ROOT } });
+  const stored = await metadataOf('plain');
+  for (const key of LIFECYCLE_KEYS) expect(key in stored, key).toBe(false);
+});
+
 it('keeps a member mission (teamChild.mission) immutable: no update and no re-issued create changes it, and none adds one', async () => {
   const store = createPGLiteSessionStore(sqlite);
   const teamChild = { role: 'reviewer', rootSessionId: 'root', depth: 1, mission: 'Review the security of the Tracker.' };

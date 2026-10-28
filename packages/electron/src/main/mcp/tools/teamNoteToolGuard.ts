@@ -54,7 +54,7 @@ export async function guardTeamNoteCreate(args: any, sessionId: string | undefin
     return refuse(`${TEAM_NOTE_TYPE} can only be the primary type of an item, not a type tag.`);
   }
   liftFieldsDescription(args);
-  const bodyError = checkTeamNoteBody(args.description);
+  const bodyError = checkTeamNoteBody(args.description, args.fields?.noteKind);
   if (bodyError) return refuse(bodyError);
   const kindError = checkTeamNoteKind(args.fields?.noteKind);
   if (kindError) return refuse(kindError);
@@ -77,6 +77,8 @@ export async function guardTeamNoteUpdate(
   args: any,
   itemType: string,
   sessionId: string | undefined,
+  /** The note's current kind, when the caller has the item: the body cap follows the kind. */
+  currentKind?: unknown,
 ): Promise<ToolError | null> {
   const isNote = itemType === TEAM_NOTE_TYPE;
   if (!isNote && !mentionsTeamNote(args)) return null;
@@ -94,7 +96,9 @@ export async function guardTeamNoteUpdate(
   const statusError = checkTeamNoteStatus(args.status ?? args.fields?.status);
   if (statusError) return refuse(statusError);
   if (args.description !== undefined) {
-    const bodyError = checkTeamNoteBody(args.description);
+    // The kind the update names, else the note's own: a handoff gets the larger
+    // body. With neither, the strict cap. The shared rule judges the merged data again.
+    const bodyError = checkTeamNoteBody(args.description, args.fields?.noteKind ?? currentKind);
     if (bodyError) return refuse(bodyError);
   }
   if (args.fields && typeof args.fields === 'object') {

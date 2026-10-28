@@ -10,7 +10,7 @@
  */
 
 import { AISessionsRepository } from '@nimbalyst/runtime/storage/repositories/AISessionsRepository';
-import { resolveTeamContext } from '@nimbalyst/runtime/ai/server/providers/teamContext';
+import { isHostMissionRoot, resolveTeamContext } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 import {
   TEAM_NOTE_PROVENANCE_FIELDS,
   teamNoteBodyError,
@@ -23,6 +23,7 @@ import {
 // adds only the agent-facing policy on top of them.
 export {
   TEAM_NOTE_BODY_MAX_CHARS,
+  TEAM_NOTE_HANDOFF_BODY_MAX_CHARS,
   TEAM_NOTE_KINDS,
   TEAM_NOTE_PROVENANCE_FIELDS,
   TEAM_NOTE_TYPE,
@@ -38,6 +39,12 @@ export interface TeamNoteProvenance {
   agentRole: 'coordinator' | 'standalone';
   branch: string | null;
   worktree: string | null;
+  /**
+   * The team-front of the mission, read from the root session's `teamFront`
+   * metadata (the coordinator is the root). Null for a standalone session and for
+   * a root with no front.
+   */
+  front: string | null;
 }
 
 export type TeamNoteWriterDecision =
@@ -72,7 +79,7 @@ export function decideTeamNoteWriter(
       allowed: false,
       reason:
         `Team members cannot write Team Notes. Add it to your final report under "Suggested notes" ` +
-        `("- [KIND] title — short summary") and your coordinator will decide whether to record it.`,
+        `("- [KIND] title — short summary (a pending item also names its next action)") and your coordinator will decide whether to record it.`,
     };
   }
   return {
@@ -83,8 +90,20 @@ export function decideTeamNoteWriter(
       agentRole: context.teamMode ? 'coordinator' : 'standalone',
       branch: worktree?.branch ?? null,
       worktree: worktree?.path ?? session?.worktreePath ?? null,
+      front: context.teamMode ? missionFront(session?.metadata) : null,
     },
   };
+}
+
+/**
+ * The front a mission root recorded, or null: only a non-blank string counts, and
+ * only on a root the host created (it carries the host marker). A `teamFront` stored
+ * without the marker predates the host-owned keys (F1 S3) and is not trusted.
+ */
+function missionFront(metadata: Record<string, unknown> | null | undefined): string | null {
+  if (!isHostMissionRoot(metadata)) return null;
+  const front = metadata?.teamFront;
+  return typeof front === 'string' && front.trim().length > 0 ? front.trim() : null;
 }
 
 /**
@@ -123,9 +142,12 @@ export function stripTeamNoteProvenance(fields: unknown): Record<string, unknown
   return rest;
 }
 
-/** Error text for an oversized body, or null when it fits (shared rule). */
-export function checkTeamNoteBody(body: unknown): string | null {
-  return body === undefined || body === null ? null : teamNoteBodyError(body);
+/**
+ * Error text for an oversized body, or null when it fits (shared rule). The cap
+ * depends on the kind (a handoff gets more); without a kind the strict cap applies.
+ */
+export function checkTeamNoteBody(body: unknown, kind?: unknown): string | null {
+  return body === undefined || body === null ? null : teamNoteBodyError(body, kind);
 }
 
 /** Error text for a missing or unknown noteKind, or null when valid (shared rule). */

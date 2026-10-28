@@ -172,6 +172,7 @@
       "newMetaAgent": "New Meta Agent",
       "remoteUnavailable": "This operation is not available on the selected remote machine.",
       "remoteDestination": "Selected remote machine",
+      "newTeamMission": "New Team mode mission…",
       "newTeamSession": {
         "standard": "New Team mode session: Standard (Opus, high)",
         "large": "New Team mode session: Large (Fable, high)",
@@ -813,6 +814,59 @@
     "cancel": "Cancel",
     "creating": "Creating...",
     "createAndStart": "Create & Start"
+  },
+  "teamMissionDialog": {
+    "title": "New mission",
+    "subtitle": "Start a Team mode session that works on a front of the project toward a goal.",
+    "frontLabel": "Front",
+    "loadingFronts": "Loading fronts…",
+    "loadFailed": "Could not load the fronts.",
+    "retry": "Try again",
+    "noFronts": "No active team fronts found. If you expected one, create or reactivate a Team Front in the Tracker, then try again.",
+    "noActiveFront": "No front is active. Set a front to Active in the Tracker to start a mission on it.",
+    "onlyActiveHint": "Only an active front can start a new mission.",
+    "selectedFrontGone": "The selected front is no longer active. Choose another front.",
+    "status": {
+      "active": "Active",
+      "paused": "Paused",
+      "closed": "Closed",
+      "unknown": "Status unknown"
+    },
+    "goalLabel": "Mission goal",
+    "goalPlaceholder": "What should this team achieve?",
+    "goalRequired": "The goal is required.",
+    "doneLabel": "Done criterion (optional)",
+    "donePlaceholder": "How will you know it is done?",
+    "counter": "{{used}}/{{max}}",
+    "tooLong": "Too long: {{used}} of {{max}} characters. Shorten the text; nothing is cut for you.",
+    "detailsLine": "Details: {{message}}",
+    "activeMission": {
+      "heading": "Active mission on this front",
+      "headingMany": "Active missions on this front",
+      "open": "Open mission",
+      "noGoal": "(no goal recorded)",
+      "none": "The active mission on this front could not be located. It may be on another device, or the list may need a refresh.",
+      "noneAfterFailure": "No mission was found on this front. If the creation did go through, it will appear in the session list.",
+      "failed": "Could not look for the active mission.",
+      "openFailed": "That mission could not be opened (it may have been archived or deleted). The list was refreshed.",
+      "looking": "Looking for the active mission…",
+      "more": "There are more active missions on this front than shown."
+    },
+    "cancel": "Cancel",
+    "create": "Start mission",
+    "creating": "Starting…",
+    "errors": {
+      "generic": "The mission could not be started.",
+      "invalidRequest": "Nimbalyst rejected the mission data. Review the front, the goal and the done criterion.",
+      "notATeamRoot": "A mission can only start on a new Team mode session.",
+      "sessionExists": "That session already exists or was created at the same moment. Try again.",
+      "frontNotFound": "This front no longer exists in the workspace. The list was refreshed.",
+      "frontUnavailable": "This front can no longer take a new mission (it is paused, closed or archived). The list was refreshed.",
+      "missionActive": "This front already has an active mission. Archive that mission or choose another front.",
+      "noWorkspace": "Open a workspace first.",
+      "remoteHost": "A mission can only be started in a local workspace, not on a remote machine.",
+      "presetUnavailable": "The Standard coordinator preset is not available, so no mission was started."
+    }
   },
   "worktreePicker": {
     "nameErrors": {
