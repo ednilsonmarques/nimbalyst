@@ -661,6 +661,80 @@
     "noticeLabel": "Checkpoint da equipe: continuação autorizada",
     "notice": "[Checkpoint da equipe] O usuário autorizou a continuação: a equipe agora pode criar até {{authorized}} sessões no total ({{total}} criadas até aqui). Os limites de {{maxActive}} sessões ativas ao mesmo tempo e {{maxDepth}} níveis de profundidade não mudaram. Continue de onde parou, criando um novo membro onde o trabalho pedir."
   },
+  "teamFrontProposal": {
+    "title": "Proposta de frentes",
+    "noticeLabel": "Proposta de frentes: decisão registrada",
+    "intro_one": "Seu coordenador propõe {{count}} mudança nas frentes do projeto. Nada é gravado até você decidir.",
+    "intro_other": "Seu coordenador propõe {{count}} mudanças nas frentes do projeto. Nada é gravado até você decidir.",
+    "intro_zero": "Seu coordenador propõe {{count}} mudanças nas frentes do projeto. Nada é gravado até você decidir.",
+    "kind": {
+      "create": "Nova frente",
+      "status": "Mudança de status"
+    },
+    "edited": "Editado",
+    "suggestedStatus": "Status sugerido: {{status}}",
+    "statusChange": "Status: {{from}} → {{to}}",
+    "noStatus": "sem status",
+    "status": {
+      "active": "Ativa",
+      "paused": "Pausada",
+      "closed": "Fechada",
+      "unknown": "Status desconhecido"
+    },
+    "pauseWarning": "Esta frente tem uma missão ativa (\"{{mission}}\"). Pausar a frente não encerra essa missão, mas nenhuma nova missão poderá começar nela.",
+    "pauseWarningNoTitle": "Esta frente tem uma missão ativa. Pausar a frente não encerra essa missão, mas nenhuma nova missão poderá começar nela.",
+    "closeBlocked": "Esta frente tem uma missão ativa, então não pode ser fechada. Escolha outro status ou rejeite este item.",
+    "field": {
+      "title": "Título",
+      "description": "Descrição",
+      "status": "Status"
+    },
+    "problem": {
+      "title": "O título deve ter de 1 a {{max}} caracteres.",
+      "description": "A descrição deve ter de 1 a {{max}} caracteres."
+    },
+    "approve": "Aprovar",
+    "approved": "Aprovada",
+    "reject": "Rejeitar",
+    "rejected": "Rejeitada",
+    "edit": "Editar",
+    "doneEditing": "Concluir edição",
+    "approveAll": "Aprovar tudo",
+    "rejectAll": "Rejeitar tudo",
+    "decideEach": "Aprove ou rejeite cada item para continuar.",
+    "fixEdits": "Corrija os valores editados antes de enviar.",
+    "submit": "Enviar decisão",
+    "submitting": "Enviando...",
+    "failure": {
+      "invalid": "A decisão não foi aceita. Confira os valores editados e tente de novo.",
+      "forbidden": "Esta janela não pode decidir esta proposta.",
+      "root-ineligible": "A sessão da equipe não está mais ativa, então nada foi gravado.",
+      "unavailable": "Não foi possível processar a decisão. Tente de novo."
+    },
+    "expired": "Esta proposta foi encerrada. Confira o resultado no Rastreador.",
+    "desktopOnly": "Abra esta sessão no aplicativo desktop para decidir esta proposta.",
+    "decidedTitle": "Decisão registrada",
+    "unnamed": "(sem título)",
+    "result": {
+      "written": "Gravada: {{title}} ({{status}})",
+      "syncWarning": "Gravada, mas o compartilhamento com a equipe não foi concluído.",
+      "followUpWarning": "Gravada, mas uma etapa posterior não foi concluída.",
+      "rejected": "Rejeitada: {{title}}",
+      "refused": "Não gravada: {{title}}. {{reason}}",
+      "failed": "Falhou: {{title}}. {{reason}}",
+      "unconfirmed": "Não confirmada: {{title}}. Confira o Rastreador."
+    },
+    "reason": {
+      "duplicate-title": "Já existe uma frente com este título.",
+      "front-not-found": "A frente não existe mais.",
+      "front-not-changeable": "A frente está arquivada.",
+      "no-change": "A frente já está com esse status.",
+      "close-with-active-mission": "A frente tem uma missão ativa e não pode ser fechada.",
+      "mission-started-after-card": "Uma missão começou nesta frente depois que a proposta foi exibida. Peça ao coordenador que proponha de novo.",
+      "write-failed": "Não foi possível gravar a mudança.",
+      "refused": "O Nimbalyst recusou esta mudança."
+    }
+  },
   "toolManifest": {
     "noticeLabel": "Tool Manifest gravado",
     "card": {

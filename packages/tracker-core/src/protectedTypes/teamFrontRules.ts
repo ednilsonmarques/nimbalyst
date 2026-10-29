@@ -30,13 +30,13 @@ export const TEAM_FRONT_AGENT_EDITABLE_FIELDS = ['description'] as const;
 
 export const TEAM_FRONT_AGENT_CREATE_ERROR =
   'A team-front is created by the user in the Tracker UI (or the offline nim CLI), never by an agent or tracker_create. ' +
-  'Ask the user to create it; you may then keep its description current.';
+  'A coordinator proposes one with team_front_propose (the user decides); you may then keep its description current.';
 
 /** The refusal of an agent's update: it names every key it refused. */
 export function teamFrontAgentUpdateError(refusedKeys: readonly string[]): string {
   return (
     `An agent may update only the description of a team-front; refused: ${refusedKeys.join(', ')}. ` +
-    `The title and status are the user's, currentMission is Nimbalyst's.`
+    `The title and status are the user's (a coordinator proposes a change with team_front_propose), currentMission is Nimbalyst's.`
   );
 }
 

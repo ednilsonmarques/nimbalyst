@@ -25,6 +25,8 @@ export const INTERACTIVE_WIDGET_TOOLS = new Set([
   'developer.git_commit_proposal',
   // Team mode "Continue team" card (TEAM_CHECKPOINT_TOOL_NAME in providers/teamContext).
   'TeamCheckpoint',
+  // Team mode front proposal card (TEAM_FRONT_PROPOSAL_TOOL_NAME in providers/teamContext). Settled only by its own IPC.
+  'TeamFrontProposal',
 ]);
 
 /**

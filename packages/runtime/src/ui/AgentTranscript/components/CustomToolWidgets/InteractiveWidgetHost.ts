@@ -134,6 +134,52 @@ export interface TeamContinueResult {
 }
 
 // ============================================================
+// Team Front Proposal Types (F1.1)
+// ============================================================
+
+export type TeamFrontStatusValue = 'active' | 'paused' | 'closed';
+
+/** One item decision the user submits. Edits carry only fields the item's action allows. */
+export interface TeamFrontProposalItemDecision {
+  index: number;
+  decision: 'approve' | 'reject';
+  edits?: { title?: string; description?: string; status?: TeamFrontStatusValue };
+}
+
+export interface TeamFrontProposalDecidePayload {
+  proposalId: string;
+  rootSessionId: string;
+  items: TeamFrontProposalItemDecision[];
+}
+
+/** What the host reports per item once a proposal is decided (also the card's persisted outcome). */
+export interface TeamFrontItemOutcome {
+  index: number;
+  action: 'create' | 'status';
+  label: string;
+  result: 'written' | 'rejected' | 'refused' | 'failed' | 'unconfirmed';
+  id?: string;
+  status?: string;
+  code?: string;
+  detail?: string;
+  syncWarning?: string;
+  followUpWarning?: string;
+}
+
+export interface TeamFrontProposalStateResult {
+  success: boolean;
+  state?: 'pending' | 'expired';
+  code?: string;
+}
+
+export interface TeamFrontProposalDecideResult {
+  success: boolean;
+  results?: TeamFrontItemOutcome[];
+  /** Refusal code when the decision was not applied: invalid, expired, forbidden, root-ineligible, unavailable. */
+  code?: string;
+}
+
+// ============================================================
 // Git Commit Types
 // ============================================================
 
@@ -336,6 +382,22 @@ export interface InteractiveWidgetHost {
    * left behind by a level the team has already passed.
    */
   teamContinue?(rootSessionId: string, checkpointLevel?: number): Promise<TeamContinueResult>;
+
+  // ============================================================
+  // Team Front Proposal Operations (F1.1)
+  // ============================================================
+
+  /**
+   * Whether a front proposal card can still be decided (the host keeps proposals in memory:
+   * a restart or a settled card says expired). Optional like teamContinue.
+   */
+  teamFrontProposalState?(proposalId: string): Promise<TeamFrontProposalStateResult>;
+
+  /**
+   * The user's single decision on a front proposal. Its own host channel, never an
+   * interactive-prompt answer: no session can answer it on the user's behalf.
+   */
+  teamFrontProposalDecide?(payload: TeamFrontProposalDecidePayload): Promise<TeamFrontProposalDecideResult>;
 
   // ============================================================
   // Tool Manifest card (Team mode, ECC Architect)

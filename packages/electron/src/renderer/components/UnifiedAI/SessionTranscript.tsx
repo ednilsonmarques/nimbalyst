@@ -1897,6 +1897,17 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
       teamContinue: (rootSessionId: string, checkpointLevel?: number) =>
         window.electronAPI.invoke('team:continue', { sessionId: rootSessionId, checkpointLevel }),
 
+      // Team front proposal (F1.1): the decision is the user's click, on its own channel.
+      // The host takes the action and the target front from the proposal it stored.
+      teamFrontProposalState: (proposalId: string) =>
+        window.electronAPI.invoke('team:front-proposal:state', { proposalId }),
+      teamFrontProposalDecide: (payload: { proposalId: string; rootSessionId: string; items: unknown[] }) =>
+        window.electronAPI.invoke('team:front-proposal:decide', {
+          proposalId: payload.proposalId,
+          rootSessionId: payload.rootSessionId,
+          items: payload.items,
+        }),
+
       // Tool Manifest card (Phase 1C): read-only Tracker lookups for the
       // coordinator's stored-manifest notice. The renderer never writes a
       // manifest; the domain rules keep it host-owned.
@@ -2220,6 +2231,8 @@ const LocalSessionTranscript = forwardRef<SessionTranscriptRef, SessionTranscrip
       toolPermissionSubmit: (...args) => liveHostRef.current!.toolPermissionSubmit(...args),
       toolPermissionCancel: (...args) => liveHostRef.current!.toolPermissionCancel(...args),
       teamContinue: (...args) => liveHostRef.current!.teamContinue!(...args),
+      teamFrontProposalState: (...args) => liveHostRef.current!.teamFrontProposalState!(...args),
+      teamFrontProposalDecide: (...args) => liveHostRef.current!.teamFrontProposalDecide!(...args),
       resolveToolManifest: (...args) => liveHostRef.current!.resolveToolManifest!(...args),
       onTrackerItemsChanged: (...args) => liveHostRef.current!.onTrackerItemsChanged!(...args),
       feedbackRequestSend: (...args) => liveHostRef.current!.feedbackRequestSend!(...args),

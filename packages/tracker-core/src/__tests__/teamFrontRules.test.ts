@@ -18,6 +18,7 @@ import {
   prepareProtectedTrackerCreate,
   prepareTeamFrontCreate,
   protectedTrackerTypeChangeError,
+  teamFrontAgentUpdateError,
   readTeamFrontField,
   teamFrontTypeChangeError,
   validateTeamFrontData,
@@ -367,5 +368,21 @@ describe("body", () => {
     expect(() => assertTeamFrontBody("task", "x".repeat(50_000))).not.toThrow();
     expect(() => assertProtectedTrackerBody("team-front", "x".repeat(2001))).toThrow(/limit is 2000/);
     expect(() => assertProtectedTrackerBody("team-front", "x".repeat(2000))).not.toThrow();
+  });
+});
+
+describe("F1.1: the refusal messages name the proposal tool; the rule itself is unchanged", () => {
+  it("the create and update refusals point a coordinator to team_front_propose", () => {
+    expect(TEAM_FRONT_AGENT_CREATE_ERROR).toMatch(/team_front_propose/);
+    expect(teamFrontAgentUpdateError(["status"])).toMatch(/team_front_propose/);
+    // still the user's: an agent is refused, and the message still names what was refused
+    expect(teamFrontAgentUpdateError(["status", "title"])).toMatch(/refused: status, title\./);
+    expect(teamFrontAgentUpdateError(["status"])).toMatch(/currentMission is Nimbalyst's/);
+  });
+
+  it("an agent still cannot create a front or change its title or status, with or without hostOwned", () => {
+    expect(() => prepareTeamFrontCreate("team-front", { title: "T", status: "active", description: "d" }, undefined, { agent: true })).toThrow(TEAM_FRONT_AGENT_CREATE_ERROR);
+    expect(() => prepareTeamFrontCreate("team-front", { title: "T", status: "active", description: "d" }, undefined, { agent: true, hostOwned: true })).toThrow(TEAM_FRONT_AGENT_CREATE_ERROR);
+    expect(TEAM_FRONT_AGENT_EDITABLE_FIELDS).toEqual(["description"]);
   });
 });

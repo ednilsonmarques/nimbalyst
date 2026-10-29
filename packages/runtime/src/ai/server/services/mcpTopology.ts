@@ -183,6 +183,10 @@ export const HOST_TOOLS: readonly string[] = [
   // Phase 1B: read-only lookup of the packaged ECC capability catalog (by id or
   // query). Passive data: it never runs, installs or authorizes anything.
   'ecc_catalog_lookup',
+  // F1.1: the Team coordinator proposes fronts (posts a confirmation card,
+  // writes nothing). Root only: the handler checks the caller's session row and
+  // the scope policy withholds it from every team member.
+  'team_front_propose',
   // NOTE: `applyDiff` / `streamContent` are intentionally NOT declared here.
   // They have live CallTool handlers (httpServer switch) + renderer IPC
   // listeners, but no ListTools schema — they are deliberately unadvertised so

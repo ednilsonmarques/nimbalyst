@@ -661,6 +661,80 @@
     "noticeLabel": "Team checkpoint: continuation authorized",
     "notice": "[Team checkpoint] The user authorized this team to continue: it may now create up to {{authorized}} sessions in total ({{total}} created so far). The limits of {{maxActive}} active sessions at once and {{maxDepth}} levels of depth are unchanged. Continue from where you stopped, creating a new member where the work calls for one."
   },
+  "teamFrontProposal": {
+    "title": "Front proposal",
+    "noticeLabel": "Front proposal: decision recorded",
+    "intro_one": "Your coordinator proposes {{count}} change to the project's fronts. Nothing is written until you decide.",
+    "intro_other": "Your coordinator proposes {{count}} changes to the project's fronts. Nothing is written until you decide.",
+    "intro_zero": "Your coordinator proposes {{count}} changes to the project's fronts. Nothing is written until you decide.",
+    "kind": {
+      "create": "New front",
+      "status": "Status change"
+    },
+    "edited": "Edited",
+    "suggestedStatus": "Suggested status: {{status}}",
+    "statusChange": "Status: {{from}} → {{to}}",
+    "noStatus": "no status",
+    "status": {
+      "active": "Active",
+      "paused": "Paused",
+      "closed": "Closed",
+      "unknown": "Unknown status"
+    },
+    "pauseWarning": "This front has an active mission (\"{{mission}}\"). Pausing the front does not end that mission, but no new mission can start on it.",
+    "pauseWarningNoTitle": "This front has an active mission. Pausing the front does not end that mission, but no new mission can start on it.",
+    "closeBlocked": "This front has an active mission, so it cannot be closed. Choose another status or reject this item.",
+    "field": {
+      "title": "Title",
+      "description": "Description",
+      "status": "Status"
+    },
+    "problem": {
+      "title": "The title must have 1 to {{max}} characters.",
+      "description": "The description must have 1 to {{max}} characters."
+    },
+    "approve": "Approve",
+    "approved": "Approved",
+    "reject": "Reject",
+    "rejected": "Rejected",
+    "edit": "Edit",
+    "doneEditing": "Done",
+    "approveAll": "Approve all",
+    "rejectAll": "Reject all",
+    "decideEach": "Approve or reject each item to continue.",
+    "fixEdits": "Fix the edited values before sending.",
+    "submit": "Send decision",
+    "submitting": "Sending...",
+    "failure": {
+      "invalid": "The decision was not accepted. Check the edited values and try again.",
+      "forbidden": "This window cannot decide this proposal.",
+      "root-ineligible": "The team session is no longer active, so nothing was written.",
+      "unavailable": "The decision could not be processed. Try again."
+    },
+    "expired": "This proposal is closed. Check the Tracker for its result.",
+    "desktopOnly": "Open this session in the desktop app to decide this proposal.",
+    "decidedTitle": "Decision recorded",
+    "unnamed": "(untitled)",
+    "result": {
+      "written": "Written: {{title}} ({{status}})",
+      "syncWarning": "Saved, but sharing it with the team did not complete.",
+      "followUpWarning": "Saved, but a step after saving did not complete.",
+      "rejected": "Rejected: {{title}}",
+      "refused": "Not written: {{title}}. {{reason}}",
+      "failed": "Failed: {{title}}. {{reason}}",
+      "unconfirmed": "Not confirmed: {{title}}. Check the Tracker."
+    },
+    "reason": {
+      "duplicate-title": "A front with this title already exists.",
+      "front-not-found": "The front no longer exists.",
+      "front-not-changeable": "The front is archived.",
+      "no-change": "The front already has that status.",
+      "close-with-active-mission": "The front has an active mission and cannot be closed.",
+      "mission-started-after-card": "A mission started on this front after the proposal was shown. Ask the coordinator to propose again.",
+      "write-failed": "The change could not be saved.",
+      "refused": "Nimbalyst refused this change."
+    }
+  },
   "toolManifest": {
     "noticeLabel": "Tool Manifest stored",
     "card": {

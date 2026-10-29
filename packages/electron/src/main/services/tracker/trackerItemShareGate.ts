@@ -46,13 +46,15 @@ export function trackerItemTooLargeForRoom(item: TrackerItem): TrackerPayloadToo
 /**
  * Push a saved, shared item to its room, or mark it `pending` for the
  * reconnect drain when the room is not connected. A failure is logged and
- * not thrown: the local save has already happened.
+ * not thrown: the local save has already happened. The failure is returned (not
+ * thrown) so a caller that reports per item, like a front proposal's approval,
+ * can say the sync did not go through; callers that ignore it behave as before.
  */
 export async function pushSharedTrackerItem(
   item: TrackerItem,
   markPending: (itemId: string) => Promise<unknown>,
   logPrefix = '[DocumentService] update-tracker-item',
-): Promise<void> {
+): Promise<unknown | undefined> {
   try {
     if (isTrackerSyncActive(item.workspace)) {
       await syncTrackerItem(item);
@@ -62,5 +64,72 @@ export async function pushSharedTrackerItem(
     }
   } catch (syncErr) {
     console.error(`${logPrefix} sync failed:`, syncErr);
+    return syncErr;
   }
+  return undefined;
+}
+
+/** The sharing hints a Tracker write may carry; they only matter to the sharing policy. */
+export interface TrackerSharingHints {
+  sharing?: 'personal' | 'team';
+  draftByDefault?: boolean;
+}
+
+/**
+ * The `beforeWrite` of a tracker update: a shared item its room would refuse is
+ * refused before the save. The one definition the Tracker UI's update handler
+ * and a front proposal's approval both use.
+ */
+export function sharedTrackerItemBeforeWrite(hints: TrackerSharingHints = {}): (candidate: TrackerItem) => void {
+  return (candidate) => {
+    if (shouldSyncTrackerItem(getEffectiveTrackerSharingPolicy(candidate.workspace, candidate.type, hints), candidate)) {
+      assertTrackerItemFitsRoom(candidate);
+    }
+  };
+}
+
+export interface TrackerPostWriteResult {
+  /** Whether the item is shared with the team under its sharing policy. */
+  shared: boolean;
+  /** Set when the sync step failed after the save (never thrown, never retried here). */
+  syncError?: unknown;
+}
+
+/**
+ * After a Tracker UI creation: sync the new item when it is shared and the room
+ * is connected. `skipSync` is the retryable-creation path, which publishes
+ * through its own resume machinery. Shared by the creation IPC handler and a
+ * front proposal's approval.
+ */
+export async function syncCreatedTrackerItem(
+  item: TrackerItem,
+  payload: TrackerSharingHints & { workspace: string; type: string },
+  options: { skipSync?: boolean } = {},
+): Promise<TrackerPostWriteResult> {
+  const policy = getEffectiveTrackerSharingPolicy(payload.workspace, payload.type, payload);
+  let syncError: unknown;
+  if (!options.skipSync && shouldSyncTrackerItem(policy, item) && isTrackerSyncActive(payload.workspace)) {
+    try {
+      await syncTrackerItem(item);
+    } catch (error) {
+      console.error('[TrackerCreation] Metadata sync failed:', error);
+      syncError = error;
+    }
+  }
+  return { shared: shouldSyncTrackerItem(policy, item), ...(syncError !== undefined ? { syncError } : {}) };
+}
+
+/**
+ * After a Tracker UI update: push the saved item to its room (or mark it pending)
+ * when it is shared. Shared by the update IPC handler and a front proposal's approval.
+ */
+export async function syncUpdatedTrackerItem(
+  item: TrackerItem,
+  hints: TrackerSharingHints,
+  markPending: (itemId: string) => Promise<unknown>,
+): Promise<TrackerPostWriteResult> {
+  const policy = getEffectiveTrackerSharingPolicy(item.workspace, item.type, hints);
+  if (!shouldSyncTrackerItem(policy, item)) return { shared: false };
+  const syncError = await pushSharedTrackerItem(item, markPending);
+  return { shared: true, ...(syncError !== undefined ? { syncError } : {}) };
 }

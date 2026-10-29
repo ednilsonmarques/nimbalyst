@@ -42,7 +42,7 @@ import { inheritedOwnership, isParentNotificationSuppressed } from './extensionS
 import { startExtensionSessionService } from './extensionSessions/extensionSessionsService';
 import { broadcastSessionCreated } from './session/broadcastSessionCreated';
 import { extractMessageText, extractUserPrompts } from './metaAgentMessageText';
-import { TEAM_CHILD_METADATA_KEY, resolveTeamContext, type TeamRole } from '@nimbalyst/runtime/ai/server/providers/teamContext';
+import { TEAM_CHILD_METADATA_KEY, TEAM_FRONT_PROPOSAL_PROMPT_ORIGIN, resolveTeamContext, type TeamRole } from '@nimbalyst/runtime/ai/server/providers/teamContext';
 import { renderArchitectReportForUpdate } from '@nimbalyst/runtime/ai/server/providers/toolManifest';
 import { TOOL_MANIFEST_NOTICE_CONTEXT, buildToolManifestNotice, buildToolManifestReference, persistArchitectManifest } from './team/toolManifests';
 import { withToolManifestTrackerPort } from './team/toolManifestTrackerPort';
@@ -126,6 +126,18 @@ import {
   resolveTeamCheckpointCard,
   teamContinueActionLabel,
 } from './team/teamCheckpoint';
+import { postTeamFrontProposalCard, resolveTeamFrontProposalCard } from './team/teamFrontProposalCard';
+import {
+  decideTeamFrontProposal,
+  getTeamFrontProposalState,
+  type TeamFrontDecisionDeps,
+} from './team/teamFrontProposalDecision';
+import { productionWorkspaceOfSender, resolveProposalSender } from './team/teamFrontProposalSender';
+import { defaultTeamFrontWriter } from './team/teamFrontProposalWriter';
+import { withFrontLock, withTeamFrontCreateLock } from './team/teamMissions';
+import { defaultTeamFrontProposalPorts } from './team/teamFrontProposalPorts';
+import { teamFrontProposalRegistry } from './team/teamFrontProposals';
+import { proposeTeamFronts } from './team/teamFrontProposeTool';
 import { describeChildToolScope, isToolScopeEnforced } from './ai/childToolScope';
 import type { NotificationOptions, NotificationResult } from './NotificationService';
 import type { MobilePushResult } from '@nimbalyst/runtime/sync/types';
@@ -436,6 +448,18 @@ export class MetaAgentService {
         listSpawnedSessions: (metaSessionId, workspaceId) =>
           this.listSpawnedSessionsJson(metaSessionId, workspaceId),
         resolveSessionWorkspaceRoot: (sessionId) => this.resolveSessionWorkspaceRoot(sessionId),
+        proposeTeamFronts: (callerSessionId, workspaceId, args) =>
+          proposeTeamFronts(
+            {
+              readSession: (sessionId) => AISessionsRepository.get(sessionId),
+              ports: defaultTeamFrontProposalPorts(),
+              registry: teamFrontProposalRegistry,
+              postCard: (proposal) => postTeamFrontProposalCard(proposal),
+            },
+            callerSessionId,
+            workspaceId,
+            args,
+          ),
       });
 
       // MCP consolidation Phase 7: meta-agent tools are served by the unified
@@ -602,6 +626,29 @@ export class MetaAgentService {
       }
     });
 
+    // The user's decision on a front proposal card (F1.1). Renderer-only on
+    // purpose, like team:continue, and stricter: the sender must be a real top
+    // frame of an app window, and the workspace is the one the host knows that
+    // window shows. No MCP tool, respond_to_prompt, voice or mobile reaches it.
+    // renderer_eval, which would hold this authority, is denied to every Team mode session (rendererEvalSessionGuard.ts).
+    safeHandle('team:front-proposal:decide', async (event, payload: unknown) => {
+      const sender = await resolveProposalSender(event, { workspaceOfSender: productionWorkspaceOfSender });
+      if (!sender.ok) return { success: false, ok: false, code: 'forbidden', message: 'The request did not come from an app window.' };
+      try {
+        const response = await decideTeamFrontProposal(this.teamFrontDecisionDeps(), sender.workspacePaths, payload);
+        return { success: response.ok, ...response };
+      } catch (error) {
+        console.error('[MetaAgentService] team:front-proposal:decide failed:', error);
+        return { success: false, ok: false, code: 'unavailable', message: 'The proposal could not be processed.' };
+      }
+    });
+
+    safeHandle('team:front-proposal:state', async (event, payload: unknown) => {
+      const sender = await resolveProposalSender(event, { workspaceOfSender: productionWorkspaceOfSender });
+      if (!sender.ok) return { success: false, ok: false, code: 'forbidden', message: 'The request did not come from an app window.' };
+      return { success: true, ...getTeamFrontProposalState(teamFrontProposalRegistry, sender.workspacePaths, payload) };
+    });
+
     // "Continue team" on the checkpoint card. Renderer-only on purpose: the
     // user's click is the authorization, and no MCP tool reaches this.
     safeHandle('team:continue', async (_event, payload: { sessionId?: unknown; checkpointLevel?: unknown } | undefined) => {
@@ -759,6 +806,43 @@ export class MetaAgentService {
       console.warn('[MetaAgentService] Team continued, but the coordinator could not be notified:', error);
     }
     return result;
+  }
+
+  /** The approval executor's ports: the app's registry, tracker reads, the Tracker UI writer and the delivery to the coordinator. */
+  private teamFrontDecisionDeps(): TeamFrontDecisionDeps {
+    return {
+      registry: teamFrontProposalRegistry,
+      ports: defaultTeamFrontProposalPorts(),
+      writer: defaultTeamFrontWriter,
+      readRoot: (rootSessionId) => AISessionsRepository.get(rootSessionId),
+      withFrontLock,
+      withCreateLock: withTeamFrontCreateLock,
+      deliver: async ({ proposal, results, notice }) => {
+        // Each half is independent and best-effort: the writes are already done.
+        const report = { card: false, notice: false };
+        try {
+          await resolveTeamFrontProposalCard({ proposal, results });
+          report.card = true;
+        } catch (error) {
+          console.warn('[MetaAgentService] Front proposal decided, but its card could not be closed:', error);
+        }
+        try {
+          if (this.aiService) {
+            await this.aiService.queuePromptForSession(
+              proposal.rootSessionId,
+              notice,
+              undefined,
+              { promptOrigin: TEAM_FRONT_PROPOSAL_PROMPT_ORIGIN, promptProvenance: { actor: 'system', origin: 'session-orchestration', messageKind: 'status' } },
+            );
+            this.aiService.requestQueueDrive(proposal.rootSessionId, proposal.workspacePath, 'meta-agent');
+            report.notice = true;
+          }
+        } catch (error) {
+          console.warn('[MetaAgentService] Front proposal decided, but the coordinator could not be notified:', error);
+        }
+        return report;
+      },
+    };
   }
 
   private readonly teamSpawnLocks = new Map<string, Promise<unknown>>();

@@ -13,14 +13,7 @@ import {
   publishTrackerCreation,
 } from '../services/tracker/publishTrackerCreation';
 import { registerTrackerCreationResume } from '../services/tracker/trackerCreationResume';
-import {
-  getEffectiveTrackerSharingPolicy,
-  shouldSyncTrackerItem,
-} from '../services/TrackerPolicyService';
-import {
-  isTrackerSyncActive,
-  syncTrackerItem,
-} from '../services/TrackerSyncManager';
+import { syncCreatedTrackerItem } from '../services/tracker/trackerItemShareGate';
 
 export function registerTrackerCreationHandlers(
   resolveService: (event: IpcMainInvokeEvent) => ElectronDocumentService,
@@ -45,23 +38,8 @@ export function registerTrackerCreationHandlers(
         const item = await service.createTrackerItem(payload);
         committedItem = item;
         shared = item.syncStatus === 'pending';
-        const policy = getEffectiveTrackerSharingPolicy(
-          payload.workspace,
-          payload.type,
-          payload,
-        );
-        if (
-          !payload.creationRequestId &&
-          shouldSyncTrackerItem(policy, item) &&
-          isTrackerSyncActive(payload.workspace)
-        ) {
-          try {
-            await syncTrackerItem(item);
-          } catch (error) {
-            console.error('[TrackerCreation] Metadata sync failed:', error);
-          }
-        }
-        shared = shouldSyncTrackerItem(policy, item);
+        const synced = await syncCreatedTrackerItem(item, payload, { skipSync: !!payload.creationRequestId });
+        shared = synced.shared;
         onCreated(item, shared);
         return {
           success: true,

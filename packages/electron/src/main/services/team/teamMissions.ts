@@ -178,6 +178,27 @@ export function withSessionIdLock<T>(sessionId: unknown, task: () => Promise<T>)
   return withLock(`session:${sessionId}`, task);
 }
 
+/**
+ * The front lock mission creation takes (`front:<item id>`), for any other host
+ * writer that must serialise with it: a front proposal's status change holds it
+ * through the re-read of the front and of its active mission and the write
+ * (F1.1, so a mission cannot start between the check and the write).
+ */
+export function withFrontLock<T>(frontId: string, task: () => Promise<T>): Promise<T> {
+  return withLock(`front:${frontId}`, task);
+}
+
+/**
+ * Serialises the creation of fronts decided from proposals within one workspace
+ * (F1.1, D2 across coordinators): the duplicate-title re-check and the create
+ * run under it, so two roots proposing the same absent title write one front.
+ * The key is the caller's canonical workspace. It protects ONLY the proposal
+ * path: the Tracker UI, the offline CLI and incoming sync do not take it.
+ */
+export function withTeamFrontCreateLock<T>(workspaceKey: string, task: () => Promise<T>): Promise<T> {
+  return withLock(`front-create:${workspaceKey}`, task);
+}
+
 /** Session lock, then front lock: the only order in which these are ever taken. */
 function withMissionLocks<T>(sessionId: string, frontId: string, task: () => Promise<T>): Promise<T> {
   return withSessionIdLock(sessionId, () => withLock(`front:${frontId}`, task));

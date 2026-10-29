@@ -24,6 +24,7 @@ describe('Team checkpoint is not reachable from the session tools', () => {
       'list_spawned_sessions',
       'run_project_tests',
       'ecc_catalog_lookup',
+      'team_front_propose',
     ]);
     for (const tool of META_AGENT_TOOL_DEFS) {
       expect(tool.name, tool.name).not.toMatch(/continue|budget|checkpoint|authoriz/i);

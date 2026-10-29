@@ -396,6 +396,13 @@ export async function registerSessionHandlers() {
             await AISessionsRepository.updateMetadata(sessionId, updates);
 
             if (updates.isArchived === true) {
+                // F1.1: an archived root has no card left to approve.
+                try {
+                    // Loaded on demand: the proposal registry pulls workspace identity, which the rest of this module does not need.
+                    (await import('../services/team/teamFrontProposals')).teamFrontProposalRegistry.discardRoot(sessionId);
+                } catch (error) {
+                    console.warn('[SessionHandlers] Failed to discard the front proposal of an archived session:', error);
+                }
                 destroyProviderForArchivedSession(
                     sessionId,
                     (id) => ProviderFactory.destroyProvider(id),

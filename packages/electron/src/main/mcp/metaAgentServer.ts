@@ -155,6 +155,12 @@ interface MetaAgentToolFns {
    * session is unknown or has no workspace, which refuses the run.
    */
   resolveSessionWorkspaceRoot: (sessionId: string) => Promise<string | null>;
+  /**
+   * Team coordinator proposes fronts (F1.1). Returns at once with a pending
+   * status; the user decides on a transcript card. Refuses every caller that
+   * is not a live Team mode root, reading the caller's own session row.
+   */
+  proposeTeamFronts: (callerSessionId: string, workspaceId: string, args: unknown) => Promise<string>;
 }
 
 let toolFns: MetaAgentToolFns | null = null;
@@ -546,6 +552,35 @@ export const META_AGENT_TOOL_DEFS: Array<{
       },
     },
   },
+  {
+    name: "team_front_propose",
+    description:
+      "Team mode coordinator only. Propose new fronts (team-fronts) or status changes of existing fronts to the user. A confirmation card appears in your transcript; the user approves, edits or rejects each item, and Nimbalyst writes only what they approve. This call returns immediately and writes nothing: do not wait for it, do not ask the user to approve in chat, and do not call it again until Nimbalyst reports the result. At most 10 items per proposal and one pending proposal at a time. A create needs a title (at most 120 characters, unique among the workspace's non-archived fronts, ignoring case) and a description (at most 2000 characters: the goal, the situation and the pointers, with the document that has precedence); its status defaults to active. A status change needs the front id (from tracker_list/tracker_get, never the title) and the new status (active, paused or closed). Closing a front that has an active mission is refused; pausing it is allowed and the card warns the user. currentMission is never proposable.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        items: {
+          type: "array",
+          minItems: 1,
+          maxItems: 10,
+          description: "The proposed changes, in the order the user should see them.",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              action: { type: "string", enum: ["create", "status"], description: "create: a new front. status: change the status of an existing front." },
+              title: { type: "string", maxLength: 120, description: "create only. The front's title." },
+              description: { type: "string", maxLength: 2000, description: "create only. The state of the front: goal, situation, pointers." },
+              status: { type: "string", enum: ["active", "paused", "closed"], description: "create: the suggested status (default active). status: the new status (required)." },
+              frontId: { type: "string", description: "status only. The id of the existing team-front item." },
+            },
+            required: ["action"],
+          },
+        },
+      },
+      required: ["items"],
+    },
+  },
 ];
 
 /**
@@ -707,6 +742,10 @@ export async function dispatchMetaAgentTool(
       if ('error' in lookup) throw new Error(lookup.error);
       return JSON.stringify(lookup, null, 2);
     }
+    case "team_front_propose":
+      // The handler reads the caller's session row and refuses anyone but a
+      // live Team mode root; the scope policy (toolPolicy.ts) is the second layer.
+      return toolFns.proposeTeamFronts(aiSessionId, effectiveWorkspaceId, args ?? {});
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

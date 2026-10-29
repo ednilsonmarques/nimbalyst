@@ -37,7 +37,7 @@ import { ClaudeCodeDeps } from './dependencyInjection';
 import { resolveEffectiveSessionMode } from './resolveEffectiveSessionMode';
 import { ClaudeCodeTranscriptAdapter } from './ClaudeCodeTranscriptAdapter';
 import { buildSdkOptions, type BuildSdkOptionsDeps, type BuildSdkOptionsResult } from './sdkOptionsBuilder';
-import { SDK_NATIVE_TOOLS, mergeToolScopeDisallowedTools, type ChildToolScope } from './toolPolicy';
+import { SDK_NATIVE_TOOLS, mergeToolScopeDisallowedTools, teamSessionDeniedTools, type ChildToolScope } from './toolPolicy';
 import { neutralizeRestrictedPrompt } from './restrictedPrompt';
 import type { TeamRole } from '../teamContext';
 import type { TurnState } from './turnState';
@@ -195,6 +195,8 @@ export interface TurnQueryHost {
   ensureSessionDirective(sessionId?: string): Promise<void>;
   /** Resolves and freezes the Team mode context; must be awaited before buildSystemPrompt. */
   ensureTeamContext(sessionId?: string): Promise<void>;
+  /** Whether this session (frozen by ensureTeamContext) is a Team mode root or member. */
+  isTeamSession?(): boolean;
   buildSystemPrompt(
     documentContext: DocumentContext | undefined,
     enableAgentTeams: boolean,
@@ -429,7 +431,11 @@ export async function buildTurnQuery(
       Object.keys((options as any).mcpServers ?? {}),
       teamRole,
     );
-    if (disallowedTools) (options as any).disallowedTools = disallowedTools;
+    // F1.1 S3b: renderer_eval for any Team mode session, root included (the role
+    // above covers members only).
+    const teamDenied = teamSessionDeniedTools(host.isTeamSession?.() === true);
+    const withTeamDenials = teamDenied.length > 0 ? [...new Set([...(disallowedTools ?? []), ...teamDenied])] : disallowedTools;
+    if (withTeamDenials) (options as any).disallowedTools = withTeamDenials;
   }
 
   const queryStartTime = Date.now();

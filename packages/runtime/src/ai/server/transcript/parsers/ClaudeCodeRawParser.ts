@@ -20,7 +20,7 @@ import type {
 } from './IRawMessageParser';
 import { stagedAttachmentRegistry } from '../../attachments/stagedAttachmentRegistry';
 import { isBackgroundedToolAck, isInteractiveWidgetTool } from '../../interactivePromptTools';
-import { TEAM_CHECKPOINT_PROMPT_ORIGIN, TOOL_MANIFEST_PROMPT_ORIGIN } from '../../providers/teamContext';
+import { TEAM_CHECKPOINT_PROMPT_ORIGIN, TEAM_FRONT_PROPOSAL_PROMPT_ORIGIN, TOOL_MANIFEST_PROMPT_ORIGIN } from '../../providers/teamContext';
 
 const ATTACHMENT_DENY_MESSAGE = 'File is in a directory that is denied by your permission settings.';
 
@@ -119,6 +119,17 @@ export class ClaudeCodeRawParser implements IRawMessageParser {
             text: parsed.prompt,
             systemType: 'status',
             reminderKind: TEAM_CHECKPOINT_PROMPT_ORIGIN,
+            searchable: false,
+            createdAt: msg.createdAt,
+          });
+        } else if (msg.metadata?.promptOrigin === TEAM_FRONT_PROPOSAL_PROMPT_ORIGIN) {
+          // Host notice with the per-item results of the user's decision on a
+          // front proposal (F1.1): orchestration status, not something the user typed.
+          descriptors.push({
+            type: 'system_message',
+            text: parsed.prompt,
+            systemType: 'status',
+            reminderKind: TEAM_FRONT_PROPOSAL_PROMPT_ORIGIN,
             searchable: false,
             createdAt: msg.createdAt,
           });

@@ -1,7 +1,7 @@
 import type { DocumentContext } from './types';
 import { getPreferredAgentLanguage } from './server/preferredAgentLanguageConfig';
 import { MCP_CORE, MCP_HOST, MCP_TRACKERS } from './server/services/mcpTopology';
-import type { TeamRole, TeamRootMission } from './server/providers/teamContext';
+import { TEAM_FRONT_PROPOSE_TOOL, type TeamRole, type TeamRootMission } from './server/providers/teamContext';
 import {
   TEAM_NOTE_BODY_MAX_CHARS,
   TEAM_NOTE_HANDOFF_BODY_MAX_CHARS,
@@ -466,7 +466,7 @@ Waiting for a member's report is not a stop: end your turn and its [Child Sessio
 The advisor recommends; you decide. That holds for readiness too: the advisor may contest a READY, point out a forgotten ambiguity or a risky assumption, or recommend going back to clarification, but the readiness gate stays yours. Weigh its recommendation like any finding: only when you accept it and the action is within the goal, the rules and the authority the user explicitly granted, have it done, validated, and continue; when you do not accept it, say why; call the user when the recommendation implies a decision reserved to them. An opinion never binds you and never executes anything by itself.
 Stop and call the user only at a real user decision gate, a material decision outside the authority the user explicitly granted: a change of business rule or of scope; a change of legacy or oracle behavior; a choice between materially different alternatives none of which was authorized; a destructive or irreversible risk; a promotion to production that needs approval; a commit, push or merge the user has not explicitly authorized; an external cost not authorized; a credential; a conflict of requirements the team cannot resolve; a blocker whose fix changes an earlier decision of the user; the objective or a material requirement too ambiguous to proceed safely, meaning a hard blocker of Mission readiness above, at the start or discovered during the work (a minor ambiguity is recorded as an assumption and the work goes on); the team checkpoint above. Then explain, in decision language (see Talking to the user below), the decision, the alternatives and their consequences, give your recommendation, and end your turn waiting for the user.
 Continuous is not endless. Never repeat the same action without a new hypothesis; when an attempt keeps failing with no new hypothesis, stop and report the impediment. When the architect, the reviewer and the advisor cycle without converging, name the conflict and ask the user to decide. When the next step is unclear or outside the authority granted, stop and say so. Something already validated enough is not validated again without a concrete hypothesis. Continuity follows the goal and the gates, never activity for its own sake; none of it widens what you or any member may do.
-${buildGitAndIntegritySection()}${buildWorkingIdentitySection('coordinator', teamNotesEnabled)}${buildUserFacingCommunicationSection('coordinator', teamNotesEnabled)}${teamNotesEnabled ? buildTeamNotesSection(style) : ''}`;
+${buildGitAndIntegritySection()}${buildFrontsSection(style)}${buildWorkingIdentitySection('coordinator', teamNotesEnabled)}${buildUserFacingCommunicationSection('coordinator', teamNotesEnabled)}${teamNotesEnabled ? buildTeamNotesSection(style) : ''}`;
 }
 
 /** Longest stretch of a user-stated mission value the prompt will quote; the host caps goal and criterion far lower (400). */
@@ -568,6 +568,20 @@ At a relevant milestone (a phase or slice closed, a user gate ahead, the end of 
  * development, database migrations, security review, API design, deployment)
  * and are memory aids, never a form.
  */
+/**
+ * How the coordinator changes the project's fronts (F1.1). A front is the user's: the coordinator
+ * proposes, the user decides on a card, Nimbalyst writes. The tool name is the single definition in
+ * teamContext; the rule it describes is enforced by the host (teamFrontRules, the handler, the IPC),
+ * never by this text.
+ */
+export function buildFrontsSection(style: ToolReferenceStyle = 'claude'): string {
+  const proposeTool = formatMcpToolReference(MCP_HOST, TEAM_FRONT_PROPOSE_TOOL, style);
+  return `
+### Fronts
+A front (a \`team-front\` item) is a permanent area of work of the project, and its creation, title and status are the user's. You never create one or change its title or status yourself (the Tracker refuses it; you may only keep a front's description current). When the team needs a new front, or a front's status should change, propose it with ${proposeTool}: up to 10 items per call, each either a create (title, description, suggested status) or a status change (the front's id from the Tracker, never its title). Nimbalyst shows the user a card where they approve, edit or reject each item; the call returns at once and writes nothing. Carry on with other work, and wait for Nimbalyst's result message (written, rejected or refused, per item) before you rely on the front. Never ask the user in chat to approve the proposal, and do not call the tool again while one is waiting. A title equal to an existing front's is refused, and so is closing a front that has an active mission (pausing it is allowed, with a warning on the card). Members cannot propose fronts: they tell you what the team needs and you propose it.
+`;
+}
+
 export function buildMissionReadinessSection(sendPromptTool: string, teamNotesEnabled = true): string {
   return `
 ### Mission readiness

@@ -38,6 +38,7 @@ import { selectFocusedRestartSessions } from "./restartContinuationSelection";
 import { tailFile, grepTailFile } from "./logTail";
 import { app as electronApp } from "electron";
 import { isRendererEvalAvailable } from "./rendererEvalGate";
+import { rendererEvalSessionRefusal } from "./rendererEvalSessionGuard";
 import { captureRendererHeapSnapshot } from "../services/HeapSnapshotService";
 import { analyzeHeapSnapshot } from "../services/HeapSnapshotAnalyzer";
 
@@ -2096,6 +2097,13 @@ function createExtensionDevMcpServer(
       }
 
       case "renderer_eval": {
+        // Team mode sessions (root and members) never get it, on any provider (F1.1 S3b).
+        {
+          const teamRefusal = await rendererEvalSessionRefusal(callingAiSessionId);
+          if (teamRefusal) {
+            return { content: [{ type: "text", text: `Error: ${teamRefusal}` }], isError: true };
+          }
+        }
         // Double-check dev mode (tool definition should already be hidden in prod)
         const isDev = isRendererEvalAvailable({
           nodeEnv: process.env.NODE_ENV,

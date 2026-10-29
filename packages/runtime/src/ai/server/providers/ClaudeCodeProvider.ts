@@ -692,6 +692,7 @@ export class ClaudeCodeProvider extends BaseAgentProvider {
           ensureGitContext: (wp) => this.ensureGitContext(wp),
           ensureSessionDirective: async (sid) => { this.frozenSessionDirective = await this.getSessionDirective(sid); },
           ensureTeamContext: async (sid) => { this.frozenTeamContext = await this.getTeamContext(sid); },
+          isTeamSession: () => this.frozenTeamContext.teamMode || !!this.frozenTeamContext.teamChild,
           buildSystemPrompt: (dc, teams, meta, preset) => this.buildSystemPrompt(dc, teams, meta, preset),
           emit: (event, payload) => { this.emit(event, payload); },
           withPromptProvenanceMetadata: (dc) => this.withPromptProvenanceMetadata(dc),

@@ -17,7 +17,7 @@ import type {
 import crypto from 'crypto';
 import { getCurrentIdentity } from './TrackerIdentityService';
 import { createNativeTrackerItem, type NativeTrackerCreatePayload } from './tracker/createNativeTrackerItem';
-import { assertTrackerItemFitsRoom, pushSharedTrackerItem } from './tracker/trackerItemShareGate';
+import { sharedTrackerItemBeforeWrite, syncUpdatedTrackerItem } from './tracker/trackerItemShareGate';
 import { fileTrackerItemRowUpdateRefusal } from './tracker/fileTrackerItemSizeGate';
 import { applyCommentMutation, type CommentMutation } from './tracker/commentMutations';
 import { appendActivity } from './tracker/trackerActivity';
@@ -116,8 +116,8 @@ function trackerMutationAction(updates: Record<string, any>): 'status_changed' |
   return 'field_changed';
 }
 
-/** IPC seam: always a human action, so `actorType` is fixed to `user` here. */
-function trackTrackerMutation(params: {
+/** IPC seam: always a human action, so `actorType` is fixed to `user` here. Also used by a front proposal's approval (the user's click). */
+export function trackTrackerMutation(params: {
   itemId: string;
   action: TrackerMutationAction;
   collaborationScope: 'personal' | 'shared';
@@ -3955,18 +3955,14 @@ export function setupDocumentServiceHandlers(resolver: DocumentServiceResolver) 
       }
 
       // A shared item its room would refuse is refused here, before the save.
-      const isShared = (candidate: TrackerItem) =>
-        shouldSyncTrackerItem(getEffectiveTrackerSharingPolicy(candidate.workspace, candidate.type, payload), candidate);
       const item = await svc.updateTrackerItem(payload.itemId, updates, {
-        beforeWrite: candidate => { if (isShared(candidate)) assertTrackerItemFitsRoom(candidate); },
+        beforeWrite: sharedTrackerItemBeforeWrite(payload),
       });
       const sharingPolicy = getEffectiveTrackerSharingPolicy(item.workspace, item.type, payload);
 
-      if (shouldSyncTrackerItem(sharingPolicy, item)) {
-        await pushSharedTrackerItem(item, itemId => svc.updateTrackerItemSyncStatus(itemId, 'pending'));
-      } else {
-        // console.log('[DocumentService] update-tracker-item no sync: sharing =', sharingPolicy.sharing);
-      }
+      // Push the saved item to its room (or mark it pending) when it is shared; the
+      // same step a front proposal's approval runs.
+      await syncUpdatedTrackerItem(item, payload, itemId => svc.updateTrackerItemSyncStatus(itemId, 'pending'));
 
       // Phase 3: materialize inverse relationship fields on target items via the
       // shared, customFields-aware helper (same path the MCP tracker_update handler

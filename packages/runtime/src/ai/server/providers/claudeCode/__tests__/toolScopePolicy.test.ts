@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   ARCHITECT_DENIED_TOOLS,
@@ -7,6 +9,10 @@ import {
   PORTAL_EXERCISE_TOOLS,
   PORTAL_TOOLS,
   teamRoleDeniedTools,
+  teamRoleFrontDeniedTools,
+  teamRoleRendererEvalDeniedTools,
+  teamSessionDeniedTools,
+  RENDERER_EVAL_TOOL,
   isReadScopeAllowedMcpTool,
   isToolDeniedForScope,
   mergeToolScopeDisallowedTools,
@@ -15,6 +21,9 @@ import {
   toolScopeDeniedTools,
   RESTRICTED_SCOPE_SETTINGS,
 } from '../toolPolicy';
+
+const FRONT_PROPOSE = 'mcp__nimbalyst-host__team_front_propose';
+const RENDERER_EVAL = 'mcp__nimbalyst-extension-dev__renderer_eval';
 
 describe('resolveChildToolScope', () => {
   it('keeps read and write, and treats absent or full as full', () => {
@@ -400,8 +409,84 @@ describe('architect role denials (Phase 1A)', () => {
     // The role denies even without a restricting scope (defense in depth).
     expect(mergeToolScopeDisallowedTools(undefined, 'full', [], 'architect')).toEqual(expect.arrayContaining(architectOnly));
     // F1.2: an explorer carries no ask/plan denials, but it never gets a portal tool and loses browser.*.
+    // F1.1: and no team member proposes fronts.
     expect(mergeToolScopeDisallowedTools(undefined, 'full', [], 'explorer')?.sort()).toEqual(
-      [...PORTAL_TOOLS.map((tool) => `mcp__nimbalyst__${tool}`), 'mcp__nimbalyst-browser'].sort(),
+      [...PORTAL_TOOLS.map((tool) => `mcp__nimbalyst__${tool}`), 'mcp__nimbalyst-browser', FRONT_PROPOSE, RENDERER_EVAL].sort(),
     );
+  });
+});
+
+describe('team_front_propose is for the coordinator only (F1.1)', () => {
+  const roles = ['explorer', 'implementer', 'reviewer', 'architect', 'advisor', 'other'] as const;
+
+  it('every team child role is denied it, whatever its scope', () => {
+    for (const role of roles) {
+      expect(teamRoleFrontDeniedTools(role), role).toEqual([FRONT_PROPOSE]);
+      for (const scope of ['read', 'review', 'write', 'full'] as const) {
+        expect(isToolDeniedForScope(scope, FRONT_PROPOSE, [], role), `${role}/${scope}`).toBe(true);
+        expect(mergeToolScopeDisallowedTools(undefined, scope, [], role) ?? [], `${role}/${scope}`).toContain(FRONT_PROPOSE);
+      }
+    }
+  });
+
+  it('a session without a team role (the root, or a solo session) is not denied it under full scope', () => {
+    expect(teamRoleFrontDeniedTools(null)).toEqual([]);
+    expect(teamRoleFrontDeniedTools(undefined)).toEqual([]);
+    expect(isToolDeniedForScope('full', FRONT_PROPOSE, [], null)).toBe(false);
+    expect(mergeToolScopeDisallowedTools(undefined, 'full', [], null)).toBeUndefined();
+  });
+
+  it('a read or review session is denied it even without a role (not on the read allowlist)', () => {
+    expect(isToolDeniedForScope('read', FRONT_PROPOSE)).toBe(true);
+    expect(isToolDeniedForScope('review', FRONT_PROPOSE)).toBe(true);
+    expect(readScopeDeniedFirstPartyTools()).toContain(FRONT_PROPOSE);
+  });
+
+  it('leaves the architect and advisor ask/plan denial lists exactly as they were', () => {
+    expect(teamRoleDeniedTools('architect')).not.toContain(FRONT_PROPOSE);
+    expect(teamRoleDeniedTools('advisor')).not.toContain(FRONT_PROPOSE);
+  });
+});
+
+describe('renderer_eval is denied to Team mode sessions (F1.1 S3b)', () => {
+  const roles = ['explorer', 'implementer', 'reviewer', 'architect', 'advisor', 'other'] as const;
+
+  it('every member role is denied it, whatever its scope', () => {
+    expect(RENDERER_EVAL_TOOL).toBe(RENDERER_EVAL);
+    for (const role of roles) {
+      expect(teamRoleRendererEvalDeniedTools(role), role).toEqual([RENDERER_EVAL]);
+      for (const scope of ['read', 'review', 'write', 'full'] as const) {
+        expect(isToolDeniedForScope(scope, RENDERER_EVAL, [], role), `${role}/${scope}`).toBe(true);
+        expect(mergeToolScopeDisallowedTools(undefined, scope, [], role) ?? [], `${role}/${scope}`).toContain(RENDERER_EVAL);
+      }
+    }
+  });
+
+  it('the root, which has no member role, is covered by the session-level denial', () => {
+    expect(teamSessionDeniedTools(true)).toEqual([RENDERER_EVAL]);
+    expect(teamSessionDeniedTools(false)).toEqual([]);
+  });
+
+  it('a non-team session keeps renderer_eval, and no other extension-dev tool is denied to a team member by this rule', () => {
+    expect(teamRoleRendererEvalDeniedTools(null)).toEqual([]);
+    expect(isToolDeniedForScope('full', RENDERER_EVAL, [], null)).toBe(false);
+    for (const role of roles) {
+      expect(isToolDeniedForScope('full', 'mcp__nimbalyst-extension-dev__get_environment_info', [], role), role).toBe(false);
+    }
+  });
+});
+
+describe('the Claude turn applies the session-level renderer_eval denial (F1.1 S3b)', () => {
+  const read = (file: string) => fs.readFileSync(path.resolve(__dirname, '..', file), 'utf8');
+
+  it('turnPrologue merges teamSessionDeniedTools(host.isTeamSession()) into the non-meta-agent disallowedTools', () => {
+    const source = read('turnPrologue.ts');
+    expect(source).toMatch(/teamSessionDeniedTools\(host\.isTeamSession\?\.\(\) === true\)/);
+    expect(source).toMatch(/\(options as any\)\.disallowedTools = withTeamDenials/);
+  });
+
+  it('the provider answers isTeamSession from the frozen team context (root or member)', () => {
+    const provider = fs.readFileSync(path.resolve(__dirname, '..', '..', 'ClaudeCodeProvider.ts'), 'utf8');
+    expect(provider).toMatch(/isTeamSession: \(\) => this\.frozenTeamContext\.teamMode \|\| !!this\.frozenTeamContext\.teamChild/);
   });
 });

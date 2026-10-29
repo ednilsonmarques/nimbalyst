@@ -18,7 +18,7 @@ import {
   isExtensionServerConfigKey,
   type McpServerTopologyEntry,
 } from '../../services/mcpTopology';
-import type { TeamRole } from '../teamContext';
+import { TEAM_FRONT_PROPOSE_TOOL, type TeamRole } from '../teamContext';
 
 // Internal Nimbalyst MCP tools that are auto-allowed (no permission prompt):
 // they are display-only or confirm within their own widget, and the SDK's
@@ -61,6 +61,10 @@ export const INTERNAL_MCP_TOOLS: readonly string[] = [
   // Host — the packaged ECC catalog (Phase 1B): read-only passive data, no
   // workspace access, no execution; the scope policy still decides who sees it.
   'mcp__nimbalyst-host__ecc_catalog_lookup',
+  // Host — F1.1: the coordinator's front proposal. It only posts a card and
+  // writes nothing; the host refuses every caller but a live team root, and
+  // `teamRoleFrontDeniedTools` withholds it from every team member.
+  'mcp__nimbalyst-host__team_front_propose',
 ];
 
 export const TEAM_TOOLS: readonly string[] = [
@@ -329,6 +333,36 @@ export function teamRolePortalDeniedTools(role: TeamRole | null | undefined): re
 }
 
 /**
+ * The coordinator proposes fronts; no team member does, whatever its role or
+ * scope (F1.1, R2). The host handler refuses a member by reading its session
+ * row; this is the second layer, kept apart from the architect's and advisor's
+ * ask/plan denials, whose lists other policy mirrors compare exactly.
+ */
+export function teamRoleFrontDeniedTools(role: TeamRole | null | undefined): readonly string[] {
+  return role ? [mcpTool(MCP_HOST, TEAM_FRONT_PROPOSE_TOOL)] : [];
+}
+
+/**
+ * renderer_eval runs JavaScript in the user's renderer, which holds the user's
+ * own authority (the IPC that settles front proposals included), so no Team
+ * mode session may call it (F1.1 S3b, NIB.186). The extension-dev server
+ * refuses it by the caller's session row on every provider; this is the Claude
+ * layer: `teamRoleRendererEvalDeniedTools` for a member (its role is known to
+ * the guard) and `teamSessionDeniedTools` for any team session, the root
+ * included, which the turn passes to the SDK's disallowedTools.
+ */
+export const RENDERER_EVAL_TOOL = mcpTool(MCP_EXTENSION_DEV, 'renderer_eval');
+
+export function teamRoleRendererEvalDeniedTools(role: TeamRole | null | undefined): readonly string[] {
+  return role ? [RENDERER_EVAL_TOOL] : [];
+}
+
+/** Tools denied to a Team mode session whether it is the root or a member. */
+export function teamSessionDeniedTools(isTeamSession: boolean): readonly string[] {
+  return isTeamSession ? [RENDERER_EVAL_TOOL] : [];
+}
+
+/**
  * First-party Nimbalyst tools a `read` child may keep: lookups, plus asking the
  * user, rendering output to them, and naming its own session (the system prompt
  * asks every session to call update_session_meta). Everything else on the
@@ -442,7 +476,7 @@ export function mergeToolScopeDisallowedTools(
   mcpServerKeys: readonly string[] = [],
   role: TeamRole | null = null,
 ): string[] | undefined {
-  const denied = [...toolScopeDeniedTools(scope), ...teamRoleDeniedTools(role), ...teamRolePortalDeniedTools(role)];
+  const denied = [...toolScopeDeniedTools(scope), ...teamRoleDeniedTools(role), ...teamRolePortalDeniedTools(role), ...teamRoleFrontDeniedTools(role), ...teamRoleRendererEvalDeniedTools(role)];
   if (role !== null) denied.push(BROWSER_EXTENSION_SERVER);
   if (scope === 'read' || scope === 'review') {
     denied.push(...mcpServerKeys.filter(isExtensionServerConfigKey).map((key) => `mcp__${key}`));
@@ -480,6 +514,8 @@ export function isToolDeniedForScope(
   role: TeamRole | null = null,
 ): boolean {
   if (teamRoleDeniedTools(role).includes(toolName)) return true;
+  if (teamRoleFrontDeniedTools(role).includes(toolName)) return true;
+  if (teamRoleRendererEvalDeniedTools(role).includes(toolName)) return true;
   if (role !== null && (teamRolePortalDeniedTools(role).includes(toolName) || toolName.startsWith(`${BROWSER_EXTENSION_SERVER}__`))) {
     return true;
   }

@@ -26,7 +26,7 @@ import { usePendingPermissionNavigation } from './usePendingPermissionNavigation
 import { TeamCheckpointBar } from './CustomToolWidgets/TeamCheckpointWidget';
 import { ToolManifestCard } from './CustomToolWidgets/ToolManifestCard';
 import { findPendingTeamCheckpoint } from './CustomToolWidgets/teamCheckpointState';
-import { TEAM_CHECKPOINT_PROMPT_ORIGIN, TOOL_MANIFEST_PROMPT_ORIGIN } from '../../../ai/server/providers/teamContext';
+import { TEAM_CHECKPOINT_PROMPT_ORIGIN, TEAM_FRONT_PROPOSAL_PROMPT_ORIGIN, TOOL_MANIFEST_PROMPT_ORIGIN } from '../../../ai/server/providers/teamContext';
 import { usePendingQuestionNavigation } from './usePendingQuestionNavigation';
 import { AttachmentStagingDeniedCard } from './AttachmentStagingDeniedCard';
 import { useElapsedTimeRef } from './CustomToolWidgets/useElapsedTime';
@@ -455,6 +455,8 @@ const SystemReminderCard: React.FC<{
   // their fixed English labels.
   const label = reminderKind === TEAM_CHECKPOINT_PROMPT_ORIGIN
     ? t('teamCheckpoint.noticeLabel')
+    : reminderKind === TEAM_FRONT_PROPOSAL_PROMPT_ORIGIN
+      ? t('teamFrontProposal.noticeLabel')
     : reminderKind === TOOL_MANIFEST_PROMPT_ORIGIN
       ? t('toolManifest.noticeLabel')
       : (reminderKind && REMINDER_KIND_LABELS[reminderKind]) ?? 'System Reminder';

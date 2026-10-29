@@ -459,3 +459,25 @@ describe("coordinator continuity: no silent stall, and the advisor recommends wh
     expect(section).not.toContain("When the advisor recommends a correction that is within the goal and your authority, have it done");
   });
 });
+
+describe('Fronts section (F1.1)', () => {
+  const prompt = buildTeamModeAddendum('claude');
+
+  it('tells the coordinator to propose fronts only through team_front_propose and to wait for Nimbalyst\'s result', () => {
+    const section = prompt.slice(prompt.indexOf('### Fronts'));
+    expect(section).toContain('mcp__nimbalyst-host__team_front_propose');
+    expect(section).toMatch(/never create one or change its title or status yourself/);
+    expect(section).toMatch(/the call returns at once and writes nothing/);
+    expect(section).toMatch(/wait for Nimbalyst's result message/);
+    expect(section).toMatch(/Never ask the user in chat to approve the proposal/);
+    expect(section).toMatch(/Members cannot propose fronts: they tell you what the team needs/);
+    expect(section).toMatch(/closing a front that has an active mission/);
+  });
+
+  it('names the tool in the Codex style too, and only the coordinator gets the section', () => {
+    expect(buildTeamModeAddendum('codex')).toContain('team_front_propose');
+    for (const role of ['explorer', 'implementer', 'reviewer', 'architect', 'advisor', 'other'] as const) {
+      expect(buildTeamChildAddendum(role), role).not.toContain('team_front_propose');
+    }
+  });
+});

@@ -51,6 +51,7 @@ export { GitCommitConfirmationWidget } from './GitCommitConfirmationWidget';
 export { ExitPlanModeWidget } from './ExitPlanModeWidget';
 export { ToolPermissionWidget } from './ToolPermissionWidget';
 export { TeamCheckpointWidget } from './TeamCheckpointWidget';
+export { TeamFrontProposalWidget } from './TeamFrontProposalWidget';
 export { ToolManifestCard } from './ToolManifestCard';
 export { FileChangeWidget } from './FileChangeWidget';
 export { SuperProgressSnapshotWidget } from './SuperProgressSnapshotWidget';
@@ -119,6 +120,7 @@ import { GitCommitConfirmationWidget } from './GitCommitConfirmationWidget';
 import { ExitPlanModeWidget } from './ExitPlanModeWidget';
 import { ToolPermissionWidget } from './ToolPermissionWidget';
 import { TeamCheckpointWidget } from './TeamCheckpointWidget';
+import { TeamFrontProposalWidget } from './TeamFrontProposalWidget';
 import { SuperProgressSnapshotWidget } from './SuperProgressSnapshotWidget';
 import { SuperLoopProgressWidget } from './SuperLoopProgressWidget';
 import { UpdateSessionMetaWidget } from './UpdateSessionMetaWidget';
@@ -195,6 +197,10 @@ const BUILT_IN_TOOL_WIDGETS: CustomToolWidgetRegistry = {
   // Team mode checkpoint - "Continue team" card the host posts in a team root
   // when the team has used its authorized budget.
   'TeamCheckpoint': TeamCheckpointWidget,
+
+  // Team mode front proposal (F1.1) - approve/edit/reject card the host posts in a team root
+  // when its coordinator calls team_front_propose. Settled only by its own host channel.
+  'TeamFrontProposal': TeamFrontProposalWidget,
 
   // Note: Codex `file_change` is intentionally NOT registered here. RichTranscriptView
   // routes it to EditToolResultCard via extractCodexFileChanges so it renders as an

@@ -48,6 +48,25 @@ export const TEAM_BUDGET_METADATA_KEY = 'teamBudget';
 export const TEAM_CHECKPOINT_TOOL_NAME = 'TeamCheckpoint';
 
 /**
+ * Transcript card shown in a team root when its coordinator proposes fronts
+ * (`team_front_propose`, F1.1). Like the checkpoint card it is NOT an
+ * interactive prompt: it is settled only by the renderer's IPC, never through
+ * respond_to_prompt, mobile or voice, so a coordinator cannot approve its own
+ * proposal.
+ */
+export const TEAM_FRONT_PROPOSAL_TOOL_NAME = 'TeamFrontProposal';
+
+/**
+ * `promptOrigin` of the notice the host queues for the coordinator once the
+ * user has decided a front proposal (per-item results). System provenance:
+ * a status line, never a message the user typed.
+ */
+export const TEAM_FRONT_PROPOSAL_PROMPT_ORIGIN = 'team_front_proposal';
+
+/** The host tool a team root calls to put a front proposal in front of the user. */
+export const TEAM_FRONT_PROPOSE_TOOL = 'team_front_propose';
+
+/**
  * `promptOrigin` of the notice the host queues for the coordinator once the
  * user continues the team. The transcript shows a prompt of this origin as a
  * system status line (never as a user message), with this as its reminder kind.
