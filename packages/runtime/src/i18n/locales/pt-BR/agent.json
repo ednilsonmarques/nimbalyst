@@ -423,7 +423,7 @@
         "waitingUser_zero": "{{count}} aguardando você",
         "waitingUser_one": "{{count}} aguardando você",
         "waitingUser_other": "{{count}} aguardando você",
-        "error_zero": "{{count}} com erro não visto",
+        "error_zero": "{{count}} com erros não vistos",
         "error_one": "{{count}} com erro não visto",
         "error_other": "{{count}} com erros não vistos"
       },

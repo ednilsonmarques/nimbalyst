@@ -51,11 +51,29 @@ describe('AttachmentService.validateFile', () => {
     expect(service.validateFile(1024, 'text/csv', 'vendas.csv')).toEqual({ valid: true });
   });
 
-  it('never tells a .csv reported as vnd.ms-excel to save itself as CSV', () => {
-    const result = service.validateFile(1024, 'application/vnd.ms-excel', 'dados.csv');
-    expect(result.valid).toBe(false);
-    expect(result.code).toBeUndefined();
-    expect(result.error).toBe('Unsupported file type: application/vnd.ms-excel');
+  it('accepts a real .csv or .tsv that Chromium reports as application/vnd.ms-excel', () => {
+    for (const name of ['dados.csv', 'DADOS.CSV', 'dados.tsv', 'dados.TSV']) {
+      expect(service.validateFile(1024, 'application/vnd.ms-excel', name), name).toEqual({ valid: true });
+      expect(service.validateFile(1024, 'APPLICATION/VND.MS-EXCEL', name), name).toEqual({ valid: true });
+    }
+  });
+
+  it('resolves such a file to its text type, and leaves every other case as it was', () => {
+    expect(AttachmentService.resolveMimeType('application/vnd.ms-excel', 'dados.csv')).toBe('text/csv');
+    expect(AttachmentService.resolveMimeType('application/vnd.ms-excel', 'dados.tsv')).toBe('text/csv');
+    expect(AttachmentService.resolveMimeType('', 'dados.csv')).toBe('text/csv');
+    expect(AttachmentService.resolveMimeType('application/octet-stream', 'dados.tsv')).toBe('text/csv');
+    expect(AttachmentService.resolveMimeType('text/plain', 'dados.csv')).toBe('text/plain');
+    expect(AttachmentService.resolveMimeType('application/vnd.ms-excel', 'planilha.xls')).toBe('application/vnd.ms-excel');
+    expect(AttachmentService.resolveMimeType('application/vnd.ms-excel', 'noextension')).toBe('application/vnd.ms-excel');
+  });
+
+  it('does NOT accept real Excel files: .xls and .xlsx keep the spreadsheet message, whatever MIME is reported', () => {
+    for (const [mime, name] of [['application/vnd.ms-excel', 'planilha.xls'], ['application/vnd.ms-excel', 'planilha.xlsx'], [XLSX_MIME, 'planilha.xlsx'], ['application/vnd.ms-excel', 'PLANILHA.XLS']] as const) {
+      const result = service.validateFile(1024, mime, name);
+      expect(result.valid, name).toBe(false);
+      expect(result.code, name).toBe('spreadsheet_unsupported');
+    }
   });
 
   it('recognizes an .xlsx sent as application/octet-stream', () => {

@@ -8,7 +8,7 @@
  * action, the target front and the other fields from the proposal it stored.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { interactiveWidgetHostAtom, getInteractiveWidgetHost } from '../../../../store/atoms/interactiveWidgetHost';
 import { stripMcpPrefix } from '../../../../ai/server/interactivePromptTools';
@@ -228,6 +228,53 @@ export function useTeamFrontProposal(sessionId: string, card: TeamFrontProposalC
     return () => { cancelled = true; };
   }, [host, sessionId, proposalId, decided]);
 
+  // The host keeps proposals in memory and drops one when its root is archived or after a restart, so a card that
+  // stays mounted can go stale. Re-check whenever it is shown again, and right before Send is enabled or performed.
+  // Only ever pending -> expired: a proposal that is gone never comes back.
+  const live = useRef({ host, sessionId, proposalId, decided, remote, results });
+  live.current = { host, sessionId, proposalId, decided, remote, results };
+  const recheck = useCallback(async (): Promise<'pending' | 'expired' | 'unknown'> => {
+    const cur = live.current;
+    const liveHost = cur.host || getInteractiveWidgetHost(cur.sessionId);
+    if (!cur.proposalId || cur.decided || cur.results !== null || !liveHost?.teamFrontProposalState) return 'unknown';
+    try {
+      const state = await liveHost.teamFrontProposalState(cur.proposalId);
+      // Unlike the first check on mount (where "no answer" can only mean nothing is approvable), a RE-check only
+      // closes the card on an explicit answer from the host. A failed call (success:false) or a rejection says
+      // nothing about the proposal, so it is 'unknown': the card stays as it is, and Send refuses to go.
+      if (state.success && state.state === 'pending') return 'pending';
+      if (state.success && state.state === 'expired') {
+        setRemote('expired');
+        return 'expired';
+      }
+      return 'unknown';
+    } catch {
+      return 'unknown';
+    }
+  }, []);
+
+  const [watched, setWatched] = useState<Element | null>(null);
+  /** Attach to the card's root element so the card re-checks when it scrolls or switches back into view. */
+  const watch = useCallback((element: Element | null) => setWatched(element), []);
+  const active = !!proposalId && !decided && results === null && remote === 'pending';
+  useEffect(() => {
+    if (!active) return;
+    const onFocus = () => { void recheck(); };
+    const onVisibility = () => { if (document.visibilityState === 'visible') void recheck(); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    let observer: IntersectionObserver | null = null;
+    if (watched && typeof IntersectionObserver !== 'undefined') {
+      observer = new IntersectionObserver((entries) => { if (entries.some((entry) => entry.isIntersecting)) void recheck(); });
+      observer.observe(watched);
+    }
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      observer?.disconnect();
+    };
+  }, [active, watched, recheck]);
+
   const decide = useCallback((index: number, value: ItemDecision) => {
     setDecisions((current) => current.map((d, i) => (i === index ? value : d)));
   }, []);
@@ -241,12 +288,22 @@ export function useTeamFrontProposal(sessionId: string, card: TeamFrontProposalC
   const items = useMemo(() => (card ? buildDecisionItems(card, decisions, edits) : null), [card, decisions, edits]);
   const canSubmit = remote === 'pending' && !isSubmitting && results === null && items !== null;
 
+  // Send just became possible (every item decided): make sure the proposal is still there.
+  const sendReady = items !== null;
+  useEffect(() => {
+    if (sendReady && active) void recheck();
+  }, [sendReady, active, recheck]);
+
   const submit = useCallback(async () => {
     const liveHost = host || getInteractiveWidgetHost(sessionId);
     if (!card || !items || !liveHost?.teamFrontProposalDecide || isSubmitting || results !== null) return;
     setIsSubmitting(true);
     setFailure(null);
     try {
+      // Right before sending: a proposal the host no longer holds switches the card to closed without sending.
+      const current = await recheck();
+      if (current === 'expired') return;
+      if (current === 'unknown') { setFailure('unavailable'); return; }
       const response = await liveHost.teamFrontProposalDecide({
         proposalId: card.proposalId,
         rootSessionId: card.rootSessionId ?? sessionId,
@@ -266,7 +323,7 @@ export function useTeamFrontProposal(sessionId: string, card: TeamFrontProposalC
     } finally {
       setIsSubmitting(false);
     }
-  }, [host, sessionId, card, items, isSubmitting, results]);
+  }, [host, sessionId, card, items, isSubmitting, results, recheck]);
 
-  return { remote, decisions, edits, decide, decideAll, edit, canSubmit, submit, isSubmitting, failure, results };
+  return { watch, recheck, remote, decisions, edits, decide, decideAll, edit, canSubmit, submit, isSubmitting, failure, results };
 }

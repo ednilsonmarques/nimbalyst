@@ -346,10 +346,16 @@ export class AttachmentService {
    * Browsers report "" or "application/octet-stream" for many text-based files.
    */
   static resolveMimeType(mimeType: string, filename: string): string {
+    const ext = extname(filename).toLowerCase();
+    // Chromium on Windows with Excel installed reports a real .csv/.tsv as application/vnd.ms-excel.
+    // The extension is then the better evidence for these two plain-text formats only: .xls/.xlsx
+    // keep the reported MIME and stay rejected as spreadsheets.
+    if (mimeType.toLowerCase() === 'application/vnd.ms-excel' && (ext === '.csv' || ext === '.tsv')) {
+      return AttachmentService.EXTENSION_MIME_MAP[ext];
+    }
     if (mimeType && mimeType !== 'application/octet-stream') {
       return mimeType;
     }
-    const ext = extname(filename).toLowerCase();
     return AttachmentService.EXTENSION_MIME_MAP[ext] ?? mimeType;
   }
 

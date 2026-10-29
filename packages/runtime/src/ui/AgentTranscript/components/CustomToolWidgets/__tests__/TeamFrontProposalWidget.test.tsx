@@ -609,3 +609,134 @@ describe('an unconfirmed result (advisor 49b904f1)', () => {
     }
   });
 });
+
+describe('a mounted card re-checks the proposal state (NIB.193)', () => {
+  const expired = { success: true, state: 'expired' } as const;
+  const visible = () => { Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' }); document.dispatchEvent(new Event('visibilitychange')); };
+
+  it('switches to closed when the window regains focus after the host dropped the proposal', async () => {
+    const { teamFrontProposalState } = await renderIn('en');
+    expect(widget().getAttribute('data-state')).toBe('pending');
+    const calls = teamFrontProposalState.mock.calls.length;
+    teamFrontProposalState.mockResolvedValue(expired);
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    expect(teamFrontProposalState.mock.calls.length).toBeGreaterThan(calls);
+    expect(widget().getAttribute('data-state')).toBe('expired');
+    expect(screen.getByTestId('team-front-proposal-expired').textContent).toBe('This proposal is closed. Check the Tracker for its result.');
+    expect(screen.queryByTestId('team-front-proposal-submit')).toBeNull();
+  });
+
+  it('switches to closed when the page becomes visible again', async () => {
+    const { teamFrontProposalState } = await renderIn('pt-BR');
+    teamFrontProposalState.mockResolvedValue(expired);
+    await act(async () => { visible(); });
+    expect(widget().getAttribute('data-state')).toBe('expired');
+  });
+
+  it('switches to closed when the card scrolls or switches back into view (IntersectionObserver)', async () => {
+    const observers: Array<{ cb: (entries: Array<{ isIntersecting: boolean }>) => void; disconnect: () => void }> = [];
+    vi.stubGlobal('IntersectionObserver', class {
+      cb: (entries: Array<{ isIntersecting: boolean }>) => void;
+      constructor(cb: (entries: Array<{ isIntersecting: boolean }>) => void) { this.cb = cb; observers.push(this as never); }
+      observe() {}
+      disconnect() {}
+    });
+    try {
+      const { teamFrontProposalState } = await renderIn('en');
+      expect(observers.length).toBeGreaterThan(0);
+      teamFrontProposalState.mockResolvedValue(expired);
+      await act(async () => { observers[observers.length - 1].cb([{ isIntersecting: false }]); });
+      expect(widget().getAttribute('data-state')).toBe('pending');
+      await act(async () => { observers[observers.length - 1].cb([{ isIntersecting: true }]); });
+      expect(widget().getAttribute('data-state')).toBe('expired');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('checks again as soon as Send becomes possible (every item decided)', async () => {
+    const { teamFrontProposalState } = await renderIn('en');
+    teamFrontProposalState.mockResolvedValue(expired);
+    await click('team-front-proposal-approve-all');
+    await act(async () => {});
+    expect(widget().getAttribute('data-state')).toBe('expired');
+  });
+
+  it('checks right before sending: a proposal gone since the last check switches the card to closed and sends nothing', async () => {
+    const { teamFrontProposalState, teamFrontProposalDecide } = await renderIn('en');
+    await click('team-front-proposal-approve-0');
+    await click('team-front-proposal-approve-1');
+    await click('team-front-proposal-approve-2');
+    expect(submit().disabled).toBe(false);
+    // the host drops the proposal between the last check and the click
+    teamFrontProposalState.mockResolvedValue(expired);
+    await click('team-front-proposal-submit');
+    expect(widget().getAttribute('data-state')).toBe('expired');
+    expect(teamFrontProposalDecide).not.toHaveBeenCalled();
+  });
+
+  it('still sends once when the proposal is still pending, and never checks after the outcome is persisted', async () => {
+    const { teamFrontProposalState, teamFrontProposalDecide } = await renderIn('en');
+    await click('team-front-proposal-approve-all');
+    await click('team-front-proposal-submit');
+    expect(teamFrontProposalDecide).toHaveBeenCalledTimes(1);
+    cleanup();
+    const result = JSON.stringify({ decided: true, results: [{ index: 0, action: 'create', label: 'A', result: 'written', status: 'active' }] });
+    const again = await renderIn('en', { result });
+    const before = again.teamFrontProposalState.mock.calls.length;
+    await act(async () => { window.dispatchEvent(new Event('focus')); visible(); });
+    expect(again.teamFrontProposalState.mock.calls.length).toBe(before);
+    void teamFrontProposalState;
+  });
+
+  it('a failing state check at send time does not send and says so, keeping the card pending', async () => {
+    const { teamFrontProposalState, teamFrontProposalDecide } = await renderIn('en');
+    await click('team-front-proposal-approve-all');
+    teamFrontProposalState.mockRejectedValue(new Error('ipc down'));
+    await click('team-front-proposal-submit');
+    expect(teamFrontProposalDecide).not.toHaveBeenCalled();
+    expect(widget().getAttribute('data-state')).toBe('pending');
+    expect(screen.getByTestId('team-front-proposal-error').textContent).toContain('could not be processed');
+  });
+});
+
+describe('re-check hardening (reviewer 55d572f0)', () => {
+  it('after the card is unmounted, focus and visibilitychange no longer call the state check', async () => {
+    const { teamFrontProposalState, view } = await renderIn('en');
+    view.unmount();
+    const calls = teamFrontProposalState.mock.calls.length;
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
+    await act(async () => { window.dispatchEvent(new Event('focus')); document.dispatchEvent(new Event('visibilitychange')); });
+    expect(teamFrontProposalState.mock.calls.length).toBe(calls);
+  });
+
+  it('a focus re-check that answers success:false keeps the card pending', async () => {
+    const { teamFrontProposalState } = await renderIn('en');
+    teamFrontProposalState.mockResolvedValue({ success: false });
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    expect(widget().getAttribute('data-state')).toBe('pending');
+    expect(screen.getByTestId('team-front-proposal-approve-all')).toBeTruthy();
+  });
+
+  it('a focus re-check that rejects keeps the card pending', async () => {
+    const { teamFrontProposalState } = await renderIn('en');
+    teamFrontProposalState.mockRejectedValue(new Error('ipc down'));
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    expect(widget().getAttribute('data-state')).toBe('pending');
+  });
+
+  it('a pre-send check that answers success:false sends nothing, shows the unavailable error and stays pending', async () => {
+    const { teamFrontProposalState, teamFrontProposalDecide } = await renderIn('en');
+    await click('team-front-proposal-approve-all');
+    teamFrontProposalState.mockResolvedValue({ success: false });
+    await click('team-front-proposal-submit');
+    expect(teamFrontProposalDecide).not.toHaveBeenCalled();
+    expect(widget().getAttribute('data-state')).toBe('pending');
+    expect(screen.getByTestId('team-front-proposal-error').textContent).toContain('could not be processed');
+  });
+
+  it('the mount check keeps its behaviour: no usable answer means closed', async () => {
+    await renderIn('en', { state: { success: false } });
+    expect(widget().getAttribute('data-state')).toBe('expired');
+  });
+});

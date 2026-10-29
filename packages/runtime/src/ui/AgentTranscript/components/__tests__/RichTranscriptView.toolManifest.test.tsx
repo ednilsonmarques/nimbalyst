@@ -235,7 +235,7 @@ describe('nothing is invented', () => {
     await renderIn('pt-BR', [manifestNotice(0, PT_NOTICE_M2)]);
     expect(cards()).toHaveLength(1);
     expect(cards()[0].getAttribute('data-state')).toBe('missing');
-    expect(screen.getByTestId('tool-manifest-missing').textContent).toBe('O manifesto gravado não está no Tracker desta área de trabalho.');
+    expect(screen.getByTestId('tool-manifest-missing').textContent).toBe('O manifesto gravado não está no Rastreador desta área de trabalho.');
     expect(screen.queryByTestId('tool-manifest-status')).toBeNull();
     expect((screen.getByTestId('tool-manifest-open') as HTMLButtonElement).disabled).toBe(true);
   });

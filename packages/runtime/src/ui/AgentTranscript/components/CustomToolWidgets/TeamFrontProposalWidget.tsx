@@ -101,7 +101,7 @@ export const TeamFrontProposalWidget: React.FC<CustomToolWidgetProps> = ({ messa
   const anyApprovedProblem = card.items.some((item, index) => state.decisions[index] === 'approve' && itemProblem(item, state.edits[index]) !== null);
 
   return (
-    <div data-testid="team-front-proposal-widget" data-state="pending" className="team-front-proposal-widget rounded-lg overflow-hidden border border-nim-primary bg-nim-secondary">
+    <div ref={state.watch} data-testid="team-front-proposal-widget" data-state="pending" className="team-front-proposal-widget rounded-lg overflow-hidden border border-nim-primary bg-nim-secondary">
       <div className="flex items-center gap-2 py-3 px-4 border-b border-nim bg-nim-tertiary">
         <span className="text-sm font-semibold text-nim flex-1">{t('teamFrontProposal.title')}</span>
       </div>

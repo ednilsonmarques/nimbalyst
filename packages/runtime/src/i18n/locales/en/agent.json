@@ -423,7 +423,7 @@
         "waitingUser_zero": "{{count}} waiting for you",
         "waitingUser_one": "{{count}} waiting for you",
         "waitingUser_other": "{{count}} waiting for you",
-        "error_zero": "{{count}} with an unseen error",
+        "error_zero": "{{count}} with unseen errors",
         "error_one": "{{count}} with an unseen error",
         "error_other": "{{count}} with unseen errors"
       },
